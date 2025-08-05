@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="TwizzAutomationSuite" thread-count="3" parallel="tests" verbose="2">
+    <test name="Config Reader Test">
+        <classes>
+            <class name="tests.ConfigReaderTest"/>
+        </classes>
+    </test>
+</suite>
