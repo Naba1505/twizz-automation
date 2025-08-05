@@ -12,6 +12,9 @@ target/
 *.iml
 *.ipr
 
+# Allure results
+allure-results/
+
 ### Eclipse ###
 .apt_generated
 .classpath
@@ -36,3 +39,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Logs and temp files
+*.log
+*.tmp
