@@ -1,9 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="TwizzAutomationSuite" thread-count="3" parallel="tests" verbose="2">
-    <test name="Config Reader Test">
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Twizz Automation Suite" parallel="tests" thread-count="2">
+    <listeners>
+        <listener class-name="utils.ExtentReportListener"/>
+        <listener class-name="utils.AnnotationTransformer"/>
+    </listeners>
+    <test name="Landing Page Tests">
         <classes>
-            <class name="tests.ConfigReaderTest"/>
+            <class name="tests.LandingPageTest"/>
         </classes>
     </test>
 </suite>

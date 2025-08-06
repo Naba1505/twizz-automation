@@ -19,8 +19,11 @@ public class ConfigReader {
                 throw new RuntimeException("Unable to find config.properties");
             }
             properties.load(input);
-            // Read environment from config.properties, default to 'dev' if not set
             env = properties.getProperty("environment", "dev").toLowerCase();
+            if (!env.matches("dev|stage|prod")) {
+                logger.error("Invalid environment: {}. Allowed values: dev, stage, prod", env);
+                throw new RuntimeException("Invalid environment: " + env);
+            }
             logger.info("Selected environment: {}", env);
             logger.info("Loaded properties: {}", properties);
         } catch (IOException e) {
@@ -29,11 +32,11 @@ public class ConfigReader {
         }
     }
 
-    public static String getBaseUrl() {
-        String url = properties.getProperty(env + ".baseUrl");
+    public static String getLandingPageUrl() {
+        String url = properties.getProperty(env + ".landingPageUrl");
         if (url == null) {
-            logger.error("Base URL not found for environment: {}", env);
-            throw new RuntimeException("Base URL not found for environment: " + env);
+            logger.error("Landing URL not found for environment: {}", env);
+            throw new RuntimeException("Landing URL not found for environment: " + env);
         }
         logger.info("Loaded base URL: {}", url);
         return url;
@@ -69,5 +72,9 @@ public class ConfigReader {
 
     public static String getEnvironment() {
         return env;
+    }
+
+    public static Properties getProperties() {
+        return properties;
     }
 }
