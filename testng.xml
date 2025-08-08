@@ -1,12 +1,15 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="Twizz Automation Suite" parallel="tests" thread-count="2">
+<suite name="Twizz Automation Suite" parallel="classes" thread-count="2" verbose="1" preserve-order="true">
     <listeners>
         <listener class-name="utils.ExtentReportListener"/>
         <listener class-name="utils.AnnotationTransformer"/>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
     </listeners>
-    <test name="Landing Page Tests">
+
+    <test name="Functional Tests">
         <classes>
             <class name="tests.LandingPageTest"/>
+            <class name="tests.CreatorRegistrationTest"/>
         </classes>
     </test>
 </suite>

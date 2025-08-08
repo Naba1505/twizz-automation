@@ -42,6 +42,16 @@ public class ConfigReader {
         return url;
     }
 
+    public static String getCreatorRegistrationUrl() {
+        String url = properties.getProperty(env + ".creatorRegistrationUrl");
+        if (url == null) {
+            logger.error("Creator Registration URL not found for environment: {}", env);
+            throw new RuntimeException("Creator Registration URL not found for environment: " + env);
+        }
+        logger.info("Loaded Creator Registration URL: {}", url);
+        return url;
+    }
+
     public static String getBrowserType() {
         String browser = properties.getProperty("browser", "chromium").toLowerCase();
         if (!browser.matches("chrome|chromium|firefox|webkit|safari|edge")) {

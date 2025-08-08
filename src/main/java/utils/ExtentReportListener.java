@@ -3,6 +3,8 @@ package utils;
 import com.aventstack.extentreports.Status;
 import org.testng.*;
 
+import java.util.Optional;
+
 public class ExtentReportListener extends ExtentReportManager implements ITestListener {
 
     @Override
@@ -17,7 +19,15 @@ public class ExtentReportListener extends ExtentReportManager implements ITestLi
 
     @Override
     public void onTestStart(ITestResult result) {
-        createTest(result.getMethod().getMethodName(), "Teja Naba", "Smoke", "Chrome - Windows 11");
+        String methodName = result.getMethod().getMethodName();
+        String description = Optional.ofNullable(result.getMethod().getDescription()).orElse("");
+        String testName = description.isEmpty() ? methodName : methodName + " - " + description;
+
+        String author = ConfigReader.getProperty("author", "unknown");
+        String category = result.getTestClass().getRealClass().getSimpleName();
+        String device = ConfigReader.getProperty("browser", "chrome") + " - " + System.getProperty("os.name", "OS");
+
+        createTest(testName, author, category, device);
         getTest().log(Status.INFO, "Test Started");
     }
 
@@ -28,12 +38,17 @@ public class ExtentReportListener extends ExtentReportManager implements ITestLi
 
     @Override
     public void onTestFailure(ITestResult result) {
-        getTest().log(Status.FAIL, "Test Failed: " + result.getThrowable());
+        if (result.getThrowable() != null) {
+            getTest().fail(result.getThrowable());
+        } else {
+            getTest().log(Status.FAIL, "Test Failed");
+        }
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        getTest().log(Status.SKIP, "Test Skipped");
+        String reason = result.getThrowable() != null ? result.getThrowable().getMessage() : "No reason provided";
+        getTest().log(Status.SKIP, "Test Skipped: " + reason);
     }
 
     @Override
