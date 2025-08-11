@@ -64,6 +64,22 @@
 
     <build>
         <plugins>
+            <!-- Ensure Java 21 is used for compile and test-compile -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <release>21</release>
+                    <testSource>${maven.compiler.source}</testSource>
+                    <testTarget>${maven.compiler.target}</testTarget>
+                    <testRelease>21</testRelease>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <useModulePath>false</useModulePath>
+                </configuration>
+            </plugin>
             <!-- Maven Surefire Plugin for TestNG -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

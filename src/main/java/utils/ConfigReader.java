@@ -52,6 +52,42 @@ public class ConfigReader {
         return url;
     }
 
+    /**
+     * Returns the environment-specific login URL, falling back to base landing URL + /auth/signIn
+     */
+    public static String getLoginUrl() {
+        String key = env + ".loginUrl";
+        String url = properties.getProperty(key);
+        if (url == null) {
+            String base = properties.getProperty(env + ".landingPageUrl");
+            if (base == null) {
+                logger.error("Neither {} nor {} present in config.properties", key, env + ".landingPageUrl");
+                throw new RuntimeException("Login URL not configured for environment: " + env);
+            }
+            if (base.endsWith("/")) {
+                base = base.substring(0, base.length() - 1);
+            }
+            url = base + "/auth/signIn";
+        }
+        logger.info("Loaded Login URL: {}", url);
+        return url;
+    }
+
+    public static String getFanSignupUrl() {
+        String key = env + ".fanSignupUrl";
+        String url = properties.getProperty(key);
+        if (url == null) {
+            // Fallback to generic property if env-specific is not provided
+            url = properties.getProperty("fan.signup.url");
+        }
+        if (url == null) {
+            logger.error("Fan Signup URL not found for environment: {}", env);
+            throw new RuntimeException("Fan Signup URL not found for environment: " + env);
+        }
+        logger.info("Loaded Fan Signup URL: {}", url);
+        return url;
+    }
+
     public static String getBrowserType() {
         String browser = properties.getProperty("browser", "chromium").toLowerCase();
         if (!browser.matches("chrome|chromium|firefox|webkit|safari|edge")) {

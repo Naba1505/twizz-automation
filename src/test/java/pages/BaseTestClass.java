@@ -2,6 +2,8 @@ package pages;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
 import io.qameta.allure.Allure;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
@@ -26,9 +28,44 @@ public class BaseTestClass {
     public void setUp(ITestResult result) {
         BrowserFactory.initialize();
         page = BrowserFactory.getPage();
+        // Increase default timeouts for slow networks and heavy pages
+        page.setDefaultNavigationTimeout(60000);
+        page.setDefaultTimeout(60000);
+
+        // Optionally start tracing early if enabled
+        try {
+            boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));
+            if (traceEnabled) {
+                page.context().tracing().start(new Tracing.StartOptions()
+                    .setScreenshots(true)
+                    .setSnapshots(true)
+                    .setSources(true));
+            }
+        } catch (Exception ignored) { }
+
         String landingPageUrl = ConfigReader.getLandingPageUrl();
-        page.navigate(landingPageUrl);
+        // Robust navigation with waitUntil + extra load-state wait and a single retry
+        try {
+            page.navigate(landingPageUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+            // Some Playwright versions don't expose NETWORKIDLE reliably; LOAD is safer across versions
+            page.waitForLoadState(LoadState.LOAD);
+        } catch (Exception first) {
+            // Retry once with a clean attempt
+            try {
+                page.navigate(landingPageUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+                page.waitForLoadState(LoadState.LOAD);
+            } catch (Exception second) {
+                throw first;
+            }
+        }
         landingPage = new LandingPage(page);
+        // Ensure the landing page is fully interactive before tests
+        try {
+            landingPage.waitForPageToLoad();
+        } catch (Exception e) {
+            // do not swallow setup issues silently; rethrow to mark config failure
+            throw e;
+        }
         if (ExtentReportManager.getTest() != null) {
             ExtentReportManager.getTest().assignAuthor(ConfigReader.getProperty("author", "unknown"));
         }

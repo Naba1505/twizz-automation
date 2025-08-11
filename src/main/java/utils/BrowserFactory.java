@@ -62,6 +62,7 @@ public class BrowserFactory {
         BrowserContext ctx = tlContext.get();
         if (ctx == null) {
             Browser.NewContextOptions options = new Browser.NewContextOptions()
+                    .setIgnoreHTTPSErrors(true)
                     .setViewportSize(
                             Integer.parseInt(ConfigReader.getProperty("viewport.width", "1280")),
                             Integer.parseInt(ConfigReader.getProperty("viewport.height", "720"))

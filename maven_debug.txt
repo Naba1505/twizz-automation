@@ -1,0 +1,925 @@
+Apache Maven 3.9.8 (36645f6c9b5079805ea5009217e36f2cffd34256)
+Maven home: C:\apache-maven-3.9.8
+Java version: 21.0.3, vendor: Oracle Corporation, runtime: C:\Program Files\Java\jdk-21.0.3
+Default locale: en_US, platform encoding: UTF-8
+OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
+[DEBUG] Created new class realm maven.api
+[DEBUG] Importing foreign packages into class realm maven.api
+[DEBUG]   Imported: javax.annotation.* < plexus.core
+[DEBUG]   Imported: javax.annotation.security.* < plexus.core
+[DEBUG]   Imported: javax.inject.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.artifact < plexus.core
+[DEBUG]   Imported: org.apache.maven.classrealm < plexus.core
+[DEBUG]   Imported: org.apache.maven.cli < plexus.core
+[DEBUG]   Imported: org.apache.maven.configuration < plexus.core
+[DEBUG]   Imported: org.apache.maven.exception < plexus.core
+[DEBUG]   Imported: org.apache.maven.execution < plexus.core
+[DEBUG]   Imported: org.apache.maven.execution.scope < plexus.core
+[DEBUG]   Imported: org.apache.maven.graph < plexus.core
+[DEBUG]   Imported: org.apache.maven.lifecycle < plexus.core
+[DEBUG]   Imported: org.apache.maven.model < plexus.core
+[DEBUG]   Imported: org.apache.maven.monitor < plexus.core
+[DEBUG]   Imported: org.apache.maven.plugin < plexus.core
+[DEBUG]   Imported: org.apache.maven.profiles < plexus.core
+[DEBUG]   Imported: org.apache.maven.project < plexus.core
+[DEBUG]   Imported: org.apache.maven.reporting < plexus.core
+[DEBUG]   Imported: org.apache.maven.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.rtinfo < plexus.core
+[DEBUG]   Imported: org.apache.maven.settings < plexus.core
+[DEBUG]   Imported: org.apache.maven.toolchain < plexus.core
+[DEBUG]   Imported: org.apache.maven.usability < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.authentication < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.authorization < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.events < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.observers < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.proxy < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.resource < plexus.core
+[DEBUG]   Imported: org.codehaus.classworlds < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.* < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.classworlds < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.component < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.configuration < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.container < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.context < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.lifecycle < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.logging < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.personality < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.Xpp3Dom < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlPullParser < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlPullParserException < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlSerializer < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.* < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.artifact < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.collection < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.deployment < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.graph < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.impl < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.installation < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.internal.impl < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.metadata < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.repository < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.resolution < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.spi < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.transfer < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.util < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.version < plexus.core
+[DEBUG]   Imported: org.fusesource.jansi.* < plexus.core
+[DEBUG]   Imported: org.slf4j.* < plexus.core
+[DEBUG]   Imported: org.slf4j.event.* < plexus.core
+[DEBUG]   Imported: org.slf4j.helpers.* < plexus.core
+[DEBUG]   Imported: org.slf4j.spi.* < plexus.core
+[DEBUG] Populating class realm maven.api
+[DEBUG] Created adapter factory; available factories [file-lock, rwlock-local, semaphore-local, noop]; available name mappers [discriminating, file-gav, file-hgav, file-static, gav, static]
+[INFO] Error stacktraces are turned on.
+[DEBUG] Message scheme: color
+[DEBUG] Message styles: debug info warning error success failure strong mojo project
+[DEBUG] Reading global settings from C:\apache-maven-3.9.8\conf\settings.xml
+[DEBUG] Reading user settings from C:\Users\Nabha Raja\.m2\settings.xml
+[DEBUG] Reading global toolchains from C:\apache-maven-3.9.8\conf\toolchains.xml
+[DEBUG] Reading user toolchains from C:\Users\Nabha Raja\.m2\toolchains.xml
+[DEBUG] Using local repository at C:\Users\Nabha Raja\.m2\repository
+[DEBUG] Using manager EnhancedLocalRepositoryManager with priority 10.0 for C:\Users\Nabha Raja\.m2\repository
+[INFO] Scanning for projects...
+[DEBUG] Extension realms for project com.twizz.automation:twizz-automation:jar:1.0-SNAPSHOT: (none)
+[DEBUG] Looking up lifecycle mappings for packaging jar from ClassRealm[plexus.core, parent: null]
+[DEBUG] === REACTOR BUILD PLAN ================================================
+[DEBUG] Project: com.twizz.automation:twizz-automation:jar:1.0-SNAPSHOT
+[DEBUG] Tasks:   [test-compile]
+[DEBUG] Style:   Regular
+[DEBUG] =======================================================================
+[INFO] 
+[INFO] ---------------< com.twizz.automation:twizz-automation >----------------
+[INFO] Building twizz-automation 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Creating adapter using nameMapper 'gav' and factory 'rwlock-local'
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] === PROJECT BUILD PLAN ================================================
+[DEBUG] Project:       com.twizz.automation:twizz-automation:1.0-SNAPSHOT
+[DEBUG] Dependencies (collect): []
+[DEBUG] Dependencies (resolve): [compile, test]
+[DEBUG] Repositories (dependencies): [central (https://repo.maven.apache.org/maven2, default, releases)]
+[DEBUG] Repositories (plugins)     : [central (https://repo.maven.apache.org/maven2, default, releases)]
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-resources-plugin:3.3.1:resources (default-resources)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <addDefaultExcludes default-value="true"/>
+  <buildFilters default-value="${project.build.filters}"/>
+  <encoding default-value="${project.build.sourceEncoding}"/>
+  <escapeWindowsPaths default-value="true"/>
+  <fileNameFiltering default-value="false"/>
+  <includeEmptyDirs default-value="false"/>
+  <outputDirectory default-value="${project.build.outputDirectory}"/>
+  <overwrite default-value="false"/>
+  <project default-value="${project}"/>
+  <resources default-value="${project.resources}"/>
+  <session default-value="${session}"/>
+  <skip default-value="false">${maven.resources.skip}</skip>
+  <supportMultiLineFiltering default-value="false"/>
+  <useBuildFilters default-value="true"/>
+  <useDefaultDelimiters default-value="true"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <annotationProcessorPathsUseDepMgmt default-value="false"/>
+  <basedir default-value="${basedir}"/>
+  <buildDirectory default-value="${project.build.directory}"/>
+  <compilePath default-value="${project.compileClasspathElements}"/>
+  <compileSourceRoots default-value="${project.compileSourceRoots}"/>
+  <compilerId default-value="javac">${maven.compiler.compilerId}</compilerId>
+  <compilerReuseStrategy default-value="${reuseCreated}">${maven.compiler.compilerReuseStrategy}</compilerReuseStrategy>
+  <compilerVersion>${maven.compiler.compilerVersion}</compilerVersion>
+  <createMissingPackageInfoClass default-value="true">${maven.compiler.createMissingPackageInfoClass}</createMissingPackageInfoClass>
+  <debug default-value="true">${maven.compiler.debug}</debug>
+  <debugFileName default-value="javac"/>
+  <debuglevel>${maven.compiler.debuglevel}</debuglevel>
+  <enablePreview default-value="false">${maven.compiler.enablePreview}</enablePreview>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <executable>${maven.compiler.executable}</executable>
+  <failOnError default-value="true">${maven.compiler.failOnError}</failOnError>
+  <failOnWarning default-value="false">${maven.compiler.failOnWarning}</failOnWarning>
+  <fileExtensions default-value="class,jar"/>
+  <forceJavacCompilerUse default-value="false">${maven.compiler.forceJavacCompilerUse}</forceJavacCompilerUse>
+  <forceLegacyJavacApi default-value="false">${maven.compiler.forceLegacyJavacApi}</forceLegacyJavacApi>
+  <fork default-value="false">${maven.compiler.fork}</fork>
+  <generatedSourcesDirectory default-value="${project.build.directory}/generated-sources/annotations"/>
+  <implicit>${maven.compiler.implicit}</implicit>
+  <maxmem>${maven.compiler.maxmem}</maxmem>
+  <meminitial>${maven.compiler.meminitial}</meminitial>
+  <mojoExecution default-value="${mojoExecution}"/>
+  <optimize default-value="false">${maven.compiler.optimize}</optimize>
+  <outputDirectory default-value="${project.build.outputDirectory}">${maven.compiler.outputDirectory}</outputDirectory>
+  <outputTimestamp default-value="${project.build.outputTimestamp}"/>
+  <parameters default-value="false">${maven.compiler.parameters}</parameters>
+  <proc>${maven.compiler.proc}</proc>
+  <project default-value="${project}"/>
+  <projectArtifact default-value="${project.artifact}"/>
+  <release>${maven.compiler.release}</release>
+  <session default-value="${session}"/>
+  <showCompilationChanges default-value="false">${maven.compiler.showCompilationChanges}</showCompilationChanges>
+  <showDeprecation default-value="false">${maven.compiler.showDeprecation}</showDeprecation>
+  <showWarnings default-value="true">${maven.compiler.showWarnings}</showWarnings>
+  <skipMain>${maven.main.skip}</skipMain>
+  <skipMultiThreadWarning default-value="false">${maven.compiler.skipMultiThreadWarning}</skipMultiThreadWarning>
+  <source default-value="1.8">${maven.compiler.source}</source>
+  <staleMillis default-value="0">${lastModGranularityMs}</staleMillis>
+  <target default-value="1.8">${maven.compiler.target}</target>
+  <useIncrementalCompilation default-value="true">${maven.compiler.useIncrementalCompilation}</useIncrementalCompilation>
+  <verbose default-value="false">${maven.compiler.verbose}</verbose>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-resources-plugin:3.3.1:testResources (default-testResources)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <addDefaultExcludes default-value="true"/>
+  <buildFilters default-value="${project.build.filters}"/>
+  <encoding default-value="${project.build.sourceEncoding}"/>
+  <escapeWindowsPaths default-value="true"/>
+  <fileNameFiltering default-value="false"/>
+  <includeEmptyDirs default-value="false"/>
+  <outputDirectory default-value="${project.build.testOutputDirectory}"/>
+  <overwrite default-value="false"/>
+  <project default-value="${project}"/>
+  <resources default-value="${project.testResources}"/>
+  <session default-value="${session}"/>
+  <skip default-value="false">${maven.test.skip}</skip>
+  <supportMultiLineFiltering default-value="false"/>
+  <useBuildFilters default-value="true"/>
+  <useDefaultDelimiters default-value="true"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-compiler-plugin:3.13.0:testCompile (default-testCompile)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <annotationProcessorPathsUseDepMgmt default-value="false"/>
+  <basedir default-value="${basedir}"/>
+  <buildDirectory default-value="${project.build.directory}"/>
+  <compileSourceRoots default-value="${project.testCompileSourceRoots}"/>
+  <compilerId default-value="javac">${maven.compiler.compilerId}</compilerId>
+  <compilerReuseStrategy default-value="${reuseCreated}">${maven.compiler.compilerReuseStrategy}</compilerReuseStrategy>
+  <compilerVersion>${maven.compiler.compilerVersion}</compilerVersion>
+  <createMissingPackageInfoClass default-value="true">${maven.compiler.createMissingPackageInfoClass}</createMissingPackageInfoClass>
+  <debug default-value="true">${maven.compiler.debug}</debug>
+  <debugFileName default-value="javac-test"/>
+  <debuglevel>${maven.compiler.debuglevel}</debuglevel>
+  <enablePreview default-value="false">${maven.compiler.enablePreview}</enablePreview>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <executable>${maven.compiler.executable}</executable>
+  <failOnError default-value="true">${maven.compiler.failOnError}</failOnError>
+  <failOnWarning default-value="false">${maven.compiler.failOnWarning}</failOnWarning>
+  <fileExtensions default-value="class,jar"/>
+  <forceJavacCompilerUse default-value="false">${maven.compiler.forceJavacCompilerUse}</forceJavacCompilerUse>
+  <forceLegacyJavacApi default-value="false">${maven.compiler.forceLegacyJavacApi}</forceLegacyJavacApi>
+  <fork default-value="false">${maven.compiler.fork}</fork>
+  <generatedTestSourcesDirectory default-value="${project.build.directory}/generated-test-sources/test-annotations"/>
+  <implicit>${maven.compiler.implicit}</implicit>
+  <maxmem>${maven.compiler.maxmem}</maxmem>
+  <meminitial>${maven.compiler.meminitial}</meminitial>
+  <mojoExecution default-value="${mojoExecution}"/>
+  <optimize default-value="false">${maven.compiler.optimize}</optimize>
+  <outputDirectory default-value="${project.build.testOutputDirectory}"/>
+  <outputTimestamp default-value="${project.build.outputTimestamp}"/>
+  <parameters default-value="false">${maven.compiler.parameters}</parameters>
+  <proc>${maven.compiler.proc}</proc>
+  <project default-value="${project}"/>
+  <release>${maven.compiler.release}</release>
+  <session default-value="${session}"/>
+  <showCompilationChanges default-value="false">${maven.compiler.showCompilationChanges}</showCompilationChanges>
+  <showDeprecation default-value="false">${maven.compiler.showDeprecation}</showDeprecation>
+  <showWarnings default-value="true">${maven.compiler.showWarnings}</showWarnings>
+  <skip>${maven.test.skip}</skip>
+  <skipMultiThreadWarning default-value="false">${maven.compiler.skipMultiThreadWarning}</skipMultiThreadWarning>
+  <source default-value="1.8">${maven.compiler.source}</source>
+  <staleMillis default-value="0">${lastModGranularityMs}</staleMillis>
+  <target default-value="1.8">${maven.compiler.target}</target>
+  <testPath default-value="${project.testClasspathElements}"/>
+  <testRelease>${maven.compiler.testRelease}</testRelease>
+  <testSource>${maven.compiler.testSource}</testSource>
+  <testTarget>${maven.compiler.testTarget}</testTarget>
+  <useIncrementalCompilation default-value="true">${maven.compiler.useIncrementalCompilation}</useIncrementalCompilation>
+  <useModulePath default-value="true"/>
+  <verbose default-value="false">${maven.compiler.verbose}</verbose>
+</configuration>
+[DEBUG] =======================================================================
+[DEBUG] Using mirror maven-default-http-blocker (http://0.0.0.0/) for apache.snapshots (http://repository.apache.org/snapshots).
+[DEBUG] Dependency collection stats {ConflictMarker.analyzeTime=2465600, ConflictMarker.markTime=257800, ConflictMarker.nodeCount=33, ConflictIdSorter.graphTime=1363200, ConflictIdSorter.topsortTime=1675100, ConflictIdSorter.conflictIdCount=26, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=9556900, ConflictResolver.conflictItemCount=32, DfDependencyCollector.collectTime=416457000, DfDependencyCollector.transformTime=22258000}
+[DEBUG] com.twizz.automation:twizz-automation:jar:1.0-SNAPSHOT
+[DEBUG]    com.microsoft.playwright:playwright:jar:1.54.0:compile
+[DEBUG]       com.google.code.gson:gson:jar:2.12.1:compile
+[DEBUG]          com.google.errorprone:error_prone_annotations:jar:2.36.0:compile
+[DEBUG]       org.opentest4j:opentest4j:jar:1.3.0:compile
+[DEBUG]       com.microsoft.playwright:driver:jar:1.54.0:compile
+[DEBUG]       com.microsoft.playwright:driver-bundle:jar:1.54.0:compile
+[DEBUG]    org.testng:testng:jar:7.11.0:compile
+[DEBUG]       org.slf4j:slf4j-api:jar:2.0.16:compile
+[DEBUG]       org.jcommander:jcommander:jar:1.83:compile
+[DEBUG]       org.webjars:jquery:jar:3.7.1:runtime
+[DEBUG]    com.aventstack:extentreports:jar:5.1.2:compile
+[DEBUG]       io.reactivex.rxjava3:rxjava:jar:3.1.6:compile
+[DEBUG]          org.reactivestreams:reactive-streams:jar:1.0.4:compile
+[DEBUG]       org.freemarker:freemarker:jar:2.3.32:compile
+[DEBUG]       org.projectlombok:lombok:jar:1.18.26:compile
+[DEBUG]    com.fasterxml.jackson.core:jackson-databind:jar:2.19.2:compile
+[DEBUG]       com.fasterxml.jackson.core:jackson-annotations:jar:2.19.2:compile
+[DEBUG]       com.fasterxml.jackson.core:jackson-core:jar:2.19.2:compile
+[DEBUG]    io.qameta.allure:allure-testng:jar:2.29.1:compile
+[DEBUG]       io.qameta.allure:allure-java-commons:jar:2.29.1:compile
+[DEBUG]          io.qameta.allure:allure-model:jar:2.29.1:compile
+[DEBUG]       io.qameta.allure:allure-test-filter:jar:2.29.1:runtime
+[DEBUG]    org.aspectj:aspectjweaver:jar:1.9.24:compile
+[DEBUG]    org.slf4j:slf4j-simple:jar:2.0.9:compile
+[DEBUG]    ch.qos.logback:logback-classic:jar:1.5.12:compile
+[DEBUG]       ch.qos.logback:logback-core:jar:1.5.12:compile
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ twizz-automation ---
+[DEBUG] Dependency collection stats {ConflictMarker.analyzeTime=188100, ConflictMarker.markTime=112300, ConflictMarker.nodeCount=13, ConflictIdSorter.graphTime=55100, ConflictIdSorter.topsortTime=34300, ConflictIdSorter.conflictIdCount=9, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=922800, ConflictResolver.conflictItemCount=13, DfDependencyCollector.collectTime=164073000, DfDependencyCollector.transformTime=1348600}
+[DEBUG] org.apache.maven.plugins:maven-resources-plugin:jar:3.3.1
+[DEBUG]    org.codehaus.plexus:plexus-interpolation:jar:1.26:runtime
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:3.5.1:compile
+[DEBUG]    org.apache.maven.shared:maven-filtering:jar:3.3.1:compile
+[DEBUG]       javax.inject:javax.inject:jar:1:compile
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.36:compile
+[DEBUG]       org.sonatype.plexus:plexus-build-api:jar:0.0.7:compile
+[DEBUG]    commons-io:commons-io:jar:2.11.0:compile
+[DEBUG]    org.apache.commons:commons-lang3:jar:3.12.0:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1
+[DEBUG]   Included: org.apache.maven.plugins:maven-resources-plugin:jar:3.3.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-interpolation:jar:1.26
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:3.5.1
+[DEBUG]   Included: org.apache.maven.shared:maven-filtering:jar:3.3.1
+[DEBUG]   Included: org.sonatype.plexus:plexus-build-api:jar:0.0.7
+[DEBUG]   Included: commons-io:commons-io:jar:2.11.0
+[DEBUG]   Included: org.apache.commons:commons-lang3:jar:3.12.0
+[DEBUG] Loading mojo org.apache.maven.plugins:maven-resources-plugin:3.3.1:resources from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1, parent: jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e]
+[DEBUG] Configuring mojo execution 'org.apache.maven.plugins:maven-resources-plugin:3.3.1:resources:default-resources' with basic configurator -->
+[DEBUG]   (f) addDefaultExcludes = true
+[DEBUG]   (f) buildFilters = []
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) escapeWindowsPaths = true
+[DEBUG]   (f) fileNameFiltering = false
+[DEBUG]   (s) includeEmptyDirs = false
+[DEBUG]   (s) outputDirectory = C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\classes
+[DEBUG]   (s) overwrite = false
+[DEBUG]   (f) project = MavenProject: com.twizz.automation:twizz-automation:1.0-SNAPSHOT @ C:\Users\Nabha Raja\IdeaProjects\twizz-automation\pom.xml
+[DEBUG]   (s) resources = [Resource {targetPath: null, filtering: false, FileSet {directory: C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\main\resources, PatternSet [includes: {}, excludes: {}]}}]
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@7c251f90
+[DEBUG]   (f) skip = false
+[DEBUG]   (f) supportMultiLineFiltering = false
+[DEBUG]   (f) useBuildFilters = true
+[DEBUG]   (s) useDefaultDelimiters = true
+[DEBUG] -- end configuration --
+[DEBUG] properties used:
+[DEBUG] classworlds.conf: C:\apache-maven-3.9.8\bin\m2.conf
+[DEBUG] env.=C:: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] env.ALLUSERSPROFILE: C:\ProgramData
+[DEBUG] env.ANDROID_HOME: C:\Users\Nabha Raja\AppData\Local\Android\Sdk
+[DEBUG] env.APPDATA: C:\Users\Nabha Raja\AppData\Roaming
+[DEBUG] env.CHROME_CRASHPAD_PIPE_NAME: \\.\pipe\crashpad_8716_LYMUQNUBJJGONEIM
+[DEBUG] env.CLASSWORLDS_JAR: "C:\apache-maven-3.9.8\boot\plexus-classworlds-2.8.0.jar"
+[DEBUG] env.CLASSWORLDS_LAUNCHER: org.codehaus.plexus.classworlds.launcher.Launcher
+[DEBUG] env.COLORTERM: truecolor
+[DEBUG] env.COMMONPROGRAMFILES: C:\Program Files\Common Files
+[DEBUG] env.COMMONPROGRAMFILES(X86): C:\Program Files (x86)\Common Files
+[DEBUG] env.COMMONPROGRAMW6432: C:\Program Files\Common Files
+[DEBUG] env.COMPUTERNAME: LAPTOP-6M7LULL1
+[DEBUG] env.COMSPEC: C:\WINDOWS\system32\cmd.exe
+[DEBUG] env.DRIVERDATA: C:\Windows\System32\Drivers\DriverData
+[DEBUG] env.EFC_6972_1592913036: 1
+[DEBUG] env.ERROR_CODE: 0
+[DEBUG] env.EXEC_DIR: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] env.GIT_ASKPASS: c:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\resources\app\extensions\git\dist\askpass.sh
+[DEBUG] env.HOMEDRIVE: C:
+[DEBUG] env.HOMEPATH: \Users\Nabha Raja
+[DEBUG] env.INTELLIJ IDEA COMMUNITY EDITION: C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2025.1.2\bin;
+[DEBUG] env.JAVACMD: C:\Program Files\Java\jdk-21.0.3\bin\java.exe
+[DEBUG] env.JAVA_HOME: C:\Program Files\Java\jdk-21.0.3
+[DEBUG] env.JVMCONFIG: \.mvn\jvm.config
+[DEBUG] env.LANG: en_US.UTF-8
+[DEBUG] env.LOCALAPPDATA: C:\Users\Nabha Raja\AppData\Local
+[DEBUG] env.LOGONSERVER: \\LAPTOP-6M7LULL1
+[DEBUG] env.MAVEN_CMD_LINE_ARGS: -DskipTests test-compile -e -X
+[DEBUG] env.MAVEN_HOME: C:\apache-maven-3.9.8
+[DEBUG] env.MAVEN_PROJECTBASEDIR: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] env.NODE_HOME: C:\Program Files\nodejs
+[DEBUG] env.NUMBER_OF_PROCESSORS: 8
+[DEBUG] env.ONEDRIVE: C:\Users\Nabha Raja\OneDrive
+[DEBUG] env.ONEDRIVECONSUMER: C:\Users\Nabha Raja\OneDrive
+[DEBUG] env.ORIGINAL_XDG_CURRENT_DESKTOP: undefined
+[DEBUG] env.OS: Windows_NT
+[DEBUG] env.PAGER: cat
+[DEBUG] env.PATH: C:\Program Files\Python312\Scripts\;C:\Program Files\Python312\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\PuTTY\;C:\Program Files\nodejs\;C:\apache-maven-3.9.8\bin;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\tools\bin;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\tools;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\platform-tools;C:\Program Files\nodejs\node_modules\npm\bin;C:\Program Files\Java\jdk-21.0.3\bin;C:\Users\Nabha Raja\OneDrive\Desktop\Playwright\allure-2.34.1\bin;C:\Users\Nabha Raja\AppData\Local\Microsoft\WindowsApps;;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2025.1.2\bin;;C:\Users\Nabha Raja\AppData\Roaming\npm;C:\Program Files\JetBrains\PyCharm Community Edition 2024.1.4\bin;;C:\Users\Nabha Raja\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\bin
+[DEBUG] env.PATHEXT: .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PY;.PYW;.CPL
+[DEBUG] env.PROCESSOR_ARCHITECTURE: AMD64
+[DEBUG] env.PROCESSOR_IDENTIFIER: Intel64 Family 6 Model 126 Stepping 5, GenuineIntel
+[DEBUG] env.PROCESSOR_LEVEL: 6
+[DEBUG] env.PROCESSOR_REVISION: 7e05
+[DEBUG] env.PROGRAMDATA: C:\ProgramData
+[DEBUG] env.PROGRAMFILES: C:\Program Files
+[DEBUG] env.PROGRAMFILES(X86): C:\Program Files (x86)
+[DEBUG] env.PROGRAMW6432: C:\Program Files
+[DEBUG] env.PROMPT: $P$G
+[DEBUG] env.PSMODULEPATH: C:\Users\Nabha Raja\OneDrive\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
+[DEBUG] env.PUBLIC: C:\Users\Public
+[DEBUG] env.PYCHARM COMMUNITY EDITION: C:\Program Files\JetBrains\PyCharm Community Edition 2024.1.4\bin;
+[DEBUG] env.SESSIONNAME: Console
+[DEBUG] env.SYSTEMDRIVE: C:
+[DEBUG] env.SYSTEMROOT: C:\WINDOWS
+[DEBUG] env.TEMP: C:\Users\NABHAR~1\AppData\Local\Temp
+[DEBUG] env.TERM_PROGRAM: vscode
+[DEBUG] env.TERM_PROGRAM_VERSION: 1.99.3
+[DEBUG] env.TMP: C:\Users\NABHAR~1\AppData\Local\Temp
+[DEBUG] env.USERDOMAIN: LAPTOP-6M7LULL1
+[DEBUG] env.USERDOMAIN_ROAMINGPROFILE: LAPTOP-6M7LULL1
+[DEBUG] env.USERNAME: Nabha Raja
+[DEBUG] env.USERPROFILE: C:\Users\Nabha Raja
+[DEBUG] env.VSCODE_GIT_ASKPASS_EXTRA_ARGS: 
+[DEBUG] env.VSCODE_GIT_ASKPASS_MAIN: c:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\resources\app\extensions\git\dist\askpass-main.js
+[DEBUG] env.VSCODE_GIT_ASKPASS_NODE: C:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\Windsurf.exe
+[DEBUG] env.VSCODE_GIT_IPC_HANDLE: \\.\pipe\vscode-git-8bbad52c88-sock
+[DEBUG] env.VSCODE_INJECTION: 1
+[DEBUG] env.WDIR: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] env.WINDIR: C:\WINDOWS
+[DEBUG] env.ZES_ENABLE_SYSMAN: 1
+[DEBUG] file.encoding: UTF-8
+[DEBUG] file.separator: \
+[DEBUG] java.class.path: C:\apache-maven-3.9.8\boot\plexus-classworlds-2.8.0.jar
+[DEBUG] java.class.version: 65.0
+[DEBUG] java.home: C:\Program Files\Java\jdk-21.0.3
+[DEBUG] java.io.tmpdir: C:\Users\NABHAR~1\AppData\Local\Temp\
+[DEBUG] java.library.path: C:\Program Files\Java\jdk-21.0.3\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Program Files\Python312\Scripts\;C:\Program Files\Python312\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\PuTTY\;C:\Program Files\nodejs\;C:\apache-maven-3.9.8\bin;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\tools\bin;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\tools;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\platform-tools;C:\Program Files\nodejs\node_modules\npm\bin;C:\Program Files\Java\jdk-21.0.3\bin;C:\Users\Nabha Raja\OneDrive\Desktop\Playwright\allure-2.34.1\bin;C:\Users\Nabha Raja\AppData\Local\Microsoft\WindowsApps;;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2025.1.2\bin;;C:\Users\Nabha Raja\AppData\Roaming\npm;C:\Program Files\JetBrains\PyCharm Community Edition 2024.1.4\bin;;C:\Users\Nabha Raja\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\bin;.
+[DEBUG] java.runtime.name: Java(TM) SE Runtime Environment
+[DEBUG] java.runtime.version: 21.0.3+7-LTS-152
+[DEBUG] java.specification.name: Java Platform API Specification
+[DEBUG] java.specification.vendor: Oracle Corporation
+[DEBUG] java.specification.version: 21
+[DEBUG] java.vendor: Oracle Corporation
+[DEBUG] java.vendor.url: https://java.oracle.com/
+[DEBUG] java.vendor.url.bug: https://bugreport.java.com/bugreport/
+[DEBUG] java.version: 21.0.3
+[DEBUG] java.version.date: 2024-04-16
+[DEBUG] java.vm.compressedOopsMode: 32-bit
+[DEBUG] java.vm.info: mixed mode, sharing
+[DEBUG] java.vm.name: Java HotSpot(TM) 64-Bit Server VM
+[DEBUG] java.vm.specification.name: Java Virtual Machine Specification
+[DEBUG] java.vm.specification.vendor: Oracle Corporation
+[DEBUG] java.vm.specification.version: 21
+[DEBUG] java.vm.vendor: Oracle Corporation
+[DEBUG] java.vm.version: 21.0.3+7-LTS-152
+[DEBUG] jdk.debug: release
+[DEBUG] library.jansi.path: C:\apache-maven-3.9.8\lib\jansi-native
+[DEBUG] line.separator: 
+
+[DEBUG] maven.build.timestamp: 2025-08-08T13:13:38Z
+[DEBUG] maven.build.version: Apache Maven 3.9.8 (36645f6c9b5079805ea5009217e36f2cffd34256)
+[DEBUG] maven.compiler.source: 21
+[DEBUG] maven.compiler.target: 21
+[DEBUG] maven.conf: C:\apache-maven-3.9.8/conf
+[DEBUG] maven.home: C:\apache-maven-3.9.8
+[DEBUG] maven.multiModuleProjectDirectory: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] maven.version: 3.9.8
+[DEBUG] native.encoding: Cp1252
+[DEBUG] os.arch: amd64
+[DEBUG] os.name: Windows 11
+[DEBUG] os.version: 10.0
+[DEBUG] path.separator: ;
+[DEBUG] project.baseUri: file:/C:/Users/Nabha%20Raja/IdeaProjects/twizz-automation/
+[DEBUG] project.build.sourceEncoding: UTF-8
+[DEBUG] skipTests: true
+[DEBUG] stderr.encoding: Cp1252
+[DEBUG] stdout.encoding: Cp1252
+[DEBUG] sun.arch.data.model: 64
+[DEBUG] sun.boot.library.path: C:\Program Files\Java\jdk-21.0.3\bin
+[DEBUG] sun.cpu.endian: little
+[DEBUG] sun.cpu.isalist: amd64
+[DEBUG] sun.io.unicode.encoding: UnicodeLittle
+[DEBUG] sun.java.command: org.codehaus.plexus.classworlds.launcher.Launcher -DskipTests test-compile -e -X
+[DEBUG] sun.java.launcher: SUN_STANDARD
+[DEBUG] sun.jnu.encoding: Cp1252
+[DEBUG] sun.management.compiler: HotSpot 64-Bit Tiered Compilers
+[DEBUG] sun.os.patch.level: 
+[DEBUG] user.country: US
+[DEBUG] user.dir: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] user.home: C:\Users\Nabha Raja
+[DEBUG] user.language: en
+[DEBUG] user.name: Nabha Raja
+[DEBUG] user.script: 
+[DEBUG] user.variant: 
+[DEBUG] Using 'UTF-8' encoding to copy filtered resources.
+[DEBUG] Using 'UTF-8' encoding to copy filtered properties files.
+[DEBUG] resource with targetPath null
+directory C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\main\resources
+excludes []
+includes []
+[DEBUG] ignoreDelta true
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[DEBUG] Copying file config.properties
+[DEBUG] file config.properties has a filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'config.properties'.
+[DEBUG] copy C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\main\resources\config.properties to C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\classes\config.properties
+[DEBUG] no user filter components
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ twizz-automation ---
+[DEBUG] Dependency collection stats {ConflictMarker.analyzeTime=160800, ConflictMarker.markTime=118100, ConflictMarker.nodeCount=22, ConflictIdSorter.graphTime=35100, ConflictIdSorter.topsortTime=25400, ConflictIdSorter.conflictIdCount=14, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=612700, ConflictResolver.conflictItemCount=22, DfDependencyCollector.collectTime=176878900, DfDependencyCollector.transformTime=991300}
+[DEBUG] org.apache.maven.plugins:maven-compiler-plugin:jar:3.13.0
+[DEBUG]    org.apache.maven.shared:maven-shared-utils:jar:3.4.2:compile
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.36:compile
+[DEBUG]       commons-io:commons-io:jar:2.11.0:compile
+[DEBUG]    org.apache.maven.shared:maven-shared-incremental:jar:1.1:compile
+[DEBUG]    org.codehaus.plexus:plexus-java:jar:1.2.0:compile
+[DEBUG]       org.ow2.asm:asm:jar:9.6:compile
+[DEBUG]       com.thoughtworks.qdox:qdox:jar:2.0.3:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-api:jar:2.15.0:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-manager:jar:2.15.0:compile
+[DEBUG]       javax.inject:javax.inject:jar:1:compile
+[DEBUG]       org.codehaus.plexus:plexus-xml:jar:3.0.0:compile (version managed from default)
+[DEBUG]    org.codehaus.plexus:plexus-compiler-javac:jar:2.15.0:runtime
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:4.0.0:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.13.0
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.13.0
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.13.0
+[DEBUG]   Included: org.apache.maven.plugins:maven-compiler-plugin:jar:3.13.0
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-utils:jar:3.4.2
+[DEBUG]   Included: commons-io:commons-io:jar:2.11.0
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-incremental:jar:1.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-java:jar:1.2.0
+[DEBUG]   Included: org.ow2.asm:asm:jar:9.6
+[DEBUG]   Included: com.thoughtworks.qdox:qdox:jar:2.0.3
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-api:jar:2.15.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-manager:jar:2.15.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-xml:jar:3.0.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-javac:jar:2.15.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:4.0.0
+[DEBUG] Loading mojo org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-compiler-plugin:3.13.0, parent: jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e]
+[DEBUG] Configuring mojo execution 'org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile:default-compile' with basic configurator -->
+[DEBUG]   (f) annotationProcessorPathsUseDepMgmt = false
+[DEBUG]   (f) basedir = C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG]   (f) buildDirectory = C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target
+[DEBUG]   (f) compilePath = [C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\classes, C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\playwright\1.54.0\playwright-1.54.0.jar, C:\Users\Nabha Raja\.m2\repository\com\google\code\gson\gson\2.12.1\gson-2.12.1.jar, C:\Users\Nabha Raja\.m2\repository\com\google\errorprone\error_prone_annotations\2.36.0\error_prone_annotations-2.36.0.jar, C:\Users\Nabha Raja\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar, C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\driver\1.54.0\driver-1.54.0.jar, C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\driver-bundle\1.54.0\driver-bundle-1.54.0.jar, C:\Users\Nabha Raja\.m2\repository\org\testng\testng\7.11.0\testng-7.11.0.jar, C:\Users\Nabha Raja\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar, C:\Users\Nabha Raja\.m2\repository\org\jcommander\jcommander\1.83\jcommander-1.83.jar, C:\Users\Nabha Raja\.m2\repository\com\aventstack\extentreports\5.1.2\extentreports-5.1.2.jar, C:\Users\Nabha Raja\.m2\repository\io\reactivex\rxjava3\rxjava\3.1.6\rxjava-3.1.6.jar, C:\Users\Nabha Raja\.m2\repository\org\reactivestreams\reactive-streams\1.0.4\reactive-streams-1.0.4.jar, C:\Users\Nabha Raja\.m2\repository\org\freemarker\freemarker\2.3.32\freemarker-2.3.32.jar, C:\Users\Nabha Raja\.m2\repository\org\projectlombok\lombok\1.18.26\lombok-1.18.26.jar, C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.19.2\jackson-databind-2.19.2.jar, C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.19.2\jackson-annotations-2.19.2.jar, C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.19.2\jackson-core-2.19.2.jar, C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-testng\2.29.1\allure-testng-2.29.1.jar, C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-java-commons\2.29.1\allure-java-commons-2.29.1.jar, C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-model\2.29.1\allure-model-2.29.1.jar, C:\Users\Nabha Raja\.m2\repository\org\aspectj\aspectjweaver\1.9.24\aspectjweaver-1.9.24.jar, C:\Users\Nabha Raja\.m2\repository\org\slf4j\slf4j-simple\2.0.9\slf4j-simple-2.0.9.jar, C:\Users\Nabha Raja\.m2\repository\ch\qos\logback\logback-classic\1.5.12\logback-classic-1.5.12.jar, C:\Users\Nabha Raja\.m2\repository\ch\qos\logback\logback-core\1.5.12\logback-core-1.5.12.jar]
+[DEBUG]   (f) compileSourceRoots = [C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\main\java]
+[DEBUG]   (f) compilerId = javac
+[DEBUG]   (f) createMissingPackageInfoClass = true
+[DEBUG]   (f) debug = true
+[DEBUG]   (f) debugFileName = javac
+[DEBUG]   (f) enablePreview = false
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) failOnError = true
+[DEBUG]   (f) failOnWarning = false
+[DEBUG]   (f) fileExtensions = [jar, class]
+[DEBUG]   (f) forceJavacCompilerUse = false
+[DEBUG]   (f) forceLegacyJavacApi = false
+[DEBUG]   (f) fork = false
+[DEBUG]   (f) generatedSourcesDirectory = C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-sources\annotations
+[DEBUG]   (f) mojoExecution = org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile {execution: default-compile}
+[DEBUG]   (f) optimize = false
+[DEBUG]   (f) outputDirectory = C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\classes
+[DEBUG]   (f) parameters = false
+[DEBUG]   (f) project = MavenProject: com.twizz.automation:twizz-automation:1.0-SNAPSHOT @ C:\Users\Nabha Raja\IdeaProjects\twizz-automation\pom.xml
+[DEBUG]   (f) projectArtifact = com.twizz.automation:twizz-automation:jar:1.0-SNAPSHOT
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@7c251f90
+[DEBUG]   (f) showCompilationChanges = false
+[DEBUG]   (f) showDeprecation = false
+[DEBUG]   (f) showWarnings = true
+[DEBUG]   (f) skipMultiThreadWarning = false
+[DEBUG]   (f) source = 21
+[DEBUG]   (f) staleMillis = 0
+[DEBUG]   (s) target = 21
+[DEBUG]   (f) useIncrementalCompilation = true
+[DEBUG]   (f) verbose = false
+[DEBUG] -- end configuration --
+[DEBUG] Using compiler 'javac'.
+[DEBUG] Adding C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-sources\annotations to compile source roots:
+  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\main\java
+[DEBUG] New compile source roots:
+  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\main\java
+  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-sources\annotations
+[DEBUG] CompilerReuseStrategy: reuseCreated
+[DEBUG] useIncrementalCompilation enabled
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ twizz-automation ---
+[DEBUG] Loading mojo org.apache.maven.plugins:maven-resources-plugin:3.3.1:testResources from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-resources-plugin:3.3.1, parent: jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e]
+[DEBUG] Configuring mojo execution 'org.apache.maven.plugins:maven-resources-plugin:3.3.1:testResources:default-testResources' with basic configurator -->
+[DEBUG]   (f) addDefaultExcludes = true
+[DEBUG]   (f) buildFilters = []
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) escapeWindowsPaths = true
+[DEBUG]   (f) fileNameFiltering = false
+[DEBUG]   (s) includeEmptyDirs = false
+[DEBUG]   (s) outputDirectory = C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\test-classes
+[DEBUG]   (s) overwrite = false
+[DEBUG]   (f) project = MavenProject: com.twizz.automation:twizz-automation:1.0-SNAPSHOT @ C:\Users\Nabha Raja\IdeaProjects\twizz-automation\pom.xml
+[DEBUG]   (s) resources = [Resource {targetPath: null, filtering: false, FileSet {directory: C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\resources, PatternSet [includes: {}, excludes: {}]}}]
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@7c251f90
+[DEBUG]   (f) skip = false
+[DEBUG]   (f) supportMultiLineFiltering = false
+[DEBUG]   (f) useBuildFilters = true
+[DEBUG]   (s) useDefaultDelimiters = true
+[DEBUG] -- end configuration --
+[DEBUG] properties used:
+[DEBUG] classworlds.conf: C:\apache-maven-3.9.8\bin\m2.conf
+[DEBUG] env.=C:: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] env.ALLUSERSPROFILE: C:\ProgramData
+[DEBUG] env.ANDROID_HOME: C:\Users\Nabha Raja\AppData\Local\Android\Sdk
+[DEBUG] env.APPDATA: C:\Users\Nabha Raja\AppData\Roaming
+[DEBUG] env.CHROME_CRASHPAD_PIPE_NAME: \\.\pipe\crashpad_8716_LYMUQNUBJJGONEIM
+[DEBUG] env.CLASSWORLDS_JAR: "C:\apache-maven-3.9.8\boot\plexus-classworlds-2.8.0.jar"
+[DEBUG] env.CLASSWORLDS_LAUNCHER: org.codehaus.plexus.classworlds.launcher.Launcher
+[DEBUG] env.COLORTERM: truecolor
+[DEBUG] env.COMMONPROGRAMFILES: C:\Program Files\Common Files
+[DEBUG] env.COMMONPROGRAMFILES(X86): C:\Program Files (x86)\Common Files
+[DEBUG] env.COMMONPROGRAMW6432: C:\Program Files\Common Files
+[DEBUG] env.COMPUTERNAME: LAPTOP-6M7LULL1
+[DEBUG] env.COMSPEC: C:\WINDOWS\system32\cmd.exe
+[DEBUG] env.DRIVERDATA: C:\Windows\System32\Drivers\DriverData
+[DEBUG] env.EFC_6972_1592913036: 1
+[DEBUG] env.ERROR_CODE: 0
+[DEBUG] env.EXEC_DIR: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] env.GIT_ASKPASS: c:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\resources\app\extensions\git\dist\askpass.sh
+[DEBUG] env.HOMEDRIVE: C:
+[DEBUG] env.HOMEPATH: \Users\Nabha Raja
+[DEBUG] env.INTELLIJ IDEA COMMUNITY EDITION: C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2025.1.2\bin;
+[DEBUG] env.JAVACMD: C:\Program Files\Java\jdk-21.0.3\bin\java.exe
+[DEBUG] env.JAVA_HOME: C:\Program Files\Java\jdk-21.0.3
+[DEBUG] env.JVMCONFIG: \.mvn\jvm.config
+[DEBUG] env.LANG: en_US.UTF-8
+[DEBUG] env.LOCALAPPDATA: C:\Users\Nabha Raja\AppData\Local
+[DEBUG] env.LOGONSERVER: \\LAPTOP-6M7LULL1
+[DEBUG] env.MAVEN_CMD_LINE_ARGS: -DskipTests test-compile -e -X
+[DEBUG] env.MAVEN_HOME: C:\apache-maven-3.9.8
+[DEBUG] env.MAVEN_PROJECTBASEDIR: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] env.NODE_HOME: C:\Program Files\nodejs
+[DEBUG] env.NUMBER_OF_PROCESSORS: 8
+[DEBUG] env.ONEDRIVE: C:\Users\Nabha Raja\OneDrive
+[DEBUG] env.ONEDRIVECONSUMER: C:\Users\Nabha Raja\OneDrive
+[DEBUG] env.ORIGINAL_XDG_CURRENT_DESKTOP: undefined
+[DEBUG] env.OS: Windows_NT
+[DEBUG] env.PAGER: cat
+[DEBUG] env.PATH: C:\Program Files\Python312\Scripts\;C:\Program Files\Python312\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\PuTTY\;C:\Program Files\nodejs\;C:\apache-maven-3.9.8\bin;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\tools\bin;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\tools;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\platform-tools;C:\Program Files\nodejs\node_modules\npm\bin;C:\Program Files\Java\jdk-21.0.3\bin;C:\Users\Nabha Raja\OneDrive\Desktop\Playwright\allure-2.34.1\bin;C:\Users\Nabha Raja\AppData\Local\Microsoft\WindowsApps;;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2025.1.2\bin;;C:\Users\Nabha Raja\AppData\Roaming\npm;C:\Program Files\JetBrains\PyCharm Community Edition 2024.1.4\bin;;C:\Users\Nabha Raja\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\bin
+[DEBUG] env.PATHEXT: .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PY;.PYW;.CPL
+[DEBUG] env.PROCESSOR_ARCHITECTURE: AMD64
+[DEBUG] env.PROCESSOR_IDENTIFIER: Intel64 Family 6 Model 126 Stepping 5, GenuineIntel
+[DEBUG] env.PROCESSOR_LEVEL: 6
+[DEBUG] env.PROCESSOR_REVISION: 7e05
+[DEBUG] env.PROGRAMDATA: C:\ProgramData
+[DEBUG] env.PROGRAMFILES: C:\Program Files
+[DEBUG] env.PROGRAMFILES(X86): C:\Program Files (x86)
+[DEBUG] env.PROGRAMW6432: C:\Program Files
+[DEBUG] env.PROMPT: $P$G
+[DEBUG] env.PSMODULEPATH: C:\Users\Nabha Raja\OneDrive\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
+[DEBUG] env.PUBLIC: C:\Users\Public
+[DEBUG] env.PYCHARM COMMUNITY EDITION: C:\Program Files\JetBrains\PyCharm Community Edition 2024.1.4\bin;
+[DEBUG] env.SESSIONNAME: Console
+[DEBUG] env.SYSTEMDRIVE: C:
+[DEBUG] env.SYSTEMROOT: C:\WINDOWS
+[DEBUG] env.TEMP: C:\Users\NABHAR~1\AppData\Local\Temp
+[DEBUG] env.TERM_PROGRAM: vscode
+[DEBUG] env.TERM_PROGRAM_VERSION: 1.99.3
+[DEBUG] env.TMP: C:\Users\NABHAR~1\AppData\Local\Temp
+[DEBUG] env.USERDOMAIN: LAPTOP-6M7LULL1
+[DEBUG] env.USERDOMAIN_ROAMINGPROFILE: LAPTOP-6M7LULL1
+[DEBUG] env.USERNAME: Nabha Raja
+[DEBUG] env.USERPROFILE: C:\Users\Nabha Raja
+[DEBUG] env.VSCODE_GIT_ASKPASS_EXTRA_ARGS: 
+[DEBUG] env.VSCODE_GIT_ASKPASS_MAIN: c:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\resources\app\extensions\git\dist\askpass-main.js
+[DEBUG] env.VSCODE_GIT_ASKPASS_NODE: C:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\Windsurf.exe
+[DEBUG] env.VSCODE_GIT_IPC_HANDLE: \\.\pipe\vscode-git-8bbad52c88-sock
+[DEBUG] env.VSCODE_INJECTION: 1
+[DEBUG] env.WDIR: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] env.WINDIR: C:\WINDOWS
+[DEBUG] env.ZES_ENABLE_SYSMAN: 1
+[DEBUG] file.encoding: UTF-8
+[DEBUG] file.separator: \
+[DEBUG] java.class.path: C:\apache-maven-3.9.8\boot\plexus-classworlds-2.8.0.jar
+[DEBUG] java.class.version: 65.0
+[DEBUG] java.home: C:\Program Files\Java\jdk-21.0.3
+[DEBUG] java.io.tmpdir: C:\Users\NABHAR~1\AppData\Local\Temp\
+[DEBUG] java.library.path: C:\Program Files\Java\jdk-21.0.3\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Program Files\Python312\Scripts\;C:\Program Files\Python312\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\PuTTY\;C:\Program Files\nodejs\;C:\apache-maven-3.9.8\bin;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\tools\bin;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\tools;C:\Users\Nabha Raja\AppData\Local\Android\Sdk\platform-tools;C:\Program Files\nodejs\node_modules\npm\bin;C:\Program Files\Java\jdk-21.0.3\bin;C:\Users\Nabha Raja\OneDrive\Desktop\Playwright\allure-2.34.1\bin;C:\Users\Nabha Raja\AppData\Local\Microsoft\WindowsApps;;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2025.1.2\bin;;C:\Users\Nabha Raja\AppData\Roaming\npm;C:\Program Files\JetBrains\PyCharm Community Edition 2024.1.4\bin;;C:\Users\Nabha Raja\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Nabha Raja\AppData\Local\Programs\Windsurf\bin;.
+[DEBUG] java.runtime.name: Java(TM) SE Runtime Environment
+[DEBUG] java.runtime.version: 21.0.3+7-LTS-152
+[DEBUG] java.specification.name: Java Platform API Specification
+[DEBUG] java.specification.vendor: Oracle Corporation
+[DEBUG] java.specification.version: 21
+[DEBUG] java.vendor: Oracle Corporation
+[DEBUG] java.vendor.url: https://java.oracle.com/
+[DEBUG] java.vendor.url.bug: https://bugreport.java.com/bugreport/
+[DEBUG] java.version: 21.0.3
+[DEBUG] java.version.date: 2024-04-16
+[DEBUG] java.vm.compressedOopsMode: 32-bit
+[DEBUG] java.vm.info: mixed mode, sharing
+[DEBUG] java.vm.name: Java HotSpot(TM) 64-Bit Server VM
+[DEBUG] java.vm.specification.name: Java Virtual Machine Specification
+[DEBUG] java.vm.specification.vendor: Oracle Corporation
+[DEBUG] java.vm.specification.version: 21
+[DEBUG] java.vm.vendor: Oracle Corporation
+[DEBUG] java.vm.version: 21.0.3+7-LTS-152
+[DEBUG] jdk.debug: release
+[DEBUG] library.jansi.path: C:\apache-maven-3.9.8\lib\jansi-native
+[DEBUG] line.separator: 
+
+[DEBUG] maven.build.timestamp: 2025-08-08T13:13:39Z
+[DEBUG] maven.build.version: Apache Maven 3.9.8 (36645f6c9b5079805ea5009217e36f2cffd34256)
+[DEBUG] maven.compiler.source: 21
+[DEBUG] maven.compiler.target: 21
+[DEBUG] maven.conf: C:\apache-maven-3.9.8/conf
+[DEBUG] maven.home: C:\apache-maven-3.9.8
+[DEBUG] maven.multiModuleProjectDirectory: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] maven.version: 3.9.8
+[DEBUG] native.encoding: Cp1252
+[DEBUG] os.arch: amd64
+[DEBUG] os.name: Windows 11
+[DEBUG] os.version: 10.0
+[DEBUG] path.separator: ;
+[DEBUG] project.baseUri: file:/C:/Users/Nabha%20Raja/IdeaProjects/twizz-automation/
+[DEBUG] project.build.sourceEncoding: UTF-8
+[DEBUG] skipTests: true
+[DEBUG] stderr.encoding: Cp1252
+[DEBUG] stdout.encoding: Cp1252
+[DEBUG] sun.arch.data.model: 64
+[DEBUG] sun.boot.library.path: C:\Program Files\Java\jdk-21.0.3\bin
+[DEBUG] sun.cpu.endian: little
+[DEBUG] sun.cpu.isalist: amd64
+[DEBUG] sun.io.unicode.encoding: UnicodeLittle
+[DEBUG] sun.java.command: org.codehaus.plexus.classworlds.launcher.Launcher -DskipTests test-compile -e -X
+[DEBUG] sun.java.launcher: SUN_STANDARD
+[DEBUG] sun.jnu.encoding: Cp1252
+[DEBUG] sun.management.compiler: HotSpot 64-Bit Tiered Compilers
+[DEBUG] sun.os.patch.level: 
+[DEBUG] user.country: US
+[DEBUG] user.dir: C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG] user.home: C:\Users\Nabha Raja
+[DEBUG] user.language: en
+[DEBUG] user.name: Nabha Raja
+[DEBUG] user.script: 
+[DEBUG] user.variant: 
+[DEBUG] Using 'UTF-8' encoding to copy filtered resources.
+[DEBUG] Using 'UTF-8' encoding to copy filtered properties files.
+[DEBUG] resource with targetPath null
+directory C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\resources
+excludes []
+includes []
+[DEBUG] ignoreDelta true
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[DEBUG] Copying file Images\Identity.png
+[DEBUG] file Identity.png has a non filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'Identity.png'.
+[DEBUG] copy C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\resources\Images\Identity.png to C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\test-classes\Images\Identity.png
+[DEBUG] Copying file Images\Selfie.jpg
+[DEBUG] file Selfie.jpg has a non filtered file extension
+[DEBUG] Using 'UTF-8' encoding to copy filtered resource 'Selfie.jpg'.
+[DEBUG] copy C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\resources\Images\Selfie.jpg to C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\test-classes\Images\Selfie.jpg
+[DEBUG] no user filter components
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ twizz-automation ---
+[DEBUG] Loading mojo org.apache.maven.plugins:maven-compiler-plugin:3.13.0:testCompile from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-compiler-plugin:3.13.0, parent: jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e]
+[DEBUG] Configuring mojo execution 'org.apache.maven.plugins:maven-compiler-plugin:3.13.0:testCompile:default-testCompile' with basic configurator -->
+[DEBUG]   (f) annotationProcessorPathsUseDepMgmt = false
+[DEBUG]   (f) basedir = C:\Users\Nabha Raja\IdeaProjects\twizz-automation
+[DEBUG]   (f) buildDirectory = C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target
+[DEBUG]   (f) compileSourceRoots = [C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java]
+[DEBUG]   (f) compilerId = javac
+[DEBUG]   (f) createMissingPackageInfoClass = true
+[DEBUG]   (f) debug = true
+[DEBUG]   (f) debugFileName = javac-test
+[DEBUG]   (f) enablePreview = false
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) failOnError = true
+[DEBUG]   (f) failOnWarning = false
+[DEBUG]   (f) fileExtensions = [jar, class]
+[DEBUG]   (f) forceJavacCompilerUse = false
+[DEBUG]   (f) forceLegacyJavacApi = false
+[DEBUG]   (f) fork = false
+[DEBUG]   (f) generatedTestSourcesDirectory = C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-test-sources\test-annotations
+[DEBUG]   (f) mojoExecution = org.apache.maven.plugins:maven-compiler-plugin:3.13.0:testCompile {execution: default-testCompile}
+[DEBUG]   (f) optimize = false
+[DEBUG]   (f) outputDirectory = C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\test-classes
+[DEBUG]   (f) parameters = false
+[DEBUG]   (f) project = MavenProject: com.twizz.automation:twizz-automation:1.0-SNAPSHOT @ C:\Users\Nabha Raja\IdeaProjects\twizz-automation\pom.xml
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@7c251f90
+[DEBUG]   (f) showCompilationChanges = false
+[DEBUG]   (f) showDeprecation = false
+[DEBUG]   (f) showWarnings = true
+[DEBUG]   (f) skipMultiThreadWarning = false
+[DEBUG]   (f) source = 21
+[DEBUG]   (f) staleMillis = 0
+[DEBUG]   (s) target = 21
+[DEBUG]   (f) testPath = [C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\test-classes, C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\classes, C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\playwright\1.54.0\playwright-1.54.0.jar, C:\Users\Nabha Raja\.m2\repository\com\google\code\gson\gson\2.12.1\gson-2.12.1.jar, C:\Users\Nabha Raja\.m2\repository\com\google\errorprone\error_prone_annotations\2.36.0\error_prone_annotations-2.36.0.jar, C:\Users\Nabha Raja\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar, C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\driver\1.54.0\driver-1.54.0.jar, C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\driver-bundle\1.54.0\driver-bundle-1.54.0.jar, C:\Users\Nabha Raja\.m2\repository\org\testng\testng\7.11.0\testng-7.11.0.jar, C:\Users\Nabha Raja\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar, C:\Users\Nabha Raja\.m2\repository\org\jcommander\jcommander\1.83\jcommander-1.83.jar, C:\Users\Nabha Raja\.m2\repository\org\webjars\jquery\3.7.1\jquery-3.7.1.jar, C:\Users\Nabha Raja\.m2\repository\com\aventstack\extentreports\5.1.2\extentreports-5.1.2.jar, C:\Users\Nabha Raja\.m2\repository\io\reactivex\rxjava3\rxjava\3.1.6\rxjava-3.1.6.jar, C:\Users\Nabha Raja\.m2\repository\org\reactivestreams\reactive-streams\1.0.4\reactive-streams-1.0.4.jar, C:\Users\Nabha Raja\.m2\repository\org\freemarker\freemarker\2.3.32\freemarker-2.3.32.jar, C:\Users\Nabha Raja\.m2\repository\org\projectlombok\lombok\1.18.26\lombok-1.18.26.jar, C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.19.2\jackson-databind-2.19.2.jar, C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.19.2\jackson-annotations-2.19.2.jar, C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.19.2\jackson-core-2.19.2.jar, C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-testng\2.29.1\allure-testng-2.29.1.jar, C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-java-commons\2.29.1\allure-java-commons-2.29.1.jar, C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-model\2.29.1\allure-model-2.29.1.jar, C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-test-filter\2.29.1\allure-test-filter-2.29.1.jar, C:\Users\Nabha Raja\.m2\repository\org\aspectj\aspectjweaver\1.9.24\aspectjweaver-1.9.24.jar, C:\Users\Nabha Raja\.m2\repository\org\slf4j\slf4j-simple\2.0.9\slf4j-simple-2.0.9.jar, C:\Users\Nabha Raja\.m2\repository\ch\qos\logback\logback-classic\1.5.12\logback-classic-1.5.12.jar, C:\Users\Nabha Raja\.m2\repository\ch\qos\logback\logback-core\1.5.12\logback-core-1.5.12.jar]
+[DEBUG]   (f) useIncrementalCompilation = true
+[DEBUG]   (f) useModulePath = true
+[DEBUG]   (f) verbose = false
+[DEBUG] -- end configuration --
+[DEBUG] Using compiler 'javac'.
+[DEBUG] Adding C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-test-sources\test-annotations to test-compile source roots:
+  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java
+[DEBUG] New test-compile source roots:
+  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java
+  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-test-sources\test-annotations
+[DEBUG] CompilerReuseStrategy: reuseCreated
+[DEBUG] useIncrementalCompilation enabled
+[INFO] 	Stale source detected: C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java\pages\LandingPage.java
+[INFO] 	Stale source detected: C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java\tests\LandingPageTest.java
+[INFO] 	Stale source detected: C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java\pages\CreatorRegistrationPage.java
+[INFO] 	Stale source detected: C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java\tests\CreatorRegistrationTest.java
+[INFO] 	Stale source detected: C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java\pages\BaseTestClass.java
+[INFO] Recompiling the module because of changed source code.
+[DEBUG] Classpath:
+[DEBUG]  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\test-classes
+[DEBUG]  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\classes
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\playwright\1.54.0\playwright-1.54.0.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\google\code\gson\gson\2.12.1\gson-2.12.1.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\google\errorprone\error_prone_annotations\2.36.0\error_prone_annotations-2.36.0.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\driver\1.54.0\driver-1.54.0.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\driver-bundle\1.54.0\driver-bundle-1.54.0.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\testng\testng\7.11.0\testng-7.11.0.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\jcommander\jcommander\1.83\jcommander-1.83.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\webjars\jquery\3.7.1\jquery-3.7.1.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\aventstack\extentreports\5.1.2\extentreports-5.1.2.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\io\reactivex\rxjava3\rxjava\3.1.6\rxjava-3.1.6.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\reactivestreams\reactive-streams\1.0.4\reactive-streams-1.0.4.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\freemarker\freemarker\2.3.32\freemarker-2.3.32.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\projectlombok\lombok\1.18.26\lombok-1.18.26.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.19.2\jackson-databind-2.19.2.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.19.2\jackson-annotations-2.19.2.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.19.2\jackson-core-2.19.2.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-testng\2.29.1\allure-testng-2.29.1.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-java-commons\2.29.1\allure-java-commons-2.29.1.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-model\2.29.1\allure-model-2.29.1.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-test-filter\2.29.1\allure-test-filter-2.29.1.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\aspectj\aspectjweaver\1.9.24\aspectjweaver-1.9.24.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\org\slf4j\slf4j-simple\2.0.9\slf4j-simple-2.0.9.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\ch\qos\logback\logback-classic\1.5.12\logback-classic-1.5.12.jar
+[DEBUG]  C:\Users\Nabha Raja\.m2\repository\ch\qos\logback\logback-core\1.5.12\logback-core-1.5.12.jar
+[DEBUG] Source roots:
+[DEBUG]  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java
+[DEBUG]  C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-test-sources\test-annotations
+[DEBUG] Command line options:
+[DEBUG] -d C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\test-classes -classpath C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\test-classes;C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\classes;C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\playwright\1.54.0\playwright-1.54.0.jar;C:\Users\Nabha Raja\.m2\repository\com\google\code\gson\gson\2.12.1\gson-2.12.1.jar;C:\Users\Nabha Raja\.m2\repository\com\google\errorprone\error_prone_annotations\2.36.0\error_prone_annotations-2.36.0.jar;C:\Users\Nabha Raja\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\driver\1.54.0\driver-1.54.0.jar;C:\Users\Nabha Raja\.m2\repository\com\microsoft\playwright\driver-bundle\1.54.0\driver-bundle-1.54.0.jar;C:\Users\Nabha Raja\.m2\repository\org\testng\testng\7.11.0\testng-7.11.0.jar;C:\Users\Nabha Raja\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar;C:\Users\Nabha Raja\.m2\repository\org\jcommander\jcommander\1.83\jcommander-1.83.jar;C:\Users\Nabha Raja\.m2\repository\org\webjars\jquery\3.7.1\jquery-3.7.1.jar;C:\Users\Nabha Raja\.m2\repository\com\aventstack\extentreports\5.1.2\extentreports-5.1.2.jar;C:\Users\Nabha Raja\.m2\repository\io\reactivex\rxjava3\rxjava\3.1.6\rxjava-3.1.6.jar;C:\Users\Nabha Raja\.m2\repository\org\reactivestreams\reactive-streams\1.0.4\reactive-streams-1.0.4.jar;C:\Users\Nabha Raja\.m2\repository\org\freemarker\freemarker\2.3.32\freemarker-2.3.32.jar;C:\Users\Nabha Raja\.m2\repository\org\projectlombok\lombok\1.18.26\lombok-1.18.26.jar;C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.19.2\jackson-databind-2.19.2.jar;C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.19.2\jackson-annotations-2.19.2.jar;C:\Users\Nabha Raja\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.19.2\jackson-core-2.19.2.jar;C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-testng\2.29.1\allure-testng-2.29.1.jar;C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-java-commons\2.29.1\allure-java-commons-2.29.1.jar;C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-model\2.29.1\allure-model-2.29.1.jar;C:\Users\Nabha Raja\.m2\repository\io\qameta\allure\allure-test-filter\2.29.1\allure-test-filter-2.29.1.jar;C:\Users\Nabha Raja\.m2\repository\org\aspectj\aspectjweaver\1.9.24\aspectjweaver-1.9.24.jar;C:\Users\Nabha Raja\.m2\repository\org\slf4j\slf4j-simple\2.0.9\slf4j-simple-2.0.9.jar;C:\Users\Nabha Raja\.m2\repository\ch\qos\logback\logback-classic\1.5.12\logback-classic-1.5.12.jar;C:\Users\Nabha Raja\.m2\repository\ch\qos\logback\logback-core\1.5.12\logback-core-1.5.12.jar; -sourcepath C:\Users\Nabha Raja\IdeaProjects\twizz-automation\src\test\java;C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-test-sources\test-annotations; -s C:\Users\Nabha Raja\IdeaProjects\twizz-automation\target\generated-test-sources\test-annotations -g -target 21 -source 21 -encoding UTF-8 -XDuseUnsharedTable=true
+[DEBUG] incrementalBuildHelper#beforeRebuildExecution
+[INFO] Compiling 8 source files with javac [debug target 21] to target\test-classes
+[DEBUG] incrementalBuildHelper#afterRebuildExecution
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/Nabha Raja/IdeaProjects/twizz-automation/src/test/java/pages/BasePage.java:[64,35] cannot find symbol
+  symbol:   variable LoadState
+  location: interface com.microsoft.playwright.Page
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.136 s
+[INFO] Finished at: 2025-08-08T18:43:43+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:testCompile (default-testCompile) on project twizz-automation: Compilation failure
+[ERROR] /C:/Users/Nabha Raja/IdeaProjects/twizz-automation/src/test/java/pages/BasePage.java:[64,35] cannot find symbol
+[ERROR]   symbol:   variable LoadState
+[ERROR]   location: interface com.microsoft.playwright.Page
+[ERROR] 
+[ERROR] -> [Help 1]
+org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:testCompile (default-testCompile) on project twizz-automation: Compilation failure
+/C:/Users/Nabha Raja/IdeaProjects/twizz-automation/src/test/java/pages/BasePage.java:[64,35] cannot find symbol
+  symbol:   variable LoadState
+  location: interface com.microsoft.playwright.Page
+
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:333)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:903)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:280)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:203)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+Caused by: org.apache.maven.plugin.compiler.CompilationFailureException: Compilation failure
+/C:/Users/Nabha Raja/IdeaProjects/twizz-automation/src/test/java/pages/BasePage.java:[64,35] cannot find symbol
+  symbol:   variable LoadState
+  location: interface com.microsoft.playwright.Page
+
+    at org.apache.maven.plugin.compiler.AbstractCompilerMojo.execute (AbstractCompilerMojo.java:1309)
+    at org.apache.maven.plugin.compiler.TestCompilerMojo.execute (TestCompilerMojo.java:208)
+    at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo (DefaultBuildPluginManager.java:126)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:328)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:903)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:280)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:203)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+[ERROR] 
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[DEBUG] Shutting down adapter factory; available factories [file-lock, rwlock-local, semaphore-local, noop]; available name mappers [discriminating, file-gav, file-hgav, file-static, gav, static]
+[DEBUG] Shutting down 'file-lock' factory
+[DEBUG] Shutting down 'rwlock-local' factory
+[DEBUG] Shutting down 'semaphore-local' factory
+[DEBUG] Shutting down 'noop' factory
