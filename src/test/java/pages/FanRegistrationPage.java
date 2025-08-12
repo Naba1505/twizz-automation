@@ -19,7 +19,9 @@ public class FanRegistrationPage extends BasePage {
     private final String passwordInput = "[placeholder='Password']";
     private final String registrationButton = "role=button[name='Registration']";
 
-    public FanRegistrationPage(Page page) { super(page); }
+    public FanRegistrationPage(Page page) {
+        super(page);
+    }
 
     public void navigate() {
         String url = ConfigReader.getFanSignupUrl();

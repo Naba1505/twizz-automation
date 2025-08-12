@@ -13,10 +13,12 @@ public class RetryAnalyzer implements IRetryAnalyzer {
     public boolean retry(ITestResult result) {
         if (retryCount < maxRetryCount) {
             retryCount++;
-            ExtentReportManager.getTest().log(Status.WARNING,
-                    "Retrying test '" + result.getName() + "' (attempt " + retryCount + "/" + maxRetryCount + ")");
-            if (result.getThrowable() != null) {
-                ExtentReportManager.getTest().log(Status.INFO, "Last failure: " + result.getThrowable().getMessage());
+            if (ExtentReportManager.getTest() != null) {
+                ExtentReportManager.getTest().log(Status.WARNING,
+                        "Retrying test '" + result.getName() + "' (attempt " + retryCount + "/" + maxRetryCount + ")");
+                if (result.getThrowable() != null) {
+                    ExtentReportManager.getTest().log(Status.INFO, "Last failure: " + result.getThrowable().getMessage());
+                }
             }
 
             if (retryDelayMs > 0) {

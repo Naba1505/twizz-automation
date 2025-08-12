@@ -44,7 +44,11 @@ public class BasePage {
             } catch (RuntimeException e) {
                 last = e;
                 logger.warn("Click failed (attempt {}/{}): {}", i + 1, retries + 1, e.getMessage());
-                try { Thread.sleep(sleepMs); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                try {
+                    Thread.sleep(sleepMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
         throw last != null ? last : new RuntimeException("Click failed after retries");

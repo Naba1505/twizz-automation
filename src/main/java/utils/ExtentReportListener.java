@@ -4,6 +4,7 @@ import com.aventstack.extentreports.Status;
 import org.testng.*;
 
 import java.util.Optional;
+import java.nio.file.Path;
 
 public class ExtentReportListener extends ExtentReportManager implements ITestListener {
 
@@ -14,7 +15,11 @@ public class ExtentReportListener extends ExtentReportManager implements ITestLi
 
     @Override
     public void onFinish(ITestContext context) {
+        Path reportPath = ExtentReportManager.getReportFilePath();
         flushReports();
+        if (reportPath != null) {
+            System.out.println("[Extent] Report generated at: " + reportPath.toAbsolutePath());
+        }
     }
 
     @Override

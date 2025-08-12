@@ -37,11 +37,12 @@ public class BaseTestClass {
             boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));
             if (traceEnabled) {
                 page.context().tracing().start(new Tracing.StartOptions()
-                    .setScreenshots(true)
-                    .setSnapshots(true)
-                    .setSources(true));
+                        .setScreenshots(true)
+                        .setSnapshots(true)
+                        .setSources(true));
             }
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
 
         String landingPageUrl = ConfigReader.getLandingPageUrl();
         // Robust navigation with waitUntil + extra load-state wait and a single retry
@@ -80,12 +81,16 @@ public class BaseTestClass {
                 String timestamp = dateFormat.format(System.currentTimeMillis());
                 String screenshotPath = screenshotDir + "/" + result.getName() + "_" + timestamp + ".png";
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
-                ExtentReportManager.getTest().fail("Screenshot on failure:")
-                        .addScreenCaptureFromPath(screenshotPath);
+                if (ExtentReportManager.getTest() != null) {
+                    ExtentReportManager.getTest().fail("Screenshot on failure:")
+                            .addScreenCaptureFromPath(screenshotPath);
+                }
                 // Allure attachment
                 Allure.addAttachment("Failure Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
             } catch (Exception e) {
-                ExtentReportManager.getTest().warning("Screenshot not captured: " + e.getMessage());
+                if (ExtentReportManager.getTest() != null) {
+                    ExtentReportManager.getTest().warning("Screenshot not captured: " + e.getMessage());
+                }
             }
             // Export Playwright trace on failure
             try {
@@ -99,7 +104,9 @@ public class BaseTestClass {
                     Allure.addAttachment("Playwright Trace", "application/zip", Files.newInputStream(tracePath), ".zip");
                 }
             } catch (Exception e) {
-                ExtentReportManager.getTest().warning("Trace export failed: " + e.getMessage());
+                if (ExtentReportManager.getTest() != null) {
+                    ExtentReportManager.getTest().warning("Trace export failed: " + e.getMessage());
+                }
             }
         } else if (ITestResult.SUCCESS == result.getStatus() && Boolean.parseBoolean(ConfigReader.getProperty("screenshot.on.success", "false"))) {
             try {
@@ -108,12 +115,16 @@ public class BaseTestClass {
                 String timestamp = dateFormat.format(System.currentTimeMillis());
                 String screenshotPath = screenshotDir + "/" + result.getName() + "_SUCCESS_" + timestamp + ".png";
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
-                ExtentReportManager.getTest().pass("Screenshot on success:")
-                        .addScreenCaptureFromPath(screenshotPath);
+                if (ExtentReportManager.getTest() != null) {
+                    ExtentReportManager.getTest().pass("Screenshot on success:")
+                            .addScreenCaptureFromPath(screenshotPath);
+                }
                 // Allure attachment
                 Allure.addAttachment("Success Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
             } catch (Exception e) {
-                ExtentReportManager.getTest().warning("Success screenshot not captured: " + e.getMessage());
+                if (ExtentReportManager.getTest() != null) {
+                    ExtentReportManager.getTest().warning("Success screenshot not captured: " + e.getMessage());
+                }
             }
             // Optionally export trace on success
             try {
@@ -127,7 +138,9 @@ public class BaseTestClass {
                     Allure.addAttachment("Playwright Trace (Success)", "application/zip", Files.newInputStream(tracePath), ".zip");
                 }
             } catch (Exception e) {
-                ExtentReportManager.getTest().warning("Trace export on success failed: " + e.getMessage());
+                if (ExtentReportManager.getTest() != null) {
+                    ExtentReportManager.getTest().warning("Trace export on success failed: " + e.getMessage());
+                }
             }
         }
         BrowserFactory.close();

@@ -11,6 +11,26 @@ End-to-end UI automation for Twizz with Creator Registration flow, robust waits,
 - SLF4J + Logback
 - Maven Surefire Plugin 3.2.5
 
+## Quick Start
+1. Clone and build
+   ```bash
+   mvn clean install -DskipTests
+   ```
+2. (First time only) Ensure Playwright browsers are installed
+   ```bash
+   mvn -Dplaywright.cli.install=true test -DskipTests
+   ```
+3. Run the full suite (uses `testng.xml`)
+   ```bash
+   mvn test
+   ```
+4. View reports
+   - Extent: check console for the generated path under `extent-reports/`
+   - Allure (requires Allure CLI):
+     ```bash
+     allure serve target/allure-results
+     ```
+
 ## Project Structure
 - `src/main/java/utils/`
   - `BrowserFactory`: ThreadLocal Playwright/Browser/Context/Page for parallel safety, optional tracing.
@@ -18,11 +38,12 @@ End-to-end UI automation for Twizz with Creator Registration flow, robust waits,
   - `ExtentReportManager`, `ExtentReportListener`: Extent setup and TestNG listener.
   - `RetryAnalyzer`, `AnnotationTransformer`: Centralized retry with logging and optional delay.
 - `src/test/java/pages/`
-  - `LandingPage`, `CreatorRegistrationPage`: Page Objects with robust waits and fallbacks.
+  - `BasePage`: Common helpers.
+  - `LandingPage`, `CreatorRegistrationPage`, `CreatorLoginPage`, `CreatorPublicationPage`, `FanRegistrationPage`, `FanLoginPage`: Page Objects with robust waits and fallbacks.
   - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
 - `src/test/java/tests/`
-  - `LandingPageTest`, `CreatorRegistrationTest`.
-- `testng.xml`: Suite config, listeners (Extent + Allure), class-level parallel by default.
+  - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `FanLoginTest`.
+- `testng.xml`: Suite config, listeners (`utils.ExtentReportListener`, `utils.AnnotationTransformer`); Allure via TestNG adapter dependency, class-level parallel by default.
 
 ## Prerequisites
 - Java 21+
@@ -69,7 +90,7 @@ Key entries (with defaults):
 - If you hit parallel issues on some environments, switch `testng.xml` to `parallel="tests"` or run sequentially.
 
 ## Reports
-- Extent report: `extent-reports/extent-report.html`
+- Extent report: timestamped HTML under `extent-reports/` (e.g., `extent-report_YYYYMMDD_HHmmss.html`). The exact path is printed in the console at the end of the run.
 - Allure raw results: `target/allure-results/`
 - To view Allure report (after installing Allure CLI):
   ```bash

@@ -17,7 +17,9 @@ public class FanLoginPage extends BasePage {
     private final String twizzLogoRoleName = "Twizz"; // used with AriaRole.IMG
     private final String loginTextExact = "Login";    // exact text on screen
 
-    public FanLoginPage(Page page) { super(page); }
+    public FanLoginPage(Page page) {
+        super(page);
+    }
 
     public void navigate() {
         String url = ConfigReader.getLoginUrl();
