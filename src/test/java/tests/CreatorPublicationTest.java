@@ -1,5 +1,6 @@
 package tests;
 
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.CreatorPublicationPage;
 
@@ -38,5 +39,20 @@ public class CreatorPublicationTest extends BaseCreatorTest {
         String caption = "image with blurred media disabled";
         CreatorPublicationPage pub = new CreatorPublicationPage(page);
         pub.completePublicationFlow(media, caption, false);
+    }
+
+    @Test(priority = 5, description = "Delete all created publications from Publications screen")
+    public void testDeleteAllPublications() {
+        CreatorPublicationPage pub = new CreatorPublicationPage(page);
+        // Navigate to Publications via profile icon
+        pub.openProfilePublicationsIcon();
+        pub.verifyPublicationsScreen();
+
+        // Loop delete until no publications remain
+        pub.deleteAllPublicationsLoop();
+
+        // Assert no publication menus remain
+        int remaining = pub.getPublicationMenuCount();
+        Assert.assertEquals(remaining, 0, "Expected no publications remaining, but found: " + remaining);
     }
 }

@@ -10,7 +10,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import utils.BrowserFactory;
 import utils.ConfigReader;
-import utils.ExtentReportManager;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -67,9 +66,7 @@ public class BaseTestClass {
             // do not swallow setup issues silently; rethrow to mark config failure
             throw e;
         }
-        if (ExtentReportManager.getTest() != null) {
-            ExtentReportManager.getTest().assignAuthor(ConfigReader.getProperty("author", "unknown"));
-        }
+        // Author metadata can be added to Allure via labels if desired
     }
 
     @AfterMethod
@@ -81,16 +78,10 @@ public class BaseTestClass {
                 String timestamp = dateFormat.format(System.currentTimeMillis());
                 String screenshotPath = screenshotDir + "/" + result.getName() + "_" + timestamp + ".png";
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
-                if (ExtentReportManager.getTest() != null) {
-                    ExtentReportManager.getTest().fail("Screenshot on failure:")
-                            .addScreenCaptureFromPath(screenshotPath);
-                }
                 // Allure attachment
                 Allure.addAttachment("Failure Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
             } catch (Exception e) {
-                if (ExtentReportManager.getTest() != null) {
-                    ExtentReportManager.getTest().warning("Screenshot not captured: " + e.getMessage());
-                }
+                // swallow attachment errors, already failing test
             }
             // Export Playwright trace on failure
             try {
@@ -103,11 +94,7 @@ public class BaseTestClass {
                     page.context().tracing().stop(new Tracing.StopOptions().setPath(tracePath));
                     Allure.addAttachment("Playwright Trace", "application/zip", Files.newInputStream(tracePath), ".zip");
                 }
-            } catch (Exception e) {
-                if (ExtentReportManager.getTest() != null) {
-                    ExtentReportManager.getTest().warning("Trace export failed: " + e.getMessage());
-                }
-            }
+            } catch (Exception e) { }
         } else if (ITestResult.SUCCESS == result.getStatus() && Boolean.parseBoolean(ConfigReader.getProperty("screenshot.on.success", "false"))) {
             try {
                 String screenshotDir = ConfigReader.getProperty("screenshot.dir", "screenshots");
@@ -115,16 +102,10 @@ public class BaseTestClass {
                 String timestamp = dateFormat.format(System.currentTimeMillis());
                 String screenshotPath = screenshotDir + "/" + result.getName() + "_SUCCESS_" + timestamp + ".png";
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
-                if (ExtentReportManager.getTest() != null) {
-                    ExtentReportManager.getTest().pass("Screenshot on success:")
-                            .addScreenCaptureFromPath(screenshotPath);
-                }
                 // Allure attachment
                 Allure.addAttachment("Success Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
             } catch (Exception e) {
-                if (ExtentReportManager.getTest() != null) {
-                    ExtentReportManager.getTest().warning("Success screenshot not captured: " + e.getMessage());
-                }
+                // swallow attachment errors
             }
             // Optionally export trace on success
             try {
@@ -137,11 +118,7 @@ public class BaseTestClass {
                     page.context().tracing().stop(new Tracing.StopOptions().setPath(tracePath));
                     Allure.addAttachment("Playwright Trace (Success)", "application/zip", Files.newInputStream(tracePath), ".zip");
                 }
-            } catch (Exception e) {
-                if (ExtentReportManager.getTest() != null) {
-                    ExtentReportManager.getTest().warning("Trace export on success failed: " + e.getMessage());
-                }
-            }
+            } catch (Exception e) { }
         }
         BrowserFactory.close();
     }

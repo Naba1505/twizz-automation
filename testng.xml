@@ -1,7 +1,6 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="Twizz Automation Suite" parallel="classes" thread-count="2" verbose="1" preserve-order="true">
     <listeners>
-        <listener class-name="utils.ExtentReportListener"/>
         <listener class-name="utils.AnnotationTransformer"/>
     </listeners>
 

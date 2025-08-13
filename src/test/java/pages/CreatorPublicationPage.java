@@ -4,14 +4,13 @@ import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-import com.microsoft.playwright.options.LoadState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+ 
 
 public class CreatorPublicationPage extends BasePage {
     private static final Logger logger = LoggerFactory.getLogger(CreatorPublicationPage.class);
@@ -226,6 +225,165 @@ public class CreatorPublicationPage extends BasePage {
             }
             clickWithRetry(understand, 2, 300);
             logger.info("Clicked 'I understand' button");
+        }
+    }
+
+    // Navigation from profile to Publications
+    public void openProfilePublicationsIcon() {
+        Locator icon = page.getByRole(AriaRole.TABPANEL, new Page.GetByRoleOptions().setName("publications icon")).locator("img").first();
+        if (icon.count() > 0 && icon.isVisible()) {
+            clickWithRetry(icon, 2, 300);
+            logger.info("Clicked publications icon from profile");
+            return;
+        }
+        if (isPublicationsScreen()) {
+            logger.info("Already on Publications screen; no need to click icon");
+            return;
+        }
+        Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Connect").setExact(true));
+        if (connectBtn.isVisible()) {
+            clickWithRetry(connectBtn, 2, 200);
+            try { page.waitForTimeout(300); } catch (Exception ignored) {}
+            if (icon.count() > 0 && icon.isVisible()) {
+                clickWithRetry(icon, 2, 300);
+                logger.info("Clicked publications icon after Connect");
+                return;
+            }
+        }
+        logger.warn("Publications icon not visible and not on Publications screen");
+    }
+
+// Verify Publications screen by presence of 'Publications' text
+public void verifyPublicationsScreen() {
+    Locator publicationsTitle = page.getByText(PUBLICATIONS_TEXT);
+    waitVisible(publicationsTitle, 20000);
+    logger.info("Publications screen visible");
+}
+
+private boolean isPublicationsScreen() {
+    try {
+        Locator publicationsTitle = page.getByText(PUBLICATIONS_TEXT);
+        return publicationsTitle.isVisible();
+    } catch (Exception ignored) {
+        return false;
+    }
+}
+
+// Delete a single publication via available UI entry points
+public void deleteOnePublication() {
+    try { page.waitForTimeout(300); } catch (Exception ignored) {}
+
+    // 1) Some flows require clicking 'Connect' first
+    Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Connect").setExact(true));
+    if (connectBtn.isVisible()) {
+      clickWithRetry(connectBtn, 2, 200);
+      logger.info("Clicked 'Connect' before deletion flow");
+      try { page.waitForTimeout(300); } catch (Exception ignored) {}
+    }
+
+    // 2) Primary path: menu beside post '.dots-wrapper'
+    Locator dotsWrapper = page.locator(".dots-wrapper");
+    if (dotsWrapper.count() > 0) {
+      try { dotsWrapper.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+      clickWithRetry(dotsWrapper.first(), 2, 200);
+      confirmDeletionPopup();
+      return;
+    }
+
+    // 3) Alternate menu icon: role IMG name 'dot'
+    Locator dotImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).first();
+    if (dotImg != null && dotImg.count() > 0) {
+      try { dotImg.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+      clickWithRetry(dotImg, 2, 200);
+      confirmDeletionPopup();
+      return;
+    }
+
+    // 4) Fallback path: open first post and use action button '.d-flex'
+    Locator fanPost = page.locator(".fanProfilePost").first();
+    Locator actionBtn = page.locator(".d-flex").first();
+    if (fanPost.count() > 0 && fanPost.isVisible()) {
+      clickWithRetry(fanPost, 2, 200);
+      logger.info("Opened first fan profile post");
+      waitVisible(actionBtn, 10000);
+      clickWithRetry(actionBtn, 2, 200);
+      confirmDeletionPopup();
+      return;
+    }
+
+    logger.warn("No known delete entry point found for publication");
+}
+
+private void confirmDeletionPopup() {
+    Locator confirmText = page.getByText("Do you really want to delete a publication?");
+    waitVisible(confirmText, 10000);
+    Locator yesDelete = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
+    waitVisible(yesDelete, 10000);
+    clickWithRetry(yesDelete, 2, 200);
+    logger.info("Confirmed publication deletion");
+    try { page.waitForTimeout(600); } catch (Exception ignored) {}
+}
+
+// Loop delete until none remain
+  public void deleteAllPublicationsLoop() {
+    int deleted = 0;
+    while (true) {
+      // Open publications only if not already there
+      if (!isPublicationsScreen()) {
+        openProfilePublicationsIcon();
+        // If still not on publications, try a brief wait and check again
+        if (!isPublicationsScreen()) {
+          try { page.waitForTimeout(700); } catch (Exception ignored) {}
+          if (!isPublicationsScreen()) {
+            logger.warn("Could not navigate to Publications screen; stopping loop");
+            break;
+          }
+        }
+      }
+
+      // Wait for list to load: try multiple selectors
+      long start = System.currentTimeMillis();
+      boolean anyPresent = false;
+      while (System.currentTimeMillis() - start < 5000) {
+        int dots = page.locator(".dots-wrapper").count();
+        int dotsImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).count();
+        int posts = page.locator(".fanProfilePost").count();
+        if (dots > 0 || dotsImg > 0 || posts > 0) { anyPresent = true; break; }
+        try { page.waitForTimeout(200); } catch (Exception ignored) {}
+      }
+
+      // Gentle scroll to trigger lazy load if nothing yet
+      if (!anyPresent) {
+        try { page.evaluate("window.scrollTo(0, 0)"); } catch (Exception ignored) {}
+        try { page.evaluate("window.scrollBy(0, 400)"); } catch (Exception ignored) {}
+        anyPresent = page.locator(".dots-wrapper").count() > 0
+                || page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).count() > 0
+                || page.locator(".fanProfilePost").count() > 0;
+      }
+
+      if (!anyPresent) {
+        logger.info("No publications found on Publications screen");
+        break;
+      }
+
+      // Delete one and loop
+      deleteOnePublication();
+      deleted++;
+      try { page.waitForTimeout(500); } catch (Exception ignored) {}
+    }
+    logger.info("Deleted {} publications (loop until none left)", deleted);
+  }
+
+    // Helper to check remaining publication menus
+    public int getPublicationMenuCount() {
+        return page.locator(".dots-wrapper").count();
+    }
+
+// ... (rest of the code remains the same)
+    // Helper to click if visible
+    private void clickIfVisible(Locator locator) {
+        if (locator.isVisible()) {
+            clickWithRetry(locator, 2, 200);
         }
     }
 

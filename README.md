@@ -1,12 +1,11 @@
 # Twizz Automation (Java + Playwright + TestNG)
 
-End-to-end UI automation for Twizz with Creator Registration flow, robust waits, parallel-safe Playwright usage, and advanced reporting via ExtentReports and Allure (with Playwright traces and screenshots).
+End-to-end UI automation for Twizz with Creator Registration flow, robust waits, parallel-safe Playwright usage, and reporting via Allure (with Playwright traces and screenshots).
 
 ## Tech Stack
 - Java 21
 - Playwright for Java 1.54.0
 - TestNG 7.11.0
-- ExtentReports 5.1.2
 - Allure TestNG 2.29.1
 - SLF4J + Logback
 - Maven Surefire Plugin 3.2.5
@@ -25,7 +24,6 @@ End-to-end UI automation for Twizz with Creator Registration flow, robust waits,
    mvn test
    ```
 4. View reports
-   - Extent: check console for the generated path under `extent-reports/`
    - Allure (requires Allure CLI):
      ```bash
      allure serve target/allure-results
@@ -35,7 +33,6 @@ End-to-end UI automation for Twizz with Creator Registration flow, robust waits,
 - `src/main/java/utils/`
   - `BrowserFactory`: ThreadLocal Playwright/Browser/Context/Page for parallel safety, optional tracing.
   - `ConfigReader`: Loads `config.properties` and exposes typed getters.
-  - `ExtentReportManager`, `ExtentReportListener`: Extent setup and TestNG listener.
   - `RetryAnalyzer`, `AnnotationTransformer`: Centralized retry with logging and optional delay.
 - `src/test/java/pages/`
   - `BasePage`: Common helpers.
@@ -43,7 +40,7 @@ End-to-end UI automation for Twizz with Creator Registration flow, robust waits,
   - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
 - `src/test/java/tests/`
   - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `FanLoginTest`.
-- `testng.xml`: Suite config, listeners (`utils.ExtentReportListener`, `utils.AnnotationTransformer`); Allure via TestNG adapter dependency, class-level parallel by default.
+- `testng.xml`: Suite config, listeners (`utils.AnnotationTransformer`); Allure via TestNG adapter dependency, class-level parallel by default.
 
 ## Prerequisites
 - Java 21+
@@ -69,7 +66,6 @@ Key entries (with defaults):
   - `registration.contentTypes=Model,Artist,Influencer,ASMR,Lingerie`
 - Reporting
   - `author=Your Name`
-  - `report.path=extent-reports/extent-report.html`
   - `screenshot.dir=screenshots`
   - `screenshot.on.success=false`
   - `retry.max=2`
@@ -90,14 +86,13 @@ Key entries (with defaults):
 - If you hit parallel issues on some environments, switch `testng.xml` to `parallel="tests"` or run sequentially.
 
 ## Reports
-- Extent report: timestamped HTML under `extent-reports/` (e.g., `extent-report_YYYYMMDD_HHmmss.html`). The exact path is printed in the console at the end of the run.
-- Allure raw results: `target/allure-results/`
-- To view Allure report (after installing Allure CLI):
-  ```bash
-  allure serve target/allure-results
-  ```
+  - Allure raw results: `target/allure-results/`
+  - To view Allure report (after installing Allure CLI):
+    ```bash
+    allure serve target/allure-results
+    ```
 
-On failure, screenshots and Playwright trace ZIPs are attached to Allure and screenshots to Extent. Optional success screenshots/trace export are configurable.
+On failure, screenshots and Playwright trace ZIPs are attached to Allure. Optional success screenshots/trace export are configurable.
 
 ## Creator Registration Flow Coverage
 - Page 1: Basic info (name, username, names, DOB, email, password, phone, gender)
