@@ -35,6 +35,10 @@ public class BasePage {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name)).click();
     }
 
+    protected void clickLabelByText(String text) {
+        page.locator("label").filter(new Locator.FilterOptions().setHasText(text)).click();
+    }
+
     protected void clickWithRetry(Locator locator, int retries, long sleepMs) {
         RuntimeException last = null;
         for (int i = 0; i <= retries; i++) {
