@@ -28,10 +28,17 @@ pipeline {
     stage('Build') {
       steps {
         script {
-          if (isUnix()) {
-            sh "${MAVEN_CMD} clean install -DskipTests ${params.MAVEN_OPTS_EXTRA}"
-          } else {
-            bat "${MAVEN_CMD} clean install -DskipTests %MAVEN_OPTS_EXTRA%"
+          // Resolve tool homes and export JAVA_HOME + PATH explicitly
+          def jdkHome = tool name: 'JDK21', type: 'jdk'
+          def mvnHome = tool name: 'Maven3.9', type: 'maven'
+          withEnv(["JAVA_HOME=${jdkHome}",
+                   isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
+                   isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin"]) {
+            if (isUnix()) {
+              sh "${MAVEN_CMD} clean install -DskipTests ${params.MAVEN_OPTS_EXTRA}"
+            } else {
+              bat "${MAVEN_CMD} clean install -DskipTests %MAVEN_OPTS_EXTRA%"
+            }
           }
         }
       }
@@ -42,10 +49,16 @@ pipeline {
       steps {
         // Safe no-op if already installed
         script {
-          if (isUnix()) {
-            sh "${MAVEN_CMD} -Dplaywright.cli.install=true test -DskipTests ${params.MAVEN_OPTS_EXTRA}"
-          } else {
-            bat "${MAVEN_CMD} -Dplaywright.cli.install=true test -DskipTests %MAVEN_OPTS_EXTRA%"
+          def jdkHome = tool name: 'JDK21', type: 'jdk'
+          def mvnHome = tool name: 'Maven3.9', type: 'maven'
+          withEnv(["JAVA_HOME=${jdkHome}",
+                   isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
+                   isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin"]) {
+            if (isUnix()) {
+              sh "${MAVEN_CMD} -Dplaywright.cli.install=true test -DskipTests ${params.MAVEN_OPTS_EXTRA}"
+            } else {
+              bat "${MAVEN_CMD} -Dplaywright.cli.install=true test -DskipTests %MAVEN_OPTS_EXTRA%"
+            }
           }
         }
       }
@@ -61,10 +74,16 @@ pipeline {
           } else if (params.RUN_SUITE == 'parallel_xml') {
             suiteArg = '"-Dsurefire.suiteXmlFiles=testng-parallel.xml"'
           }
-          if (isUnix()) {
-            sh "${MAVEN_CMD} ${suiteArg} test ${params.MAVEN_OPTS_EXTRA}"
-          } else {
-            bat "${MAVEN_CMD} ${suiteArg} test %MAVEN_OPTS_EXTRA%"
+          def jdkHome = tool name: 'JDK21', type: 'jdk'
+          def mvnHome = tool name: 'Maven3.9', type: 'maven'
+          withEnv(["JAVA_HOME=${jdkHome}",
+                   isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
+                   isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin"]) {
+            if (isUnix()) {
+              sh "${MAVEN_CMD} ${suiteArg} test ${params.MAVEN_OPTS_EXTRA}"
+            } else {
+              bat "${MAVEN_CMD} ${suiteArg} test %MAVEN_OPTS_EXTRA%"
+            }
           }
         }
       }
