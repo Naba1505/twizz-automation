@@ -44,9 +44,10 @@ pipeline {
               sh 'echo Using MVN=$MVN && $MVN -v || true'
               sh "${MAVEN_CMD} clean install -DskipTests ${params.MAVEN_OPTS_EXTRA}"
             } else {
-              bat 'echo Using JAVA_HOME=%JAVA_HOME% && dir "%JAVA_HOME%\\bin\\java.exe"'
+              bat 'echo JAVA_HOME=%JAVA_HOME%'
               bat '"%JAVA_HOME%\\bin\\java.exe" -version'
-              bat 'echo Using MVN=%MVN% && "%MVN%" -v'
+              bat 'echo MVN=%MVN%'
+              bat '"%MVN%" -v'
               bat '"%MVN%" -B clean install -DskipTests %MAVEN_OPTS_EXTRA%'
             }
           }
@@ -74,9 +75,10 @@ pipeline {
               sh 'echo Using MVN=$MVN && $MVN -v || true'
               sh "${MAVEN_CMD} -Dplaywright.cli.install=true test -DskipTests ${params.MAVEN_OPTS_EXTRA}"
             } else {
-              bat 'echo Using JAVA_HOME=%JAVA_HOME% && dir "%JAVA_HOME%\\bin\\java.exe"'
+              bat 'echo JAVA_HOME=%JAVA_HOME%'
               bat '"%JAVA_HOME%\\bin\\java.exe" -version'
-              bat 'echo Using MVN=%MVN% && "%MVN%" -v'
+              bat 'echo MVN=%MVN%'
+              bat '"%MVN%" -v'
               bat '"%MVN%" -B -Dplaywright.cli.install=true test -DskipTests %MAVEN_OPTS_EXTRA%'
             }
           }
@@ -109,9 +111,10 @@ pipeline {
               sh 'echo Using MVN=$MVN && $MVN -v || true'
               sh "${MAVEN_CMD} ${suiteArg} test ${params.MAVEN_OPTS_EXTRA}"
             } else {
-              bat 'echo Using JAVA_HOME=%JAVA_HOME% && dir "%JAVA_HOME%\\bin\\java.exe"'
+              bat 'echo JAVA_HOME=%JAVA_HOME%'
               bat '"%JAVA_HOME%\\bin\\java.exe" -version'
-              bat 'echo Using MVN=%MVN% && "%MVN%" -v'
+              bat 'echo MVN=%MVN%'
+              bat '"%MVN%" -v'
               bat '"%MVN%" -B ${suiteArg} test %MAVEN_OPTS_EXTRA%'
             }
           }
