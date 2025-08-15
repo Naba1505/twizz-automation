@@ -92,9 +92,9 @@ pipeline {
         script {
           def suiteArg = ''
           if (params.RUN_SUITE == 'sequential_xml') {
-            suiteArg = '"-Dsurefire.suiteXmlFiles=testng.xml"'
+            suiteArg = '-Dsurefire.suiteXmlFiles=testng.xml'
           } else if (params.RUN_SUITE == 'parallel_xml') {
-            suiteArg = '"-Dsurefire.suiteXmlFiles=testng-parallel.xml"'
+            suiteArg = '-Dsurefire.suiteXmlFiles=testng-parallel.xml'
           }
           def jdkHome = tool name: 'JDK21', type: 'jdk'
           def mvnHome = tool name: 'Maven3.9', type: 'maven'
@@ -115,7 +115,7 @@ pipeline {
               bat '"%JAVA_HOME%\\bin\\java.exe" -version'
               bat 'echo MVN=%MVN%'
               bat '"%MVN%" -v'
-              bat '"%MVN%" -B ${suiteArg} test %MAVEN_OPTS_EXTRA%'
+              bat "\"%MVN%\" -B ${suiteArg} test %MAVEN_OPTS_EXTRA%"
             }
           }
         }
