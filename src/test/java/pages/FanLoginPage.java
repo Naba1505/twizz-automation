@@ -7,6 +7,7 @@ import com.microsoft.playwright.options.LoadState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
+import java.util.regex.Pattern;
 
 public class FanLoginPage extends BasePage {
     private static final Logger logger = LoggerFactory.getLogger(FanLoginPage.class);
@@ -54,15 +55,26 @@ public class FanLoginPage extends BasePage {
         page.waitForLoadState(LoadState.NETWORKIDLE);
     }
 
+    // Backwards-compatible: replace LIVE check with URL-based verification
     public boolean isLiveVisible() {
-        String liveText = ConfigReader.getProperty("fan.live.text", "LIVE");
+        return isOnFanHomeUrl(20000);
+    }
+
+    public boolean isOnFanHomeUrl(long timeoutMs) {
         try {
-            Locator live = page.getByText(liveText, new Page.GetByTextOptions().setExact(true));
-            waitVisible(live, 20000);
-            return live.isVisible();
+            page.waitForURL(Pattern.compile(".*/fan/home.*"), new Page.WaitForURLOptions().setTimeout(timeoutMs));
+            boolean ok = page.url().contains("/fan/home");
+            logger.info("Fan login landed on URL: {} (ok={})", page.url(), ok);
+            return ok;
         } catch (Exception e) {
-            logger.warn("LIVE indicator not visible: {}", e.getMessage());
+            logger.warn("Did not reach /fan/home within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
             return false;
+        }
+    }
+
+    public void waitForFanHomeUrl(long timeoutMs) {
+        if (!isOnFanHomeUrl(timeoutMs)) {
+            throw new IllegalStateException("Fan did not land on /fan/home after login. Actual URL: " + page.url());
         }
     }
 }

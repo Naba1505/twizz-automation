@@ -11,7 +11,7 @@ public class CreatorPublicationTest extends BaseCreatorTest {
 
     @Test(priority = 1, description = "Publish video with blurred media enabled")
     public void testPublishVideoBlurred() {
-        Path media = Paths.get("src", "test", "resources", "Videos", "TeamWork.mp4");
+        Path media = Paths.get("src", "test", "resources", "Videos", "Toast.mp4");
         String caption = "video with blurred media enabled";
         CreatorPublicationPage pub = new CreatorPublicationPage(page);
         pub.completePublicationFlow(media, caption, true);

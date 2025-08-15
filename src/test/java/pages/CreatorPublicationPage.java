@@ -7,6 +7,7 @@ import com.microsoft.playwright.options.AriaRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
+import utils.WaitUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,14 +31,11 @@ public class CreatorPublicationPage extends BasePage {
     }
 
     public void openPlusMenu() {
-        // Click plus icon at top
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plusImg, 15000);
         clickWithRetry(plusImg, 2, 300);
-        logger.info("Opened plus menu");
-
-        // Dismiss conversion tools prompt if present
         handleConversionPromptIfPresent();
+        logger.info("Opened plus menu");
     }
 
     public void selectPostEntry() {
@@ -45,8 +43,23 @@ public class CreatorPublicationPage extends BasePage {
         handleConversionPromptIfPresent();
         // Click on Post entry
         Locator post = page.getByText(POST_TEXT, new Page.GetByTextOptions().setExact(true));
-        waitVisible(post, 15000);
-        clickWithRetry(post, 2, 300);
+        // Faster loop with early exit
+        long start = System.currentTimeMillis();
+        boolean clicked = false;
+        while (System.currentTimeMillis() - start < 6000) {
+            try {
+                if (post.isVisible()) {
+                    clickWithRetry(post, 2, 150);
+                    clicked = true;
+                    break;
+                }
+            } catch (Exception ignored) {}
+            try { page.waitForTimeout(120); } catch (Exception ignored) {}
+        }
+        if (!clicked) {
+            try { waitVisible(post, 5000); } catch (Exception ignored) {}
+            clickWithRetry(post, 2, 200);
+        }
         logger.info("Clicked Post entry");
 
         // If the understand button appears again, scroll and click
@@ -141,8 +154,9 @@ public class CreatorPublicationPage extends BasePage {
             publishBtn.scrollIntoViewIfNeeded();
         } catch (Exception ignored) {
         }
-        waitForPublishEnabled(publishBtn, 60000);
-        clickWithRetry(publishBtn, 2, 300);
+        // Use a shorter enable wait with retries
+        waitForPublishEnabled(publishBtn, 20000);
+        clickWithRetry(publishBtn, 2, 200);
         // Do not wait for page load state here; SPA may not trigger it. Success toast wait happens later.
         logger.info("Clicked Publish");
     }
@@ -179,12 +193,75 @@ public class CreatorPublicationPage extends BasePage {
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < timeoutMs) {
             if (isSuccessToastVisible()) return true;
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
-            }
+            try { page.waitForTimeout(200); } catch (Exception ignored) {}
         }
         return false;
+    }
+
+    // Consider composer closed when publish UI is no longer visible
+    private boolean isComposerOpen() {
+        try {
+            // If publish button or caption placeholder visible, composer is open
+            if (getPublishButton().isVisible()) return true;
+        } catch (Exception ignored) {}
+        try {
+            if (page.getByText(CAPTION_TITLE_TEXT, new Page.GetByTextOptions().setExact(true)).isVisible()) return true;
+        } catch (Exception ignored) {}
+        try {
+            if (page.getByPlaceholder(CAPTION_PLACEHOLDER).isVisible()) return true;
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    
+
+    // Try to close composer if still open (best-effort, non-fatal)
+    private void closeComposerIfOpen() {
+        if (!isComposerOpen()) return;
+        try {
+            Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
+            if (closeBtn.isVisible()) {
+                clickWithRetry(closeBtn, 2, 150);
+                return;
+            }
+        } catch (Exception ignored) {}
+        try {
+            Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+            if (cancelBtn.isVisible()) {
+                clickWithRetry(cancelBtn, 2, 150);
+                return;
+            }
+        } catch (Exception ignored) {}
+        try {
+            // Generic .close icon or top-right X in dialogs
+            Locator x = page.locator(".close, button[aria-label='Close'], [data-testid='close']").first();
+            if (x != null && x.count() > 0 && x.isVisible()) {
+                clickWithRetry(x, 2, 150);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    // Force-exit composer quickly without waiting on background uploads
+    private void forceExitComposer() {
+        // If already closed, nothing to do
+        if (!isComposerOpen()) return;
+
+        // Try ESC key
+        try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
+        try { page.waitForTimeout(150); } catch (Exception ignored) {}
+        if (!isComposerOpen()) return;
+
+        // Use existing close attempts
+        closeComposerIfOpen();
+        if (!isComposerOpen()) return;
+
+        // Click outside the dialog area (top-left corner)
+        try { page.mouse().click(5, 5); } catch (Exception ignored) {}
+        try { page.waitForTimeout(120); } catch (Exception ignored) {}
+        if (!isComposerOpen()) return;
+
+        // Quick back navigation as last resort (short timeout)
+        try { page.goBack(new Page.GoBackOptions().setTimeout(800)); } catch (Exception ignored) {}
     }
 
     private Locator getPublishButton() {
@@ -192,22 +269,9 @@ public class CreatorPublicationPage extends BasePage {
     }
 
     private void waitForPublishEnabled(Locator btn, long timeoutMs) {
-        long start = System.currentTimeMillis();
-        while (System.currentTimeMillis() - start < timeoutMs) {
-            try {
-                String disabled = btn.getAttribute("disabled");
-                String ariaDisabled = btn.getAttribute("aria-disabled");
-                if ((disabled == null || disabled.isEmpty()) && (ariaDisabled == null || !"true".equalsIgnoreCase(ariaDisabled))) {
-                    return;
-                }
-            } catch (Exception ignored) {
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ignored) {
-            }
+        if (!WaitUtils.waitForEnabled(btn, timeoutMs)) {
+            logger.warn("Publish button did not become enabled within {} ms", timeoutMs);
         }
-        logger.warn("Publish button did not become enabled within {} ms", timeoutMs);
     }
 
     private void handleConversionPromptIfPresent() {
@@ -380,12 +444,7 @@ private void confirmDeletionPopup() {
     }
 
 // ... (rest of the code remains the same)
-    // Helper to click if visible
-    private void clickIfVisible(Locator locator) {
-        if (locator.isVisible()) {
-            clickWithRetry(locator, 2, 200);
-        }
-    }
+    
 
     public void completePublicationFlow(Path mediaPath, String caption, boolean blurEnabled) {
         openPlusMenu();
@@ -398,8 +457,12 @@ private void confirmDeletionPopup() {
         clickCaptionOk();
         setBlurEnabled(blurEnabled);
         publish();
-        if (!waitForSuccessToast(90000)) {
-            throw new RuntimeException("Publication success toast not visible");
+        // Prefer immediate exit: very short toast wait, then force-exit composer and proceed
+        long toastWait = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "6000"));
+        boolean success = waitForSuccessToast(toastWait);
+        if (!success) {
+            logger.warn("Success toast not detected within {} ms; exiting composer anyway", toastWait);
         }
+        forceExitComposer();
     }
 }

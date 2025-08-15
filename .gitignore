@@ -15,6 +15,16 @@ target/
 # Allure results
 allure-results/
 
+# Playwright traces and screenshots (configurable via config.properties)
+traces/
+screenshots/
+
+# Playwright HTML report
+playwright-report/
+
+# TestNG default output directory
+test-output/
+
 ### Eclipse ###
 .apt_generated
 .classpath

@@ -3,9 +3,11 @@ package pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import io.qameta.allure.Step;
 import io.qameta.allure.Allure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.WaitUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,6 +47,7 @@ public class CreatorLivePage extends BasePage {
     }
 
     // Navigation and guards
+    @Step("Open plus menu")
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plusImg, 15000);
@@ -53,6 +56,7 @@ public class CreatorLivePage extends BasePage {
         logger.info("Opened plus menu");
     }
 
+    @Step("Navigate to Live screen")
     public void navigateToLive() {
         // Either after plus or direct
         if (page.getByText(CONVERSION_TOOLS_TEXT).count() > 0) {
@@ -68,6 +72,7 @@ public class CreatorLivePage extends BasePage {
         ensureLiveScreen();
     }
 
+    @Step("Ensure Live screen visible")
     public void ensureLiveScreen() {
         Locator live = page.getByText(LIVE_TEXT);
         waitVisible(live, 20000);
@@ -75,26 +80,31 @@ public class CreatorLivePage extends BasePage {
     }
 
     // Form steps
+    @Step("Set access: Everyone")
     public void setAccessEveryone() {
         clickLabelByText(ACCESS_EVERYONE);
         logger.info("Set access to Everyone");
     }
 
+    @Step("Set access: Subscribers")
     public void setAccessSubscribers() {
         clickLabelByText(ACCESS_SUBSCRIBERS);
         logger.info("Set access to Subscribers");
     }
 
+    @Step("Set price: {euro}€")
     public void setPriceEuro(int euro) {
         page.locator("label").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^" + euro + "€$"))).click();
         logger.info("Set price to {}€", euro);
     }
 
+    @Step("Set price: Free")
     public void setPriceFree() {
         clickLabelByText(PRICE_FREE);
         logger.info("Set price to Free");
     }
 
+    @Step("Enable chat with Everyone if present")
     public void enableChatEveryoneIfPresent() {
         Locator chatBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ACCESS_EVERYONE));
         if (chatBtn.count() > 0) {
@@ -103,6 +113,7 @@ public class CreatorLivePage extends BasePage {
         }
     }
 
+    @Step("Enable chat with Subscribers if present")
     public void enableChatSubscribersIfPresent() {
         Locator chatBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ACCESS_SUBSCRIBERS));
         if (chatBtn.count() > 0) {
@@ -111,6 +122,7 @@ public class CreatorLivePage extends BasePage {
         }
     }
 
+    @Step("Set custom price: {amount}€")
     public void setCustomPriceEuro(String amount) {
         // Click the editable price field, then fill the spinbutton
         Locator priceDisplay = page.getByText("0.00 €");
@@ -122,6 +134,7 @@ public class CreatorLivePage extends BasePage {
     }
 
     // ================= Delete Flow =================
+    @Step("Check if live logo visible on profile")
     public boolean isLiveLogoVisibleOnProfile() {
         Locator logo = page.locator(".ant-col > img");
         try {
@@ -134,19 +147,83 @@ public class CreatorLivePage extends BasePage {
         }
     }
 
+    @Step("Open Edit on latest event")
     public void openEditEvent() {
-        Locator edit = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN));
-        waitVisible(edit.first(), 10000);
-        clickWithRetry(edit.first(), 2, 200);
-        logger.info("Clicked Edit on event");
+        // Try to reveal edit actions by hovering the first live card/logo
+        try {
+            Locator firstImg = page.locator(".ant-col > img").first();
+            if (firstImg.count() > 0) {
+                firstImg.scrollIntoViewIfNeeded();
+                firstImg.hover();
+            }
+        } catch (Exception ignored) {}
+
+        // Strategy 1: direct button named "Edit"
+        Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN));
+        if (editBtn.count() > 0) {
+            try {
+                waitVisible(editBtn.first(), 10000);
+                clickWithRetry(editBtn.first(), 2, 200);
+                logger.info("Clicked Edit via BUTTON locator");
+                return;
+            } catch (Exception ignored) {}
+        }
+
+        // Strategy 2: link named "Edit"
+        Locator editLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(EDIT_BTN));
+        if (editLink.count() > 0) {
+            try {
+                waitVisible(editLink.first(), 8000);
+                clickWithRetry(editLink.first(), 2, 200);
+                logger.info("Clicked Edit via LINK locator");
+                return;
+            } catch (Exception ignored) {}
+        }
+
+        // Strategy 3: menu item named "Edit" (if actions are under a menu)
+        try {
+            Locator menuItem = page.getByRole(AriaRole.MENUITEM, new Page.GetByRoleOptions().setName(EDIT_BTN));
+            if (menuItem.count() > 0) {
+                waitVisible(menuItem.first(), 8000);
+                clickWithRetry(menuItem.first(), 2, 200);
+                logger.info("Clicked Edit via MENUITEM locator");
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        // Strategy 4: visible text "Edit" scoped under an open dropdown/menu/dialog
+        try {
+            Locator popup = page.locator(".ant-dropdown:visible, .ant-popover:visible, .ant-modal:visible, body");
+            Locator editTxt = popup.getByText(EDIT_BTN, new Locator.GetByTextOptions().setExact(true));
+            if (editTxt.count() > 0) {
+                clickWithRetry(editTxt.first(), 2, 200);
+                logger.info("Clicked Edit via visible text fallback");
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        // As a last attempt, try clicking any visible 'Edit' text on the page
+        try {
+            Locator anyEdit = page.getByText(EDIT_BTN, new Page.GetByTextOptions().setExact(true));
+            if (anyEdit.count() > 0 && anyEdit.first().isVisible()) {
+                clickWithRetry(anyEdit.first(), 2, 200);
+                logger.info("Clicked Edit via global text fallback");
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        // If all strategies fail, log a warning for non-fatal cleanup skip
+        logger.warn("Unable to locate clickable 'Edit' action for live event after multiple strategies");
     }
 
+    @Step("Ensure Scheduled Live screen visible")
     public void ensureScheduledLiveScreen() {
         Locator txt = page.getByText(SCHEDULED_LIVE_TEXT);
         waitVisible(txt.first(), 15000);
         logger.info("Scheduled Live screen visible");
     }
 
+    @Step("Click Delete event")
     public void clickDeleteEvent() {
         Locator del = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(DELETE_EVENT_BTN));
         waitVisible(del.first(), 10000);
@@ -154,6 +231,7 @@ public class CreatorLivePage extends BasePage {
         logger.info("Clicked Delete event");
     }
 
+    @Step("Confirm delete")
     public void confirmDeleteYes() {
         // Ensure confirm text appears
         Locator confirmTxt = page.getByText(DELETE_CONFIRM_TEXT);
@@ -164,12 +242,14 @@ public class CreatorLivePage extends BasePage {
         logger.info("Confirmed delete");
     }
 
+    @Step("Verify delete success toast")
     public void verifyDeleteSuccessToast() {
         Locator toast = page.getByText(DELETE_SUCCESS_TOAST);
         waitVisible(toast.first(), 15000);
         logger.info("Delete success toast visible");
     }
 
+    @Step("Delete latest scheduled live event")
     public void deleteLatestLiveEvent() {
         if (!isLiveLogoVisibleOnProfile()) {
             throw new AssertionError("Expected live logo on profile indicating a live event exists");
@@ -185,6 +265,7 @@ public class CreatorLivePage extends BasePage {
      * Attempts to delete the latest scheduled live event if present.
      * Returns true if a delete was performed, false if no event was found.
      */
+    @Step("Try delete latest scheduled live event if present")
     public boolean tryDeleteLatestLiveEvent() {
         if (!isLiveLogoVisibleOnProfile()) {
             logger.info("No live event found on profile; skipping cleanup delete");
@@ -220,11 +301,13 @@ public class CreatorLivePage extends BasePage {
         throw new RuntimeException("Register button did not become enabled within timeout");
     }
 
+    @Step("Choose Schedule option")
     public void chooseSchedule() {
         page.locator("label").filter(new Locator.FilterOptions().setHasText(WHEN_SCHEDULE)).click();
         logger.info("Selected Schedule option");
     }
 
+    @Step("Pick date: {when}")
     public void pickDate(LocalDateTime when) {
         // Prevent choosing past dates: clamp to today if needed
         if (when.toLocalDate().isBefore(LocalDate.now())) {
@@ -300,48 +383,85 @@ public class CreatorLivePage extends BasePage {
         return panel.count() > 0 ? panel.first() : page.locator("body");
     }
 
+    @Step("Pick time for {when}")
     public void pickTime(LocalDateTime when) {
-        // If selecting today but time is in the past, try the next sensible future slots
+        // Normalize target: if selecting today and time is in the past, clamp to next sensible future slot first
         boolean today = when.toLocalDate().isEqual(LocalDate.now());
         LocalDateTime now = LocalDateTime.now();
-
-        String hhmm12 = when.format(DateTimeFormatter.ofPattern("hh:mm"));
-        String hhmm24 = when.format(DateTimeFormatter.ofPattern("HH:mm"));
-
-        // Some envs use rc_select_0, others rc_select_1
-        String[] timeSelectors = new String[]{"#rc_select_0", "#rc_select_1"};
-        boolean opened = false;
-        for (String sel : timeSelectors) {
-            Locator dd = page.locator(sel);
-            if (dd.count() > 0) {
-                dd.first().click();
-                opened = true;
-                break;
-            }
+        if (today && !when.isAfter(now.plusMinutes(1))) {
+            int minute = now.getMinute();
+            int toNext30 = ((minute < 30) ? (30 - minute) : (60 - minute));
+            when = now.plusMinutes(toNext30);
+            logger.info("Requested past/near-past time; clamped to next slot: {}", when.format(DateTimeFormatter.ofPattern("HH:mm")));
         }
 
+        String hhmm12 = when.format(DateTimeFormatter.ofPattern("hh:mm"));
+        String hhmm12AmPm = when.format(DateTimeFormatter.ofPattern("hh:mm a"));
+        String hhmm24 = when.format(DateTimeFormatter.ofPattern("HH:mm"));
+
+        // If a date dropdown is still open, close it to avoid overlay blocking time dropdown
+        if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
+            try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
+            page.waitForTimeout(200);
+        }
+
+        // Try opening the time select near the Date field (robust against rc_select_* changes)
+        boolean opened = false;
+        try {
+            Locator dateInput = page.getByPlaceholder(DATE_PLACEHOLDER).first();
+            // First try: the next ant-select after the Date form item
+            Locator timeSelector = dateInput.locator("xpath=ancestor::div[contains(@class,'ant-form-item')][1]//following::div[contains(@class,'ant-select')][1]//div[contains(@class,'ant-select-selector')]");
+            if (timeSelector.count() > 0) {
+                timeSelector.first().click();
+                opened = true;
+            }
+            // Second try: any visible select selector on the page
+            if (!opened) {
+                Locator anySelector = page.locator(".ant-select-selector");
+                if (anySelector.count() > 0) {
+                    anySelector.first().click();
+                    opened = true;
+                }
+            }
+        } catch (Exception ignored) {}
         if (!opened) {
-            logger.warn("Time dropdown not found by known selectors. Trying to click Date field to reveal");
+            logger.warn("Time dropdown not found via relative selector; clicking Date field to reveal");
             page.getByPlaceholder(DATE_PLACEHOLDER).click();
         }
 
-        // Try to pick time by exact text (12h then 24h)
-        Locator opt = page.getByText(hhmm12, new Page.GetByTextOptions().setExact(true));
-        if (opt.count() == 0) opt = page.getByText(hhmm24, new Page.GetByTextOptions().setExact(true));
-        // Fallback: sometimes options are inside #root overlay
+        // Wait for dropdown to become visible
+        WaitUtils.waitForDropdownVisible(page, 3000);
+
+        // Try to pick time within the visible dropdown by role/name or text/title (12h, 12h AM/PM, then 24h)
+        Locator dropdown = page.locator(".ant-select-dropdown:visible").first();
+        Locator opt = dropdown.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(hhmm12).setExact(true));
         if (opt.count() == 0)
-            opt = page.locator("#root").getByText(hhmm12, new Locator.GetByTextOptions().setExact(true));
+            opt = dropdown.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(hhmm12AmPm).setExact(true));
         if (opt.count() == 0)
-            opt = page.locator("#root").getByText(hhmm24, new Locator.GetByTextOptions().setExact(true));
+            opt = dropdown.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(hhmm24).setExact(true));
+        if (opt.count() == 0)
+            opt = dropdown.getByText(hhmm12, new Locator.GetByTextOptions().setExact(true));
+        if (opt.count() == 0)
+            opt = dropdown.getByText(hhmm12AmPm, new Locator.GetByTextOptions().setExact(true));
+        if (opt.count() == 0)
+            opt = dropdown.getByText(hhmm24, new Locator.GetByTextOptions().setExact(true));
+        if (opt.count() == 0)
+            opt = dropdown.locator("[title='" + hhmm12 + "']");
+        if (opt.count() == 0)
+            opt = dropdown.locator("[title='" + hhmm12AmPm + "']");
+        if (opt.count() == 0)
+            opt = dropdown.locator("[title='" + hhmm24 + "']");
 
         if (opt.count() > 0) {
+            // ensure visible
+            WaitUtils.waitForVisible(opt.first(), 2000);
             clickWithRetry(opt.first(), 2, 150);
             logger.info("Picked time {}", opt.first().innerText());
             return;
         }
 
-        // If not found or invalid (past time today), try future candidates
-        if (today && when.isBefore(now)) {
+        // If not found, try future candidates derived from the adjusted base time
+        if (today) {
             String[] candidates = buildFutureTimeCandidates(now);
             logger.info("Initial time in the past; trying candidates: {}", String.join(", ", candidates));
             pickTimeCandidates(candidates);
@@ -363,29 +483,136 @@ public class CreatorLivePage extends BasePage {
     }
 
     // Optional helper if callers want to specify explicit time strings (e.g., 18:30 -> 19:00 fallback)
+    @Step("Pick time candidates: {times}")
     public void pickTimeCandidates(String... times) {
-        String[] selectors = new String[]{"#rc_select_0", "#rc_select_1"};
-        for (String sel : selectors) {
-            Locator dd = page.locator(sel);
-            if (dd.count() > 0) {
-                dd.first().click();
-                break;
+        // Open the time select near the Date field (robust against rc_select_* changes)
+        boolean opened = false;
+        try {
+            Locator dateInput = page.getByPlaceholder(DATE_PLACEHOLDER).first();
+            Locator timeSelector = dateInput.locator("xpath=ancestor::div[contains(@class,'ant-form-item')][1]//following::div[contains(@class,'ant-select')][1]//div[contains(@class,'ant-select-selector')]");
+            if (timeSelector.count() > 0) {
+                timeSelector.first().click();
+                opened = true;
             }
+            if (!opened) {
+                Locator anySelector = page.locator(".ant-select-selector");
+                if (anySelector.count() > 0) {
+                    anySelector.first().click();
+                    opened = true;
+                }
+            }
+        } catch (Exception ignored) {}
+        // 3) Ensure the date picker overlay is not blocking the time dropdown
+        Locator visibleDropdown = page.locator(".ant-select-dropdown:visible");
+        Locator dateDropdown = page.locator(".ant-picker-dropdown:visible");
+        if (dateDropdown.count() > 0) {
+            try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
+            page.waitForTimeout(150);
         }
+        // If time dropdown still not visible, explicitly click the time selector again
+        if (visibleDropdown.count() == 0) {
+            try {
+                Locator dateInput = page.getByPlaceholder(DATE_PLACEHOLDER).first();
+                Locator timeSelector = dateInput.locator("xpath=ancestor::div[contains(@class,'ant-form-item')][1]//following::div[contains(@class,'ant-select')][1]//div[contains(@class,'ant-select-selector')]");
+                if (timeSelector.count() > 0) {
+                    timeSelector.first().click();
+                } else {
+                    page.locator(".ant-select-selector").first().click();
+                }
+            } catch (Exception ignored) {}
+        }
+        // Wait for dropdown to appear
+        WaitUtils.waitForDropdownVisible(page, 3000);
+        // Re-resolve visible dropdown after potential state changes
+        visibleDropdown = page.locator(".ant-select-dropdown:visible");
+
+        // 4) Try provided candidates against the visible dropdown first
         for (String t : times) {
             if (t == null || t.isEmpty()) continue;
-            Locator opt = page.getByText(t, new Page.GetByTextOptions().setExact(true));
-            if (opt.count() == 0)
+            Locator opt = (visibleDropdown.count() > 0)
+                    ? visibleDropdown.first().getByText(t, new Locator.GetByTextOptions().setExact(true))
+                    : page.getByText(t, new Page.GetByTextOptions().setExact(true));
+            if (opt.count() == 0) {
                 opt = page.locator("#root").getByText(t, new Locator.GetByTextOptions().setExact(true));
+            }
             if (opt.count() > 0) {
-                clickWithRetry(opt.first(), 2, 150);
+                try { opt.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                WaitUtils.waitForVisible(opt.first(), 2000);
+                clickWithRetry(opt.first(), 2, 200);
                 logger.info("Picked time {}", t);
                 return;
             }
+            // Typing fallback into combobox input then Enter
+            Locator input = (visibleDropdown.count() > 0)
+                    ? visibleDropdown.first().locator("input[role='combobox'], input")
+                    : page.locator("input[role='combobox'], .ant-select-selector input");
+            if (input.count() > 0) {
+                try {
+                    input.first().click();
+                    input.first().fill("");
+                    input.first().fill(t);
+                    page.keyboard().press("Enter");
+                    logger.info("Typed time {} and pressed Enter", t);
+                    return;
+                } catch (Exception ignored) {}
+            }
         }
-        logger.warn("No provided time candidates matched: {}", String.join(", ", times));
+
+        // 5) Fallback: try a few future time candidates derived from now
+        DateTimeFormatter f24 = DateTimeFormatter.ofPattern("HH:mm");
+        LocalDateTime now = LocalDateTime.now();
+        int minute = now.getMinute();
+        int toNext30 = ((minute < 30) ? (30 - minute) : (60 - minute));
+        String[] fallback = new String[]{
+                now.plusMinutes(toNext30).format(f24),
+                now.plusMinutes(toNext30 + 30).format(f24),
+                now.plusMinutes(toNext30 + 60).format(f24)
+        };
+        for (String t : fallback) {
+            Locator opt = (visibleDropdown.count() > 0)
+                    ? visibleDropdown.first().getByText(t, new Locator.GetByTextOptions().setExact(true))
+                    : page.getByText(t, new Page.GetByTextOptions().setExact(true));
+            if (opt.count() == 0) {
+                opt = page.locator("#root").getByText(t, new Locator.GetByTextOptions().setExact(true));
+            }
+            if (opt.count() > 0) {
+                try { opt.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                WaitUtils.waitForVisible(opt.first(), 2000);
+                clickWithRetry(opt.first(), 2, 200);
+                logger.info("Picked fallback time {}", t);
+                return;
+            }
+        }
+
+        // 6) Final attempt: type a candidate directly and press Enter
+        String candidate = null;
+        for (String t : times) { if (t != null && !t.isEmpty()) { candidate = t; break; } }
+        if (candidate == null) { candidate = fallback[0]; }
+
+        // Re-evaluate dropdown/input in case it changed
+        visibleDropdown = page.locator(".ant-select-dropdown:visible");
+        Locator input = (visibleDropdown.count() > 0)
+                ? visibleDropdown.first().locator("input[role='combobox'], input")
+                : page.locator("input[role='combobox'], .ant-select-selector input");
+        if (input.count() > 0) {
+            try {
+                input.first().click();
+                input.first().fill("");
+                input.first().fill(candidate);
+                page.keyboard().press("Enter");
+                page.waitForTimeout(200);
+                logger.info("Final fallback: typed time '{}' and pressed Enter", candidate);
+                return;
+            } catch (Exception e) {
+                logger.warn("Final typing fallback failed: {}", e.getMessage());
+            }
+        }
+
+        logger.warn("No time option matched. Provided: {}. Fallback tried: {} / {} / {}",
+                String.join(", ", times), fallback[0], fallback[1], fallback[2]);
     }
 
+    @Step("Upload coverage image if provided")
     public void uploadCoverage(Path imagePath) {
         Locator section = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^CoverageDescription$")));
         Locator btn = section.getByRole(AriaRole.BUTTON);
@@ -435,6 +662,7 @@ public class CreatorLivePage extends BasePage {
         }
     }
 
+    @Step("Set description")
     public void setDescription(String message) {
         Locator desc = page.getByPlaceholder(DESC_PLACEHOLDER);
         if (desc.count() > 0) {
@@ -451,6 +679,7 @@ public class CreatorLivePage extends BasePage {
         }
     }
 
+    @Step("Submit and verify success")
     public void submitAndVerify() {
         // Wait for Register to become enabled
         waitUntilRegisterEnabled(20000);

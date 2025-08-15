@@ -24,7 +24,7 @@ public class BaseTestClass {
     protected CreatorRegistrationPage creatorRegistrationPage;
 
     @BeforeMethod
-    public void setUp(ITestResult result) {
+    public void setUp() {
         BrowserFactory.initialize();
         page = BrowserFactory.getPage();
         // Increase default timeouts for slow networks and heavy pages
@@ -83,6 +83,11 @@ public class BaseTestClass {
             } catch (Exception e) {
                 // swallow attachment errors, already failing test
             }
+            // Attach current page HTML to Allure
+            try {
+                String html = page.content();
+                Allure.addAttachment("Page HTML", "text/html", new ByteArrayInputStream(html.getBytes()), ".html");
+            } catch (Exception ignored) {}
             // Export Playwright trace on failure
             try {
                 boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));

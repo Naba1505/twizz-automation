@@ -7,6 +7,7 @@ import com.microsoft.playwright.options.WaitForSelectorState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
+import utils.WaitUtils;
 
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
@@ -42,7 +43,6 @@ public class CreatorRegistrationPage {
     // Fifth Page Locators
     private final String fifthPageHeader = "Identity verification";
     private final String firstImageUploadButton = "role=img[name='document'] >> nth=0";
-    private final String secondImageUploadButton = "role=img[name='document'] >> nth=1";
     private final String firstFileInput = ".ant-upload input[type='file'] >> nth=0";
     private final String secondFileInput = ".ant-upload input[type='file'] >> nth=1";
     private final String finishButton = "role=button[name='FINISH']";
@@ -74,29 +74,173 @@ public class CreatorRegistrationPage {
         String year = dateParts[2];
 
         // Map numeric month to German month name (as per Codegen)
-        String[] monthNames = {"Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"};
-        String monthName = monthNames[Integer.parseInt(month) - 1];
+        int monthIndex = Integer.parseInt(month) - 1; // 0-based index for AntD month grid
+        String dayText = String.valueOf(Integer.parseInt(day)); // normalize no leading zero
 
         page.locator(datePicker).click();
         logger.info("Clicked date picker");
 
-        // Select year
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("2007")).click();
-        page.getByRole(AriaRole.BUTTON).nth(2).click();
-        page.getByText(year).click();
+        // Wait for visible picker
+        Locator picker = page.locator(".ant-picker-dropdown:visible");
+        if (!WaitUtils.waitForVisible(picker, 5000)) {
+            logger.warn("Date picker dropdown did not become visible; attempting typing fallback");
+            typeDobFallback(day, month, year);
+            return;
+        }
+
+        // Move to year panel using AntD header buttons (locale-agnostic)
+        Locator yearBtn = picker.locator(".ant-picker-year-btn");
+        if (yearBtn.count() > 0) {
+            yearBtn.first().click();
+            page.waitForTimeout(100);
+            // Some versions need a second click to move to decade view
+            if (picker.locator(".ant-picker-year-panel").count() == 0) {
+                yearBtn.first().click();
+            }
+        } else {
+            // Fallback to header view buttons
+            Locator headerViewBtn = picker.locator(".ant-picker-header-view button");
+            int toggleGuard = 0;
+            while (picker.locator(".ant-picker-year-panel").count() == 0 && toggleGuard++ < 3) {
+                if (headerViewBtn.count() > 0) headerViewBtn.first().click();
+                page.waitForTimeout(100);
+            }
+        }
+
+        // If year panel still not visible quickly, fall back to typing to avoid flakiness
+        if (picker.locator(".ant-picker-year-panel").count() == 0) {
+            logger.warn("Year panel not detected; using typing fallback for DOB");
+            typeDobFallback(day, month, year);
+            return;
+        }
+        if (!WaitUtils.waitForVisible(picker.locator(".ant-picker-year-panel"), 2000)) {
+            logger.warn("Year panel not visible after toggle; using typing fallback for DOB");
+            typeDobFallback(day, month, year);
+            return;
+        }
+
+        // Navigate decades until target year is within the visible range
+        int targetYear = Integer.parseInt(year);
+        int navGuard = 0;
+        while (navGuard++ < 24) { // up to ~24 decade moves
+            Locator yCells = picker.locator(".ant-picker-year-panel .ant-picker-cell .ant-picker-cell-inner");
+            if (yCells.count() == 0) break;
+            String firstTxt = yCells.first().innerText().replaceAll("[^0-9]", "");
+            String lastTxt = yCells.nth(yCells.count() - 1).innerText().replaceAll("[^0-9]", "");
+            try {
+                int minY = Integer.parseInt(firstTxt);
+                int maxY = Integer.parseInt(lastTxt);
+                if (targetYear >= minY && targetYear <= maxY) {
+                    break; // target in view
+                }
+                if (targetYear < minY) {
+                    Locator prev = picker.locator(".ant-picker-header-super-prev-btn");
+                    if (prev.count() > 0) { prev.first().click(); page.waitForTimeout(100); } else { break; }
+                } else {
+                    Locator next = picker.locator(".ant-picker-header-super-next-btn");
+                    if (next.count() > 0) { next.first().click(); page.waitForTimeout(100); } else { break; }
+                }
+            } catch (Exception ignored) { break; }
+        }
+
+        // Select desired year (click enabled cell)
+        Locator yearCell = picker.locator(".ant-picker-year-panel .ant-picker-cell:not(.ant-picker-cell-disabled) .ant-picker-cell-inner").filter(new Locator.FilterOptions().setHasText(year));
+        WaitUtils.waitForVisible(yearCell, 3000);
+        yearCell.first().click();
         logger.info("Selected year: {}", year);
 
-        // Select month
-        page.getByText(monthName, new Page.GetByTextOptions().setExact(true)).click();
-        logger.info("Selected month: {}", monthName);
+        // Wait for month panel and select month by index (locale-agnostic)
+        WaitUtils.waitForVisible(picker.locator(".ant-picker-month-panel"), 3000);
+        Locator monthCells = picker.locator(".ant-picker-month-panel .ant-picker-cell:not(.ant-picker-cell-disabled)");
+        if (monthCells.count() >= monthIndex + 1) {
+            monthCells.nth(monthIndex).locator(".ant-picker-cell-inner").click();
+            logger.info("Selected month index: {}", monthIndex + 1);
+        } else {
+            logger.warn("Month cells not sufficient ({}), expected index {}. Falling back to first month.", monthCells.count(), monthIndex);
+            monthCells.first().locator(".ant-picker-cell-inner").click();
+        }
 
-        // Select day
-        page.getByText(day).click();
-        logger.info("Selected day: {}", day);
+        // Wait for date panel and select day (enabled cell only)
+        WaitUtils.waitForVisible(picker.locator(".ant-picker-date-panel"), 3000);
+        Locator dayCell = picker.locator(".ant-picker-date-panel .ant-picker-cell-in-view:not(.ant-picker-cell-disabled) .ant-picker-cell-inner").filter(new Locator.FilterOptions().setHasText(dayText));
+        WaitUtils.waitForVisible(dayCell, 3000);
+        dayCell.first().click();
+        logger.info("Selected day: {}", dayText);
 
-        // Click outside to close picker
-        page.getByRole(AriaRole.MAIN).click();
+        // Close picker robustly and verify input is populated
+        try {
+            page.keyboard().press("Escape");
+            page.waitForTimeout(100);
+        } catch (Exception ignored) {}
+        if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
+            page.getByRole(AriaRole.MAIN).click();
+        }
+        // Wait until dropdown is hidden (best-effort)
+        try {
+            Locator visible = page.locator(".ant-picker-dropdown:visible");
+            if (visible.count() > 0) {
+                visible.first().waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.HIDDEN).setTimeout(2000));
+            }
+        } catch (Exception ignored) {}
+
+        // Ensure the date input has a value, otherwise fallback to typing
+        try {
+            Locator input = page.locator(datePicker).first();
+            String v = input.inputValue();
+            if (v == null || v.isEmpty()) {
+                logger.warn("Picker selection did not populate DOB field; using typing fallback");
+                typeDobFallback(day, month, year);
+            }
+        } catch (Exception ignored) {}
         logger.info("Closed date picker");
+
+        // Verify picker closed and input populated; fallback if not
+        try {
+            boolean closed = page.locator(".ant-picker-dropdown:visible").count() == 0;
+            boolean hasValue = !page.locator(datePicker).first().inputValue().isEmpty();
+            if (!closed || !hasValue) {
+                logger.warn("Picker not closed or value empty -> using typing fallback");
+                typeDobFallback(day, month, year);
+            }
+            // Move focus away from date input to avoid reopening the dropdown
+            try {
+                page.keyboard().press("Tab");
+                page.waitForTimeout(100);
+            } catch (Exception ignored) {}
+        } catch (Exception ignored) {}
+    }
+
+    private void typeDobFallback(String day, String month, String year) {
+        // Try common formats accepted by AntD depending on locale
+        String dd = String.format("%02d", Integer.parseInt(day));
+        String mm = String.format("%02d", Integer.parseInt(month));
+        String yyyy = year;
+        String[] formats = new String[] {
+                String.format("%s.%s.%s", dd, mm, yyyy),    // dd.MM.yyyy
+                String.format("%s/%s/%s", dd, mm, yyyy),    // dd/MM/yyyy
+                String.format("%s-%s-%s", dd, mm, yyyy),    // dd-MM-yyyy
+                String.format("%s-%s-%s", yyyy, mm, dd)     // yyyy-MM-dd
+        };
+        Locator input = page.locator(datePicker);
+        input.click();
+        for (String fmt : formats) {
+            try {
+                input.fill("");
+                input.fill(fmt);
+                input.press("Enter");
+                page.waitForTimeout(200);
+                String v = input.inputValue();
+                logger.info("DOB typing attempt '{}' -> '{}'", fmt, v);
+                if (v != null && !v.isEmpty()) {
+                    // Close dropdown if open
+                    if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
+                        page.getByRole(AriaRole.MAIN).click();
+                    }
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
+        logger.warn("DOB typing fallback did not populate value; proceeding with flow");
     }
 
     public void selectGender(String gender) {
@@ -125,8 +269,23 @@ public class CreatorRegistrationPage {
 
         selectDateOfBirth(dob);
         logger.info("Filled date of birth: {}", dob);
-
-        page.locator(emailInput).fill(email);
+        // Ensure focus is on email field and picker is not obstructing
+        try {
+            Locator emailLoc = page.locator(emailInput).first();
+            emailLoc.click();
+            // Best-effort ensure no dropdown overlays
+            Locator dd = page.locator(".ant-picker-dropdown:visible");
+            if (dd.count() > 0) {
+                page.keyboard().press("Escape");
+                page.waitForTimeout(100);
+            }
+            emailLoc.fill(email);
+        } catch (Exception e) {
+            logger.warn("Email fill encountered overlay; retrying after blur: {}", e.getMessage());
+            try { page.evaluate("() => document.activeElement && document.activeElement.blur() "); } catch (Exception ignored) {}
+            page.locator(emailInput).first().click();
+            page.locator(emailInput).first().fill(email);
+        }
         logger.info("Filled email: {}", email);
 
         page.locator(passwordInput).fill(password);

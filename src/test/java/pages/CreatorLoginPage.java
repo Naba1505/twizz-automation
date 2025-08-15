@@ -60,8 +60,18 @@ public class CreatorLoginPage extends BasePage {
         fillByPlaceholder(usernamePlaceholder, username);
         fillByPlaceholder(passwordPlaceholder, password);
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).click();
-        page.waitForLoadState(LoadState.NETWORKIDLE);
-        logger.info("Clicked Connect and waited for network idle");
+        // Avoid NETWORKIDLE due to potential long-polling; wait for a reliable post-login marker instead
+        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+        boolean visible = false;
+        try {
+            waitVisible(plusImg, 20000);
+            visible = true;
+        } catch (Exception ignored) { }
+        if (!visible) {
+            // Fallback to a lighter load-state to not hang
+            try { page.waitForLoadState(LoadState.DOMCONTENTLOADED); } catch (Exception ignored) {}
+        }
+        logger.info("Clicked Connect; post-login UI visible: {}", visible);
     }
 
     public boolean isHandleVisible(String handleWithAt) {

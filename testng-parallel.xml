@@ -1,0 +1,18 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Twizz Automation Suite (Parallel)" parallel="classes" thread-count="4" verbose="1" preserve-order="true">
+    <listeners>
+        <listener class-name="utils.AnnotationTransformer"/>
+    </listeners>
+
+    <test name="Functional Tests (Parallel)">
+        <classes>
+            <class name="tests.LandingPageTest"/>
+            <class name="tests.CreatorRegistrationTest"/>
+            <class name="tests.FanRegistrationTest"/>
+            <class name="tests.CreatorLoginTest"/>
+            <class name="tests.CreatorPublicationTest"/>
+            <class name="tests.CreatorLiveTest"/>
+            <class name="tests.FanLoginTest"/>
+        </classes>
+    </test>
+</suite>

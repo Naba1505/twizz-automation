@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BasePage {
+    protected static final int DEFAULT_WAIT = 10_000;
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     protected final Page page;
 
@@ -48,11 +49,7 @@ public class BasePage {
             } catch (RuntimeException e) {
                 last = e;
                 logger.warn("Click failed (attempt {}/{}): {}", i + 1, retries + 1, e.getMessage());
-                try {
-                    Thread.sleep(sleepMs);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
+                try { page.waitForTimeout(sleepMs); } catch (Exception ignored) {}
             }
         }
         throw last != null ? last : new RuntimeException("Click failed after retries");

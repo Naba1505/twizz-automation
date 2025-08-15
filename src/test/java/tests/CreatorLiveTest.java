@@ -7,10 +7,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 import pages.CreatorLivePage;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import utils.DateTimeUtils;
+import utils.TestAssets;
 
 @Epic("Creator")
 @Feature("Live")
@@ -32,14 +32,11 @@ public class CreatorLiveTest extends BaseCreatorTest {
         live.openPlusMenu();
         live.navigateToLive();
 
-        // 3) Prepare scheduling time: now + 1 day at 03:00 like example (we will let page time picker match if available)
-        LocalDateTime when = LocalDateTime.now().plusDays(1).withHour(3).withMinute(0).withSecond(0).withNano(0);
+        // 3) Prepare scheduling time using utility
+        LocalDateTime when = DateTimeUtils.futureAtDaysHour(1, 3, 0);
 
         // 4) Coverage image (optional if not present)
-        Path coverage = Paths.get("src", "test", "resources", "Images", "Live A.jpg");
-        if (!Files.exists(coverage)) {
-            coverage = null; // page object will skip upload and warn
-        }
+        Path coverage = TestAssets.imageOrNull("Live A.jpg");
 
         // 2) Fill live form step-by-step
         live.setAccessEveryone();
@@ -47,8 +44,9 @@ public class CreatorLiveTest extends BaseCreatorTest {
         live.enableChatEveryoneIfPresent();
         live.chooseSchedule();
         live.pickDate(when);
-        // Prefer specific times from your codegen example with fallback
-        live.pickTimeCandidates("18:30", "19:00");
+        // Prefer dynamic time candidates matching UI from the chosen date
+        String[] timeCandidates = DateTimeUtils.futureTimeCandidates(when);
+        live.pickTimeCandidates(timeCandidates);
         live.uploadCoverage(coverage);
         live.setDescription("Test");
         live.submitAndVerify();
@@ -65,12 +63,9 @@ public class CreatorLiveTest extends BaseCreatorTest {
         live.openPlusMenu();
         live.navigateToLive();
 
-        LocalDateTime when = LocalDateTime.now().plusDays(1).withHour(3).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime when = DateTimeUtils.futureAtDaysHour(1, 3, 0);
 
-        Path coverage = Paths.get("src", "test", "resources", "Images", "Live D.jpg");
-        if (!Files.exists(coverage)) {
-            coverage = null;
-        }
+        Path coverage = TestAssets.imageOrNull("Live D.jpg");
 
         live.setAccessSubscribers();
         // custom amount from request
@@ -78,7 +73,8 @@ public class CreatorLiveTest extends BaseCreatorTest {
         live.enableChatSubscribersIfPresent();
         live.chooseSchedule();
         live.pickDate(when);
-        live.pickTimeCandidates("18:30", "19:00");
+        String[] timeCandidates2 = DateTimeUtils.futureTimeCandidates(when);
+        live.pickTimeCandidates(timeCandidates2);
         live.uploadCoverage(coverage);
         live.setDescription("Test - subscribers");
         live.submitAndVerify();
@@ -93,19 +89,17 @@ public class CreatorLiveTest extends BaseCreatorTest {
         live.openPlusMenu();
         live.navigateToLive();
 
-        LocalDateTime when = LocalDateTime.now().plusDays(1).withHour(3).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime when = DateTimeUtils.futureAtDaysHour(1, 3, 0);
 
-        Path coverage = Paths.get("src", "test", "resources", "Images", "Live C.jpg");
-        if (!Files.exists(coverage)) {
-            coverage = null;
-        }
+        Path coverage = TestAssets.imageOrNull("Live C.jpg");
 
         live.setAccessEveryone();
         live.setPriceFree();
         live.enableChatSubscribersIfPresent();
         live.chooseSchedule();
         live.pickDate(when);
-        live.pickTimeCandidates("18:30", "19:00");
+        String[] timeCandidates2 = DateTimeUtils.futureTimeCandidates(when);
+        live.pickTimeCandidates(timeCandidates2);
         live.uploadCoverage(coverage);
         live.setDescription("Free event - Everyone access, chat for Subscribers");
         live.submitAndVerify();
@@ -120,19 +114,17 @@ public class CreatorLiveTest extends BaseCreatorTest {
         live.openPlusMenu();
         live.navigateToLive();
 
-        LocalDateTime when = LocalDateTime.now().plusDays(1).withHour(3).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime when = DateTimeUtils.futureAtDaysHour(1, 3, 0);
 
-        Path coverage = Paths.get("src", "test", "resources", "Images", "Live B.jpg");
-        if (!Files.exists(coverage)) {
-            coverage = null;
-        }
+        Path coverage = TestAssets.imageOrNull("Live B.jpg");
 
         live.setAccessSubscribers();
         live.setPriceFree();
         live.enableChatSubscribersIfPresent();
         live.chooseSchedule();
         live.pickDate(when);
-        live.pickTimeCandidates("18:30", "19:00");
+        String[] timeCandidates4 = DateTimeUtils.futureTimeCandidates(when);
+        live.pickTimeCandidates(timeCandidates4);
         live.uploadCoverage(coverage);
         live.setDescription("Free event - Subscribers access");
         live.submitAndVerify();

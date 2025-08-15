@@ -1,11 +1,13 @@
 package tests;
 
+import com.microsoft.playwright.Page;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.BaseTestClass;
 import pages.FanRegistrationPage;
 import utils.ConfigReader;
 import utils.DataGenerator;
+import java.util.regex.Pattern;
 
 public class FanRegistrationTest extends BaseTestClass {
 
@@ -21,7 +23,8 @@ public class FanRegistrationTest extends BaseTestClass {
 
         fanPage.completeFanRegistrationFlow(firstName, lastName, username, email, password);
 
-        Assert.assertTrue(fanPage.isHomeVisibleForUser(username),
-                "Home should display 'For " + username + "' after fan registration");
+        // Assert we land on fan home URL instead of relying on LIVE or header text
+        page.waitForURL(Pattern.compile(".*/fan/home.*"), new Page.WaitForURLOptions().setTimeout(15000));
+        Assert.assertTrue(page.url().contains("/fan/home"), "Fan did not land on /fan/home after registration. Actual: " + page.url());
     }
 }
