@@ -28,16 +28,26 @@ pipeline {
     stage('Build') {
       steps {
         script {
-          // Resolve tool homes and export JAVA_HOME + PATH explicitly
+          // Resolve tool homes and export JAVA_HOME/M2_HOME + PATH explicitly
           def jdkHome = tool name: 'JDK21', type: 'jdk'
           def mvnHome = tool name: 'Maven3.9', type: 'maven'
-          withEnv(["JAVA_HOME=${jdkHome}",
-                   isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
-                   isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin"]) {
+          def mvnCmdAbs = isUnix() ? "${mvnHome}/bin/mvn" : "${mvnHome}\\bin\\mvn.cmd"
+          withEnv([
+            "JAVA_HOME=${jdkHome}",
+            "M2_HOME=${mvnHome}",
+            isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
+            isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin",
+            "MVN=${mvnCmdAbs}"
+          ]) {
             if (isUnix()) {
+              sh 'echo Using JAVA_HOME=$JAVA_HOME && $JAVA_HOME/bin/java -version || true'
+              sh 'echo Using MVN=$MVN && $MVN -v || true'
               sh "${MAVEN_CMD} clean install -DskipTests ${params.MAVEN_OPTS_EXTRA}"
             } else {
-              bat "${MAVEN_CMD} clean install -DskipTests %MAVEN_OPTS_EXTRA%"
+              bat 'echo Using JAVA_HOME=%JAVA_HOME% && dir "%JAVA_HOME%\\bin\\java.exe"'
+              bat '"%JAVA_HOME%\\bin\\java.exe" -version'
+              bat 'echo Using MVN=%MVN% && "%MVN%" -v'
+              bat '"%MVN%" -B clean install -DskipTests %MAVEN_OPTS_EXTRA%'
             }
           }
         }
@@ -51,13 +61,23 @@ pipeline {
         script {
           def jdkHome = tool name: 'JDK21', type: 'jdk'
           def mvnHome = tool name: 'Maven3.9', type: 'maven'
-          withEnv(["JAVA_HOME=${jdkHome}",
-                   isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
-                   isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin"]) {
+          def mvnCmdAbs = isUnix() ? "${mvnHome}/bin/mvn" : "${mvnHome}\\bin\\mvn.cmd"
+          withEnv([
+            "JAVA_HOME=${jdkHome}",
+            "M2_HOME=${mvnHome}",
+            isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
+            isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin",
+            "MVN=${mvnCmdAbs}"
+          ]) {
             if (isUnix()) {
+              sh 'echo Using JAVA_HOME=$JAVA_HOME && $JAVA_HOME/bin/java -version || true'
+              sh 'echo Using MVN=$MVN && $MVN -v || true'
               sh "${MAVEN_CMD} -Dplaywright.cli.install=true test -DskipTests ${params.MAVEN_OPTS_EXTRA}"
             } else {
-              bat "${MAVEN_CMD} -Dplaywright.cli.install=true test -DskipTests %MAVEN_OPTS_EXTRA%"
+              bat 'echo Using JAVA_HOME=%JAVA_HOME% && dir "%JAVA_HOME%\\bin\\java.exe"'
+              bat '"%JAVA_HOME%\\bin\\java.exe" -version'
+              bat 'echo Using MVN=%MVN% && "%MVN%" -v'
+              bat '"%MVN%" -B -Dplaywright.cli.install=true test -DskipTests %MAVEN_OPTS_EXTRA%'
             }
           }
         }
@@ -76,13 +96,23 @@ pipeline {
           }
           def jdkHome = tool name: 'JDK21', type: 'jdk'
           def mvnHome = tool name: 'Maven3.9', type: 'maven'
-          withEnv(["JAVA_HOME=${jdkHome}",
-                   isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
-                   isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin"]) {
+          def mvnCmdAbs = isUnix() ? "${mvnHome}/bin/mvn" : "${mvnHome}\\bin\\mvn.cmd"
+          withEnv([
+            "JAVA_HOME=${jdkHome}",
+            "M2_HOME=${mvnHome}",
+            isUnix() ? "PATH+JAVA=${jdkHome}/bin" : "Path+JAVA=${jdkHome}\\bin",
+            isUnix() ? "PATH+MAVEN=${mvnHome}/bin" : "Path+MAVEN=${mvnHome}\\bin",
+            "MVN=${mvnCmdAbs}"
+          ]) {
             if (isUnix()) {
+              sh 'echo Using JAVA_HOME=$JAVA_HOME && $JAVA_HOME/bin/java -version || true'
+              sh 'echo Using MVN=$MVN && $MVN -v || true'
               sh "${MAVEN_CMD} ${suiteArg} test ${params.MAVEN_OPTS_EXTRA}"
             } else {
-              bat "${MAVEN_CMD} ${suiteArg} test %MAVEN_OPTS_EXTRA%"
+              bat 'echo Using JAVA_HOME=%JAVA_HOME% && dir "%JAVA_HOME%\\bin\\java.exe"'
+              bat '"%JAVA_HOME%\\bin\\java.exe" -version'
+              bat 'echo Using MVN=%MVN% && "%MVN%" -v'
+              bat '"%MVN%" -B ${suiteArg} test %MAVEN_OPTS_EXTRA%'
             }
           }
         }
