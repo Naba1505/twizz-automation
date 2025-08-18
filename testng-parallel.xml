@@ -12,6 +12,7 @@
             <class name="tests.CreatorLoginTest"/>
             <class name="tests.CreatorPublicationTest"/>
             <class name="tests.CreatorLiveTest"/>
+            <class name="tests.CreatorQuickFilesTest"/>
             <class name="tests.FanLoginTest"/>
         </classes>
     </test>

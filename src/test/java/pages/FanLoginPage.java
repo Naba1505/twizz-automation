@@ -52,12 +52,8 @@ public class FanLoginPage extends BasePage {
         fillByPlaceholder(usernamePlaceholder, username);
         fillByPlaceholder(passwordPlaceholder, password);
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).click();
-        page.waitForLoadState(LoadState.NETWORKIDLE);
-    }
-
-    // Backwards-compatible: replace LIVE check with URL-based verification
-    public boolean isLiveVisible() {
-        return isOnFanHomeUrl(20000);
+        // Do not rely on NETWORKIDLE; wait for destination URL instead
+        waitForFanHomeUrl(20_000);
     }
 
     public boolean isOnFanHomeUrl(long timeoutMs) {

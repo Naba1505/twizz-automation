@@ -97,14 +97,63 @@ Key entries (with defaults):
   ```
 - If you hit parallel issues on some environments, switch `testng.xml` to `parallel="tests"` or run sequentially.
 
-## Reports
-  - Allure raw results: `target/allure-results/`
-  - To view Allure report (after installing Allure CLI):
-    ```bash
-    allure serve target/allure-results
-    ```
+## Quick Files (Creator) Upload Tests
+- Tests: `CreatorQuickFilesTest`
+  - Three scenarios split by media type with album name prefixes:
+    - Videos only: prefix `videoalbum_`
+    - Images only: prefix `imagealbum_`
+    - Mixed media: prefix `mixalbum_`
+- Upload strategy:
+  - Prefer sequential per-file uploads via the PLUS button with tab switching to the appropriate media tab.
+  - If PLUS is not a native input (e.g., Ant Upload wrapper), fallback to `input[type=file]` and set files (batch or sequential by `multiple`).
+- Timing constants used (see `pages/CreatorSettingsPage.java`):
+  - `SHORT_PAUSE_MS = 300`
+  - `SEQUENTIAL_PAUSE_MS = 500`
+  - Tests use `POST_CONFIRM_PAUSE_MS = 1000` (see `tests/CreatorQuickFilesTest.java`).
+- How to run:
+  ```bash
+  mvn -Dtest=CreatorQuickFilesTest#creatorCreatesQuickAlbum_VideosOnly test
+  mvn -Dtest=CreatorQuickFilesTest#creatorCreatesQuickAlbum_ImagesOnly test
+  mvn -Dtest=CreatorQuickFilesTest#creatorCreatesQuickAlbum_MixedMedia test
+  ```
 
-On failure, screenshots and Playwright trace ZIPs are attached to Allure. Optional success screenshots/trace export are configurable.
+## Fan Login
+- Page object: `pages/FanLoginPage`
+- Behavior:
+  - After clicking Connect, avoids `NETWORKIDLE` waits (flaky on SPAs).
+  - Waits for redirect to `/fan/home` using URL-based wait helpers.
+- Test: `tests/FanLoginTest`
+  - Uses `pageObj.waitForFanHomeUrl()` and asserts current URL contains `/fan/home`.
+
+## Reports (Allure)
+- Allure raw results are written to: `target/allure-results/`
+- Install Allure CLI:
+  - Windows: `choco install allure` or `scoop install allure`
+  - macOS: `brew install allure`
+  - Linux: `sudo npm i -g allure-commandline --save-dev` or download from GitHub releases
+- Quick preview (one-off web server):
+  ```bash
+  allure serve target/allure-results
+  ```
+- Generate static report and open:
+  ```bash
+  allure generate -c -o target/allure-report target/allure-results
+  allure open target/allure-report
+  ```
+- What gets attached automatically:
+  - Failure screenshot (PNG)
+  - Page HTML on failure
+  - Playwright trace ZIP on failure
+  - Optional on success (configurable via `src/main/resources/config.properties`):
+    - `screenshot.on.success=false|true`
+    - `trace.export.on.success=false|true`
+    - `trace.enable=true|false` and `trace.dir=traces`
+- CI notes:
+  - GitHub Actions uploads `target/allure-results` as an artifact (see `.github/workflows/ci.yml`).
+  - Jenkins pipeline attempts to publish Allure results if the Allure plugin is installed (see `Jenkinsfile`).
+- Troubleshooting:
+  - If `allure` command is not found, ensure CLI is installed and on PATH. On Windows, restart the shell after installing via Chocolatey/Scoop.
+  - If the report is empty, confirm tests ran and `target/allure-results` contains `.json`/attachments.
 
 ## Creator Registration Flow Coverage
 - Page 1: Basic info (name, username, names, DOB, email, password, phone, gender)
