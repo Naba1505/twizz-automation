@@ -28,6 +28,28 @@ public class CreatorSettingsPage extends BasePage {
         super(page);
     }
 
+    // Try to detect media items that appear in the queue/list on the upload page
+    private Locator getQueuedMediaItems() {
+        // Common patterns: Ant Upload list items, image thumbnails, generic cards in the media area
+        return page.locator(".ant-upload-list-item, [data-testid='upload-item'], .ant-image, .ql-media-thumb, .media-thumb, .ant-card");
+    }
+
+    private void waitForQueuedItemsIncrement(int before, int expectedIncrement, int timeoutMs) {
+        int target = before + expectedIncrement;
+        long end = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < end) {
+            int now = 0;
+            try { now = getQueuedMediaItems().count(); } catch (RuntimeException ignored) {}
+            if (now >= target) {
+                log.info("Queued items reached target {} (now={})", target, now);
+                return;
+            }
+            try { page.waitForTimeout(200); } catch (Exception ignored) {}
+        }
+        int finalCount = getQueuedMediaItems().count();
+        log.warn("Queued items did not reach target {} within {} ms (final={})", target, timeoutMs, finalCount);
+    }
+
     // Locators/labels used in steps
     private static final String SETTINGS_ICON_NAME = "settings"; // role=img name
     private static final String QUICK_FILES_TEXT = "Quick Files";
@@ -62,6 +84,181 @@ public class CreatorSettingsPage extends BasePage {
         // Verify title text present
         waitVisible(page.getByText(QUICK_FILES_TEXT), DEFAULT_WAIT);
         log.info("Quick Files screen visible, url={}", page.url());
+    }
+
+    @Step("Ensure Quick Files URL and title are visible")
+    public void ensureOnQuickFiles() {
+        waitForUrlContains(QUICK_LINK_URL);
+        waitVisible(page.getByText(QUICK_FILES_TEXT), DEFAULT_WAIT);
+    }
+
+    @Step("Delete all Quick Files albums via trash icon with confirmation")
+    public void deleteAllQuickFileAlbums() {
+        // Navigate to Quick Files first to ensure correct context
+        navigateToQuickFilesDirect();
+        ensureOnQuickFiles();
+        waitForAlbumGrid();
+
+        int guard = 0;
+        while (true) {
+            Locator trashes = getTrashIcons();
+            int count = trashes.count();
+            log.info("Found {} trash icon(s) on Quick Files page", count);
+            if (count == 0) {
+                // Try per-card hover-and-delete as a fallback
+                if (!tryDeleteViaCards()) {
+                    log.info("No trash icons found on page or within cards; nothing to delete.");
+                    break;
+                }
+                // After per-card attempt, continue loop to re-count
+                continue;
+            }
+            // Click the last icon (deleting from bottom up is often more stable)
+            try {
+                Locator target = trashes.nth(count - 1);
+                // Some UIs render the trash only on hover; ensure visibility
+                try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                try { target.hover(); } catch (Exception ignored) {}
+                try {
+                    clickWithRetry(target, 2, 300);
+                } catch (RuntimeException primary) {
+                    // force click as fallback
+                    try { target.click(new Locator.ClickOptions().setForce(true)); }
+                    catch (Exception forceErr) { throw primary; }
+                }
+            } catch (RuntimeException e) {
+                log.warn("Failed to click trash icon: {}", e.getMessage());
+                break;
+            }
+
+            // Confirm modal
+            boolean confirmed = clickAnyConfirmDelete();
+            if (!confirmed) {
+                log.warn("Could not find a known confirm delete button; aborting deletion loop.");
+                break;
+            }
+
+            // brief settle for DOM update
+            try { page.waitForTimeout(SHORT_PAUSE_MS); } catch (Exception ignored) {}
+            // Wait for the number of trash icons to decrease
+            long end = System.currentTimeMillis() + DEFAULT_WAIT;
+            while (System.currentTimeMillis() < end) {
+                int now = getTrashIcons().count();
+                if (now < count) break;
+                try { page.waitForTimeout(100); } catch (Exception ignored) {}
+            }
+
+            guard++;
+            if (guard > 100) {
+                log.warn("Stopping delete loop after {} iterations to avoid infinite loop.", guard);
+                break;
+            }
+        }
+    }
+
+    @Step("Directly navigate to Quick Files URL and ensure page is visible")
+    public void navigateToQuickFilesDirect() {
+        page.navigate(QUICK_LINK_URL);
+        ensureOnQuickFiles();
+    }
+
+    public int quickFilesTrashIconCount() {
+        return getTrashIcons().count();
+    }
+
+    private Locator getTrashIcons() {
+        // Try role=img name=trash (exact)
+        Locator imgTrash = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("trash").setExact(true));
+        if (imgTrash.count() > 0) return imgTrash;
+        // Try role=img name=Trash (capitalized)
+        Locator imgTrashCap = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Trash").setExact(true));
+        if (imgTrashCap.count() > 0) return imgTrashCap;
+        // Try role=button name=trash
+        Locator btnTrash = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("trash").setExact(true));
+        if (btnTrash.count() > 0) return btnTrash;
+        // Try role=button name=Trash
+        Locator btnTrashCap = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Trash").setExact(true));
+        if (btnTrashCap.count() > 0) return btnTrashCap;
+        // Fallback: CSS class often present on the icon
+        return page.locator(".trashIcon");
+    }
+
+    private boolean clickAnyConfirmDelete() {
+        String[] labels = new String[]{"Yes, delete", "Yes, Delete", "Delete", "Yes"};
+        long end = System.currentTimeMillis() + DEFAULT_WAIT;
+        while (System.currentTimeMillis() < end) {
+            for (String label : labels) {
+                Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
+                if (btn.count() > 0 && btn.first().isVisible()) {
+                    try {
+                        clickWithRetry(btn.first(), 2, 200);
+                        return true;
+                    } catch (Exception ignored) {}
+                }
+            }
+            try { page.waitForTimeout(100); } catch (Exception ignored) {}
+        }
+        return false;
+    }
+
+    private void waitForAlbumGrid() {
+        // Wait for any of the expected containers or any trash icon to appear
+        long end = System.currentTimeMillis() + DEFAULT_WAIT;
+        while (System.currentTimeMillis() < end) {
+            if (getTrashIcons().count() > 0) return;
+            if (getAlbumCards().count() > 0) return;
+            try { page.waitForTimeout(150); } catch (Exception ignored) {}
+        }
+    }
+
+    private Locator getAlbumCards() {
+        // Common Ant Design patterns and potential testid
+        Locator cards = page.locator("[data-testid='album-card'], .ant-card, .ant-card-body, .ql-card, .albumCard");
+        return cards;
+    }
+
+    private boolean tryDeleteViaCards() {
+        Locator cards = getAlbumCards();
+        int total = cards.count();
+        if (total == 0) return false;
+        for (int i = total - 1; i >= 0; i--) {
+            Locator card = cards.nth(i);
+            try { card.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+            try { card.hover(); } catch (Exception ignored) {}
+            Locator trash = card.getByRole(AriaRole.IMG, new Locator.GetByRoleOptions().setName("trash").setExact(true));
+            if (trash.count() == 0) {
+                trash = card.getByRole(AriaRole.IMG, new Locator.GetByRoleOptions().setName("Trash").setExact(true));
+            }
+            if (trash.count() == 0) {
+                trash = card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("trash").setExact(true));
+            }
+            if (trash.count() == 0) {
+                trash = card.locator(".trashIcon");
+            }
+            if (trash.count() > 0) {
+                Locator target = trash.first();
+                try { target.hover(); } catch (Exception ignored) {}
+                try {
+                    clickWithRetry(target, 2, 200);
+                } catch (Exception e) {
+                    try { target.click(new Locator.ClickOptions().setForce(true)); } catch (Exception ignored) { continue; }
+                }
+                // Confirm
+                if (!clickAnyConfirmDelete()) {
+                    continue;
+                }
+                // Wait for at least one album/trash to disappear
+                long end = System.currentTimeMillis() + DEFAULT_WAIT;
+                while (System.currentTimeMillis() < end) {
+                    if (getTrashIcons().count() < total || getAlbumCards().count() < total) {
+                        return true;
+                    }
+                    try { page.waitForTimeout(100); } catch (Exception ignored) {}
+                }
+                return true; // best effort
+            }
+        }
+        return false;
     }
 
     @Step("Start creating a new album")
@@ -100,6 +297,7 @@ public class CreatorSettingsPage extends BasePage {
         int total = filePaths != null ? filePaths.size() : 0;
         log.info("Adding media files ({} files)", total);
         if (filePaths == null || filePaths.isEmpty()) return;
+        int beforeTotalQueued = getQueuedMediaItems().count();
 
         // Split by type early so we can choose appropriate tab before using PLUS
         List<Path> images = filePaths.stream().filter(this::isImage).collect(Collectors.toList());
@@ -137,8 +335,10 @@ public class CreatorSettingsPage extends BasePage {
             try { accept = allInputs.first().getAttribute("accept"); } catch (RuntimeException ignored) {}
             log.info("Single input accept='{}'", accept);
             log.info("Uploading all files in one batch on the single input to avoid replacement.");
+            int before = getQueuedMediaItems().count();
             allInputs.first().setInputFiles(filePaths.toArray(new Path[0]));
             logSelectedFilesCount(allInputs.first(), total);
+            waitForQueuedItemsIncrement(before, total, LONG_WAIT);
             return;
         }
 
@@ -158,8 +358,10 @@ public class CreatorSettingsPage extends BasePage {
                 combined.addAll(images);
                 combined.addAll(videos);
                 log.info("Images and videos target the same input (index {}), uploading combined {} file(s)", imgIdx, combined.size());
+                int before = getQueuedMediaItems().count();
                 input.setInputFiles(combined.toArray(new Path[0]));
                 logSelectedFilesCount(input, combined.size());
+                waitForQueuedItemsIncrement(before, combined.size(), LONG_WAIT);
             } else {
                 if (!images.isEmpty()) {
                     log.info("Uploading {} image(s): {}", images.size(), images);
@@ -176,6 +378,12 @@ public class CreatorSettingsPage extends BasePage {
             // Fallback to any available input
             uploadToCategory(null, null, others);
         }
+
+        // Final guard: ensure at least 'total' new items were queued
+        int afterTotalQueued = getQueuedMediaItems().count();
+        int delta = afterTotalQueued - beforeTotalQueued;
+        log.info("Queued items before: {} after: {} delta: {} (expected >= {})", beforeTotalQueued, afterTotalQueued, delta, total);
+        Assert.assertTrue(delta >= total, "Not all files were queued. Expected at least " + total + ", but only saw " + delta + " new item(s).");
     }
 
     private void uploadToCategory(String tabName, String acceptKeyword, List<Path> files) {
@@ -209,8 +417,10 @@ public class CreatorSettingsPage extends BasePage {
         boolean supportsMultiple = multipleAttr != null; // presence of attribute indicates multi-select
         log.info("Uploading {} file(s) to input (accept='{}', multiple='{}')", files.size(), acceptKeyword, supportsMultiple);
         if (supportsMultiple) {
+            int before = getQueuedMediaItems().count();
             input.setInputFiles(files.toArray(new Path[0]));
             logSelectedFilesCount(input, files.size());
+            waitForQueuedItemsIncrement(before, files.size(), LONG_WAIT);
         } else {
             // Upload sequentially one by one; re-find input each time to avoid stale locators
             for (int i = 0; i < files.size(); i++) {
@@ -231,9 +441,11 @@ public class CreatorSettingsPage extends BasePage {
                         throw new RuntimeException("No file input available for sequential upload of: " + f.getFileName());
                     }
                     log.info("Sequential upload ({}/{}): {}", i + 1, files.size(), f.getFileName());
+                    int before = getQueuedMediaItems().count();
                     current.setInputFiles(new Path[]{f});
                     // brief settle; real UIs usually queue the file instantly
                     try { page.waitForTimeout(SEQUENTIAL_PAUSE_MS); } catch (Exception ignored) {}
+                    waitForQueuedItemsIncrement(before, 1, DEFAULT_WAIT);
                 } catch (RuntimeException e) {
                     log.warn("Failed sequential upload for {}: {}", f.getFileName(), e.getMessage());
                     throw e;
@@ -290,12 +502,25 @@ public class CreatorSettingsPage extends BasePage {
             try {
                 Locator plus = getPlusButton();
                 if (plus == null) {
-                    log.info("PLUS button not available for tab '{}'; aborting sequential PLUS path", tabName);
+                    log.info("PLUS button not available for tab '{}' ; aborting sequential PLUS path", tabName);
                     return false;
                 }
+                // Click plus to reveal the hidden input, then set files on the actual input element
                 clickWithRetry(plus, 1, 150);
-                log.info("[PLUS] Sequential ({}/{}): {} in tab '{}'", i + 1, files.size(), f.getFileName(), tabName);
-                plus.setInputFiles(new Path[]{f});
+                log.info("[PLUS] Sequential ({}/{}) : {} in tab '{}'", i + 1, files.size(), f.getFileName(), tabName);
+                Locator input = page.locator("input[type=file]");
+                // Prefer the last input as many UIs inject a new input per click
+                if (input.count() == 0) {
+                    // Try to reveal again explicitly and re-scan
+                    revealUploadTrigger();
+                    input = page.locator("input[type=file]");
+                }
+                if (input.count() == 0) {
+                    log.warn("[PLUS] No file input found after plus click for '{}'", f.getFileName());
+                    return false;
+                }
+                Locator targetInput = input.nth(input.count() - 1);
+                targetInput.setInputFiles(new Path[]{f});
                 try { page.waitForTimeout(SHORT_PAUSE_MS); } catch (Exception ignored) {}
             } catch (RuntimeException ex) {
                 log.warn("[PLUS] Sequential failed for {} in tab '{}': {}", f.getFileName(), tabName, ex.getMessage());
@@ -307,18 +532,28 @@ public class CreatorSettingsPage extends BasePage {
 
     private boolean clickTabIfPresent(String tabName) {
         if (tabName == null) return false;
-        Locator tab = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tabName));
-        if (tab.count() > 0) {
-            log.info("Switching to '{}' tab", tabName);
-            clickWithRetry(tab.first(), 2, 300);
-            return true;
+        String[] candidates;
+        if ("Images".equalsIgnoreCase(tabName)) {
+            candidates = new String[]{"Images", "Image", "Photos", "Photo"};
+        } else if ("Videos".equalsIgnoreCase(tabName)) {
+            candidates = new String[]{"Videos", "Video"};
+        } else {
+            candidates = new String[]{tabName};
         }
-        // Fallback: plain text tab
-        Locator textTab = page.getByText(tabName);
-        if (textTab.count() > 0) {
-            log.info("Switching to '{}' section via text", tabName);
-            clickWithRetry(textTab.first(), 2, 300);
-            return true;
+        for (String name : candidates) {
+            Locator tab = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
+            if (tab.count() > 0) {
+                log.info("Switching to '{}' tab", name);
+                clickWithRetry(tab.first(), 2, 300);
+                return true;
+            }
+            // Fallback: plain text tab
+            Locator textTab = page.getByText(name);
+            if (textTab.count() > 0) {
+                log.info("Switching to '{}' section via text", name);
+                clickWithRetry(textTab.first(), 2, 300);
+                return true;
+            }
         }
         log.info("'{}' tab not present; continuing without switch", tabName);
         return false;
@@ -339,8 +574,8 @@ public class CreatorSettingsPage extends BasePage {
                 }
             } catch (RuntimeException ignored) { }
         }
-        log.info("No input matched acceptKeyword '{}'; using first input index 0 as fallback", acceptKeyword);
-        return 0;
+        log.info("No input matched acceptKeyword '{}' ; returning null to allow smarter fallback", acceptKeyword);
+        return null;
     }
 
     private boolean isImage(Path p) {

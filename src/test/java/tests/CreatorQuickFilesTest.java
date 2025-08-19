@@ -10,7 +10,7 @@ import java.util.List;
 public class CreatorQuickFilesTest extends BaseCreatorTest {
     private static final int POST_CONFIRM_PAUSE_MS = 1000;
 
-    @Test(priority = 1, description = "Create Quick Files album with videos only")
+    @Test(priority = 1, description = "Create Quick Files album with videos only", groups = {"quickfiles-create"})
     public void creatorCreatesQuickAlbum_VideosOnly() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("videoalbum_");
@@ -29,7 +29,7 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         settings.navigateBackToProfile(2);
     }
 
-    @Test(priority = 2, description = "Create Quick Files album with images only")
+    @Test(priority = 2, description = "Create Quick Files album with images only", groups = {"quickfiles-create"})
     public void creatorCreatesQuickAlbum_ImagesOnly() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("imagealbum_");
@@ -48,7 +48,7 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         settings.navigateBackToProfile(2);
     }
 
-    @Test(priority = 3, description = "Create Quick Files album with both videos and images")
+    @Test(priority = 3, description = "Create Quick Files album with both videos and images", groups = {"quickfiles-create"})
     public void creatorCreatesQuickAlbum_MixedMedia() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("mixalbum_");

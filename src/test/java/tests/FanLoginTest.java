@@ -1,12 +1,10 @@
 package tests;
 
-import com.microsoft.playwright.Page;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.BaseTestClass;
 import pages.FanLoginPage;
 import utils.ConfigReader;
-import java.util.regex.Pattern;
 
 public class FanLoginTest extends BaseTestClass {
 
