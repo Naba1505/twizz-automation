@@ -58,17 +58,18 @@ public class CreatorLivePage extends BasePage {
 
     @Step("Navigate to Live screen")
     public void navigateToLive() {
-        // Either after plus or direct
-        if (page.getByText(CONVERSION_TOOLS_TEXT).count() > 0) {
-            clickIUnderstandIfPresent();
-        }
-        Locator liveExact = page.getByText(LIVE_TEXT, new Page.GetByTextOptions().setExact(true));
-        if (liveExact.count() > 0) {
-            clickWithRetry(liveExact.first(), 2, 200);
-        }
+        // Always clear any blocking overlay first
+        clickIUnderstandIfPresent();
+
+        // Click Live reliably
+        clickLiveExactWithRetry();
+
+        // If onboarding shows up after clicking Live, dismiss and retry click
         if (page.getByText(LIVE_ONBOARDING_TEXT).count() > 0) {
             clickIUnderstandIfPresent();
+            clickLiveExactWithRetry();
         }
+
         ensureLiveScreen();
     }
 
@@ -708,5 +709,13 @@ public class CreatorLivePage extends BasePage {
         if (understand.count() > 0 && understand.first().isVisible()) {
             clickWithRetry(understand.first(), 2, 200);
         }
+    }
+
+    private void clickLiveExactWithRetry() {
+        Locator liveExact = page.getByText(LIVE_TEXT, new Page.GetByTextOptions().setExact(true));
+        // Wait briefly for it to be attached/visible, then click with retry
+        waitVisible(liveExact.first(), 10000);
+        try { liveExact.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+        clickWithRetry(liveExact.first(), 3, 250);
     }
 }

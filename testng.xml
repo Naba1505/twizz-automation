@@ -14,7 +14,7 @@
             <class name="tests.CreatorLiveTest"/>
             <class name="tests.CreatorQuickFilesTest"/>
             <class name="tests.CreatorQuickFilesDeleteTest"/>
-            <class name="tests.FanLoginTest"/>  
+            <class name="tests.FanLoginTest"/>
         </classes>
     </test>
 </suite>
