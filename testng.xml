@@ -13,6 +13,7 @@
             <class name="tests.CreatorPublicationTest"/>
             <class name="tests.CreatorLiveTest"/>
             <class name="tests.CreatorQuickFilesTest"/>
+            <class name="tests.CreatorCollectionTest"/>
             <class name="tests.CreatorQuickFilesDeleteTest"/>
             <class name="tests.FanLoginTest"/>
         </classes>
