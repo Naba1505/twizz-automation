@@ -25,6 +25,29 @@ pipeline {
       }
     }
 
+    stage('Guard: disallow scheduled (cron) runs') {
+      steps {
+        script {
+          try {
+            def causes = currentBuild?.rawBuild?.getCauses() ?: []
+            def isTimer = false
+            for (def c in causes) {
+              def cls = c?.getClass()?.getName() ?: ''
+              def desc = c?.getShortDescription() ?: ''
+              if (cls.contains('TimerTriggerCause') || desc.toLowerCase().contains('timer') || desc.toLowerCase().contains('cron')) {
+                isTimer = true
+              }
+            }
+            if (isTimer) {
+              error 'Scheduled (cron) runs are disabled for this pipeline. Please remove the timer trigger from the Jenkins job configuration.'
+            }
+          } catch (ignored) {
+            // If we cannot detect, do nothing and proceed
+          }
+        }
+      }
+    }
+
     stage('Build') {
       steps {
         script {
