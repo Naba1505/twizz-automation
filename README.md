@@ -128,6 +128,20 @@ Key entries (with defaults):
   mvn -Dtest=CreatorQuickFilesTest#creatorCreatesQuickAlbum_MixedMedia test
   ```
 
+### Quick Files Collection Flow (POM)
+- Test: `CreatorCollectionTest#creatorCanCreateCollectionUsingQuickFilesAlbum`
+- What it does:
+  - Opens the Creator plus menu, dismisses any "I understand" dialog, navigates to `Collection`.
+  - Creates a collection, adds media via Quick Files, selects album by case-insensitive prefix (video/image/mix), selects up to 3 covers via mouse hover + click, proceeds next steps, validates, and waits for the success toast only.
+  - All locators and interactions are encapsulated in `pages/CreatorCollectionPage`.
+- How to run just this test:
+  ```bash
+  mvn -Dtest=CreatorCollectionTest#creatorCanCreateCollectionUsingQuickFilesAlbum test
+  ```
+ - Notes:
+   - The test asserts only the success toast "Collection is created successfully" and dismisses it.
+   - Interactions prefer mouse hover and clicks to mimic real user behavior.
+
 ## Fan Login
 - Page object: `pages/FanLoginPage`
 - Behavior:

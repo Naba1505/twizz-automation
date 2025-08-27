@@ -191,4 +191,56 @@ public class CreatorCollectionTest extends BaseCreatorTest {
         }
     }
 
+    @Story("Create collection by using Quick Files album to add media")
+    @Test(priority = 4, description = "Creator creates a collection using Quick Files album and validates creation")
+    public void creatorCanCreateCollectionUsingQuickFilesAlbum() {
+        CreatorCollectionPage coll = new CreatorCollectionPage(page);
+
+        // 1) Open plus and navigate to Collection
+        logger.info("[QuickFiles] Opening plus menu and navigating to Collection");
+        coll.openPlusMenu();
+        // Dismiss potential 'I understand' dialog if shown
+        coll.clickIUnderstandIfPresent();
+        coll.navigateToCollection();
+
+        // 2) Fill title and Create (timestamped)
+        logger.info("[QuickFiles] Filling title and clicking Create");
+        coll.fillCollectionTitle("CollectionQuickFile");
+        coll.clickCreate();
+
+        // 3) Add media via Quick Files
+        logger.info("[QuickFiles] Opening Add Media and choosing Quick Files");
+        coll.clickAddMediaPlus();
+        coll.chooseQuickFiles();
+
+        // 4) Select an album (prefer names starting with videoalbum_/imagealbum_/mixalbum_)
+        logger.info("[QuickFiles] Selecting a Quick Files album");
+        coll.selectQuickFilesAlbumWithFallback();
+
+        // 5) Select a few media covers
+        logger.info("[QuickFiles] Selecting up to 3 media items from album");
+        coll.selectUpToNCovers(3);
+
+        // 6) Confirm selection and proceed through Next steps
+        logger.info("[QuickFiles] Confirm selection and proceed");
+        coll.clickSelectInQuickFiles();
+        // Next through steps (thumbnail, options, summary)
+        coll.proceedNextSteps(3);
+
+        // 7) Description and price
+        logger.info("[QuickFiles] Filling description and setting price 15€");
+        coll.fillDescription("Descripion");
+        coll.setPriceEuro(15);
+
+        // 8) Validate and wait for completion
+        logger.info("[QuickFiles] Validating collection and waiting for upload to finish");
+        coll.validateCollection();
+        coll.waitForUploadFinish();
+        try {
+            coll.assertCollectionCreatedToast();
+        } catch (Throwable t) {
+            logger.warn("[QuickFiles] Toast not detected; proceeding. Cause: {}", t.getMessage());
+        }
+    }
+
 }

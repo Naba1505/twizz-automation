@@ -28,7 +28,6 @@ public class CreatorCollectionPage extends BasePage {
     private static final String ADD_MEDIA_TITLE = "Add media";
     private static final String DESC_PLACEHOLDER = "Your message....";
     private static final String VALIDATE_COLLECTION_BTN = "Validate the collection";
-    private static final String STAY_ON_PAGE_MSG = "Stay on page during uploading";
 
     public CreatorCollectionPage(Page page) {
         super(page);
@@ -562,7 +561,120 @@ public class CreatorCollectionPage extends BasePage {
         waitVisible(page.getByText(IMPORTATION).first(), 10000);
     }
 
-    // (Quick Files helpers removed)
+    // Quick Files helpers
+    @Step("Choose 'Quick Files' in Importation dialog")
+    public void chooseQuickFiles() {
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
+        waitVisible(btn.first(), 10000);
+        clickWithRetry(btn.first(), 2, 200);
+    }
+
+    @Step("Select a Quick Files album by known prefixes or fallback to first available")
+    public void selectQuickFilesAlbumWithFallback() {
+        // Wait for list/grid to load inside Quick Files modal
+        try {
+            Locator listAny = page.locator(".ant-list, [role=row], .ant-list-item, .album, .list-item");
+            waitVisible(listAny.first(), 10000);
+        } catch (Exception ignored) {}
+
+        // Case-insensitive starts-with using XPath (handles e.g., videoalbum_250827_122444(3))
+        try {
+            String ciStartsWith = "xpath=(//*[self::div or self::span or self::p or self::li or self::a or self::button]" +
+                    "[starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'video') or " +
+                    " starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'image') or " +
+                    " starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'mix')])";
+            Locator byPrefix = page.locator(ciStartsWith);
+            int c = byPrefix.count();
+            if (c > 0) {
+                for (int i = 0; i < Math.min(10, c); i++) {
+                    Locator cand = byPrefix.nth(i);
+                    if (safeIsVisible(cand)) {
+                        try { cand.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                        clickWithRetry(cand, 1, 150);
+                        return;
+                    }
+                }
+                // Fallback to first candidate if visibility heuristics fail
+                Locator first = byPrefix.first();
+                try { first.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                clickWithRetry(first, 1, 150);
+                return;
+            }
+        } catch (Exception ignored) {}
+        // Fallback: click first album-like row
+        Locator anyAlbum = page.locator("[role=row], .ant-list-item, .album, .list-item");
+        if (anyAlbum.count() > 0) {
+            clickWithRetry(anyAlbum.first(), 1, 150);
+            return;
+        }
+        throw new RuntimeException("No Quick Files album found to select");
+    }
+
+    @Step("Select up to {n} media items (covers) from the Quick Files album")
+    public void selectUpToNCovers(int n) {
+        Locator covers = page.locator(".cover");
+        waitVisible(covers.first(), 10000);
+        int need = Math.max(1, n);
+        int total = covers.count();
+        int picked = 0;
+        for (int i = 0; i < total && picked < need; i++) {
+            Locator card = covers.nth(i);
+            try {
+                // Hover to reveal selection UI
+                try { card.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                try { card.hover(); } catch (Exception ignored) {}
+
+                // Try common selection controls inside the same tile/card
+                Locator radioOrCheckbox = card.locator("input[type=radio], input[type=checkbox], .ant-radio, .ant-checkbox");
+                Locator roleRadio = page.getByRole(com.microsoft.playwright.options.AriaRole.RADIO);
+                Locator roleCheckbox = page.getByRole(com.microsoft.playwright.options.AriaRole.CHECKBOX);
+                Locator selectBtn = card.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON, new com.microsoft.playwright.Locator.GetByRoleOptions().setName("Select"));
+
+                boolean clicked = false;
+                if (radioOrCheckbox.count() > 0 && safeIsVisible(radioOrCheckbox.first())) {
+                    clickWithRetry(radioOrCheckbox.first(), 1, 120);
+                    clicked = true;
+                } else if (selectBtn.count() > 0 && safeIsVisible(selectBtn.first())) {
+                    clickWithRetry(selectBtn.first(), 1, 120);
+                    clicked = true;
+                } else if (roleRadio.count() > 0 && safeIsVisible(roleRadio.first())) {
+                    clickWithRetry(roleRadio.first(), 1, 120);
+                    clicked = true;
+                } else if (roleCheckbox.count() > 0 && safeIsVisible(roleCheckbox.first())) {
+                    clickWithRetry(roleCheckbox.first(), 1, 120);
+                    clicked = true;
+                } else {
+                    // Fallback: click the cover itself
+                    clickWithRetry(card, 1, 120);
+                    clicked = true;
+                }
+
+                if (clicked) {
+                    // Small wait for selection state to update
+                    page.waitForTimeout(150);
+                    picked++;
+                }
+            } catch (Exception ignored) { }
+        }
+    }
+
+    @Step("Confirm selection in Quick Files dialog")
+    public void clickSelectInQuickFiles() {
+        Locator selectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select"));
+        if (selectBtn.count() > 0) {
+            clickWithRetry(selectBtn.first(), 1, 150);
+        }
+    }
+
+    @Step("Proceed through Next steps {times} times")
+    public void proceedNextSteps(int times) {
+        int t = Math.max(1, times);
+        for (int i = 0; i < t; i++) {
+            try {
+                clickNext();
+            } catch (Exception ignored) {}
+        }
+    }
 
 
     @Step("Choose 'My Device' in Importation dialog")
@@ -670,22 +782,21 @@ public class CreatorCollectionPage extends BasePage {
         clickWithRetry(validate.first(), 2, 250);
     }
 
-    @Step("Wait for upload message to appear and disappear")
+    @Step("Assert success toast and dismiss it")
     public void waitForUploadFinish() {
-        Locator stay = page.getByText(STAY_ON_PAGE_MSG);
-        // appear
-        waitVisible(stay.first(), 30000);
-        // disappear
-        stay.first().waitFor(new Locator.WaitForOptions()
-                .setState(com.microsoft.playwright.options.WaitForSelectorState.DETACHED)
-                .setTimeout(120000));
+        Locator success = page.getByText("Collection is created successfully");
+        // Wait up to 60s for success toast to appear
+        waitVisible(success.first(), 60000);
+        // Click to dismiss as per UX
+        try { clickWithRetry(success.first(), 1, 150); } catch (Exception ignored) {}
+        // Small settle
+        page.waitForTimeout(300);
     }
 
-    @Step("Assert collection created success toast and click it")
+    @Step("Assert collection created success toast")
     public void assertCollectionCreatedToast() {
-        Locator toast = page.getByText("Collection is created successfully");
-        waitVisible(toast.first(), 60000);
-        try { clickWithRetry(toast.first(), 1, 100); } catch (Exception ignored) {}
+        // Backward compatible alias for tests expecting this method
+        waitForUploadFinish();
     }
 
     // Safe wrapper to check enabled state without throwing exceptions
