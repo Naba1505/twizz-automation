@@ -1,6 +1,6 @@
 # Twizz Automation (Java + Playwright + TestNG)
 
-End-to-end UI automation for Twizz with Creator Registration flow, robust waits, parallel-safe Playwright usage, and reporting via Allure (with Playwright traces and screenshots).
+End-to-end UI automation for Twizz with Creator and Fan flows. The framework emphasizes robust, resilient interactions and uses Allure only for reporting (with Playwright traces and screenshots).
 
 ## Tech Stack
 - Java 21
@@ -40,10 +40,10 @@ End-to-end UI automation for Twizz with Creator Registration flow, robust waits,
   - `RetryAnalyzer`, `AnnotationTransformer`: Centralized retry with logging and optional delay.
 - `src/test/java/pages/`
   - `BasePage`: Common helpers.
-  - `LandingPage`, `CreatorRegistrationPage`, `CreatorLoginPage`, `CreatorPublicationPage`, `FanRegistrationPage`, `FanLoginPage`: Page Objects with robust waits and fallbacks.
+  - `LandingPage`, `CreatorRegistrationPage`, `CreatorLoginPage`, `CreatorPublicationPage`, `CreatorCollectionPage`, `FanRegistrationPage`, `FanLoginPage`: Page Objects with robust waits and fallbacks.
   - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
 - `src/test/java/tests/`
-  - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `FanLoginTest`.
+  - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `CreatorQuickFilesTest`, `CreatorQuickFilesDeleteTest`, `CreatorCollectionTest`, `CreatorCollectionDeleteTest`, `FanLoginTest`.
 - `testng.xml`: Suite config, listeners (`utils.AnnotationTransformer`); Allure via TestNG adapter dependency, class-level parallel by default.
 
 ## Prerequisites
@@ -94,6 +94,17 @@ Key entries (with defaults):
 - Single test class:
   ```bash
   mvn test -Dtest=CreatorRegistrationTest
+  ```
+
+### Collections Cleanup (Creator)
+- Test: `CreatorCollectionDeleteTest`
+- What it does:
+  - From the Creator profile screen, opens Collections via `IMG[name='collections icon']`.
+  - Iteratively opens a collection using the top `files` icon, navigates to Details, opens the three-dots menu, chooses “Delete collection”, confirms “Yes, delete”, and verifies deletion via toast/alert or UI-state fallbacks.
+  - Loops until no `files` icon remains.
+- Run only this cleanup:
+  ```bash
+  mvn -Dtest=CreatorCollectionDeleteTest test
   ```
 - If you hit parallel issues on some environments, switch `testng.xml` to `parallel="tests"` or run sequentially.
 
