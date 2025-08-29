@@ -142,6 +142,23 @@ Key entries (with defaults):
    - The test asserts only the success toast "Collection is created successfully" and dismisses it.
    - Interactions prefer mouse hover and clicks to mimic real user behavior.
 
+## Media Push (Creator)
+- Page object: `pages/CreatorMediaPushPage`
+- Test: `tests/CreatorMediaPushTest#creatorCanSendMediaPushToSubscribers`
+- Flow:
+  - Open plus menu, ensure options popup, dismiss "I understand" if present.
+  - Choose "Media push" and ensure "Select your segments" screen.
+  - Pick "Subscribers" segment and click Create.
+  - Ensure add push media screen (hint text visible).
+  - Add first media (image) from device, ensure blur toggle enabled, click Next.
+  - Add second media (video) from device, ensure blur toggle enabled, click Next.
+  - Ensure Message title, fill message, set price to 15€, ensure promotion toggle disabled.
+  - Click "Propose push media". Optionally observe transient uploading message, then assert "Messaging" screen.
+- How to run just this test:
+  ```bash
+  mvn -Dtest=CreatorMediaPushTest#creatorCanSendMediaPushToSubscribers test
+  ```
+
 ## Fan Login
 - Page object: `pages/FanLoginPage`
 - Behavior:
