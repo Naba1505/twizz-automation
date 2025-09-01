@@ -143,20 +143,33 @@ Key entries (with defaults):
    - Interactions prefer mouse hover and clicks to mimic real user behavior.
 
 ## Media Push (Creator)
-- Page object: `pages/CreatorMediaPushPage`
-- Test: `tests/CreatorMediaPushTest#creatorCanSendMediaPushToSubscribers`
-- Flow:
+- __Page object__: `pages/CreatorMediaPushPage`
+- __Tests class__: `tests/CreatorMediaPushTest` (18 tests total)
+- __Coverage__:
+  - Subscribers-only flows (priorities 1–6)
+  - Interested-only flows (priorities 7–12)
+  - Multi-select: Subscribers + Interested (priorities 13–18)
+- __General flow__:
   - Open plus menu, ensure options popup, dismiss "I understand" if present.
   - Choose "Media push" and ensure "Select your segments" screen.
-  - Pick "Subscribers" segment and click Create.
-  - Ensure add push media screen (hint text visible).
-  - Add first media (image) from device, ensure blur toggle enabled, click Next.
-  - Add second media (video) from device, ensure blur toggle enabled, click Next.
-  - Ensure Message title, fill message, set price to 15€, ensure promotion toggle disabled.
-  - Click "Propose push media". Optionally observe transient uploading message, then assert "Messaging" screen.
-- How to run just this test:
+  - Select segment(s) and proceed.
+  - Add two media (image + video) from device with robust toggles (blur, etc.).
+  - Fill message, set price/promotion per scenario.
+  - Click "Propose push media" and assert landing on Messaging.
+- __Limiter popup handling__ (Interested and Multi-select): after proposing, a weekly limit dialog may appear for Interested recipients. Tests call `handleIUnderstandAfterProposeIfVisible()` to click "I understand" and exit early. If not shown, they proceed to validate Messaging as usual.
+
+### Running Media Push tests
+- Single baseline test:
   ```bash
   mvn -Dtest=CreatorMediaPushTest#creatorCanSendMediaPushToSubscribers test
+  ```
+- Only Interested flows (priorities 7–12):
+  ```bash
+  mvn -Dtest=CreatorMediaPushTest#creatorCanSend*Interested* test
+  ```
+- Only Multi-select flows (priorities 13–18):
+  ```bash
+  mvn -Dtest=CreatorMediaPushTest#creatorCanSend*MultiSelect* test
   ```
 
 ## Fan Login

@@ -78,6 +78,13 @@ public class CreatorMediaPushPage extends BasePage {
         clickWithRetry(seg.first(), 1, 150);
     }
 
+    @Step("Select Interested segment")
+    public void selectInterestedSegment() {
+        Locator seg = page.getByText("Interested");
+        waitVisible(seg.first(), 10000);
+        clickWithRetry(seg.first(), 1, 150);
+    }
+
     @Step("Click Create to proceed from segments")
     public void clickCreateNext() {
         Locator create = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BTN));
