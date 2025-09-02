@@ -144,11 +144,12 @@ Key entries (with defaults):
 
 ## Media Push (Creator)
 - __Page object__: `pages/CreatorMediaPushPage`
-- __Tests class__: `tests/CreatorMediaPushTest` (18 tests total)
+- __Tests class__: `tests/CreatorMediaPushTest` (19 tests total)
 - __Coverage__:
   - Subscribers-only flows (priorities 1–6)
   - Interested-only flows (priorities 7–12)
   - Multi-select: Subscribers + Interested (priorities 13–18)
+  - Quick Files album import (priority 19): selects a Quick Files album, picks up to 3 media, fills message and price, proposes, and asserts Messaging. Skips if no Quick Files albums are available.
 - __General flow__:
   - Open plus menu, ensure options popup, dismiss "I understand" if present.
   - Choose "Media push" and ensure "Select your segments" screen.
@@ -170,6 +171,11 @@ Key entries (with defaults):
 - Only Multi-select flows (priorities 13–18):
   ```bash
   mvn -Dtest=CreatorMediaPushTest#creatorCanSend*MultiSelect* test
+  ```
+
+- Quick Files album flow only (priority 19):
+  ```bash
+  mvn -Dtest=CreatorMediaPushTest#creatorCanSendMediaPushUsingQuickFilesAlbum test
   ```
 
 ## Fan Login

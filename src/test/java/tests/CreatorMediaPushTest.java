@@ -1125,4 +1125,63 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.waitForUploadingMessageIfFast();
         mp.assertOnMessagingScreen();
     }
+
+    @Story("Creator sends media push using Quick Files album (Subscribers)")
+    @Test(priority = 19, description = "Media push via Quick Files: pick album, select up to 3 items, set price 15€, propose push, land on Messaging")
+    public void creatorCanSendMediaPushUsingQuickFilesAlbum() {
+        CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
+
+        // 1) Open plus and choose Media push
+        logger.info("[MediaPushQuickFiles] Opening plus menu and selecting Media push");
+        mp.openPlusMenu();
+        mp.ensureOptionsPopup();
+        mp.clickIUnderstandIfPresent();
+        mp.chooseMediaPush();
+
+        // 2) Segments: Subscribers (avoid limiter)
+        logger.info("[MediaPushQuickFiles] Selecting segment: Subscribers");
+        mp.ensureSegmentsScreen();
+        mp.selectSubscribersSegment();
+        mp.clickCreateNext();
+
+        // 3) Add media via Quick Files
+        mp.ensureAddPushMediaScreen();
+        logger.info("[MediaPushQuickFiles] Opening Add Media and choosing Quick Files");
+        mp.clickAddMediaPlus();
+        mp.ensureImportation();
+        mp.chooseQuickFiles();
+
+        // 4) Select an album with fallback, or skip test if none available
+        logger.info("[MediaPushQuickFiles] Selecting a Quick Files album");
+        try {
+            mp.selectQuickFilesAlbumWithFallback();
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("No Quick Files album found to select")) {
+                throw new SkipException("No Quick Files albums available; skipping test");
+            }
+            throw e;
+        }
+
+        // 5) Pick up to 3 media items
+        logger.info("[MediaPushQuickFiles] Selecting up to 3 media items from album");
+        mp.selectUpToNCovers(3);
+        mp.clickSelectInQuickFiles();
+
+        // 6) Proceed Next through steps to Message/Price
+        logger.info("[MediaPushQuickFiles] Proceeding through Next steps");
+        mp.proceedNextSteps(3);
+
+        // 7) Message + price
+        logger.info("[MediaPushQuickFiles] Filling message and setting price 15€");
+        mp.ensureMessageTitle();
+        mp.fillMessage("Quick files push");
+        mp.setPriceEuro(15);
+        mp.ensureAddPromotionDisabled();
+
+        // 8) Propose and assert Messaging
+        logger.info("[MediaPushQuickFiles] Proposing push media and asserting Messaging screen");
+        mp.clickProposePushMedia();
+        mp.waitForUploadingMessageIfFast();
+        mp.assertOnMessagingScreen();
+    }
 }

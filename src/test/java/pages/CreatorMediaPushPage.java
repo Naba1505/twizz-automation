@@ -34,6 +34,15 @@ public class CreatorMediaPushPage extends BasePage {
         super(page);
     }
 
+    // Helper: safe visibility check to prevent polluting logs with transient errors
+    private boolean safeIsVisible(Locator locator) {
+        try {
+            return locator != null && locator.isVisible();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
     @Step("Open plus menu on creator screen")
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
@@ -107,6 +116,117 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Ensure Importation dialog visible")
     public void ensureImportation() {
         waitVisible(page.getByText(IMPORTATION).first(), 10000);
+    }
+
+    // Quick Files helpers (parity with Collection page)
+    @Step("Choose 'Quick Files' in Importation dialog")
+    public void chooseQuickFiles() {
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
+        waitVisible(btn.first(), 10000);
+        clickWithRetry(btn.first(), 2, 200);
+    }
+
+    @Step("Select a Quick Files album by known prefixes or fallback to first available")
+    public void selectQuickFilesAlbumWithFallback() {
+        // Wait for list/grid to load inside Quick Files modal
+        try {
+            Locator listAny = page.locator(".ant-list, [role=row], .ant-list-item, .album, .list-item");
+            waitVisible(listAny.first(), 10000);
+        } catch (Exception ignored) {}
+
+        // Case-insensitive starts-with using XPath (handles names like videoalbum_*, imagealbum_*, mixalbum_*)
+        try {
+            String ciStartsWith = "xpath=(//*[self::div or self::span or self::p or self::li or self::a or self::button]" +
+                    "[starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'video') or " +
+                    " starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'image') or " +
+                    " starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'mix')])";
+            Locator byPrefix = page.locator(ciStartsWith);
+            int c = byPrefix.count();
+            if (c > 0) {
+                for (int i = 0; i < Math.min(10, c); i++) {
+                    Locator cand = byPrefix.nth(i);
+                    if (safeIsVisible(cand)) {
+                        try { cand.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                        clickWithRetry(cand, 1, 150);
+                        return;
+                    }
+                }
+                // Fallback to first candidate if visibility heuristics fail
+                Locator first = byPrefix.first();
+                try { first.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                clickWithRetry(first, 1, 150);
+                return;
+            }
+        } catch (Exception ignored) {}
+        // Fallback: click first album-like row
+        Locator anyAlbum = page.locator("[role=row], .ant-list-item, .album, .list-item");
+        if (anyAlbum.count() > 0) {
+            clickWithRetry(anyAlbum.first(), 1, 150);
+            return;
+        }
+        throw new RuntimeException("No Quick Files album found to select");
+    }
+
+    @Step("Select up to {n} media items (covers) from the Quick Files album")
+    public void selectUpToNCovers(int n) {
+        Locator covers = page.locator(".cover");
+        waitVisible(covers.first(), 10000);
+        int need = Math.max(1, n);
+        int total = covers.count();
+        int picked = 0;
+        for (int i = 0; i < total && picked < need; i++) {
+            Locator card = covers.nth(i);
+            try {
+                try { card.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                try { card.hover(); } catch (Exception ignored) {}
+
+                Locator radioOrCheckbox = card.locator("input[type=radio], input[type=checkbox], .ant-radio, .ant-checkbox");
+                Locator roleRadio = page.getByRole(com.microsoft.playwright.options.AriaRole.RADIO);
+                Locator roleCheckbox = page.getByRole(com.microsoft.playwright.options.AriaRole.CHECKBOX);
+                Locator selectBtn = card.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON, new com.microsoft.playwright.Locator.GetByRoleOptions().setName("Select"));
+
+                boolean clicked = false;
+                if (radioOrCheckbox.count() > 0 && safeIsVisible(radioOrCheckbox.first())) {
+                    clickWithRetry(radioOrCheckbox.first(), 1, 120);
+                    clicked = true;
+                } else if (selectBtn.count() > 0 && safeIsVisible(selectBtn.first())) {
+                    clickWithRetry(selectBtn.first(), 1, 120);
+                    clicked = true;
+                } else if (roleRadio.count() > 0 && safeIsVisible(roleRadio.first())) {
+                    clickWithRetry(roleRadio.first(), 1, 120);
+                    clicked = true;
+                } else if (roleCheckbox.count() > 0 && safeIsVisible(roleCheckbox.first())) {
+                    clickWithRetry(roleCheckbox.first(), 1, 120);
+                    clicked = true;
+                } else {
+                    clickWithRetry(card, 1, 120);
+                    clicked = true;
+                }
+
+                if (clicked) {
+                    page.waitForTimeout(150);
+                    picked++;
+                }
+            } catch (Exception ignored) { }
+        }
+    }
+
+    @Step("Confirm selection in Quick Files dialog")
+    public void clickSelectInQuickFiles() {
+        Locator selectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select"));
+        if (selectBtn.count() > 0) {
+            clickWithRetry(selectBtn.first(), 1, 150);
+        }
+    }
+
+    @Step("Proceed through Next steps {times} times")
+    public void proceedNextSteps(int times) {
+        int t = Math.max(1, times);
+        for (int i = 0; i < t; i++) {
+            try {
+                clickNext();
+            } catch (Exception ignored) {}
+        }
     }
 
     @Step("Choose 'My Device' in Importation")
