@@ -74,7 +74,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPush] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         // 2) Choose Media push and ensure segments screen
         logger.info("[MediaPush] Choosing 'Media push' and selecting segment: Subscribers");
@@ -135,7 +134,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushClear] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         // 2) Choose Media push and ensure segments screen
         logger.info("[MediaPushClear] Choosing 'Media push' and selecting segment: Subscribers");
@@ -200,7 +198,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushFree] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         // 2) Choose Media push and ensure segments screen
         logger.info("[MediaPushFree] Choosing 'Media push' and selecting segment: Subscribers");
@@ -261,7 +258,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushCustomPrice] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         // 2) Choose Media push and ensure segments screen
         logger.info("[MediaPushCustomPrice] Choosing 'Media push' and selecting segment: Subscribers");
@@ -323,7 +319,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushEuro] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         // 2) Choose Media push and ensure segments screen
         logger.info("[MediaPushEuro] Choosing 'Media push' and selecting segment: Subscribers");
@@ -390,7 +385,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushPromo] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         // 2) Choose Media push and ensure segments screen
         logger.info("[MediaPushPromo] Choosing 'Media push' and selecting segment: Subscribers");
@@ -458,7 +452,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushInterested] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushInterested] Choosing 'Media push' and selecting segment: Interested");
         mp.chooseMediaPush();
@@ -511,7 +504,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushPromoInterested] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushPromoInterested] Choosing 'Media push' and selecting segment: Interested");
         mp.chooseMediaPush();
@@ -570,7 +562,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushEuroInterested] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushEuroInterested] Choosing 'Media push' and selecting segment: Interested");
         mp.chooseMediaPush();
@@ -628,7 +619,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushCustomPriceInterested] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushCustomPriceInterested] Choosing 'Media push' and selecting segment: Interested");
         mp.chooseMediaPush();
@@ -682,7 +672,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushFreeInterested] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushFreeInterested] Choosing 'Media push' and selecting segment: Interested");
         mp.chooseMediaPush();
@@ -735,7 +724,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushClearInterested] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushClearInterested] Choosing 'Media push' and selecting segment: Interested");
         mp.chooseMediaPush();
@@ -794,7 +782,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushMulti] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushMulti] Choosing 'Media push' and selecting segments: Subscribers + Interested");
         mp.chooseMediaPush();
@@ -848,7 +835,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushClearMulti] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushClearMulti] Choosing 'Media push' and selecting segments: Subscribers + Interested");
         mp.chooseMediaPush();
@@ -906,7 +892,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushFreeMulti] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushFreeMulti] Choosing 'Media push' and selecting segments: Subscribers + Interested");
         mp.chooseMediaPush();
@@ -960,7 +945,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushCustomPriceMulti] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushCustomPriceMulti] Choosing 'Media push' and selecting segments: Subscribers + Interested");
         mp.chooseMediaPush();
@@ -1015,7 +999,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushEuroMulti] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushEuroMulti] Choosing 'Media push' and selecting segments: Subscribers + Interested");
         mp.chooseMediaPush();
@@ -1074,7 +1057,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushPromoMulti] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
 
         logger.info("[MediaPushPromoMulti] Choosing 'Media push' and selecting segments: Subscribers + Interested");
         mp.chooseMediaPush();
@@ -1135,7 +1117,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         logger.info("[MediaPushQuickFiles] Opening plus menu and selecting Media push");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.clickIUnderstandIfPresent();
         mp.chooseMediaPush();
 
         // 2) Segments: Subscribers (avoid limiter)

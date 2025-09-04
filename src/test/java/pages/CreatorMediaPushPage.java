@@ -57,14 +57,38 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Ensure options popup is visible")
     public void ensureOptionsPopup() {
+        // Proactively dismiss blocking dialog if present
+        clickIUnderstandIfPresent();
         waitVisible(page.getByText(WHAT_DO_YOU_WANT).first(), 15000);
     }
 
     @Step("Dismiss 'I understand' dialog if present")
     public void clickIUnderstandIfPresent() {
-        Locator understand = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I understand"));
-        if (understand.count() > 0 && understand.first().isVisible()) {
-            clickWithRetry(understand.first(), 2, 200);
+        long start = System.currentTimeMillis();
+        long timeoutMs = 5000;
+        while (System.currentTimeMillis() - start < timeoutMs) {
+            try {
+                // Try role-based first
+                Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I understand"));
+                if (btn.count() > 0 && btn.first().isVisible()) {
+                    clickWithRetry(btn.first(), 2, 200);
+                    return;
+                }
+                // Fallbacks: case/selector variants
+                String[] sel = new String[] {
+                        "button:has-text('I understand')",
+                        "text=I understand",
+                        "//*[self::button or self::*][contains(translate(normalize-space(.), 'IUNDERSTAND', 'iunderstand'), 'i understand')]"
+                };
+                for (String s : sel) {
+                    Locator cand = s.startsWith("//") ? page.locator("xpath=" + s) : page.locator(s);
+                    if (cand.count() > 0 && cand.first().isVisible()) {
+                        clickWithRetry(cand.first(), 2, 200);
+                        return;
+                    }
+                }
+            } catch (Exception ignored) {}
+            try { page.waitForTimeout(150); } catch (Exception ignored) {}
         }
     }
 

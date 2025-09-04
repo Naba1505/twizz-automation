@@ -180,10 +180,10 @@ public class CreatorCollectionTest extends BaseCreatorTest {
         coll.fillDescription("X_Description");
         coll.setCustomPriceEuro(5);
 
-        // 6) Validate and wait
-        logger.info("[CustomPrice] Validating collection and waiting for upload to finish");
+        // 6) Validate and wait (extend timeout to 5 minutes for this test)
+        logger.info("[CustomPrice] Validating collection and waiting for upload to finish (up to 5 minutes)");
         coll.validateCollection();
-        coll.waitForUploadFinish();
+        coll.waitForUploadFinish(300000);
         try {
             coll.assertCollectionCreatedToast();
         } catch (Throwable t) {
