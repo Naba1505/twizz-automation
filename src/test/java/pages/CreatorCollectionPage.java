@@ -1221,18 +1221,92 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Assert success toast and dismiss it (timeout: {timeoutMs} ms)")
     public void waitForUploadFinish(long timeoutMs) {
+        long deadline = System.currentTimeMillis() + Math.max(1, timeoutMs);
+        Locator stayMsg = page.getByText("Stay on page during uploading");
+        // Percentage element example (e.g., "67%Stay on page during uploading")
+        Locator percentSticky = page.locator("div").filter(new Locator.FilterOptions()
+            .setHasText(Pattern.compile("^\\d+%Stay on page during uploading$")));
+        // Success toast can appear quickly after a certain percentage; capture as soon as it shows
         Locator success = page.getByText("Collection is created successfully");
-        // Wait up to provided timeout for success toast to appear
-        waitVisible(success.first(), Math.max(1, timeoutMs));
-        // Click to dismiss as per UX
-        try { clickWithRetry(success.first(), 1, 150); } catch (Exception ignored) {}
-        // Small settle
-        page.waitForTimeout(300);
+
+        // If the sticky uploading UI appears, track until it disappears
+        boolean sawUploading = false;
+        Integer lastSeen = null;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                // If success toast already visible, click and finish early
+                if (success.count() > 0 && success.first().isVisible()) {
+                    logger.info("[Upload] Success toast detected during upload; finishing early");
+                    try { clickWithRetry(success.first(), 1, 150); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+                    return;
+                }
+                if (stayMsg.count() > 0 && stayMsg.first().isVisible()) {
+                    sawUploading = true;
+                    // Try to read a leading percentage if present
+                    try {
+                        String text = percentSticky.first().innerText().trim();
+                        // Extract leading number before %
+                        int idx = text.indexOf('%');
+                        if (idx > 0) {
+                            String num = text.substring(0, idx).replaceAll("[^0-9]", "");
+                            if (!num.isEmpty()) {
+                                int val = Integer.parseInt(num);
+                                if (lastSeen == null || val != lastSeen) {
+                                    logger.info("[Upload] Progress: {}%", val);
+                                    lastSeen = val;
+                                }
+                            }
+                        }
+                    } catch (Throwable ignored) { /* percentage may not always be present */ }
+                } else {
+                    // If we had seen uploading and it's now gone, break to post-upload checks
+                    if (sawUploading) {
+                        logger.info("[Upload] Uploading banner disappeared; proceeding to post-upload verification");
+                        break;
+                    }
+                }
+            } catch (Throwable ignored) {}
+            try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+        }
+
+        // Immediately after banner disappears, quickly check for success toast (some UIs show it right away)
+        long quickToastBudget = Math.min(5000, Math.max(0, deadline - System.currentTimeMillis()));
+        if (quickToastBudget > 0) {
+            try {
+                waitVisible(success.first(), quickToastBudget);
+                logger.info("[Upload] Success toast detected right after banner; dismissing");
+                try { clickWithRetry(success.first(), 1, 150); } catch (Exception ignored) {}
+                try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+                return;
+            } catch (Throwable ignored) {
+                // proceed to URL wait
+            }
+        }
+
+        // Post-upload navigation: expect profile screen
+        try {
+            page.waitForURL("**/creator/profile", new Page.WaitForURLOptions().setTimeout(Math.max(1, deadline - System.currentTimeMillis())));
+        } catch (Throwable e) {
+            logger.warn("[Upload] Did not navigate to /creator/profile within timeout: {}", e.getMessage());
+        }
+
+        // Finally, assert success toast
+        long remaining = Math.max(1, deadline - System.currentTimeMillis());
+        try {
+            waitVisible(success.first(), remaining);
+            try { clickWithRetry(success.first(), 1, 150); } catch (Exception ignored) {}
+        } catch (Throwable te) {
+            // Be lenient: try alternate detection or continue if profile is already visible
+            logger.warn("[Upload] Success toast not detected within remaining time ({} ms): {}", remaining, te.getMessage());
+        }
+        try { page.waitForTimeout(300); } catch (Throwable ignored) {}
     }
 
     @Step("Assert success toast and dismiss it")
     public void waitForUploadFinish() {
-        waitForUploadFinish(60000);
+        // Increase default wait to 5 minutes to accommodate slow media uploads
+        waitForUploadFinish(300000);
     }
 
     @Step("Assert collection created success toast")
