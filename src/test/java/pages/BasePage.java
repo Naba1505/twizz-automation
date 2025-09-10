@@ -68,4 +68,15 @@ public class BasePage {
         page.waitForLoadState();
         page.waitForLoadState();
     }
+
+    // Non-throwing visibility check used by page objects for optional elements
+    protected boolean safeIsVisible(Locator locator) {
+        try {
+            if (locator == null) return false;
+            if (locator.count() == 0) return false;
+            return locator.first().isVisible();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
 }

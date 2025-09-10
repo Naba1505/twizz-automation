@@ -23,9 +23,6 @@ public class CreatorDiscoverPage extends BasePage {
         super(page);
     }
 
-    private boolean safeIsVisible(Locator locator) {
-        try { return locator != null && locator.isVisible(); } catch (Exception ignored) { return false; }
-    }
 
     @Step("Navigate to Discover screen via Search icon")
     public void navigateToDiscover() {

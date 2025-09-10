@@ -34,14 +34,7 @@ public class CreatorMediaPushPage extends BasePage {
         super(page);
     }
 
-    // Helper: safe visibility check to prevent polluting logs with transient errors
-    private boolean safeIsVisible(Locator locator) {
-        try {
-            return locator != null && locator.isVisible();
-        } catch (Exception ignored) {
-            return false;
-        }
-    }
+    // safeIsVisible provided by BasePage
 
     @Step("Open plus menu on creator screen")
     public void openPlusMenu() {

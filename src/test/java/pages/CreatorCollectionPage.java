@@ -1324,13 +1324,6 @@ public class CreatorCollectionPage extends BasePage {
         }
     }
 
-    // Safe wrapper to check visible state without throwing exceptions
-    private boolean safeIsVisible(Locator loc) {
-        try {
-            return loc != null && loc.isVisible();
-        } catch (Exception e) {
-            return false;
-        }
-    }
+    // safeIsVisible provided by BasePage
 
 }
