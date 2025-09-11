@@ -26,7 +26,7 @@ public class FanLoginPage extends BasePage {
         String url = ConfigReader.getLoginUrl();
         page.navigate(url);
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        logger.info("Navigated to Fan Login page: {}", url);
+        logger.info("[Fan] Navigated to Fan Login page: {}", url);
     }
 
     public boolean isLoginHeaderVisible() {
@@ -37,7 +37,7 @@ public class FanLoginPage extends BasePage {
             waitVisible(loginText, 20000);
             return logo.isVisible() && loginText.isVisible();
         } catch (Exception e) {
-            logger.warn("Login header not visible: {}", e.getMessage());
+            logger.warn("[Fan] Login header not visible: {}", e.getMessage());
             return false;
         }
     }
@@ -48,7 +48,7 @@ public class FanLoginPage extends BasePage {
     }
 
     public void login(String username, String password) {
-        logger.info("Fan login attempt for: {}", username);
+        logger.info("[Fan] Login attempt for: {}", username);
         fillByPlaceholder(usernamePlaceholder, username);
         fillByPlaceholder(passwordPlaceholder, password);
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).click();
@@ -60,10 +60,10 @@ public class FanLoginPage extends BasePage {
         try {
             page.waitForURL(Pattern.compile(".*/fan/home.*"), new Page.WaitForURLOptions().setTimeout(timeoutMs));
             boolean ok = page.url().contains("/fan/home");
-            logger.info("Fan login landed on URL: {} (ok={})", page.url(), ok);
+            logger.info("[Fan] Login landed on URL: {} (ok={})", page.url(), ok);
             return ok;
         } catch (Exception e) {
-            logger.warn("Did not reach /fan/home within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
+            logger.warn("[Fan] Did not reach /fan/home within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
             return false;
         }
     }

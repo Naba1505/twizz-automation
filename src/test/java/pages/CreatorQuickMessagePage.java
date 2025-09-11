@@ -173,14 +173,17 @@ public class CreatorQuickMessagePage extends BasePage {
 
     @Step("Open Settings from profile and verify landing on Settings screen")
     public void openSettingsFromProfile(String expectedDisplayName) {
+        logger.info("[QuickMessage] Opening settings from profile; expecting display name: {}", expectedDisplayName);
         waitVisible(settingsIcon(), DEFAULT_WAIT);
         clickWithRetry(settingsIcon(), 1, 200);
         // Expect a recognizable display name on settings screen
         waitVisible(settingsHeader(expectedDisplayName), DEFAULT_WAIT);
+        logger.info("[QuickMessage] Settings screen visible for display name: {}", expectedDisplayName);
     }
 
     @Step("Navigate to Quick message screen from Settings")
     public void goToQuickMessage() {
+        logger.info("[QuickMessage] Navigating to 'Quick message' from Settings");
         Locator item = quickMessageMenuItem();
         try { item.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
         clickWithRetry(item, 1, 200);
@@ -217,12 +220,16 @@ public class CreatorQuickMessagePage extends BasePage {
         if (!ready) {
             AllureAttachments.attachScreenshot(page, "qm_no_delete_icons");
             AllureAttachments.attachHtml(page, "qm_page.html");
-            logger.warn("Quick message screen not ready: no empty-state and no visible delete icon detected. Proceeding without assertion by user request.");
+            logger.warn("[QuickMessage] Screen not ready: no empty-state and no visible delete icons detected");
+        } else {
+            logger.info("[QuickMessage] Screen ready: empty-state={} nthCssCount={} xpathCount={}",
+                    safeIsVisible(emptyState()), deleteIconsByNthCss().count(), deleteIconsByXPath().count());
         }
     }
 
     @Step("Add a Quick message titled: {title}")
     public void addQuickMessage(String title, String text) {
+        logger.info("[QuickMessage] Adding quick message with title: '{}'", title);
         waitVisible(addQuickMessageButton(), DEFAULT_WAIT);
         clickWithRetry(addQuickMessageButton(), 1, 200);
         // Ensure we are on add screen
@@ -249,10 +256,12 @@ public class CreatorQuickMessagePage extends BasePage {
         } catch (Throwable ignored) {}
         // Small settle time
         try { page.waitForTimeout(300); } catch (Exception ignored) {}
+        logger.info("[QuickMessage] Submitted quick message and returned to list view");
     }
 
     @Step("Assert that quick message with title is visible: {title}")
     public void assertQuickMessageVisible(String title) {
+        logger.info("[QuickMessage] Asserting quick message title is visible: '{}'", title);
         // Try exact match first with an extended timeout window
         long deadline = System.currentTimeMillis() + ASSERT_TITLE_TIMEOUT_MS;
         String partial = title.length() > 20 ? title.substring(0, 20) : title;
@@ -261,11 +270,13 @@ public class CreatorQuickMessagePage extends BasePage {
                 // Attempt exact text
                 Locator exact = page.getByText(title, new Page.GetByTextOptions().setExact(true));
                 if (safeIsVisible(exact.first())) {
+                    logger.info("[QuickMessage] Found exact title match");
                     return;
                 }
                 // Attempt partial contains
                 Locator contains = page.getByText(partial);
                 if (safeIsVisible(contains.first())) {
+                    logger.info("[QuickMessage] Found partial title match: '{}'", partial);
                     return;
                 }
                 // Scroll down a bit to reveal more rows (handle long lists/virtualization)
@@ -281,13 +292,14 @@ public class CreatorQuickMessagePage extends BasePage {
 
     @Step("Delete a single quick message using delete icon nth({index})")
     public boolean deleteOneQuickMessage(int index) {
+        logger.info("[QuickMessage] Attempting to delete one quick message (index hint: {})", index);
         // Try to ensure we are on Quick message screen
         waitVisible(quickMessageTitleExact(), DEFAULT_WAIT);
         waitForMessagesToLoad();
         // Prefer first visible delete icon over fixed nth index
         Locator del = firstVisibleDeleteIcon();
         if (!safeIsVisible(del)) {
-            logger.info("No visible delete icon found (role/css fallbacks)");
+            logger.info("[QuickMessage] No visible delete icon found (role/css fallbacks)");
             return false;
         }
         try { del.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
@@ -296,14 +308,14 @@ public class CreatorQuickMessagePage extends BasePage {
         try {
             del.click(new Locator.ClickOptions().setForce(true));
         } catch (RuntimeException e) {
-            logger.warn("Force click on delete icon failed, retrying normal click: {}", e.getMessage());
+            logger.warn("[QuickMessage] Force click on delete icon failed, retrying normal click: {}", e.getMessage());
             clickWithRetry(del, 2, 200);
         }
         // Confirm dialog
         try {
             waitVisible(deleteConfirmText(), DEFAULT_WAIT);
         } catch (RuntimeException e) {
-            logger.warn("Delete confirm text not found, proceeding to look for confirmation button only: {}", e.getMessage());
+            logger.warn("[QuickMessage] Delete confirm text not found, proceeding to look for confirmation button only: {}", e.getMessage());
         }
         Locator yes = yesDeleteButton();
         waitVisible(yes, DEFAULT_WAIT);
@@ -316,15 +328,17 @@ public class CreatorQuickMessagePage extends BasePage {
             if (after < before) break;
             try { page.waitForTimeout(150); } catch (Exception ignored) {}
         }
+        logger.info("[QuickMessage] Delete action completed");
         return true;
     }
 
     @Step("Delete all quick messages by clicking the visible trash icon until none remain")
     public void deleteAllQuickMessages() {
+        logger.info("[QuickMessage] Starting delete-all quick messages loop");
         // Loop until empty-state is visible or no more delete icons are available
         waitForMessagesToLoad();
         // Ensure we have icons or empty-state before attempting first click
-        waitUntilIconsOrEmpty(30_000);
+        waitUntilIconsOrEmpty(ICONS_OR_EMPTY_TIMEOUT_MS);
         try {
             // If icons are supposed to be present, wait until at least one matches primary CSS/XPath
             if (!safeIsVisible(emptyState())) {
@@ -334,23 +348,18 @@ public class CreatorQuickMessagePage extends BasePage {
         } catch (Throwable ignored) {}
         while (true) {
             if (safeIsVisible(emptyState())) {
-                logger.info("Empty-state visible, all quick messages deleted");
+                logger.info("[QuickMessage] Empty-state visible, all quick messages deleted");
                 break;
             }
             int count = deleteIconsByNthCss().count();
             if (count <= 0) count = deleteIconsByXPath().count();
             try { listeners.AllureAttachments.attachText("qm_delete_loop", "icons(before)=" + count); } catch (Throwable ignored) {}
             if (count <= 0) {
-                // fallback to combined strategies
-                count = combinedDeleteIcons().count();
-                try { listeners.AllureAttachments.attachText("qm_delete_loop_fallback", "combined_icons(before)=" + count); } catch (Throwable ignored) {}
-            }
-            if (count <= 0) {
-                logger.info("No delete icons found; stopping cleanup loop");
+                logger.info("[QuickMessage] No delete icons found; stopping cleanup loop");
                 if (!safeIsVisible(emptyState())) {
                     AllureAttachments.attachScreenshot(page, "qm_stopped_without_empty_state");
                     AllureAttachments.attachHtml(page, "qm_final_page.html");
-                    logger.warn("No delete icons present and empty-state not visible; stopping cleanup without assertion per user request.");
+                    logger.warn("[QuickMessage] No delete icons present and empty-state not visible; stopping cleanup without assertion per user request.");
                 }
                 break;
             }
@@ -362,7 +371,7 @@ public class CreatorQuickMessagePage extends BasePage {
             try {
                 icon.click(new Locator.ClickOptions().setForce(true));
             } catch (RuntimeException e) {
-                logger.warn("Force click on delete icon failed, retrying normal click: {}", e.getMessage());
+                logger.warn("[QuickMessage] Force click on delete icon failed, retrying normal click: {}", e.getMessage());
                 clickWithRetry(icon, 2, 200);
             }
             // Confirm
@@ -372,11 +381,7 @@ public class CreatorQuickMessagePage extends BasePage {
             // Wait for count to reduce
             long deadline = System.currentTimeMillis() + 3_000;
             while (System.currentTimeMillis() < deadline) {
-                int after = deleteIconsByNthCss().count();
-                if (after == 0) after = deleteIconsByXPath().count();
-                if (after == 0) break;
-                // fallback check
-                if (after >= count) after = combinedDeleteIcons().count();
+                int after = deleteIconByRole().count() + deleteIconByCss().count();
                 if (after < count) break;
                 try { page.waitForTimeout(150); } catch (Exception ignored) {}
             }
@@ -384,7 +389,7 @@ public class CreatorQuickMessagePage extends BasePage {
             int afterCheck = deleteIconsByNthCss().count();
             if (afterCheck == 0) afterCheck = deleteIconsByXPath().count();
             if (afterCheck >= count && !safeIsVisible(emptyState())) {
-                try { page.mouse().wheel(0, 500); } catch (Throwable ignored) {}
+                try { page.mouse().wheel(0, SCROLL_STEP_Y); } catch (Throwable ignored) {}
                 try { page.waitForTimeout(300); } catch (Exception ignored) {}
             }
             try { listeners.AllureAttachments.attachText("qm_delete_loop", "icons(after)=" + deleteIconsByXPath().count()); } catch (Throwable ignored) {}
@@ -392,5 +397,6 @@ public class CreatorQuickMessagePage extends BasePage {
             try { page.waitForTimeout(200); } catch (Exception ignored) {}
         }
         try { page.waitForTimeout(200); } catch (Exception ignored) {}
+        logger.info("[QuickMessage] Delete-all loop completed");
     }
 }
