@@ -19,6 +19,7 @@
             <class name="tests.CreatorDiscoverTest"/>
             <class name="tests.CreatorQuickMessageTest"/>
             <class name="tests.CreatorMessagingTest"/>
+            <class name="tests.CreatorRevenuesTest"/>
             <class name="tests.CreatorQuickMessageDeleteTest"/>
             <class name="tests.CreatorQuickFilesDeleteTest"/>
             <class name="tests.CreatorCollectionDeleteTest"/>
