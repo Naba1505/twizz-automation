@@ -73,7 +73,7 @@ public class CreatorQuickMessagePage extends BasePage {
     private Locator deleteIconByRole() {
         // Try accessible name-based match first (alt/aria-label)
         return page.getByRole(AriaRole.IMG,
-                new Page.GetByRoleOptions().setName(Pattern.compile("(?i)(trash|delete)")));
+                new Page.GetByRoleOptions().setName(Pattern.compile("(trash|delete)", Pattern.CASE_INSENSITIVE)));
     }
 
     private Locator deleteIconByCss() {
@@ -84,8 +84,13 @@ public class CreatorQuickMessagePage extends BasePage {
     }
 
     private Locator firstVisibleDeleteIcon() {
+        // Prefer the provided XPath delete icon first: //img[@width='38']
+        Locator byXPath = deleteIconsByXPath();
+        if (safeIsVisible(byXPath.first())) return byXPath.first();
+        // Then try role-based accessible name
         Locator byRole = deleteIconByRole();
         if (safeIsVisible(byRole.first())) return byRole.first();
+        // Then CSS fallbacks
         Locator byCss = deleteIconByCss();
         if (safeIsVisible(byCss.first())) return byCss.first();
         // As a last resort, try any IMG within an action cell that could be a delete
@@ -112,7 +117,7 @@ public class CreatorQuickMessagePage extends BasePage {
         if (safeIsVisible(btn.first())) return btn.first();
         // Fallback regex
         return page.getByRole(AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName(Pattern.compile("(?i)(yes.*delete|delete|yes)"))).first();
+                new Page.GetByRoleOptions().setName(Pattern.compile("(yes.*delete|delete|yes)", Pattern.CASE_INSENSITIVE))).first();
     }
 
     private void waitForMessagesToLoad() {
@@ -363,8 +368,8 @@ public class CreatorQuickMessagePage extends BasePage {
                 }
                 break;
             }
-            // Prefer the user's nth-child CSS list; click from last to first; else use XPath; else fallback
-            Locator list = deleteIconsByNthCss().count() > 0 ? deleteIconsByNthCss() : (deleteIconsByXPath().count() > 0 ? deleteIconsByXPath() : combinedDeleteIcons());
+            // Prefer the requested XPath list first; else use nth-child CSS; else fallback
+            Locator list = deleteIconsByXPath().count() > 0 ? deleteIconsByXPath() : (deleteIconsByNthCss().count() > 0 ? deleteIconsByNthCss() : combinedDeleteIcons());
             Locator icon = list.last();
             try { icon.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
             try { icon.hover(new Locator.HoverOptions().setForce(true)); } catch (Exception ignored) {}

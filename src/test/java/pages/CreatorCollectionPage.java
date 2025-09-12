@@ -1291,14 +1291,17 @@ public class CreatorCollectionPage extends BasePage {
             logger.warn("[Upload] Did not navigate to /creator/profile within timeout: {}", e.getMessage());
         }
 
-        // Finally, assert success toast
+        // Finally, assert success toast with a SHORT window after banner disappearance.
+        // We intentionally cap the wait to avoid long stalls when success toast is suppressed by the app.
         long remaining = Math.max(1, deadline - System.currentTimeMillis());
+        long capped = Math.min(remaining, 10_000); // cap at 10s
         try {
-            waitVisible(success.first(), remaining);
+            waitVisible(success.first(), capped);
             try { clickWithRetry(success.first(), 1, 150); } catch (Exception ignored) {}
         } catch (Throwable te) {
             // Be lenient: try alternate detection or continue if profile is already visible
-            logger.warn("[Upload] Success toast not detected within remaining time ({} ms): {}", remaining, te.getMessage());
+            logger.warn("[Upload] Success toast not detected quickly after banner ({} ms cap, remaining was {} ms): {}",
+                    capped, remaining, te.getMessage());
         }
         try { page.waitForTimeout(300); } catch (Throwable ignored) {}
     }
