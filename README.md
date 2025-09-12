@@ -43,7 +43,7 @@ End-to-end UI automation for Twizz with Creator and Fan flows. The framework emp
   - `LandingPage`, `CreatorRegistrationPage`, `CreatorLoginPage`, `CreatorPublicationPage`, `CreatorCollectionPage`, `FanRegistrationPage`, `FanLoginPage`: Page Objects with robust waits and fallbacks.
   - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
 - `src/test/java/tests/`
-  - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `CreatorLiveTest`, `CreatorQuickFilesTest`, `CreatorMediaPushTest`, `CreatorUnlockLinksTest`, `CreatorDiscoverTest`, `CreatorQuickFilesDeleteTest`, `CreatorCollectionTest`, `CreatorCollectionDeleteTest`, `FanLoginTest`.
+  - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `CreatorLiveTest`, `CreatorQuickFilesTest`, `CreatorMediaPushTest`, `CreatorUnlockLinksTest`, `CreatorDiscoverTest`, `CreatorRevenuesTest`, `CreatorQuickFilesDeleteTest`, `CreatorCollectionTest`, `CreatorCollectionDeleteTest`, `FanLoginTest`.
   - `testng.xml`: Suite config, listeners (`utils.AnnotationTransformer`); Allure via TestNG adapter dependency, class-level parallel by default.
 
 ## Prerequisites
@@ -176,6 +176,39 @@ Key entries (with defaults):
 - Quick Files album flow only (priority 19):
   ```bash
   mvn -Dtest=CreatorMediaPushTest#creatorCanSendMediaPushUsingQuickFilesAlbum test
+  ```
+
+## Revenues (Creator)
+- __Page object__: `pages/CreatorRevenuesPage`
+- __Tests class__: `tests/CreatorRevenuesTest`
+- __Coverage__:
+  - Screen load and header blocks
+    - Open from dashboard via `IMG[name='Revenues icon']`
+    - Assert title, currency image, validated/waiting price blocks and info popovers
+  - Chart basics per tab
+    - Today: chart container visible, title "Total of the day", "Receipt in your bank account" clickable, two price texts visible
+    - This week: title "Total of the week" (same validations)
+    - This month: title "Total of the month" (same validations)
+    - All: title "Total since the creation" (same validations)
+  - Last report + Filter flow
+    - Scroll to "Last report" section, ensure content container visible
+    - Change dropdown (Daily → Monthly → Detailed), verifying content remains visible
+    - Filter dropdown: clicks each in order (Decrypt → Live → Private medias → Medias push → Collection → Stream → Monthly subscription → All)
+    - Robust fallbacks when Filter button is not visible (opens via change icon) and stable scrolling back to top after "All"
+
+### Running Revenues tests
+- Entire class:
+  ```bash
+  mvn -Dtest=CreatorRevenuesTest test
+  ```
+- Specific scenarios:
+  ```bash
+  mvn -Dtest=CreatorRevenuesTest#creatorCanViewRevenues test
+  mvn -Dtest=CreatorRevenuesTest#revenuesTodayChartBasics test
+  mvn -Dtest=CreatorRevenuesTest#revenuesThisWeekChartBasics test
+  mvn -Dtest=CreatorRevenuesTest#revenuesThisMonthChartBasics test
+  mvn -Dtest=CreatorRevenuesTest#revenuesAllChartBasics test
+  mvn -Dtest=CreatorRevenuesTest#revenuesLastReportAndFilterFlows test
   ```
 
 ## Fan Login
