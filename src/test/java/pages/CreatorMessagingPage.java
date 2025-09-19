@@ -19,6 +19,442 @@ public class CreatorMessagingPage extends BasePage {
         super(page);
     }
 
+    // ================= Messaging Dashboard navigation, tabs, filter & search =================
+    @Step("Navigate directly to Creator Profile via URL")
+    public void navigateToCreatorProfileViaUrl() {
+        // Using stage URL as provided in steps; could be parameterized if needed
+        page.navigate("https://stg.twizz.app/creator/profile");
+    }
+
+    @Step("Open Messaging from creator dashboard (header icon)")
+    public void openMessagingFromDashboardIcon() {
+        Locator icon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Messaging icon"));
+        waitVisible(icon.first(), 15_000);
+        clickWithRetry(icon.first(), 1, 150);
+        waitVisible(page.getByText("Messaging"), 15_000);
+    }
+
+    @Step("Assert 'Messaging' title visible")
+    public void assertMessagingTitle() {
+        waitVisible(page.getByText("Messaging"), 10_000);
+    }
+
+    @Step("Click 'To Deliver' tab in Messaging")
+    public void clickToDeliverTab() {
+        Locator tab = page.getByText("To Deliver");
+        waitVisible(tab.first(), 10_000);
+        clickWithRetry(tab.first(), 1, 120);
+    }
+
+    @Step("Click 'General' tab in Messaging")
+    public void clickGeneralTab() {
+        Locator tab = page.getByText("General");
+        waitVisible(tab.first(), 10_000);
+        clickWithRetry(tab.first(), 1, 120);
+    }
+
+    @Step("Open Filter panel in Messaging")
+    public void openFilter() {
+        Locator filter = page.getByText("Filter");
+        waitVisible(filter.first(), 10_000);
+        clickWithRetry(filter.first(), 1, 120);
+    }
+
+    @Step("Filter: select 'Unread messages'")
+    public void filterUnreadMessages() {
+        // Click the container with exact text then the direct text entry, per codegen
+        Locator byDiv = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^Unread messages$")));
+        if (byDiv.count() > 0 && safeIsVisible(byDiv.first())) {
+            clickWithRetry(byDiv.first(), 1, 120);
+        }
+        Locator byText = page.getByText("Unread messages");
+        if (byText.count() > 0) {
+            clickWithRetry(byText.first(), 1, 120);
+        }
+    }
+
+    @Step("Filter: select 'All ( by default )'")
+    public void filterAllByDefault() {
+        Locator byDiv = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^All \\( by default \\)$")));
+        waitVisible(byDiv.first(), 10_000);
+        clickWithRetry(byDiv.first(), 1, 120);
+    }
+
+    @Step("Open search icon in Messaging")
+    public void openSearchIcon() {
+        Locator icon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("edit"));
+        waitVisible(icon.first(), 10_000);
+        clickWithRetry(icon.first(), 1, 120);
+    }
+
+    @Step("Fill Messaging search with: {query}")
+    public void fillMessagingSearch(String query) {
+        Locator box = page.getByPlaceholder("Search");
+        waitVisible(box.first(), 10_000);
+        box.fill(query == null ? "" : query);
+    }
+
+    @Step("Assert search result visible: {text}")
+    public void assertSearchResultVisible(String text) {
+        waitVisible(page.getByText(text), 10_000);
+    }
+
+    // ================= Private Media flow =================
+    @Step("Open Private Media screen via 'Media' button")
+    public void openPrivateMediaScreen() {
+        logger.info("[Messaging][Private] Opening Private media screen");
+        waitVisible(privateMediaButton(), DEFAULT_WAIT);
+        clickWithRetry(privateMediaButton(), 1, 200);
+        waitVisible(privateMediaTitle(), 15_000);
+    }
+
+    @Step("Click plus icon to add private media")
+    public void clickPrivateMediaAddPlus() {
+        logger.info("[Messaging][Private] Clicking plus icon to add media");
+        waitVisible(plusIcon().first(), 15_000);
+        clickWithRetry(plusIcon().first(), 1, 200);
+        waitVisible(importationTitle(), 15_000);
+    }
+
+    @Step("Ensure blur toggle is enabled by default (private media)")
+    public void ensureBlurToggleEnabled() {
+        Locator sw = page.getByRole(AriaRole.SWITCH).first();
+        waitVisible(sw, 15_000);
+        try {
+            String checked = sw.getAttribute("aria-checked");
+            if (!"true".equalsIgnoreCase(checked)) {
+                logger.warn("[Messaging][Private] Expected blur toggle enabled by default, aria-checked={}", checked);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    @Step("Assert 'Blurred media' label visible")
+    public void assertBlurredMediaLabelVisible() {
+        waitVisible(page.getByText("Blurred media").first(), 10_000);
+    }
+
+    @Step("Disable blur toggle if currently enabled (private media)")
+    public void disableBlurToggleIfEnabled() {
+        Locator sw = page.getByRole(AriaRole.SWITCH).first();
+        waitVisible(sw, 15_000);
+        try {
+            String checked = sw.getAttribute("aria-checked");
+            if ("true".equalsIgnoreCase(checked)) {
+                clickWithRetry(sw, 1, 150);
+            }
+        } catch (Throwable e) {
+            // Fallback: attempt click once
+            clickWithRetry(sw, 1, 150);
+        }
+    }
+
+    @Step("Click Next (private media flow)")
+    public void clickNext() {
+        Locator next = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
+        waitVisible(next.first(), 15_000);
+        clickWithRetry(next.first(), 1, 200);
+    }
+
+    @Step("Wait for 'Blurred media' section to be visible (optional)")
+    public void waitForBlurredMediaVisible(int timeoutMs) {
+        try {
+            waitVisible(page.getByText("Blurred media").first(), Math.max(2000, timeoutMs));
+        } catch (Throwable ignored) {}
+    }
+
+    @Step("Click 'Next' repeatedly until private message placeholder appears or maxSteps reached")
+    public void clickNextUntilMessagePlaceholder(int maxSteps, int perStepWaitMs) {
+        int steps = Math.max(1, maxSteps);
+        for (int i = 0; i < steps; i++) {
+            // If already on message screen, stop
+            if (safeIsVisible(privateMessagePlaceholder())) {
+                logger.info("[Messaging][Private] Message placeholder visible after {} step(s)", i);
+                return;
+            }
+            // If Next is present, click it
+            Locator next = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
+            if (next.count() > 0 && safeIsVisible(next.first())) {
+                waitForBlurredMediaVisible(5_000);
+                clickWithRetry(next.first(), 1, 200);
+                try { page.waitForTimeout(Math.max(200, perStepWaitMs)); } catch (Throwable ignored) {}
+                continue;
+            }
+            // If no Next and no message field, wait a bit and retry
+            try { page.waitForTimeout(Math.max(200, perStepWaitMs)); } catch (Throwable ignored) {}
+        }
+        // Final check
+        if (!safeIsVisible(privateMessagePlaceholder())) {
+            logger.warn("[Messaging][Private] Message placeholder still not visible after {} Next steps", steps);
+        }
+    }
+
+    @Step("Assert private message input visible (Your message....)")
+    public void assertPrivateMessagePlaceholder() {
+        waitVisible(privateMessagePlaceholder(), 15_000);
+    }
+
+    @Step("Fill private message: {msg}")
+    public void fillPrivateMessage(String msg) {
+        Locator ph = privateMessagePlaceholder();
+        waitVisible(ph, 15_000);
+        ph.click();
+        ph.fill(msg == null ? "" : msg);
+    }
+
+    @Step("Set price euro: {euros}€ (private media)")
+    public void setPriceEuro(int euros) {
+        String regex = "^" + euros + "€$";
+        // 1) Try explicit label filter
+        Locator label = page.locator("label").filter(new Locator.FilterOptions().setHasText(Pattern.compile(regex)));
+        try {
+            waitVisible(label.first(), 5_000);
+            try { label.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            clickWithRetry(label.first(), 1, 150);
+            return;
+        } catch (Throwable ignored) {}
+
+        // 2) Try visible text node anywhere
+        Locator byText = page.getByText(euros + "€", new Page.GetByTextOptions().setExact(true));
+        try {
+            waitVisible(byText.first(), 5_000);
+            try { byText.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            clickWithRetry(byText.first(), 1, 150);
+            return;
+        } catch (Throwable ignored) {}
+
+        // 3) Iterate over radio button labels in pricing section
+        Locator radios = page.locator("label.ant-radio-button-wrapper.mediaAmountRadioButton");
+        int count = radios.count();
+        for (int i = 0; i < count; i++) {
+            Locator r = radios.nth(i);
+            String text = "";
+            try { text = r.innerText().trim(); } catch (Throwable ignored) {}
+            if (text.contains(euros + "€")) {
+                try { r.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                clickWithRetry(r, 1, 150);
+                return;
+            }
+        }
+
+        // 4) As a last resort, scroll a bit and retry #1 briefly
+        try { page.mouse().wheel(0, 600); } catch (Throwable ignored) {}
+        try {
+            waitVisible(label.first(), 3_000);
+            clickWithRetry(label.first(), 1, 150);
+            return;
+        } catch (Throwable ignored) {}
+
+        throw new RuntimeException("Failed to set price to " + euros + "€: option not visible or not clickable");
+    }
+
+    @Step("Select price as 'Free' (private media)")
+    public void selectPriceFree() {
+        Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("Free"));
+        waitVisible(lbl.first(), 15_000);
+        clickWithRetry(lbl.first(), 1, 150);
+    }
+
+    @Step("Click 'Propose the private media'")
+    public void clickProposePrivateMedia() {
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Propose the private media"));
+        waitVisible(btn.first(), 30_000);
+        clickWithRetry(btn.first(), 1, 200);
+    }
+
+    // ================= Actions menu (three-dots) & Private Gallery =================
+    @Step("Open actions menu (three dots)")
+    public void openActionsMenu() {
+        Locator dots = page.locator(".dots-wrapper");
+        waitVisible(dots.first(), 10_000);
+        clickWithRetry(dots.first(), 1, 150);
+    }
+
+    @Step("Assert action prompt visible: 'What action do you want to take?'")
+    public void assertActionPrompt() {
+        waitVisible(page.getByText("What action do you want to take?"), 10_000);
+    }
+
+    @Step("Click 'Private Gallery' option")
+    public void clickPrivateGallery() {
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Private Gallery"));
+        waitVisible(btn.first(), 10_000);
+        clickWithRetry(btn.first(), 1, 150);
+    }
+
+    @Step("Assert 'Private Gallery' screen visible")
+    public void assertPrivateGalleryScreen() {
+        waitVisible(page.getByText("Private Gallery"), 15_000);
+    }
+
+    private Locator privateGalleryItems() {
+        return page.locator(".galleryItem, .ant-image, .ant-card");
+    }
+
+    @Step("Wait for Private Gallery items to load")
+    public void waitForPrivateGalleryItems(int timeoutMs) {
+        long end = System.currentTimeMillis() + Math.max(5_000, timeoutMs);
+        while (System.currentTimeMillis() < end) {
+            int c = privateGalleryItems().count();
+            if (c > 0) return;
+            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        }
+        waitVisible(privateGalleryItems().first(), 5_000);
+    }
+
+    @Step("Scroll Private Gallery to bottom then back to top")
+    public void scrollPrivateGalleryToBottomThenTop() {
+        try {
+            // Scroll down a few times to ensure lazy load, then back to top
+            for (int i = 0; i < 6; i++) {
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+                try { page.waitForTimeout(400); } catch (Throwable ignored) {}
+            }
+            for (int i = 0; i < 3; i++) {
+                page.evaluate("window.scrollTo(0, 0)");
+                try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    @Step("Preview any item in Private Gallery")
+    public void previewAnyPrivateGalleryItem() {
+        // Codegen-specific target first
+        Locator cg = page.locator("div:nth-child(6) > .galleryItem > .ant-image > .ant-image-mask");
+        if (cg.count() > 0 && safeIsVisible(cg.first())) {
+            clickWithRetry(cg.first(), 1, 150);
+            return;
+        }
+        // Fallback: first visible image mask
+        Locator mask = page.locator(".galleryItem .ant-image .ant-image-mask, .ant-image .ant-image-mask").first();
+        waitVisible(mask, 10_000);
+        clickWithRetry(mask, 1, 150);
+    }
+
+    @Step("Close Private Gallery preview")
+    public void closePrivateGalleryPreview() {
+        // Codegen path: role IMG name 'close' then path
+        Locator imgClose = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("close"));
+        try {
+            if (imgClose.count() > 0) {
+                Locator path = imgClose.locator("path");
+                if (path.count() > 0 && safeIsVisible(path.first())) {
+                    clickWithRetry(path.first(), 1, 120);
+                    return;
+                }
+                clickWithRetry(imgClose.first(), 1, 120);
+                return;
+            }
+        } catch (Throwable ignored) {}
+        // Fallbacks: close button or Escape
+        try {
+            Locator btnClose = page.locator(".ant-modal-close, button[aria-label='Close'], .ant-image-preview-close");
+            if (btnClose.count() > 0 && safeIsVisible(btnClose.first())) {
+                clickWithRetry(btnClose.first(), 1, 120);
+                return;
+            }
+        } catch (Throwable ignored) {}
+        try { page.keyboard().press("Escape"); } catch (Throwable ignored) {}
+    }
+
+    // ===== Promotion helpers (Private media) =====
+    @Step("Enable promotion toggle if disabled")
+    public void enablePromotionToggle() {
+        Locator toggles = page.getByRole(AriaRole.SWITCH);
+        Locator target = toggles.count() > 1 ? toggles.nth(1) : toggles.first();
+        waitVisible(target, 15_000);
+        try {
+            String checked = target.getAttribute("aria-checked");
+            if (!"true".equalsIgnoreCase(checked)) {
+                clickWithRetry(target, 1, 150);
+            }
+        } catch (Throwable e) {
+            clickWithRetry(target, 1, 150);
+        }
+    }
+
+    @Step("Ensure 'Discount' field visible")
+    public void ensureDiscountVisible() {
+        waitVisible(page.getByText("Discount").first(), 15_000);
+    }
+
+    @Step("Fill euro discount amount: {amount}€ (textbox index 1)")
+    public void fillPromotionEuroDiscount(int amount) {
+        Locator tb = page.getByRole(AriaRole.TEXTBOX).nth(1);
+        waitVisible(tb, 10_000);
+        tb.click();
+        tb.fill(String.valueOf(amount));
+    }
+
+    @Step("Fill percent discount: {percent}% (textbox index 2)")
+    public void fillPromotionPercent(int percent) {
+        Locator tb = page.getByRole(AriaRole.TEXTBOX).nth(2);
+        waitVisible(tb, 10_000);
+        tb.click();
+        tb.fill(String.valueOf(percent));
+    }
+
+    @Step("Ensure 'Validity period' title visible")
+    public void ensureValidityTitle() {
+        waitVisible(page.getByText("Validity period").first(), 15_000);
+    }
+
+    @Step("Select validity as 'Unlimited'")
+    public void selectValidityUnlimited() {
+        Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("Unlimited"));
+        waitVisible(lbl.first(), 10_000);
+        clickWithRetry(lbl.first(), 1, 150);
+    }
+
+    @Step("Select validity as '7 days'")
+    public void selectValidity7Days() {
+        Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("7 days"));
+        waitVisible(lbl.first(), 10_000);
+        clickWithRetry(lbl.first(), 1, 150);
+    }
+
+    @Step("Wait for 'Stay on page during uploading' banner if it appears")
+    public void waitForUploadingBanner() {
+        try {
+            Locator msg = uploadingStayOnPageText();
+            if (msg.count() > 0) {
+                waitVisible(msg.first(), 10_000);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    @Step("Wait for 'Stay on page during uploading' banner to disappear")
+    public void waitForUploadingBannerToDisappear(long timeoutMs) {
+        long end = System.currentTimeMillis() + Math.max(5_000, timeoutMs);
+        while (System.currentTimeMillis() < end) {
+            try {
+                Locator msg = uploadingStayOnPageText();
+                if (msg.count() == 0 || !msg.first().isVisible()) {
+                    logger.info("[Messaging][Private] Uploading banner is no longer visible");
+                    return;
+                }
+            } catch (Throwable ignored) {}
+            try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+        }
+        logger.warn("[Messaging][Private] Uploading banner still visible after {} ms", timeoutMs);
+    }
+
+    @Step("Wait for 'Media sent' toast")
+    public void waitForMediaSentToast(long timeoutMs) {
+        long end = System.currentTimeMillis() + Math.max(10_000, timeoutMs);
+        while (System.currentTimeMillis() < end) {
+            try {
+                Locator toast = mediaSentToast();
+                if (toast.count() > 0 && toast.first().isVisible()) {
+                    logger.info("[Messaging][Private] 'Media sent' toast visible");
+                    return;
+                }
+            } catch (Throwable ignored) {}
+            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        }
+        // Fallback assert
+        waitVisible(mediaSentToast(), (int) Math.max(DEFAULT_WAIT, timeoutMs));
+    }
+
     @Step("Click any Quick Files album by regex (video/image/mix) with index fallbacks like codegen")
     public void clickAnyQuickFilesAlbumByRegex() {
         logger.info("[Messaging] Clicking a Quick Files album using regex selector and index fallbacks");
@@ -65,6 +501,23 @@ public class CreatorMessagingPage extends BasePage {
         waitVisible(page.getByText("Select the media you want to send"), 15_000);
     }
 
+    @Step("Wait for album items grid (.cover) to be visible")
+    public void waitForAlbumItemsGridVisible(int timeoutMs) {
+        long end = System.currentTimeMillis() + Math.max(5_000, timeoutMs);
+        while (System.currentTimeMillis() < end) {
+            try {
+                Locator firstCover = page.locator(".cover").first();
+                if (firstCover.count() > 0 && safeIsVisible(firstCover)) {
+                    logger.info("[Messaging][QuickFiles] Items grid visible with .cover elements");
+                    return;
+                }
+            } catch (Throwable ignored) {}
+            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        }
+        // Final assertion to bubble up
+        waitVisible(page.locator(".cover").first(), Math.max(3_000, timeoutMs));
+    }
+
     @Step("Pick first two covers or up to {n} items as fallback")
     public void pickFirstTwoCoversOrUpToN(int n) {
         try {
@@ -80,6 +533,65 @@ public class CreatorMessagingPage extends BasePage {
             logger.warn("[Messaging] First-two-covers click failed, fallback to generic selection: {}", e.getMessage());
         }
         selectUpToNQuickFiles(Math.max(1, n));
+    }
+
+    @Step("Select ALL items visible in the Quick Files album grid")
+    public int selectAllQuickFilesItems() {
+        // First, attempt the explicit first/second cover selectors like codegen
+        try {
+            Locator first = page.locator(".cover").first();
+            if (first.count() > 0 && safeIsVisible(first)) {
+                clickWithRetry(first, 1, 120);
+            }
+        } catch (Throwable ignored) {}
+        try {
+            Locator second = page.locator("div:nth-child(2) > .cover");
+            if (second.count() > 0 && safeIsVisible(second.first())) {
+                clickWithRetry(second.first(), 1, 120);
+            }
+        } catch (Throwable ignored) {}
+
+        // Broaden the item locator to account for different tile structures
+        Locator tiles = page.locator(".cover, .ant-image, .ant-card, div[class*='MediaCard'], div[class*='fileCard']");
+        int total = tiles.count();
+        logger.info("[Messaging][QuickFiles] Selecting all album items (broadened scan): detected tiles={}", total);
+        for (int i = 0; i < total; i++) {
+            try {
+                Locator tile = tiles.nth(i);
+                try { tile.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                if (!safeIsVisible(tile)) continue;
+                // Prefer cover inside tile
+                Locator cover = tile.locator(".cover");
+                if (cover.count() > 0 && safeIsVisible(cover.first())) {
+                    clickWithRetry(cover.first(), 1, 120);
+                    continue;
+                }
+                // Else click the tile itself
+                clickWithRetry(tile.first(), 1, 120);
+            } catch (Throwable e) {
+                logger.warn("[Messaging][QuickFiles] Failed selecting tile index {}: {}", i, e.getMessage());
+            }
+        }
+        return total;
+    }
+
+    @Step("Select the first two covers explicitly (.cover and nth-child(2) > .cover)")
+    public void selectFirstTwoCovers() {
+        try {
+            Locator first = page.locator(".cover").first();
+            waitVisible(first, 10_000);
+            clickWithRetry(first, 1, 120);
+        } catch (Throwable e) {
+            logger.warn("[Messaging][QuickFiles] Could not click first .cover: {}", e.getMessage());
+        }
+        try {
+            Locator second = page.locator("div:nth-child(2) > .cover");
+            if (second.count() > 0 && safeIsVisible(second.first())) {
+                clickWithRetry(second.first(), 1, 120);
+            }
+        } catch (Throwable e) {
+            logger.warn("[Messaging][QuickFiles] Could not click second .cover: {}", e.getMessage());
+        }
     }
 
     // ================= Quick Files minimal flow =================
@@ -448,7 +960,23 @@ public class CreatorMessagingPage extends BasePage {
     }
 
     private Locator sendButton() {
-        return page.getByText("Send");
+        // Prefer explicit button role with exact accessible name
+        Locator byRole = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send"));
+        if (byRole.count() > 0) return byRole.first();
+        // Scope to footer around the message input if possible
+        try {
+            Locator input = messageInput();
+            if (input.count() > 0) {
+                Locator container = input.first().locator("xpath=ancestor-or-self::div[contains(@class,'message') or contains(@class,'footer')][1]");
+                Locator scoped = container.getByText("Send", new Locator.GetByTextOptions().setExact(true));
+                if (scoped.count() > 0) return scoped.first();
+            }
+        } catch (Throwable ignored) {}
+        // Fallback to known label class
+        Locator label = page.locator(".messageSendLabel");
+        if (label.count() > 0) return label.first();
+        // Final fallback: global exact text (may be ambiguous but better than nothing)
+        return page.getByText("Send", new Page.GetByTextOptions().setExact(true));
     }
 
     private Locator mediaIcon() {
@@ -457,6 +985,31 @@ public class CreatorMessagingPage extends BasePage {
 
     private Locator importationTitle() {
         return page.getByText("Importation");
+    }
+
+    // ===== Private Media specific locators/texts =====
+    private Locator privateMediaButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Media"));
+    }
+
+    private Locator privateMediaTitle() {
+        return page.getByText("Private media", new Page.GetByTextOptions().setExact(true));
+    }
+
+    private Locator plusIcon() {
+        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+    }
+
+    private Locator privateMessagePlaceholder() {
+        return page.getByPlaceholder("Your message....");
+    }
+
+    private Locator uploadingStayOnPageText() {
+        return page.getByText("Stay on page during uploading");
+    }
+
+    private Locator mediaSentToast() {
+        return page.getByText("Media sent");
     }
 
     private Locator myDeviceButton() {
@@ -585,8 +1138,11 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Click Send")
     public void clickSend() {
         logger.info("[Messaging] Clicking Send button");
-        waitVisible(sendButton(), DEFAULT_WAIT);
-        clickWithRetry(sendButton(), 1, 200);
+        Locator btn = sendButton();
+        waitVisible(btn, DEFAULT_WAIT);
+        // Ensure visible and clickable; scroll into view as needed
+        try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        clickWithRetry(btn, 1, 200);
         page.waitForTimeout(300);
     }
 

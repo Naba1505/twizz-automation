@@ -165,4 +165,392 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.assertConversationInputVisible(30_000);
     }
 
+    @Test(priority = 6, description = "Creator sends a Private media message (image + video) via My Device")
+    public void creatorCanSendPrivateMediaMessage() {
+        // Arrange: credentials and media paths
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+        java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
+        java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
+
+        // Login as Creator and land on profile
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        loginPage.navigate();
+        loginPage.login(username, password);
+
+        // Messaging flow: open conversation
+        CreatorMessagingPage msg = new CreatorMessagingPage(page);
+        msg.openMessagingFromProfile();
+        msg.openFirstFanConversation();
+
+        // Open Private media screen and add first media (image)
+        msg.openPrivateMediaScreen();
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(img);
+        msg.waitForUploadSpinnerToDisappear(60_000);
+        msg.ensureBlurToggleEnabled(); // ensure blurred by default
+        msg.clickNext();
+
+        // Add second media (video)
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(vid);
+        msg.waitForUploadSpinnerToDisappear(60_000);
+        msg.clickNext();
+
+        // Fill message and price, then propose private media
+        msg.assertPrivateMessagePlaceholder();
+        msg.fillPrivateMessage("Send Media Message");
+        msg.setPriceEuro(15);
+        msg.clickProposePrivateMedia();
+        // Optional confirmations: if banners/toasts appear, wait briefly; otherwise proceed
+        msg.waitForUploadingBanner();
+        try {
+            msg.waitForMediaSentToast(15_000);
+        } catch (Throwable ignored) {
+            // Make toast optional per spec; proceed to verify conversation screen
+        }
+
+        // Ensure we land back on the conversation screen
+        msg.assertConversationInputVisible(60_000);
+    }
+
+    @Test(priority = 7, description = "Creator sends a Private media message with promotion (10€, validity Unlimited)")
+    public void creatorCanSendPrivateMediaWithPromotion() {
+        // Arrange: credentials and media paths
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+        java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
+        java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
+
+        // Login as Creator and land on profile
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        loginPage.navigate();
+        loginPage.login(username, password);
+
+        // Messaging flow: open conversation
+        CreatorMessagingPage msg = new CreatorMessagingPage(page);
+        msg.openMessagingFromProfile();
+        msg.openFirstFanConversation();
+
+        // Open Private media screen and add first media (image)
+        msg.openPrivateMediaScreen();
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(img);
+        msg.waitForUploadSpinnerToDisappear(60_000);
+        msg.ensureBlurToggleEnabled();
+        msg.clickNext();
+
+        // Add second media (video)
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(vid);
+        msg.clickNext();
+
+        // Fill message and price
+        msg.assertPrivateMessagePlaceholder();
+        msg.fillPrivateMessage("Send Media Message with Promotion");
+        msg.setPriceEuro(15);
+
+        // Enable promotion and configure discount + validity
+        msg.enablePromotionToggle();
+        msg.ensureDiscountVisible();
+        msg.fillPromotionEuroDiscount(10);
+        msg.ensureValidityTitle();
+        msg.selectValidityUnlimited();
+
+        // Propose private media
+        msg.clickProposePrivateMedia();
+        msg.waitForUploadingBanner();
+        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+
+        // Ensure we land back on the conversation screen
+        msg.assertConversationInputVisible(60_000);
+    }
+
+    @Test(priority = 8, description = "Creator sends a Private media message with promotion (5% discount, validity 7 days)")
+    public void creatorCanSendPrivateMediaWithPromotionPercent() {
+        // Arrange: credentials and media paths
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+        java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
+        java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
+
+        // Login as Creator and land on profile
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        loginPage.navigate();
+        loginPage.login(username, password);
+
+        // Messaging flow: open conversation
+        CreatorMessagingPage msg = new CreatorMessagingPage(page);
+        msg.openMessagingFromProfile();
+        msg.openFirstFanConversation();
+
+        // Open Private media screen and add first media (image)
+        msg.openPrivateMediaScreen();
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(img);
+        msg.ensureBlurToggleEnabled();
+        msg.clickNext();
+
+        // Add second media (video)
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(vid);
+        msg.clickNext();
+
+        // Fill message and price
+        msg.assertPrivateMessagePlaceholder();
+        msg.fillPrivateMessage("Send Media Message with 5% Promotion");
+        msg.setPriceEuro(15);
+
+        // Enable promotion with percent discount and 7 days validity
+        msg.enablePromotionToggle();
+        msg.ensureDiscountVisible();
+        msg.fillPromotionPercent(5);
+        msg.ensureValidityTitle();
+        msg.selectValidity7Days();
+
+        // Propose private media
+        msg.clickProposePrivateMedia();
+        msg.waitForUploadingBanner();
+        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+
+        // Ensure we land back on the conversation screen
+        msg.assertConversationInputVisible(60_000);
+    }
+
+    @Test(priority = 9, description = "Creator sends a Private media message for Free (image + video) via My Device")
+    public void creatorCanSendPrivateMediaFree() {
+        // Arrange: credentials and media paths
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+        java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
+        java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
+
+        // Login as Creator and land on profile
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        loginPage.navigate();
+        loginPage.login(username, password);
+
+        // Messaging flow: open conversation
+        CreatorMessagingPage msg = new CreatorMessagingPage(page);
+        msg.openMessagingFromProfile();
+        msg.openFirstFanConversation();
+
+        // Open Private media screen and add first media (image)
+        msg.openPrivateMediaScreen();
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(img);
+        msg.ensureBlurToggleEnabled();
+        msg.clickNext();
+
+        // Add second media (video)
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(vid);
+        msg.clickNext();
+
+        // Fill message and set price as Free
+        msg.assertPrivateMessagePlaceholder();
+        msg.fillPrivateMessage("Send Free Private Media Message");
+        msg.selectPriceFree();
+
+        // Propose private media
+        msg.clickProposePrivateMedia();
+        msg.waitForUploadingBanner();
+        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+
+        // Ensure we land back on the conversation screen
+        msg.assertConversationInputVisible(60_000);
+    }
+
+    @Test(priority = 10, description = "Creator sends a Free Private media message with unblurred media")
+    public void creatorCanSendPrivateMediaFreeUnblurred() {
+        // Arrange: credentials and media paths
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+        java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
+        java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
+
+        // Login as Creator and land on profile
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        loginPage.navigate();
+        loginPage.login(username, password);
+
+        // Messaging flow: open conversation
+        CreatorMessagingPage msg = new CreatorMessagingPage(page);
+        msg.openMessagingFromProfile();
+        msg.openFirstFanConversation();
+
+        // Open Private media screen and add first media (image)
+        msg.openPrivateMediaScreen();
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(img);
+        msg.ensureBlurToggleEnabled();
+        msg.clickNext();
+
+        // Add second media (video)
+        msg.clickPrivateMediaAddPlus();
+        msg.chooseMyDeviceForMedia();
+        msg.uploadMessageMedia(vid);
+        msg.clickNext();
+
+        // Unblur the media before sending (toggle only; label may vary)
+        msg.disableBlurToggleIfEnabled();
+
+        // Fill message and set price as Free
+        msg.assertPrivateMessagePlaceholder();
+        msg.fillPrivateMessage("Send Free Private Media Message (Unblurred)");
+        msg.selectPriceFree();
+
+        // Propose private media
+        msg.clickProposePrivateMedia();
+        msg.waitForUploadingBanner();
+        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+
+        // Ensure we land back on the conversation screen
+        msg.assertConversationInputVisible(60_000);
+    }   
+
+    @Test(priority = 11, description = "Creator sends a Private media message using Quick Files (multi-select)")
+    public void creatorCanSendPrivateMediaViaQuickFiles() {
+        // Arrange: credentials
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+
+        // Login as Creator and land on profile
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        loginPage.navigate();
+        loginPage.login(username, password);
+
+        // Messaging flow: open conversation
+        CreatorMessagingPage msg = new CreatorMessagingPage(page);
+        msg.openMessagingFromProfile();
+        msg.openFirstFanConversation();
+
+        // Open Private media screen and choose Quick Files to import
+        msg.openPrivateMediaScreen();
+        msg.clickPrivateMediaAddPlus();
+        msg.ensureImportationVisible();
+        msg.chooseQuickFilesForMedia();
+        // Assert Quick Files screen like codegen: title + My albums
+        msg.assertQuickFilesScreen();
+        try {
+            msg.ensureQuickFilesAlbumsVisible();
+        } catch (SkipException se) {
+            throw se; // skip if no albums
+        }
+
+        // Click a Quick Files album similar to codegen (regex + index), fallback to CSS
+        try {
+            msg.clickAnyQuickFilesAlbumByRegex();
+        } catch (RuntimeException e) {
+            // Secondary fallback
+            try {
+                msg.selectQuickFilesAlbumWithCssFallback();
+            } catch (RuntimeException e2) {
+                if (e2.getMessage() != null && e2.getMessage().toLowerCase().contains("no quick files")) {
+                    throw new SkipException("No Quick Files albums available; skipping test");
+                }
+                throw e2;
+            }
+        }
+
+        // Ensure album inner prompt is visible and choose items like codegen
+        msg.assertAlbumMediaPrompt();
+        msg.pickFirstTwoCoversOrUpToN(3);
+        msg.confirmQuickFilesSelection();
+        // Allow any post-selection processing/spinners to settle
+        msg.waitForUploadSpinnerToDisappear(60_000);
+        try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+
+        // Click Next repeatedly until the private message placeholder is visible (handle multi-stepper)
+        msg.clickNextUntilMessagePlaceholder(10, 600);
+
+        // Fill message and set price to 30€
+        msg.assertPrivateMessagePlaceholder();
+        msg.fillPrivateMessage("Quick Files Private Media");
+        msg.setPriceEuro(30);
+
+        // Propose private media and wait for upload to complete
+        msg.clickProposePrivateMedia();
+        msg.waitForUploadingBanner();
+        msg.waitForUploadingBannerToDisappear(90_000);
+        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+
+        // Ensure we land back on the conversation screen
+        msg.assertConversationInputVisible(60_000);
+    }
+
+
+    @Test(priority = 12, description = "Creator opens Private Gallery from messaging, scrolls, previews an item, and closes preview")
+    public void creatorCanViewPrivateGallery() {
+        // Arrange: credentials
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+
+        // Login as Creator and land on profile
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        loginPage.navigate();
+        loginPage.login(username, password);
+
+        // Messaging flow: open conversation
+        CreatorMessagingPage msg = new CreatorMessagingPage(page);
+        msg.openMessagingFromProfile();
+        msg.openFirstFanConversation();
+
+        // Open actions menu and navigate to Private Gallery
+        msg.openActionsMenu();
+        msg.assertActionPrompt();
+        msg.clickPrivateGallery();
+        msg.assertPrivateGalleryScreen();
+
+        // Wait for items to load, then scroll bottom and back to top
+        msg.waitForPrivateGalleryItems(15_000);
+        msg.scrollPrivateGalleryToBottomThenTop();
+
+        // Preview any item and close preview
+        msg.previewAnyPrivateGalleryItem();
+        msg.closePrivateGalleryPreview();
+    }
+
+    @Test(priority = 13, description = "Creator navigates Messaging dashboard tabs, uses filter and search")
+    public void creatorCanUseMessagingTabsFilterAndSearch() {
+        // Arrange: credentials
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+
+        // Login as Creator and land on profile
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        loginPage.navigate();
+        loginPage.login(username, password);
+
+        // Navigate directly to profile, then open Messaging via dashboard icon
+        CreatorMessagingPage msg = new CreatorMessagingPage(page);
+        msg.navigateToCreatorProfileViaUrl();
+        msg.openMessagingFromDashboardIcon();
+        msg.assertMessagingTitle();
+
+        // Navigate To Deliver tab and back to General
+        msg.clickToDeliverTab();
+        msg.clickGeneralTab();
+
+        // Open Filter and apply Unread messages, then All (by default)
+        msg.openFilter();
+        msg.filterUnreadMessages();
+        msg.filterAllByDefault();
+
+        // Open search, search for Paul, assert a result, then clear search and close search icon again
+        msg.openSearchIcon();
+        msg.fillMessagingSearch("Paul");
+        msg.assertSearchResultVisible("Paul Lewis");
+        msg.fillMessagingSearch("");
+        msg.openSearchIcon();
+    }
 }

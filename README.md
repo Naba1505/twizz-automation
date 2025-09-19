@@ -274,5 +274,43 @@ Key entries (with defaults):
   - `test-output/` (TestNG default output)
 - You can safely delete contents of these folders locally before pushing if you created them manually.
 
+## Messaging (Creator)
+- Page object: `src/test/java/pages/CreatorMessagingPage.java`
+- Tests class: `src/test/java/tests/CreatorMessagingTest.java`
+- Coverage (13 tests):
+  1. Send normal text message (with timestamp)
+  2. Send saved response (Quick answer) with appended timestamp
+  3. Send image media via Importation → My Device
+  4. Send video media via Importation → My Device
+  5. Send media via Importation → Quick Files (albums)
+  6. Private media: image + video via My Device
+  7. Private media with promotion (10€; validity Unlimited)
+  8. Private media with promotion (5% discount; validity 7 days)
+  9. Private media Free (image + video)
+  10. Private media Free (unblurred)
+  11. Private media via Quick Files (multi-select and stepper)
+  12. View Private Gallery (open actions menu, scroll, preview and close)
+  13. Messaging dashboard tabs + Filter + Search actions
+
+### Running Messaging tests
+- Entire `CreatorMessagingTest` class:
+  ```bash
+  mvn -Dtest=tests.CreatorMessagingTest test
+  ```
+- Selected tests by method names:
+  ```bash
+  mvn -Dtest=tests.CreatorMessagingTest#creatorCanSendQuickAnswerWithTimestamp+creatorCanSendPrivateMediaViaQuickFiles test
+  mvn -Dtest=tests.CreatorMessagingTest#creatorCanViewPrivateGallery+creatorCanUseMessagingTabsFilterAndSearch test
+  ```
+
+### Notes on robustness
+- Send button targeting hardened:
+  - Prefers `getByRole(AriaRole.BUTTON, name="Send")`, scopes to conversation footer when needed, with `.messageSendLabel` fallback.
+- Quick Files private media flow:
+  - Album selection uses regex + CSS fallbacks.
+  - Item selection mirrors codegen for first two covers and supports broader selectors.
+  - Stepper advancement uses `clickNextUntilMessagePlaceholder()` with resilience against variable steps.
+  - Upload completion waits for banner/spinner to disappear before final assertions.
+
 ## License
 Proprietary/Internal (adjust as needed).
