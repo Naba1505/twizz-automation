@@ -57,18 +57,49 @@ public class CreatorLoginPage extends BasePage {
 
     public void login(String username, String password) {
         logger.info("Attempting login for user: {}", username);
-        fillByPlaceholder(usernamePlaceholder, username);
-        fillByPlaceholder(passwordPlaceholder, password);
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).click();
-        // Avoid NETWORKIDLE due to potential long-polling; wait for a reliable post-login marker instead
+        // If already logged-in marker is visible, skip login
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+        try {
+            if (plusImg.count() > 0 && plusImg.first().isVisible()) {
+                logger.info("Already logged in; skipping credential entry");
+                return;
+            }
+        } catch (Throwable ignored) {}
+
+        // Ensure we are on login screen (form or header visible)
+        try {
+            if (!isLoginFormVisible()) {
+                isLoginHeaderVisible();
+            }
+        } catch (Throwable ignored) {}
+
+        // Fill credentials with robust clear
+        Locator user = page.getByPlaceholder(usernamePlaceholder);
+        Locator pass = page.getByPlaceholder(passwordPlaceholder);
+        waitVisible(user, 15000);
+        waitVisible(pass, 15000);
+        try {
+            user.click(); user.fill(""); user.press("Control+A"); user.press("Backspace"); user.fill(username);
+        } catch (Throwable t) { fillByPlaceholder(usernamePlaceholder, username); }
+        try {
+            pass.click(); pass.fill(""); pass.press("Control+A"); pass.press("Backspace"); pass.fill(password);
+        } catch (Throwable t) { fillByPlaceholder(passwordPlaceholder, password); }
+
+        // Click Connect with a light retry
+        Locator connect = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true));
+        try { clickWithRetry(connect, 1, 200); } catch (Throwable ignored) { connect.click(); }
+
+        // Avoid NETWORKIDLE; wait for a reliable post-login marker instead
         boolean visible = false;
         try {
             waitVisible(plusImg, 20000);
             visible = true;
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+            // Broaden detection: URL or common dashboard markers
+            try { page.waitForURL("**/creator/**", new Page.WaitForURLOptions().setTimeout(10000)); visible = true; } catch (Exception e) { /* ignore */ }
+        }
         if (!visible) {
-            // Fallback to a lighter load-state to not hang
+            // Final fallback to a lighter load-state to not hang
             try { page.waitForLoadState(LoadState.DOMCONTENTLOADED); } catch (Exception ignored) {}
         }
         logger.info("Clicked Connect; post-login UI visible: {}", visible);

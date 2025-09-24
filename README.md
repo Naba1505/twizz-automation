@@ -312,5 +312,51 @@ Key entries (with defaults):
   - Stepper advancement uses `clickNextUntilMessagePlaceholder()` with resilience against variable steps.
   - Upload completion waits for banner/spinner to disappear before final assertions.
 
+## Creator Profile (Creator)
+- Page object: `src/test/java/pages/CreatorProfilePage.java`
+- Tests class: `src/test/java/tests/CreatorProfileTest.java`
+- Coverage (7 tests):
+  1. Login and land on Profile, verify key elements (URL, username header, avatar, Publications/Subscribers/Interested, bottom icons; navigate Collections Publications)
+  2. Upload profile avatar (Modify profile pencil icon Edit pick `src/test/resources/Images/ProfileImageA.jpg`; success toast)
+  3. Delete profile avatar (Modify profile pencil icon Delete confirm Yes; success toast)
+  4. Update profile switches (Post grid Collection, Subscriber chat Free chat; Register; success toast)
+  5. Revert profile switches (Collection Post grid, Free chat Subscriber chat; Register; success toast)
+  6. Update profile fields (Last name = Smith, Position = India, Description = Automation Test Creator; Register; success toast)
+  7. Share Profile options (open Share profile; whatsapp/twitter/telegram popups; message icon; copy icon; Cancel)
+
+### Running Creator Profile tests
+- Entire class:
+  ```bash
+  mvn -Dtest=tests.CreatorProfileTest test
+  ```
+- Selected tests by method names:
+  ```bash
+  mvn -Dtest=tests.CreatorProfileTest#creatorCanLandOnProfileAndSeeKeyElements test
+  mvn -Dtest=tests.CreatorProfileTest#creatorCanUploadProfileAvatar test
+  mvn -Dtest=tests.CreatorProfileTest#creatorCanDeleteProfileAvatar test
+  mvn -Dtest=tests.CreatorProfileTest#creatorCanUpdateProfileSettings+creatorCanRevertProfileSettings test
+  mvn -Dtest=tests.CreatorProfileTest#creatorCanUpdateProfileFields test
+  mvn -Dtest=tests.CreatorProfileTest#creatorCanUseShareProfileOptions test
+  ```
+
+### Notes on robustness
+- Profile switches use specific container XPath first (e.g., `//div[@class='edit-profile-switch ']//span[contains(text(),'Collection')]`) with role/button fallbacks and scroll-into-view.
+- Register/Toast handling includes a short settle after clicking Register and after toast becomes visible before dismissing it.
+- Modify profile fields use robust clear-and-fill (fill(""), Ctrl+A, Backspace) prior to setting values.
+- Share profile options tolerate blocked popups and close popups if opened.
+- Login hardened in `pages/CreatorLoginPage` to reduce flakiness: pre-check for logged-in state, ensure login form/header, retry Connect, broaden post-login detection (icon/URL), and light fallback waits.
+
+## Code Coverage
+- We use JaCoCo for code coverage reporting of test runs.
+- Generate a coverage report:
+  ```bash
+  mvn clean test verify
+  ```
+- Open the HTML report:
+  - `target/site/jacoco/index.html`
+- Notes:
+  - Coverage is most meaningful for helper/util layers (`pages/`, `utils/`), not Playwright binaries.
+  - If you run a subset of tests, coverage will reflect only those executions.
+
 ## License
 Proprietary/Internal (adjust as needed).
