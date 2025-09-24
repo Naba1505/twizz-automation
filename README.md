@@ -35,16 +35,16 @@ End-to-end UI automation for Twizz with Creator and Fan flows. The framework emp
 
 ## Project Structure
 - `src/main/java/utils/`
-  - `BrowserFactory`: ThreadLocal Playwright/Browser/Context/Page for parallel safety, optional tracing.
   - `ConfigReader`: Loads `config.properties` and exposes typed getters.
   - `RetryAnalyzer`, `AnnotationTransformer`: Centralized retry with logging and optional delay.
 - `src/test/java/pages/`
   - `BasePage`: Common helpers.
   - `LandingPage`, `CreatorRegistrationPage`, `CreatorLoginPage`, `CreatorPublicationPage`, `CreatorCollectionPage`, `FanRegistrationPage`, `FanLoginPage`: Page Objects with robust waits and fallbacks.
-  - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
+    44→  - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
 - `src/test/java/tests/`
   - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `CreatorLiveTest`, `CreatorQuickFilesTest`, `CreatorMediaPushTest`, `CreatorUnlockLinksTest`, `CreatorDiscoverTest`, `CreatorRevenuesTest`, `CreatorQuickFilesDeleteTest`, `CreatorCollectionTest`, `CreatorCollectionDeleteTest`, `FanLoginTest`.
-  - `testng.xml`: Suite config, listeners (`utils.AnnotationTransformer`); Allure via TestNG adapter dependency, class-level parallel by default.
+  - `testng.xml`: Suite config, listeners (`utils.AnnotationTransformer`); Allure via TestNG adapter dependency. Runs sequentially by default.
+  - To run in parallel, use `testng-parallel.xml` or the Maven profile: `mvn -P parallel test`.
 
 ## Prerequisites
 - Java 21+
