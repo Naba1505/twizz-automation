@@ -65,7 +65,6 @@ public class CreatorMonetizationPage extends BasePage {
         return page.getByPlaceholder(PRICE_PLACEHOLDER);
     }
 
-    @SuppressWarnings("unused")
     private Locator monthlyPriceInput() {
         return priceInputs().first();
     }
