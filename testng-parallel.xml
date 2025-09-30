@@ -23,6 +23,8 @@
             <class name="tests.CreatorProfileTest"/>
             <class name="tests.CreatorFormationTest"/>
             <class name="tests.CreatorSubscriptionPriceTest"/>
+            <class name="tests.CreatorPromotionsTest"/>
+            <class name="tests.CleanupDeletePromoCodesTest"/>
             <class name="tests.CreatorQuickMessageDeleteTest"/>
             <class name="tests.CreatorQuickFilesDeleteTest"/>
             <class name="tests.CreatorCollectionDeleteTest"/>
