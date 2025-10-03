@@ -24,6 +24,11 @@
             <class name="tests.CreatorFormationTest"/>
             <class name="tests.CreatorSubscriptionPriceTest"/>
             <class name="tests.CreatorPromotionsTest"/>
+            <class name="tests.CreatorPresentationVideosTest"/>
+            <class name="tests.CreatorPushHistoryTest"/>
+            <class name="tests.CreatorUnlockHistoryTest"/>
+            <class name="tests.CreatorHelpAndContactTest"/>
+            <class name="tests.CreatorLegalPagesTest"/>
             <class name="tests.CleanupDeletePromoCodesTest"/>
             <class name="tests.CreatorQuickMessageDeleteTest"/>
             <class name="tests.CreatorQuickFilesDeleteTest"/>

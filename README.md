@@ -1,4 +1,56 @@
 # Twizz Automation (Java + Playwright + TestNG)
+## Presentation Videos (Creator)
+- Page object: `pages/CreatorPresentationVideosPage`
+- Tests class: `tests/CreatorPresentationVideosTest`
+- Flow:
+  - Login → Settings → Presentation Videos → Upload short video → optional uploading banner → assert Waiting status
+  - Includes clicking `.presentation-video-sticky-button` after upload
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorPresentationVideosTest test
+  ```
+
+## Push History (Creator)
+- Page object: `pages/CreatorPushHistoryPage`
+- Tests class: `tests/CreatorPushHistoryTest`
+- Flow:
+  - Login → Settings → History of pushes → open last item → assert Performance → back → open first item → assert Performance → back to profile
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorPushHistoryTest test
+  ```
+
+## Unlock History (Creator)
+- Page object: `pages/CreatorUnlockHistoryPage`
+- Tests class: `tests/CreatorUnlockHistoryTest`
+- Flow:
+  - Login → Settings → Unlock history → open last entry → assert Details → back → open first entry → assert Details → back to profile
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorUnlockHistoryTest test
+  ```
+
+## Help and Contact (Creator)
+- Page object: `pages/CreatorHelpAndContactPage`
+- Tests class: `tests/CreatorHelpAndContactTest`
+- Flow:
+  - Login → Settings → Help and contact → Subject/Message fill → Send → assert "Your message has been sent"
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorHelpAndContactTest test
+  ```
+
+## Legal Pages (Creator)
+- Page object: `pages/CreatorLegalPages`
+- Tests class: `tests/CreatorLegalPagesTest`
+- Flow:
+  - Terms & Conditions of Sale: assert title/url → scroll to bottom snippet and back
+  - Community Regulations: assert title/url → scroll to bottom snippet and back
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorLegalPagesTest test
+  ```
+
 
 End-to-end UI automation for Twizz with Creator and Fan flows. The framework emphasizes robust, resilient interactions and uses Allure only for reporting (with Playwright traces and screenshots).
 
@@ -15,6 +67,34 @@ End-to-end UI automation for Twizz with Creator and Fan flows. The framework emp
    ```bash
    mvn clean install -DskipTests
    ```
+
+## Promotions (Creator)
+- Page object: `pages/CreatorPromotionsPage`
+- Tests class: `tests/CreatorPromotionsTest`
+- Coverage:
+  - Create promo code with percent discount for Subscription (Unlimited)
+  - Create promo code with percent discount for Media push / Collection (7 days)
+  - Create promo code with fixed amount for Subscription (Unlimited)
+  - Create promo code with fixed amount for Media push / Collection (7 days)
+  - Copy links: clicks all visible `Copy` buttons (`//span[contains(text(),'Copy')]`), dismisses intermediate copy toasts opportunistically, and validates copy-success only on the last click (soft style to reduce flakiness)
+- Run examples:
+  ```bash
+  mvn -Dtest=CreatorPromotionsTest test
+  mvn -Dtest=CreatorPromotionsTest#testAddPromoCode test
+  mvn -Dtest=CreatorPromotionsTest#testCopyAllPromoLinks test
+  ```
+
+### Promotions Cleanup
+- Test: `tests/CleanupDeletePromoCodesTest`
+- What it does:
+  - Logs in as Creator, opens Settings → Promo code
+  - Iteratively deletes all promo codes whose title starts with "Automation" (case-insensitive), using locator `//span[starts-with(normalize-space(translate(text(),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')),'AUTOMATION')]`
+  - Confirms via `Yes, delete` button and handles success toast "Promo code deleted successfully !"
+  - Soft assertion approach: closes intermediate toasts if present without asserting; for the final deletion it attempts to observe the toast but does not fail if it is not visible (reduces UI timing flakiness). A final verification loop ensures zero remaining promos; if any remain due to virtualization/pagination, it re-opens the Promo page and retries until none remain or a safety cap is reached.
+- Run only this cleanup:
+  ```bash
+  mvn -Dtest=CleanupDeletePromoCodesTest test
+  ```
 2. (First time only) Ensure Playwright browsers are installed
    ```bash
    mvn -Dplaywright.cli.install=true test -DskipTests
@@ -45,6 +125,7 @@ End-to-end UI automation for Twizz with Creator and Fan flows. The framework emp
   - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `CreatorLiveTest`, `CreatorQuickFilesTest`, `CreatorMediaPushTest`, `CreatorUnlockLinksTest`, `CreatorDiscoverTest`, `CreatorRevenuesTest`, `CreatorQuickFilesDeleteTest`, `CreatorCollectionTest`, `CreatorCollectionDeleteTest`, `FanLoginTest`.
   - `testng.xml`: Suite config, listeners (`utils.AnnotationTransformer`); Allure via TestNG adapter dependency. Runs sequentially by default.
   - To run in parallel, use `testng-parallel.xml` or the Maven profile: `mvn -P parallel test`.
+  - New: `CreatorPromotionsTest` (promo code create + copy) and `CleanupDeletePromoCodesTest` (cleanup 'AUTOMATION' promos)
 
 ## Prerequisites
 - Java 21+
@@ -94,6 +175,16 @@ Key entries (with defaults):
 - Single test class:
   ```bash
   mvn test -Dtest=CreatorRegistrationTest
+  ```
+
+- Promotions only:
+  ```bash
+  mvn -Dtest=CreatorPromotionsTest test
+  ```
+
+- Promotions cleanup only:
+  ```bash
+  mvn -Dtest=CleanupDeletePromoCodesTest test
   ```
 
 ### Collections Cleanup (Creator)
