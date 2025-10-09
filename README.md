@@ -51,6 +51,49 @@
   mvn -Dtest=CreatorLegalPagesTest test
   ```
 
+## Payment Method (Creator)
+- Page object: `src/test/java/pages/CreatorPaymentMethodPage.java`
+- Tests class: `src/test/java/tests/CreatorPaymentMethodTest.java`
+- Scenarios:
+  1. Add Bank Account: fills Name of the bank, SWIFT, IBAN/Account number, Country, Address, Postal code, City → submits → validates success and card.
+  2. Set as Default: opens the added card (RevoCard) → clicks "Set as default".
+  3. Delete Bank Account: opens card → clicks "Delete this card" → confirms "Yes delete".
+  4. Deposit Duration Switching: ensures "Whenever you want." text → selects Every 7 days/On pause/Every 30 days, confirming each dialog.
+- Run examples:
+  ```bash
+  mvn -Dtest=CreatorPaymentMethodTest#creatorCanAddBankAccount test
+  mvn -Dtest=CreatorPaymentMethodTest#creatorCanSetBankAccountAsDefault test
+  mvn -Dtest=CreatorPaymentMethodTest#creatorCanDeleteBankAccount test
+  mvn -Dtest=CreatorPaymentMethodTest#creatorCanSwitchDepositDurations test
+  ```
+
+## Logout (Creator)
+- Page object: `src/test/java/pages/CreatorLogoutPage.java`
+- Tests class: `src/test/java/tests/CreatorLogoutTest.java`
+- Flow: Profile → Settings (URL contains `/common/setting`) → click `Disconnect` → ensure Twizz logo is visible on intro.
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorLogoutTest test
+  ```
+
+## Language (Creator)
+- Page object: `src/test/java/pages/CreatorLanguagePage.java`
+- Tests class: `src/test/java/tests/CreatorLanguageTest.java`
+- Flow: Profile → Settings → Language → switch Français (title `Langue`), Español (title `Idioma`), back to English (title `Language`) → back to profile.
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorLanguageTest test
+  ```
+
+## History of Collections (Creator)
+- Page object: `src/test/java/pages/CreatorCollectionsHistoryPage.java`
+- Tests class: `src/test/java/tests/CreatorCollectionsHistoryTest.java`
+- Flow: Profile → Settings → History of collections → ensure title `Collections` → open first collection (icon `collection`) → ensure `Details` → back to profile.
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorCollectionsHistoryTest test
+  ```
+
 
 End-to-end UI automation for Twizz with Creator and Fan flows. The framework emphasizes robust, resilient interactions and uses Allure only for reporting (with Playwright traces and screenshots).
 
