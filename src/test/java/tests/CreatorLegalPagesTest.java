@@ -44,5 +44,11 @@ public class CreatorLegalPagesTest extends BaseTestClass {
         legal.assertOnCommunityRegulationsPage();
         legal.scrollDownToCommunityBottomAndBackToTitle();
         legal.clickBackArrow();
+
+        // Content Policy
+        legal.openContentPolicy();
+        legal.assertOnContentPolicyPage();
+        legal.scrollDownToContentPolicyBottomAndBackToTitle();
+        legal.clickBackArrow();
     }
 }

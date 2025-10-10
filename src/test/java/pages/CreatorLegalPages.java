@@ -1,22 +1,25 @@
 package pages;
-
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 
 /**
- * Page object for Creator -> Settings -> Legal pages (Terms & Conditions of Sale, Community Regulations)
+ * Page object for Creator -> Settings -> Legal pages (Terms & Conditions of Sale, Community Regulations, Content Policy)
  */
 public class CreatorLegalPages extends BasePage {
     private static final String SETTINGS_URL_PART = "/common/setting";
     private static final String SALE_TITLE_EXACT = "General Conditions of Sale";
     private static final String SALE_URL_PATH = "/common/general-conditions-of-sale";
-    private static final String SALE_BOTTOM_SNIPPET = "(Other than personal data) only if it has been generated jointly with other";
-
+    private static final String SALE_BOTTOM_SNIPPET = "(Other than personal data) only if it has been generated Jointly with other";
     private static final String COMMUNITY_TITLE_EXACT = "General Conditions of Use";
     private static final String COMMUNITY_URL_PATH = "/common/general-conditions-of-use";
     private static final String COMMUNITY_BOTTOM_SNIPPET = "Twizz therefore recommends";
+
+    // Content Policy
+    private static final String CONTENT_POLICY_MENU = "Content Policy";
+    private static final String CONTENT_POLICY_TITLE = "Content Policy and Child";
+    private static final String CONTENT_POLICY_BOTTOM_SNIPPET = "Twizz users who encounter";
 
     public CreatorLegalPages(Page page) {
         super(page);
@@ -35,6 +38,10 @@ public class CreatorLegalPages extends BasePage {
         return page.getByText("Community regulations");
     }
 
+    private Locator contentPolicyMenu() {
+        return page.getByText(CONTENT_POLICY_MENU);
+    }
+
     private Locator saleTitleExact() {
         return page.getByText(SALE_TITLE_EXACT, new Page.GetByTextOptions().setExact(true));
     }
@@ -49,6 +56,15 @@ public class CreatorLegalPages extends BasePage {
 
     private Locator communityBottomSnippet() {
         return page.getByText(COMMUNITY_BOTTOM_SNIPPET);
+    }
+
+    private Locator contentPolicyTitle() {
+        // Non-exact matching to be resilient to minor text changes/whitespace
+        return page.getByText(CONTENT_POLICY_TITLE);
+    }
+
+    private Locator contentPolicyBottomSnippet() {
+        return page.getByText(CONTENT_POLICY_BOTTOM_SNIPPET);
     }
 
     private Locator backArrow() {
@@ -128,6 +144,33 @@ public class CreatorLegalPages extends BasePage {
             try { page.mouse().wheel(0, -800); page.waitForTimeout(120); } catch (Throwable ignored) {}
         }
         waitVisible(communityTitleExact(), DEFAULT_WAIT);
+    }
+
+    @Step("Open Content Policy")
+    public void openContentPolicy() {
+        waitVisible(contentPolicyMenu(), DEFAULT_WAIT);
+        try { contentPolicyMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        clickWithRetry(contentPolicyMenu(), 1, 150);
+        waitVisible(contentPolicyTitle(), 20_000);
+    }
+
+    @Step("Assert on Content Policy page (title visible)")
+    public void assertOnContentPolicyPage() {
+        waitVisible(contentPolicyTitle(), 20_000);
+    }
+
+    @Step("Scroll to bottom Content Policy snippet and back to title")
+    public void scrollDownToContentPolicyBottomAndBackToTitle() {
+        for (int i = 0; i < 12; i++) {
+            if (safeIsVisible(contentPolicyBottomSnippet())) break;
+            try { page.mouse().wheel(0, 800); page.waitForTimeout(120); } catch (Throwable ignored) {}
+        }
+        waitVisible(contentPolicyBottomSnippet(), DEFAULT_WAIT);
+        for (int i = 0; i < 12; i++) {
+            if (safeIsVisible(contentPolicyTitle())) break;
+            try { page.mouse().wheel(0, -800); page.waitForTimeout(120); } catch (Throwable ignored) {}
+        }
+        waitVisible(contentPolicyTitle(), 20_000);
     }
 
     @Step("Click back arrow")
