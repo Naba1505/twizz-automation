@@ -94,6 +94,16 @@
   mvn -Dtest=CreatorCollectionsHistoryTest test
   ```
 
+## Automatic Message (Creator)
+- Page object: `src/test/java/pages/CreatorAutomaticMessagePage.java`
+- Tests class: `src/test/java/tests/CreatorAutomaticMessageTest.java`
+- Scenario covered:
+  - New subscriber automatic message: open Settings → Automatic Message (title `Automation`) → validate "New subscriber" header and info → Modify → add media from My Device (`src/test/resources/Images/AutoMessageImage.png`) → Next → fill message and set price (15€) → Save → wait for upload prompt to disappear → ensure Modify visible again → ensure first toggle is enabled.
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorAutomaticMessageTest#verifyNewSubscriberAutoMessageCreateAndEnable test
+  ```
+
 
 End-to-end UI automation for Twizz with Creator and Fan flows. The framework emphasizes robust, resilient interactions and uses Allure only for reporting (with Playwright traces and screenshots).
 
