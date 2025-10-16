@@ -170,4 +170,63 @@ public class CreatorAutomaticMessageTest extends BaseTestClass {
         amPage.assertAutomationTitleVisible();
         try { page.waitForTimeout(500); } catch (Throwable ignored) {}
     }
+
+        @Test(priority = 5, description = "Verify Automatic Message - Delete added media and disable all messages")
+    public void verifyDeleteMediaAndDisableAllAutoMessages() {
+        // Arrange
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+
+        CreatorLoginPage loginPage = new CreatorLoginPage(page);
+        CreatorAutomaticMessagePage amPage = new CreatorAutomaticMessagePage(page);
+
+        // Act: login and land on profile
+        loginPage.navigate();
+        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
+        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
+        loginPage.login(username, password);
+
+        // Open Settings and ensure URL contains settings path
+        amPage.openSettingsFromProfile();
+        String settingsUrl = page.url();
+        log.info("Settings URL after click: {}", settingsUrl);
+        Assert.assertTrue(settingsUrl.contains("/common/setting"), "Did not land on Settings screen");
+
+        // Open Automatic Message and ensure title visible
+        amPage.openAutomaticMessage();
+        amPage.assertAutomationTitleVisible();
+
+        // 1) First Modify (New subscriber)
+        amPage.clickModifyFirst();
+        amPage.deleteAllVisibleMedia();
+        amPage.clearMessageToSpace();
+        amPage.clickSaveOnly();
+        try { page.waitForTimeout(800); } catch (Throwable ignored) {}
+
+        // 2) Second Modify (Renew subscriber)
+        amPage.clickModifySecond();
+        amPage.deleteAllVisibleMedia();
+        amPage.clearMessageToSpace();
+        amPage.clickSaveOnly();
+        try { page.waitForTimeout(800); } catch (Throwable ignored) {}
+
+        // 3) Third Modify (Unsubscribe)
+        amPage.clickModifyThird();
+        amPage.deleteAllVisibleMedia();
+        amPage.clearMessageToSpace();
+        amPage.clickSaveOnly();
+        try { page.waitForTimeout(800); } catch (Throwable ignored) {}
+
+        // 4) Fourth Modify (Re-subscription)
+        amPage.clickModifyFourth();
+        amPage.deleteAllVisibleMedia();
+        amPage.clearMessageToSpace();
+        amPage.clickSaveOnly();
+        try { page.waitForTimeout(800); } catch (Throwable ignored) {}
+
+        // Finally, disable all enabled toggles
+        amPage.assertAutomationTitleVisible();
+        amPage.disableAllFirstFourToggles();
+        try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+    }
 }

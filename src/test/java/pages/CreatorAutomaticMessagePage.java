@@ -153,6 +153,34 @@ public class CreatorAutomaticMessagePage extends BasePage {
         return page.locator(".ant-modal-mask, .ant-drawer-mask");
     }
 
+    private Locator deleteButtons() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("delete"));
+    }
+
+    private Locator switchesAll() {
+        return page.getByRole(AriaRole.SWITCH);
+    }
+
+    private Locator editorMediaItems() {
+        // Common candidates for thumbnails/items within the auto message editor panel
+        return page.locator(".ant-upload-list-item, .ant-image, .media-thumb, .ant-card, [data-testid='upload-item']");
+    }
+
+    private boolean clickAnyConfirmDeleteInline() {
+        String[] labels = new String[]{"Yes, delete", "Yes, Delete", "Delete", "Yes"};
+        long end = System.currentTimeMillis() + DEFAULT_WAIT;
+        while (System.currentTimeMillis() < end) {
+            for (String label : labels) {
+                Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
+                if (btn.count() > 0 && btn.first().isVisible()) {
+                    try { clickWithRetry(btn.first(), 1, 150); return true; } catch (Throwable ignored) {}
+                }
+            }
+            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
+        }
+        return false;
+    }
+
     // -------- Steps --------
     @Step("Open Settings from profile (Automatic Message)")
     public void openSettingsFromProfile() {
@@ -407,5 +435,80 @@ public class CreatorAutomaticMessagePage extends BasePage {
     @Step("Assert Automation title visible on Automatic Message screen")
     public void assertAutomationTitleVisible() {
         waitVisible(automationTitle(), DEFAULT_WAIT);
+    }
+
+    @Step("Delete all visible media items via delete buttons (with verification)")
+    public void deleteAllVisibleMedia() {
+        // Keep deleting until no media items remain; verify decrement after each click
+        int guard = 0;
+        while (true) {
+            int mediaBefore = 0;
+            try { mediaBefore = editorMediaItems().count(); } catch (Throwable ignored) {}
+            if (mediaBefore <= 0) {
+                // As a fallback, if no explicit media found, still attempt based on delete buttons presence
+                int delCount = 0; try { delCount = deleteButtons().count(); } catch (Throwable ignored) {}
+                if (delCount <= 0) break; // nothing to delete
+            }
+
+            int delButtons = 0; try { delButtons = deleteButtons().count(); } catch (Throwable ignored) {}
+            if (delButtons <= 0) break;
+            int idx = Math.max(0, delButtons - 1);
+            try {
+                Locator target = deleteButtons().nth(idx);
+                try { target.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                clickWithRetry(target, 1, 150);
+            } catch (Throwable e) {
+                // Try the first as fallback
+                try { clickWithRetry(deleteButtons().first(), 1, 150); } catch (Throwable ignored) { break; }
+            }
+
+            // Confirm if a confirmation dialog appears
+            try { clickAnyConfirmDeleteInline(); } catch (Throwable ignored) {}
+
+            // Wait for media count to decrease or delete button count to decrease
+            long end = System.currentTimeMillis() + DEFAULT_WAIT;
+            while (System.currentTimeMillis() < end) {
+                int mediaNow = 0; int delNow = 0;
+                try { mediaNow = editorMediaItems().count(); } catch (Throwable ignored) {}
+                try { delNow = deleteButtons().count(); } catch (Throwable ignored) {}
+                if ((mediaBefore > 0 && mediaNow < mediaBefore) || (delNow < delButtons)) { break; }
+                try { page.waitForTimeout(100); } catch (Throwable ignored) {}
+            }
+            // Small settle
+            try { page.waitForTimeout(150); } catch (Throwable ignored) {}
+            guard++; if (guard > 100) break;
+            // If not decreased, attempt one more confirm then continue loop
+        }
+        // Final assertion: no media items in editor
+        int remaining = 0;
+        try { remaining = editorMediaItems().count(); } catch (Throwable ignored) {}
+        if (remaining > 0) {
+            throw new AssertionError("Not all media were deleted from the editor; remaining items: " + remaining);
+        }
+    }
+
+    @Step("Clear message textbox to a single space")
+    public void clearMessageToSpace() {
+        waitVisible(messageTextbox(), DEFAULT_WAIT);
+        clickWithRetry(messageTextbox(), 1, 150);
+        messageTextbox().fill(" ");
+    }
+
+    @Step("Disable first four toggles if enabled")
+    public void disableAllFirstFourToggles() {
+        Locator toggles = switchesAll();
+        int total = 0;
+        try { total = toggles.count(); } catch (Throwable ignored) {}
+        int limit = Math.min(4, total);
+        for (int i = 0; i < limit; i++) {
+            Locator t = toggles.nth(i);
+            try { waitVisible(t, DEFAULT_WAIT); } catch (Throwable ignored) {}
+            boolean isOn = false;
+            try { isOn = t.isChecked(); } catch (Throwable ignored) {}
+            if (isOn) {
+                try { clickWithRetry(t, 1, 150); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(150); } catch (Throwable ignored) {}
+            }
+        }
     }
 }
