@@ -6,10 +6,14 @@ import pages.BaseTestClass;
 import pages.CreatorRegistrationPage;
 import utils.ConfigReader;
 import utils.DataGenerator;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 
 public class CreatorRegistrationTest extends BaseTestClass {
-
-    @Test(priority = 1, description = "Complete creator registration flow using valid dynamic data")
+    public static String createdUsername;
+    @Test(priority = 1, description = "Complete creator registration flow using valid dynamic data", groups = {"registration.completed"})
     public void testCreatorRegistration() {
         // Initialize page object (BaseTestClass sets up 'page')
         CreatorRegistrationPage creatorRegistrationPage = new CreatorRegistrationPage(page);
@@ -19,6 +23,7 @@ public class CreatorRegistrationTest extends BaseTestClass {
         String lastName = DataGenerator.generateUniqueLastName();
         String name = firstName + " " + lastName;
         String username = DataGenerator.generateUniqueUsername("TwizzCreator");
+        createdUsername = username;
         String email = DataGenerator.generateUniqueEmail("TwizzCreator");
         String password = DataGenerator.generateRandomString(12);
         String phone = DataGenerator.generateRandomPhoneNumber();
@@ -59,5 +64,16 @@ public class CreatorRegistrationTest extends BaseTestClass {
         // Explicitly verify final confirmation message
         Assert.assertTrue(creatorRegistrationPage.isFinalConfirmationVisible(),
                 "Final confirmation message 'Thank you for your interest!' was not visible");
+
+        // Persist created username for downstream tests (e.g., Admin approval) across separate Maven runs
+        try {
+            Path outDir = Paths.get("target");
+            if (!Files.exists(outDir)) {
+                Files.createDirectories(outDir);
+            }
+            Path outFile = outDir.resolve("created-username.txt");
+            Files.writeString(outFile, createdUsername, StandardCharsets.UTF_8);
+        } catch (Exception ignored) {
+        }
     }
 }

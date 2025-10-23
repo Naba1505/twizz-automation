@@ -111,6 +111,12 @@ public class ConfigReader {
     }
 
     public static String getProperty(String key, String defaultValue) {
+        // Prefer JVM system properties (e.g., -Dapproval.username=foo) over config.properties
+        String sysVal = System.getProperty(key);
+        if (sysVal != null) {
+            logger.info("Loaded property {} from system: {}", key, sysVal);
+            return sysVal;
+        }
         String value = properties.getProperty(key, defaultValue);
         logger.info("Loaded property {}: {}", key, value);
         return value;

@@ -401,6 +401,31 @@ Key entries (with defaults):
 - Page 5: Document uploads (identity + selfie)
 - Final confirmation validated: `"Thank you for your interest!"`
 
+## Admin Approval (Admin Dashboard)
+- Page object: `src/test/java/pages/AdminCreatorApprovalPage.java`
+- Tests class: `src/test/java/tests/AdminApproveCreatorTest.java`
+- Flow:
+  - Navigate to admin login → Log in as manager → open `Creators > All creators`.
+  - Search using the "Enter keyword" input (robust XPath + iframe handling).
+  - Row-scoped Action → Edit → toggle "Verified Email?" and "Verified Account?".
+  - Change status from Pending to Registered (Ant Design dropdown by text).
+  - Submit and verify "Updated successfully".
+- Run examples:
+  - Standalone with an explicit username (PowerShell quoting included):
+    ```bash
+    mvn -Dtest=AdminApproveCreatorTest "-Dapproval.username=<creator_username>" test
+    ```
+  - End-to-end in a single JVM (registration then admin approval):
+    ```bash
+    mvn -Dtest="CreatorRegistrationTest,AdminApproveCreatorTest" test
+    ```
+  - Username resolution order when running admin standalone:
+    - `tests.CreatorRegistrationTest.createdUsername` (same-JVM run)
+    - `target/created-username.txt` (written by the registration test)
+    - `approval.username` (from `-Dapproval.username` or `config.properties`)
+
+> Note: JVM system properties (e.g., `-Dapproval.username=...`) override `src/main/resources/config.properties`.
+
 ## Parallel Test Safety
 - `BrowserFactory` uses ThreadLocal Playwright/Browser/Context/Page per thread.
 - Each test method uses its own `Page`, traced optionally.

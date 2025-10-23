@@ -36,6 +36,7 @@
             <class name="tests.CreatorQuickFilesDeleteTest"/>
             <class name="tests.CreatorCollectionDeleteTest"/>
             <class name="tests.CreatorLogoutTest"/>
+            <class name="tests.AdminApproveCreatorTest"/>
             <class name="tests.FanLoginTest"/>
         </classes>
     </test>
