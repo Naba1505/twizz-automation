@@ -275,6 +275,22 @@ public class CreatorSettingsPage extends BasePage {
             clickWithRetry(plusBtn.first(), 2, 500);
         }
         waitForUrlContains(CREATE_NEW_ALBUM_URL);
+        // Enhancement: If a type selection screen is shown first, ensure title and choose Photos & videos, then Continue
+        try {
+            Locator typeTitle = page.getByText("What type of album do you");
+            if (typeTitle.count() > 0) {
+                log.info("Type selection screen detected. Ensuring title is visible and choosing 'Photos & videos'.");
+                waitVisible(typeTitle.first(), DEFAULT_WAIT);
+                Locator photosAndVideos = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Photos & videos"));
+                waitVisible(photosAndVideos.first(), DEFAULT_WAIT);
+                clickWithRetry(photosAndVideos.first(), 2, 300);
+                Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+                waitVisible(continueBtn.first(), DEFAULT_WAIT);
+                clickWithRetry(continueBtn.first(), 2, 300);
+            }
+        } catch (RuntimeException e) {
+            log.info("Type selection screen not present or skipped: {}", e.getMessage());
+        }
         waitVisible(page.getByText(NEW_ALBUM_TITLE), DEFAULT_WAIT);
         log.info("Create New Album screen visible, url={}", page.url());
     }
@@ -284,8 +300,23 @@ public class CreatorSettingsPage extends BasePage {
         // Use provided albumName as-is (caller ensures uniqueness). Avoid appending extra timestamp here.
         log.info("Filling album name placeholder 'My name' with value: {}", albumName);
         fillByPlaceholder("My name", albumName);
-        log.info("Clicking Create button");
-        clickButtonByName(CREATE_BUTTON);
+        // Click Create or Continue depending on UI variant
+        Locator createBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON));
+        if (createBtn.count() > 0 && createBtn.first().isVisible()) {
+            log.info("Clicking 'Create' button");
+            try { createBtn.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+            clickWithRetry(createBtn.first(), 2, 250);
+        } else {
+            log.info("'Create' not visible; trying 'Continue' button");
+            Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+            if (continueBtn.count() == 0) {
+                // Fallback to text locator
+                continueBtn = page.getByText("Continue");
+            }
+            waitVisible(continueBtn.first(), DEFAULT_WAIT);
+            try { continueBtn.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+            clickWithRetry(continueBtn.first(), 2, 250);
+        }
         // After create, we should be on add media screen
         Locator mediaText = getByTextExact(MEDIA_TEXT);
         waitVisible(mediaText, LONG_WAIT);
