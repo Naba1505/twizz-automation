@@ -12,6 +12,7 @@ import utils.ConfigReader;
 
 public class AdminApproveCreatorTest extends BaseTestClass {
     private static final Logger log = LoggerFactory.getLogger(AdminApproveCreatorTest.class);
+    public static String approvedUsername;
 
     @BeforeMethod
     @Override
@@ -78,6 +79,13 @@ public class AdminApproveCreatorTest extends BaseTestClass {
         admin.toggleVerificationAndStatus();
         admin.submitAndAssertUpdated();
 
+        approvedUsername = resolvedUsername;
+        try {
+            java.nio.file.Path out = java.nio.file.Paths.get("target", "approved-username.txt");
+            java.nio.file.Files.createDirectories(out.getParent());
+            java.nio.file.Files.writeString(out, approvedUsername, java.nio.charset.StandardCharsets.UTF_8);
+            log.info("Persisted approved username to {}", out);
+        } catch (Throwable ignored) {}
         log.info("Creator '{}' approved successfully via admin dashboard", resolvedUsername);
     }
 }

@@ -363,6 +363,27 @@ Key entries (with defaults):
 - Test: `tests/FanLoginTest`
   - Uses `pageObj.waitForFanHomeUrl()` and asserts current URL contains `/fan/home`.
 
+## Fan Subscription (3DS)
+- Page object: `pages/FanSubscriptionPage`
+- Test class: `tests/FanSubscriptionTest`
+- Depends on: `CreatorRegistrationTest` and `AdminApproveCreatorTest` (creates and approves a creator username used in search)
+- Flow (summary):
+  - Fan logs in → opens Search → opens approved creator profile → clicks "Subscribe - without obligation"
+  - Waits for "Premium" → Continue → "Secure payment" → fills card → Confirm → completes 3DS (SecurionPay)
+- Config keys (with safe defaults in `config.properties`):
+  - `fan.username`, `fan.password`
+  - `approval.username` (used as fallback if the username is not produced by earlier tests)
+  - `payment.card.number` (default: `4012 0018 0000 0016`), `payment.card.expiry` (default: `07/34`), `payment.card.cvc` (default: `657`)
+- 3DS handling: the test interacts only with the real SecurionPay popup/iframe (no direct navigation) and uses resilient selectors with JS-click fallbacks.
+- Run end-to-end in one JVM:
+  ```bash
+  mvn -Dtest="CreatorRegistrationTest,AdminApproveCreatorTest,FanSubscriptionTest" test
+  ```
+  Or via XML order (sequential):
+  ```bash
+  mvn -B "-Dsurefire.suiteXmlFiles=testng.xml" test
+  ```
+
 ## Reports (Allure)
 - Allure raw results are written to: `target/allure-results/`
 - Install Allure CLI:

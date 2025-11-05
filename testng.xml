@@ -38,6 +38,7 @@
             <class name="tests.CreatorLogoutTest"/>
             <class name="tests.AdminApproveCreatorTest"/>
             <class name="tests.FanLoginTest"/>
+            <class name="tests.FanSubscriptionTest"/>
         </classes>
     </test>
 </suite>
