@@ -7,7 +7,7 @@ import com.microsoft.playwright.options.WaitForSelectorState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class  BasePage {
+public class BasePage {
     protected static final int DEFAULT_WAIT = 10_000;
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     protected final Page page;
