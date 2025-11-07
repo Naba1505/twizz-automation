@@ -24,7 +24,6 @@ public class CreatorMediaPushPage extends BasePage {
     private static final String ADD_MEDIA_HINT = "Click on the \"+\" button to import your file";
     private static final String IMPORTATION = "Importation";
     private static final String MY_DEVICE = "My Device";
-    private static final String MESSAGE_TITLE = "Message";
     private static final String MESSAGE_PLACEHOLDER = "Your message....";
     private static final String PROPOSE_PUSH_MEDIA = "Propose push media";
     private static final String UPLOADING_MSG = "Stay on page during uploading"; // transient
@@ -322,7 +321,9 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Ensure Message title visible")
     public void ensureMessageTitle() {
-        waitVisible(page.getByText(MESSAGE_TITLE).first(), 15000);
+        // UI updated: message field is now a textbox with accessible name placeholder
+        Locator ph = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(MESSAGE_PLACEHOLDER));
+        waitVisible(ph.first(), 15000);
     }
 
     @Step("Fill message: {msg}")

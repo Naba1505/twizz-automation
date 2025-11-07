@@ -363,6 +363,41 @@ Key entries (with defaults):
 - Test: `tests/FanLoginTest`
   - Uses `pageObj.waitForFanHomeUrl()` and asserts current URL contains `/fan/home`.
 
+## Fan Home Screen
+- Page object: `pages/FanHomePage`
+- Test class: `tests/FanHomeScreenTest`
+- Flow:
+  - Fan login → assert `/fan/home` URL
+  - Assert popcorn logo next to username
+  - Scroll to first video and play
+  - Scroll back to top and interact with the first visible feed
+    - Like/Bookmark with robust icon discovery and scroll
+    - Open three-dots action menu and Cancel
+  - Search by handle, open profile by exact texts, ensure `Subscriber` button, navigate back to Home
+- Config keys (optional overrides with defaults):
+  - `fan.home.firstFeedUsername` (default: `badrzt`)
+  - `fan.home.search.handle` (default: `john_smith`)
+  - `fan.home.search.lastNameExact` (default: `Smith`)
+- Run example:
+  ```bash
+  mvn -Dtest=tests.FanHomeScreenTest test
+  ```
+
+## Fan Discover
+- Page object: `pages/FanDiscoverPage`
+- Test class: `tests/FanDiscoverTest`
+- Flow (3 tests):
+  1) Navigate via Search icon → assert URL contains `/common/discover` → ensure feeds while scrolling → unmute visible feeds → scroll up
+  2) From Discover open a random visible profile → ensure profile screen → back to Discover
+  3) Open search on Discover → search query → click result → ensure profile → back to Discover
+- Config keys (optional overrides):
+  - `fan.discover.search.query` (default: `igor`)
+  - `fan.discover.search.resultText` (default: `igor test`)
+- Run example:
+  ```bash
+  mvn -Dtest=tests.FanDiscoverTest test
+  ```
+
 ## Fan Subscription (3DS)
 - Page object: `pages/FanSubscriptionPage`
 - Test class: `tests/FanSubscriptionTest`
