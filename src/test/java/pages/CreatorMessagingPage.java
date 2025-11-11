@@ -19,6 +19,41 @@ public class CreatorMessagingPage extends BasePage {
         super(page);
     }
 
+    @Step("Click Next using strict XPath and force if needed")
+    public void clickNextStrict() {
+        Locator nextXpath = page.locator("xpath=//button//span[contains(normalize-space(.), 'Next')]/ancestor::button[1]");
+        long end = System.currentTimeMillis() + 30_000;
+        while (System.currentTimeMillis() < end) {
+            if (nextXpath.count() > 0) {
+                Locator b = nextXpath.first();
+                try { b.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                if (safeIsVisible(b)) {
+                    clickWithRetry(b, 1, 200);
+                    return;
+                }
+                try { b.click(new Locator.ClickOptions().setForce(true)); return; } catch (Throwable ignored) {}
+            }
+            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        }
+        throw new RuntimeException("Strict Next button not found or not clickable within timeout");
+    }
+
+    @Step("Wait for second add icon (.addCircle) to appear after first Next")
+    public void waitForSecondAddIcon(int timeoutMs) {
+        long end = System.currentTimeMillis() + Math.max(3_000, timeoutMs);
+        Locator second = page.locator(".addCircle");
+        while (System.currentTimeMillis() < end) {
+            try {
+                if (second.count() > 0 && safeIsVisible(second.first())) {
+                    return;
+                }
+            } catch (Throwable ignored) {}
+            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        }
+        // Final assert
+        waitVisible(second.first(), Math.max(2_000, timeoutMs));
+    }
+
     // ================= Messaging Dashboard navigation, tabs, filter & search =================
     @Step("Navigate directly to Creator Profile via URL")
     public void navigateToCreatorProfileViaUrl() {
@@ -148,13 +183,67 @@ public class CreatorMessagingPage extends BasePage {
                 return;
             }
         } catch (Throwable ignored) {}
-        waitVisible(plusIcon().first(), 15_000);
-        clickWithRetry(plusIcon().first(), 1, 200);
+
+        // Small stabilization to allow UI to render toolbar icons
+        try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+
+        // Try a series of robust candidates for the plus control (composer and private media screens)
+        Locator[] candidates = new Locator[] {
+            // Codegen-priority selectors
+            page.locator(".addCircleGreen"),
+            page.locator(".addCircle"),
+            // Role IMG/name plus (primary)
+            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus")),
+            // Role BUTTON/name plus
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("plus")),
+            // Button with aria-label
+            page.locator("button[aria-label='plus']"),
+            // Any element with data-icon=plus, click its closest button
+            page.locator("xpath=(//*[@data-icon='plus'])[1]/ancestor::button[1]"),
+            // Any svg with aria-label plus, click its closest button
+            page.locator("xpath=(//svg[@aria-label='plus'])[1]/ancestor::button[1]"),
+            // Legacy explicit mapping
+            plusIcon().first(),
+            // Add media button pattern
+            page.locator("button").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("Add.*media", java.util.regex.Pattern.CASE_INSENSITIVE)))
+        };
+
+        boolean clicked = false;
+        long end = System.currentTimeMillis() + 10_000;
+        while (!clicked && System.currentTimeMillis() < end) {
+            for (Locator cand : candidates) {
+                try {
+                    if (cand != null && cand.count() > 0) {
+                        Locator b = cand.first();
+                        try { b.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                        if (safeIsVisible(b)) {
+                            clickWithRetry(b, 1, 200);
+                            clicked = true;
+                            break;
+                        }
+                        try { b.click(new Locator.ClickOptions().setForce(true)); clicked = true; break; }
+                        catch (Throwable ignored) {}
+                    }
+                } catch (Throwable ignored) {}
+            }
+            if (!clicked) {
+                // If composer/message input is visible, the plus is in the toolbar; give UI a moment then retry
+                try { if (safeIsVisible(privateMessagePlaceholder())) { page.waitForTimeout(200); } } catch (Throwable ignored) {}
+            }
+        }
+
+        if (!clicked) {
+            // Last resort: tap Media button to re-open private media context, then expect Importation
+            try {
+                clickWithRetry(privateMediaButton(), 1, 200);
+            } catch (Throwable ignored) {}
+        }
+
         // Wait for Importation title or container to appear
-        try { waitVisible(importationTitle().first(), 15_000); }
+        try { waitVisible(importationTitle().first(), 20_000); }
         catch (Throwable e) {
             // As a fallback, ensure container is visible
-            waitVisible(importationContainer().first(), 5_000);
+            waitVisible(importationContainer().first(), 10_000);
         }
     }
 
@@ -192,9 +281,46 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Click Next (private media flow)")
     public void clickNext() {
-        Locator next = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
-        waitVisible(next.first(), 15_000);
-        clickWithRetry(next.first(), 1, 200);
+        // Prefer clicking an explicit Next button if present; only accept message textbox if no Next is actionable
+        long end = System.currentTimeMillis() + 15_000;
+        while (System.currentTimeMillis() < end) {
+            // Build candidate locators in priority order
+            Locator[] candidates = new Locator[] {
+                // Codegen primary
+                page.locator("xpath=//button//span[contains(normalize-space(.), 'Next')]/ancestor::button[1]"),
+                // Generic button containing Next text
+                page.locator("xpath=//button[contains(normalize-space(.), 'Next')]"),
+                // CSS has-text fallback
+                page.locator("button:has-text('Next')"),
+                // Role-based
+                page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"))
+            };
+            for (Locator cand : candidates) {
+                try {
+                    if (cand != null && cand.count() > 0) {
+                        Locator b = cand.first();
+                        try { b.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                        if (safeIsVisible(b)) {
+                            clickWithRetry(b, 1, 200);
+                            return;
+                        }
+                        // Try force if not reported visible
+                        try { b.click(new Locator.ClickOptions().setForce(true)); return; }
+                        catch (Throwable ignored) {}
+                    }
+                } catch (Throwable ignored) {}
+            }
+            // If no Next button was actionable, accept if message placeholder became visible (UI may auto-advance)
+            if (safeIsVisible(privateMessagePlaceholder())) {
+                return;
+            }
+            // Small stabilization before retrying
+            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        }
+        // Final attempt: if message placeholder appeared late, accept it; otherwise fail clearly
+        if (!safeIsVisible(privateMessagePlaceholder())) {
+            throw new RuntimeException("Neither 'Next' button nor message textarea became visible in time");
+        }
     }
 
     @Step("Wait for 'Blurred media' section to be visible (optional)")
@@ -235,12 +361,26 @@ public class CreatorMessagingPage extends BasePage {
         waitVisible(privateMessagePlaceholder(), 15_000);
     }
 
+    @Step("Focus private message input")
+    public void focusPrivateMessageInput() {
+        Locator ph = privateMessagePlaceholder();
+        waitVisible(ph, 15_000);
+        ph.click();
+    }
+
     @Step("Fill private message: {msg}")
     public void fillPrivateMessage(String msg) {
         Locator ph = privateMessagePlaceholder();
         waitVisible(ph, 15_000);
         ph.click();
         ph.fill(msg == null ? "" : msg);
+    }
+
+    @Step("Click message template by text: {template}")
+    public void clickMessageTemplate(String template) {
+        Locator tpl = page.getByText(template, new Page.GetByTextOptions().setExact(true));
+        waitVisible(tpl.first(), 10_000);
+        clickWithRetry(tpl.first(), 1, 150);
     }
 
     @Step("Set price euro: {euros}€ (private media)")
@@ -1143,17 +1283,9 @@ public class CreatorMessagingPage extends BasePage {
 
     // ===== Private Media specific locators/texts =====
     private Locator privateMediaButton() {
-        // Primary: footer Media icon as provided by user
-        Locator footerIcon = page.locator("(//img[@class='footer-icon'])[2]").first();
-        if (footerIcon.count() > 0) return footerIcon;
-        // Fallback: role=button name=Media (may match multiple; caller uses first())
-        Locator byRole = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Media"));
-        if (byRole.count() > 0) return byRole.first();
-        // Fallback: any button with text Media within visible container
-        Locator byText = page.locator("button:has-text('Media')");
-        if (byText.count() > 0) return byText.first();
-        // Final fallback: visible element with text Media
-        return page.getByText("Media").first();
+        // Updated per UI change: explicitly target a button that has text 'Media'
+        Locator btn = page.locator("button").filter(new Locator.FilterOptions().setHasText("Media"));
+        return btn.first();
     }
 
     private Locator privateMediaTitle() {

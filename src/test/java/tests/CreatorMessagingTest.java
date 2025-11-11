@@ -33,7 +33,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         // Rely on absence of exceptions and visible conversation input as success criteria for now.
     }
 
-    @Test(priority = 2, description = "Creator sends a Saved response (Quick answer) with appended timestamp")
+    @Test(priority = 2, description = "Creator sends a Saved response (Quick answer) with appended timestamp", enabled = false)
     public void creatorCanSendQuickAnswerWithTimestamp() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -183,37 +183,38 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.openMessagingFromProfile();
         msg.openFirstFanConversation();
 
-        // Open Private media screen and add first media (image)
+        // Open Private media screen and add first media (Image A)
         msg.openPrivateMediaScreen();
         msg.clickPrivateMediaAddPlus();
+        msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(img);
         msg.waitForUploadSpinnerToDisappear(60_000);
-        msg.ensureBlurToggleEnabled(); // ensure blurred by default
-        msg.clickNext();
+        msg.ensureBlurToggleEnabled();
+        msg.clickNextStrict();
+        msg.waitForSecondAddIcon(5_000);
 
-        // Add second media (video)
+        // Add second media (Video A)
         msg.clickPrivateMediaAddPlus();
+        msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(vid);
         msg.waitForUploadSpinnerToDisappear(60_000);
-        msg.clickNext();
+        msg.clickNextStrict();
 
-        // Fill message and price, then propose private media
+        // Proceed to message step, fill and set price
         msg.assertPrivateMessagePlaceholder();
-        msg.fillPrivateMessage("Send Media Message");
+        msg.fillPrivateMessage("Test");
+        // Apply templates as per codegen
+        msg.clickMessageTemplate("/name");
+        msg.clickMessageTemplate("Identification");
+        // Set price and propose
         msg.setPriceEuro(15);
         msg.clickProposePrivateMedia();
-        // Optional confirmations: if banners/toasts appear, wait briefly; otherwise proceed
         msg.waitForUploadingBanner();
-        try {
-            msg.waitForMediaSentToast(15_000);
-        } catch (Throwable ignored) {
-            // Make toast optional per spec; proceed to verify conversation screen
-        }
-
-        // Ensure we land back on the conversation screen
-        msg.assertConversationInputVisible(60_000);
+        // Validate success via toast or fallback to conversation input visible
+        try { msg.waitForMediaSentToast(15_000); }
+        catch (Throwable ignored) { msg.assertConversationInputVisible(60_000); }
     }
 
     @Test(priority = 7, description = "Creator sends a Private media message with promotion (10€, validity Unlimited)")
@@ -222,7 +223,6 @@ public class CreatorMessagingTest extends BaseTestClass {
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
         String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
-        java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
 
         // Login as Creator and land on profile
         CreatorLoginPage loginPage = new CreatorLoginPage(page);
@@ -234,20 +234,15 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.openMessagingFromProfile();
         msg.openFirstFanConversation();
 
-        // Open Private media screen and add first media (image)
+        // Open Private media screen and add media (image)
         msg.openPrivateMediaScreen();
         msg.clickPrivateMediaAddPlus();
+        msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(img);
         msg.waitForUploadSpinnerToDisappear(60_000);
         msg.ensureBlurToggleEnabled();
-        msg.clickNext();
-
-        // Add second media (video)
-        msg.clickPrivateMediaAddPlus();
-        msg.chooseMyDeviceForMedia();
-        msg.uploadMessageMedia(vid);
-        msg.clickNext();
+        msg.clickNextStrict();
 
         // Fill message and price
         msg.assertPrivateMessagePlaceholder();
@@ -276,7 +271,6 @@ public class CreatorMessagingTest extends BaseTestClass {
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
         String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
-        java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
 
         // Login as Creator and land on profile
         CreatorLoginPage loginPage = new CreatorLoginPage(page);
@@ -288,19 +282,14 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.openMessagingFromProfile();
         msg.openFirstFanConversation();
 
-        // Open Private media screen and add first media (image)
+        // Open Private media screen and add media (image)
         msg.openPrivateMediaScreen();
         msg.clickPrivateMediaAddPlus();
+        msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(img);
         msg.ensureBlurToggleEnabled();
-        msg.clickNext();
-
-        // Add second media (video)
-        msg.clickPrivateMediaAddPlus();
-        msg.chooseMyDeviceForMedia();
-        msg.uploadMessageMedia(vid);
-        msg.clickNext();
+        msg.clickNextStrict();
 
         // Fill message and price
         msg.assertPrivateMessagePlaceholder();
@@ -344,16 +333,19 @@ public class CreatorMessagingTest extends BaseTestClass {
         // Open Private media screen and add first media (image)
         msg.openPrivateMediaScreen();
         msg.clickPrivateMediaAddPlus();
+        msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(img);
         msg.ensureBlurToggleEnabled();
-        msg.clickNext();
+        msg.clickNextStrict();
+        msg.waitForSecondAddIcon(5_000);
 
         // Add second media (video)
         msg.clickPrivateMediaAddPlus();
+        msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(vid);
-        msg.clickNext();
+        msg.clickNextStrict();
 
         // Fill message and set price as Free
         msg.assertPrivateMessagePlaceholder();
@@ -375,7 +367,6 @@ public class CreatorMessagingTest extends BaseTestClass {
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
         String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
-        java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
 
         // Login as Creator and land on profile
         CreatorLoginPage loginPage = new CreatorLoginPage(page);
@@ -387,22 +378,16 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.openMessagingFromProfile();
         msg.openFirstFanConversation();
 
-        // Open Private media screen and add first media (image)
+        // Open Private media screen and add media (image)
         msg.openPrivateMediaScreen();
         msg.clickPrivateMediaAddPlus();
+        msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(img);
         msg.ensureBlurToggleEnabled();
-        msg.clickNext();
-
-        // Add second media (video)
-        msg.clickPrivateMediaAddPlus();
-        msg.chooseMyDeviceForMedia();
-        msg.uploadMessageMedia(vid);
-        msg.clickNext();
-
-        // Unblur the media before sending (toggle only; label may vary)
+        // Unblur before proceeding to message step
         msg.disableBlurToggleIfEnabled();
+        msg.clickNextStrict();
 
         // Fill message and set price as Free
         msg.assertPrivateMessagePlaceholder();

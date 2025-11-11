@@ -24,7 +24,7 @@ public class CreatorCollectionTest extends BaseCreatorTest {
         return Paths.get(projectDir).resolve(Paths.get(first, more));
     }
 
-    @Story("Create collection by adding files from my device (image + video)")
+    @Story("Create collection by adding files from my device (  image + video)")
     @Test(priority = 1, description = "Creator creates a collection with an image and a video from device uploads")
     public void creatorCanCreateCollectionFromMyDevice() {
         CreatorCollectionPage coll = new CreatorCollectionPage(page);
