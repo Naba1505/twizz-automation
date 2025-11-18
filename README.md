@@ -108,7 +108,7 @@
 End-to-end UI automation for Twizz with Creator and Fan flows. The framework emphasizes robust, resilient interactions and uses Allure only for reporting (with Playwright traces and screenshots).
 
 ## Tech Stack
-- Java 21
+- Java 17
 - Playwright for Java 1.54.0
 - TestNG 7.11.0
 - Allure TestNG 2.29.1
@@ -181,7 +181,7 @@ End-to-end UI automation for Twizz with Creator and Fan flows. The framework emp
   - New: `CreatorPromotionsTest` (promo code create + copy) and `CleanupDeletePromoCodesTest` (cleanup 'AUTOMATION' promos)
 
 ## Prerequisites
-- Java 21+
+- Java 17+
 - Maven 3.9+
 - Playwright browsers: first run will download automatically when Playwright creates the context. If needed, run: `mvn -Dplaywright.cli.install=true test` once.
 - (Optional) Allure CLI to view the Allure HTML report locally.
