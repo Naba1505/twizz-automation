@@ -1014,89 +1014,169 @@ public class CreatorCollectionPage extends BasePage {
             waitVisible(listAny.first(), 10000);
         } catch (Exception ignored) {}
 
-        // Case-insensitive starts-with using XPath (handles e.g., videoalbum_250827_122444(3))
+        // Proactively scroll down in the Quick Files modal to surface albums near the bottom
         try {
-            String ciStartsWith = "xpath=(//*[self::div or self::span or self::p or self::li or self::a or self::button]" +
-                    "[starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'video') or " +
-                    " starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'image') or " +
-                    " starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'mix')])";
-            Locator byPrefix = page.locator(ciStartsWith);
-            int c = byPrefix.count();
-            if (c > 0) {
-                for (int i = 0; i < Math.min(10, c); i++) {
-                    Locator cand = byPrefix.nth(i);
-                    if (safeIsVisible(cand)) {
-                        try { cand.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                        clickWithRetry(cand, 1, 150);
-                        return;
-                    }
-                }
-                // Fallback to first candidate if visibility heuristics fail
-                Locator first = byPrefix.first();
-                try { first.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                clickWithRetry(first, 1, 150);
-                return;
+            for (int i = 0; i < 5; i++) {
+                try { page.mouse().wheel(0, 700); } catch (Exception ignored) {}
+                try { page.waitForTimeout(200); } catch (Exception ignored) {}
             }
         } catch (Exception ignored) {}
-        // Fallback: click first album-like row
-        Locator anyAlbum = page.locator("[role=row], .ant-list-item, .album, .list-item");
-        if (anyAlbum.count() > 0) {
-            clickWithRetry(anyAlbum.first(), 1, 150);
-            return;
+
+        // Fast-path: if the known mixalbum with media is present, click it directly first
+        try {
+            Locator specificMixAlbum = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                    .setName("icon mixalbum_251106_155046"));
+            if (specificMixAlbum.count() > 0) {
+                Locator btn = specificMixAlbum.first();
+                try {
+                    if (!makeVisibleWithScroll(btn, 4000)) {
+                        try { btn.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                    }
+                } catch (Exception ignored) {}
+                clickWithRetry(btn, 1, 150);
+
+                // Check for media thumbnails in this album
+                Locator thumbsFast = page.locator(".select-quick-file-media-thumb");
+                long startFast = System.currentTimeMillis();
+                while (thumbsFast.count() == 0 && System.currentTimeMillis() - startFast < 4000) {
+                    try { page.waitForTimeout(200); } catch (Exception ignored) {}
+                }
+                if (thumbsFast.count() > 0) {
+                    // Non-empty album found; use it and stop
+                    return;
+                }
+
+                // Empty album: Cancel -> plus -> Quick Files, then fall back to generic album loop below
+                try {
+                    Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                    if (cancelBtn.count() > 0) {
+                        clickWithRetry(cancelBtn.first(), 1, 150);
+                        try { page.waitForTimeout(300); } catch (Exception ignored) {}
+                    }
+
+                    Locator plusIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+                    if (plusIcon.count() > 0) {
+                        clickWithRetry(plusIcon.first(), 1, 150);
+                    }
+
+                    Locator quickFilesBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
+                    if (quickFilesBtn.count() > 0) {
+                        clickWithRetry(quickFilesBtn.first(), 1, 150);
+                    }
+                    try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
+
+        // Prefer buttons whose accessible name contains videoalbum_/imagealbum_/mixalbum_ (matches codegen flow)
+        Locator byPrefix = null;
+        try {
+            byPrefix = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                    .setName(Pattern.compile(".*(videoalbum_|imagealbum_|mixalbum_).*", Pattern.CASE_INSENSITIVE)));
+        } catch (Exception ignored) {}
+
+        int attempts = 0;
+        int maxAttempts = 10;
+        while (attempts++ < maxAttempts) {
+            Locator candidateAlbum = null;
+            if (byPrefix != null && byPrefix.count() > 0) {
+                int idx = (attempts - 1) % byPrefix.count();
+                candidateAlbum = byPrefix.nth(idx);
+            } else {
+                Locator anyAlbum = page.locator("[role=row], .ant-list-item, .album, .list-item");
+                if (anyAlbum.count() > 0) {
+                    int idx = (attempts - 1) % anyAlbum.count();
+                    candidateAlbum = anyAlbum.nth(idx);
+                }
+            }
+
+            if (candidateAlbum == null || candidateAlbum.count() == 0) {
+                break;
+            }
+
+            try {
+                if (!safeIsVisible(candidateAlbum.first())) {
+                    try { candidateAlbum.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                }
+                clickWithRetry(candidateAlbum.first(), 1, 150);
+
+                // Check if this album has any media thumbnails (allow short time for grid to render)
+                Locator thumbs = page.locator(".select-quick-file-media-thumb");
+                long start = System.currentTimeMillis();
+                while (thumbs.count() == 0 && System.currentTimeMillis() - start < 4000) {
+                    try { page.waitForTimeout(200); } catch (Exception ignored) {}
+                }
+                if (thumbs.count() > 0) {
+                    // Non-empty album found
+                    return;
+                }
+
+                // Empty album: follow flow -> Cancel, plus icon, Quick Files, then try next album
+                try {
+                    // 1) Cancel out of Quick Files media picker
+                    Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                    if (cancelBtn.count() > 0) {
+                        clickWithRetry(cancelBtn.first(), 1, 150);
+                    }
+
+                    // small wait to ensure dialog closes
+                    try { page.waitForTimeout(300); } catch (Exception ignored) {}
+
+                    // 2) Click plus icon again
+                    Locator plusIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+                    if (plusIcon.count() > 0) {
+                        clickWithRetry(plusIcon.first(), 1, 150);
+                    }
+
+                    // 3) Open Quick Files again
+                    Locator quickFilesBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
+                    if (quickFilesBtn.count() > 0) {
+                        clickWithRetry(quickFilesBtn.first(), 1, 150);
+                    }
+
+                    // brief settle for album list to reappear
+                    try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                // If click or navigation fails, continue to next candidate
+            }
         }
-        throw new RuntimeException("No Quick Files album found to select");
+
+        throw new RuntimeException("No Quick Files album with media found to select");
     }
 
     @Step("Select up to {n} media items (covers) from the Quick Files album")
     public void selectUpToNCovers(int n) {
-        Locator covers = page.locator(".cover");
-        waitVisible(covers.first(), 10000);
+        Locator thumbs = page.locator(".select-quick-file-media-thumb");
+        if (thumbs.count() == 0) {
+            thumbs = page.locator(".cover");
+        }
+        if (thumbs.count() == 0) {
+            throw new RuntimeException("No media thumbnails found in Quick Files album");
+        }
+        waitVisible(thumbs.first(), 10000);
         int need = Math.max(1, n);
-        int total = covers.count();
+        int total = thumbs.count();
         int picked = 0;
         for (int i = 0; i < total && picked < need; i++) {
-            Locator card = covers.nth(i);
+            Locator thumb = thumbs.nth(i);
             try {
-                // Hover to reveal selection UI
-                try { card.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                try { card.hover(); } catch (Exception ignored) {}
-
-                // Try common selection controls inside the same tile/card
-                Locator radioOrCheckbox = card.locator("input[type=radio], input[type=checkbox], .ant-radio, .ant-checkbox");
-                Locator roleRadio = page.getByRole(com.microsoft.playwright.options.AriaRole.RADIO);
-                Locator roleCheckbox = page.getByRole(com.microsoft.playwright.options.AriaRole.CHECKBOX);
-                Locator selectBtn = card.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON, new com.microsoft.playwright.Locator.GetByRoleOptions().setName("Select"));
-
-                boolean clicked = false;
-                if (radioOrCheckbox.count() > 0 && safeIsVisible(radioOrCheckbox.first())) {
-                    clickWithRetry(radioOrCheckbox.first(), 1, 120);
-                    clicked = true;
-                } else if (selectBtn.count() > 0 && safeIsVisible(selectBtn.first())) {
-                    clickWithRetry(selectBtn.first(), 1, 120);
-                    clicked = true;
-                } else if (roleRadio.count() > 0 && safeIsVisible(roleRadio.first())) {
-                    clickWithRetry(roleRadio.first(), 1, 120);
-                    clicked = true;
-                } else if (roleCheckbox.count() > 0 && safeIsVisible(roleCheckbox.first())) {
-                    clickWithRetry(roleCheckbox.first(), 1, 120);
-                    clicked = true;
-                } else {
-                    // Fallback: click the cover itself
-                    clickWithRetry(card, 1, 120);
-                    clicked = true;
-                }
-
-                if (clicked) {
-                    // Small wait for selection state to update
-                    page.waitForTimeout(150);
-                    picked++;
-                }
+                try { thumb.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                clickWithRetry(thumb, 1, 120);
+                page.waitForTimeout(150);
+                picked++;
             } catch (Exception ignored) { }
         }
     }
 
     @Step("Confirm selection in Quick Files dialog")
     public void clickSelectInQuickFiles() {
+        Locator selectCountBtn = page.locator("text=/^Select \\([0-9]+\\)/");
+        if (selectCountBtn.count() > 0) {
+            waitVisible(selectCountBtn.first(), 10000);
+            clickWithRetry(selectCountBtn.first(), 1, 150);
+            return;
+        }
         Locator selectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select"));
         if (selectBtn.count() > 0) {
             clickWithRetry(selectBtn.first(), 1, 150);

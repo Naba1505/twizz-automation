@@ -25,6 +25,9 @@ public class CreatorRegistrationPage {
     private final String emailInput = "[placeholder='Email address']";
     private final String passwordInput = "[placeholder='Password']";
     private final String phoneNumberInput = "[placeholder='Number']";
+    // Optional Instagram field (new)
+    private final String instagramTextboxName = "Instagram";
+
     private final String registrationButton = "role=button[name='Registration']";
 
     // Second Page Locators
@@ -254,7 +257,9 @@ public class CreatorRegistrationPage {
     }
 
     public void fillRegistrationForm(String name, String username, String firstName, String lastName,
-                                     String dob, String email, String password, String phoneNumber, String gender) {
+                                     String dob, String email, String password, String phoneNumber,
+                                     String instagramUrl, String gender) {
+
         page.locator(nameInput).fill(name);
         logger.info("Filled name: {}", name);
 
@@ -294,6 +299,21 @@ public class CreatorRegistrationPage {
         page.locator(phoneNumberInput).fill(phoneNumber);
         logger.info("Filled phone number: {}", phoneNumber);
 
+        // Optional Instagram field – fill only when value is provided
+        if (instagramUrl != null && !instagramUrl.isEmpty()) {
+            try {
+                Locator insta = page.getByRole(AriaRole.TEXTBOX,
+                        new Page.GetByRoleOptions().setName(instagramTextboxName));
+                insta.click();
+                insta.fill(instagramUrl);
+                logger.info("Filled Instagram: {}", instagramUrl);
+            } catch (Exception e) {
+                logger.warn("Failed to fill Instagram field, proceeding without it: {}", e.getMessage());
+            }
+        } else {
+            logger.info("Instagram value not provided; skipping optional Instagram field");
+        }
+
         selectGender(gender);
     }
 
@@ -325,7 +345,7 @@ public class CreatorRegistrationPage {
                 logger.info("Second page visibility via heading role: true");
                 return true;
             } catch (Exception fallback) {
-                logger.warn("Second page header not visible after waits: {}", fallback.getMessage());
+                logger.warn("Second page not visible after fallback: {}", fallback.getMessage());
                 // Final fallback: wait for a known option label to appear (e.g., 'Model')
                 try {
                     Locator optionModel = page.getByText("Model", new Page.GetByTextOptions().setExact(true));
@@ -630,6 +650,7 @@ public class CreatorRegistrationPage {
             String email,
             String password,
             String phoneNumber,
+            String instagramUrl,
             String gender,
             String[] contentTypes,
             String subscriptionPrice,
@@ -643,7 +664,8 @@ public class CreatorRegistrationPage {
         if (!isRegistrationFormVisible()) {
             throw new IllegalStateException("Registration form is not visible on page 1");
         }
-        fillRegistrationForm(name, username, firstName, lastName, dob, email, password, phoneNumber, gender);
+        fillRegistrationForm(name, username, firstName, lastName, dob, email, password, phoneNumber, instagramUrl, gender);
+
         nextPageSubmit();
 
         // Page 2

@@ -2,6 +2,7 @@ package tests;
 
 import org.testng.annotations.Test;
 import pages.CreatorSettingsPage;
+import utils.ConfigReader;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -66,6 +67,43 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         settings.addMediaFiles(mixed);
         settings.confirmUploadAndStay();
         // brief settle and navigate back to profile to keep uploads processing in background
+        try { page.waitForTimeout(POST_CONFIRM_PAUSE_MS); } catch (Exception ignored) {}
+        settings.navigateBackToProfile(2);
+    }
+
+    @Test(priority = 4, description = "Create Quick Files album with audio only", groups = {"quickfiles-create"})
+    public void creatorCreatesQuickAlbum_AudioOnly() {
+        CreatorSettingsPage settings = new CreatorSettingsPage(page);
+
+        // Config-driven prefix and audio file path with safe defaults
+        String prefix = ConfigReader.getProperty("quickfiles.audio.prefix", "audioalbum_");
+        String audioPathProp = ConfigReader.getProperty("quickfiles.audio.path", "src/test/resources/Audios/A5.mp3");
+        Path audioPath = Paths.get(audioPathProp);
+
+        String albumName = settings.createAudioAlbum(prefix, audioPath);
+        System.out.println("Created audio album: " + albumName);
+
+        // brief settle and navigate back to profile to keep processing in background
+        try { page.waitForTimeout(POST_CONFIRM_PAUSE_MS); } catch (Exception ignored) {}
+        settings.navigateBackToProfile(2);
+    }
+
+    @Test(priority = 5, description = "Create Quick Files album with recorded audio", groups = {"quickfiles-create"})
+    public void creatorCreatesQuickAlbum_AudioRecording() {
+        CreatorSettingsPage settings = new CreatorSettingsPage(page);
+
+        String albumPrefix = ConfigReader.getProperty("quickfiles.audio.record.albumPrefix", "audioalbum_");
+        String recordingNameBase = ConfigReader.getProperty("quickfiles.audio.record.namePrefix", "audioRecord");
+        long durationMs;
+        try {
+            durationMs = Long.parseLong(ConfigReader.getProperty("quickfiles.audio.record.durationMs", "10000"));
+        } catch (NumberFormatException e) {
+            durationMs = 10000L;
+        }
+
+        String albumName = settings.createAudioAlbumByRecording(albumPrefix, recordingNameBase, durationMs);
+        System.out.println("Created audio recording album: " + albumName);
+
         try { page.waitForTimeout(POST_CONFIRM_PAUSE_MS); } catch (Exception ignored) {}
         settings.navigateBackToProfile(2);
     }

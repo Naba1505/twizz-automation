@@ -58,6 +58,7 @@ public class CreatorSettingsPage extends BasePage {
     private static final String TERMINATE_BUTTON = "Terminate"; // role=button name
     private static final String NEW_ALBUM_TITLE = "New album";
     private static final String MEDIA_TEXT = "Media"; // exact text
+    private static final String AUDIO_SUCCESS_TEXT = "Audio uploaded successfully";
 
     // URLs to assert against
     private static final String SETTINGS_URL = "https://stg.twizz.app/common/setting";
@@ -712,6 +713,217 @@ public class CreatorSettingsPage extends BasePage {
     @Step("Create quick album with unique name")
     public final String createQuickAlbum() {
         return createQuickAlbum("quickalbum_");
+    }
+
+    /**
+     * Creates an audio-only Quick Files album using the new Audios flow.
+     * Flow: open settings -> Quick Files -> plus -> select Audios -> Continue -> unique album name -> Continue ->
+     * import audio file -> wait for success toast.
+     *
+     * @param prefix    base prefix for album name (timestamp is appended for uniqueness)
+     * @param audioFile path to a single audio file to upload
+     * @return generated unique album name
+     */
+    @Step("Create audio Quick Files album with prefix: {prefix}")
+    public final String createAudioAlbum(String prefix, Path audioFile) {
+        if (audioFile == null) {
+            throw new IllegalArgumentException("audioFile must not be null");
+        }
+        String p = (prefix == null || prefix.isBlank()) ? "audioalbum_" : prefix;
+        if (!p.endsWith("_")) p = p + "_";
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyMMdd_HHmmss");
+        String uniqueName = p + LocalDateTime.now().format(fmt);
+        log.info("Creating audio Quick Files album with name: {} and audio file: {}", uniqueName, audioFile);
+
+        // Navigate to Quick Files
+        openSettingsFromProfile();
+        openQuickFiles();
+
+        // Start new album via plus icon (IMG preferred, then BUTTON)
+        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
+        if (plusImg.count() > 0) {
+            log.info("Found plus as IMG (count={}), clicking", plusImg.count());
+            clickWithRetry(plusImg.first(), 2, 300);
+        } else {
+            Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
+            if (plusBtn.count() == 0) {
+                throw new IllegalStateException("Plus trigger not found for creating audio album");
+            }
+            log.info("IMG plus not found; clicking BUTTON plus (count={})", plusBtn.count());
+            clickWithRetry(plusBtn.first(), 2, 300);
+        }
+
+        // Ensure we are on the type selection / new album screen
+        waitVisible(page.getByText(NEW_ALBUM_TITLE), DEFAULT_WAIT);
+        Locator typeTitle = page.getByText("What type of album do you");
+        waitVisible(typeTitle.first(), DEFAULT_WAIT);
+
+        // Select Audios type and continue
+        Locator audiosBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Audios"));
+        waitVisible(audiosBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(audiosBtn.first(), 2, 300);
+        Locator continueBtnType = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+        waitVisible(continueBtnType.first(), DEFAULT_WAIT);
+        clickWithRetry(continueBtnType.first(), 2, 300);
+
+        // Album name screen
+        Locator nameTitle = page.getByText("Give your album a name");
+        waitVisible(nameTitle.first(), DEFAULT_WAIT);
+        Locator nameTextbox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("My name"));
+        waitVisible(nameTextbox.first(), DEFAULT_WAIT);
+        nameTextbox.first().click();
+        nameTextbox.first().fill(uniqueName);
+        log.info("Filled audio album name: {}", uniqueName);
+
+        Locator continueBtnName = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+        waitVisible(continueBtnName.first(), DEFAULT_WAIT);
+        clickWithRetry(continueBtnName.first(), 2, 300);
+
+        // Audio import screen
+        Locator importMsg = page.getByText("Import or record an audio by");
+        waitVisible(importMsg.first(), DEFAULT_WAIT);
+
+        Locator importAudioBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Import an audio file"));
+        waitVisible(importAudioBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(importAudioBtn.first(), 1, 200);
+
+        // After clicking import, find the underlying input[type=file] and upload the audio file
+        Locator inputs = page.locator("input[type=file]");
+        if (inputs.count() == 0) {
+            // Try to reveal again via plus/import button once more
+            log.warn("No file input found immediately after clicking 'Import an audio file'; retrying once");
+            clickWithRetry(importAudioBtn.first(), 1, 200);
+            inputs = page.locator("input[type=file]");
+        }
+        if (inputs.count() == 0) {
+            throw new IllegalStateException("No file input available for audio upload after 'Import an audio file'");
+        }
+        Locator audioInput = inputs.nth(inputs.count() - 1);
+        audioInput.setInputFiles(audioFile);
+        log.info("Set audio file on input: {}", audioFile);
+
+        // Wait for success toast/text
+        Locator success = page.getByText(AUDIO_SUCCESS_TEXT);
+        waitVisible(success.first(), LONG_WAIT);
+        log.info("Audio upload success message visible: '{}'", AUDIO_SUCCESS_TEXT);
+        return uniqueName;
+    }
+
+    /**
+     * Creates an audio-only Quick Files album by recording audio instead of importing a file.
+     * Flow: open settings -> Quick Files -> plus -> select Audios -> Continue -> unique album name -> Continue ->
+     * Record an audio -> rename recording -> start recording -> wait -> pause -> Confirm -> wait for success toast.
+     *
+     * @param albumPrefix       base prefix for album name (timestamp appended for uniqueness)
+     * @param recordingNameBase base name for recording (timestamp appended for uniqueness)
+     * @param recordDurationMs  duration in milliseconds to wait while recording
+     * @return generated unique album name
+     */
+    @Step("Create audio Quick Files album by recording with prefix: {albumPrefix}")
+    public final String createAudioAlbumByRecording(String albumPrefix, String recordingNameBase, long recordDurationMs) {
+        String p = (albumPrefix == null || albumPrefix.isBlank()) ? "audioalbum_" : albumPrefix;
+        if (!p.endsWith("_")) p = p + "_";
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyMMdd_HHmmss");
+        String timestamp = LocalDateTime.now().format(fmt);
+        String uniqueAlbumName = p + timestamp;
+        String base = (recordingNameBase == null || recordingNameBase.isBlank()) ? "audioRecord" : recordingNameBase;
+        String recordingName = base + "_" + timestamp;
+        log.info("Creating audio-recording Quick Files album='{}', recordingName='{}' (duration={}ms)", uniqueAlbumName, recordingName, recordDurationMs);
+
+        // Navigate to Quick Files
+        openSettingsFromProfile();
+        openQuickFiles();
+
+        // Start new album via plus icon (reuse logic similar to createAudioAlbum)
+        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
+        if (plusImg.count() > 0) {
+            log.info("Found plus as IMG (count={}), clicking", plusImg.count());
+            clickWithRetry(plusImg.first(), 2, 300);
+        } else {
+            Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
+            if (plusBtn.count() == 0) {
+                throw new IllegalStateException("Plus trigger not found for creating audio recording album");
+            }
+            log.info("IMG plus not found; clicking BUTTON plus (count={})", plusBtn.count());
+            clickWithRetry(plusBtn.first(), 2, 300);
+        }
+
+        // Ensure we are on the type selection / new album screen
+        waitVisible(page.getByText(NEW_ALBUM_TITLE), DEFAULT_WAIT);
+        Locator typeTitle = page.getByText("What type of album do you");
+        waitVisible(typeTitle.first(), DEFAULT_WAIT);
+
+        // Select Audios type and continue
+        Locator audiosBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Audios"));
+        waitVisible(audiosBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(audiosBtn.first(), 2, 300);
+        Locator continueBtnType = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+        waitVisible(continueBtnType.first(), DEFAULT_WAIT);
+        clickWithRetry(continueBtnType.first(), 2, 300);
+
+        // Album name screen
+        Locator nameTitle = page.getByText("Give your album a name");
+        waitVisible(nameTitle.first(), DEFAULT_WAIT);
+        Locator nameTextbox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("My name"));
+        waitVisible(nameTextbox.first(), DEFAULT_WAIT);
+        nameTextbox.first().click();
+        nameTextbox.first().fill(uniqueAlbumName);
+        log.info("Filled audio album (recording) name: {}", uniqueAlbumName);
+
+        Locator continueBtnName = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+        waitVisible(continueBtnName.first(), DEFAULT_WAIT);
+        clickWithRetry(continueBtnName.first(), 2, 300);
+
+        // Audio record screen
+        Locator importMsg = page.getByText("Import or record an audio by");
+        waitVisible(importMsg.first(), DEFAULT_WAIT);
+
+        Locator recordAudioBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Record an audio"));
+        waitVisible(recordAudioBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(recordAudioBtn.first(), 1, 200);
+
+        // Ensure default title visible and then rename recording
+        Locator untitled = page.getByText("Untitled");
+        waitVisible(untitled.first(), DEFAULT_WAIT);
+
+        Locator editIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("edit"));
+        waitVisible(editIcon.first(), DEFAULT_WAIT);
+        clickWithRetry(editIcon.first(), 1, 200);
+
+        Locator recordingTextbox = page.getByRole(AriaRole.TEXTBOX);
+        waitVisible(recordingTextbox.first(), DEFAULT_WAIT);
+        recordingTextbox.first().fill(recordingName);
+        log.info("Set recording name to: {}", recordingName);
+
+        // Start recording
+        Locator startRecording = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Start Recording"));
+        waitVisible(startRecording.first(), DEFAULT_WAIT);
+        clickWithRetry(startRecording.first(), 1, 200);
+
+        Locator waveform = page.locator(".audio-wave-visualization");
+        waitVisible(waveform.first(), DEFAULT_WAIT);
+        log.info("Audio waveform visualization visible; waiting {}ms to record", recordDurationMs);
+
+        try {
+            page.waitForTimeout(recordDurationMs <= 0 ? 10_000 : recordDurationMs);
+        } catch (RuntimeException e) {
+            log.warn("Recording wait interrupted: {}", e.getMessage());
+        }
+
+        // Pause and confirm
+        Locator pause = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Pause"));
+        waitVisible(pause.first(), DEFAULT_WAIT);
+        clickWithRetry(pause.first(), 1, 200);
+
+        Locator confirm = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
+        waitVisible(confirm.first(), DEFAULT_WAIT);
+        clickWithRetry(confirm.first(), 1, 200);
+
+        // Wait for success toast/text
+        Locator success = page.getByText(AUDIO_SUCCESS_TEXT);
+        waitVisible(success.first(), LONG_WAIT);
+        log.info("Audio-recording upload success message visible: '{}' for album '{}'", AUDIO_SUCCESS_TEXT, uniqueAlbumName);
+        return uniqueAlbumName;
     }
 
     // Convenience helper to build Paths from resource-relative strings

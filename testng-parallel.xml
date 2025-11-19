@@ -8,7 +8,6 @@
         <classes>
             <class name="tests.LandingPageTest"/>
             <class name="tests.CreatorRegistrationTest"/>
-            <class name="tests.FanRegistrationTest"/>
             <class name="tests.CreatorLoginTest"/>
             <class name="tests.CreatorPublicationTest"/>
             <class name="tests.CreatorLiveTest"/>
@@ -39,6 +38,7 @@
             <class name="tests.CreatorCollectionDeleteTest"/>
             <class name="tests.CreatorLogoutTest"/>
             <class name="tests.AdminApproveCreatorTest"/>
+            <class name="tests.FanRegistrationTest"/>
             <class name="tests.FanLoginTest"/>
             <class name="tests.FanHomeScreenTest"/>
             <class name="tests.FanDiscoverTest"/>

@@ -27,6 +27,7 @@ public class CreatorRegistrationTest extends BaseTestClass {
         String email = DataGenerator.generateUniqueEmail("TwizzCreator");
         String password = DataGenerator.generateRandomString(12);
         String phone = DataGenerator.generateRandomPhoneNumber();
+        String instagramUrl = ConfigReader.getProperty("registration.instagramUrl", "https://www.instagram.com/");
 
         // Configurable fields (with safe defaults)
         String dob = ConfigReader.getProperty("registration.dob", "01-01-1995"); // dd-MM-yyyy
@@ -54,6 +55,7 @@ public class CreatorRegistrationTest extends BaseTestClass {
                 email,
                 password,
                 phone,
+                instagramUrl,
                 gender,
                 contentTypes,
                 subscriptionPrice,
