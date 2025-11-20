@@ -409,18 +409,115 @@ public class CreatorRevenuesPage extends BasePage {
     public void runLastReportAndFilterFlow() {
         // 1) Scroll to Last report and ensure content
         scrollToLastReportAndEnsureContent();
-        // 2) Open change dropdown and select items one by one
-        openChangeDropdown();
-        selectReportType("Daily");
-        openChangeDropdown();
-        selectReportType("Monthly");
-        openChangeDropdown();
-        selectReportType("Detailed");
-        // Ensure 'Filter' is back in view after interactions
+
+        // 2) Use codegen-like flow for the "Change" dropdown inside Last report
+        //    page.locator("div").filter(new Locator.FilterOptions().setHasText("Mensuel")).nth(5).click();
+        logger.info("[Revenues] Opening 'Change' dropdown via Mensuel div inside Last report (codegen flow)");
+        Locator mensuelDiv = page.locator("div").filter(new Locator.FilterOptions().setHasText("Mensuel"));
+        if (mensuelDiv.count() == 0) {
+            throw new RuntimeException("Could not locate Mensuel div for Last report change dropdown");
+        }
+        Locator mensuelTarget = mensuelDiv.nth(Math.min(5, mensuelDiv.count() - 1));
+        try { mensuelTarget.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+        waitVisible(mensuelTarget, DEFAULT_WAIT);
+        clickWithRetry(mensuelTarget, 1, 150);
+
+        // 2a) Then click Daily -> Journalier -> Monthly -> Mensuel -> Detailed, as per codegen
+        logger.info("[Revenues] Selecting 'Daily' then 'Journalier' from Change dropdown");
+        waitVisible(page.getByText("Daily"), DEFAULT_WAIT);
+        clickWithRetry(page.getByText("Daily"), 1, 120);
+        waitVisible(page.getByText("Journalier"), DEFAULT_WAIT);
+        clickWithRetry(page.getByText("Journalier"), 1, 120);
+
+        logger.info("[Revenues] Selecting 'Monthly' then 'Mensuel' from Change dropdown");
+        waitVisible(page.getByText("Monthly"), DEFAULT_WAIT);
+        clickWithRetry(page.getByText("Monthly"), 1, 120);
+        waitVisible(page.getByText("Mensuel"), DEFAULT_WAIT);
+        clickWithRetry(page.getByText("Mensuel"), 1, 120);
+
+        logger.info("[Revenues] Selecting 'Detailed' from Change dropdown");
+        waitVisible(page.getByText("Detailed"), DEFAULT_WAIT);
+        clickWithRetry(page.getByText("Detailed"), 1, 120);
+
+        // Ensure 'Filter' / Last report section is back in view after interactions
         scrollToLastReportAndEnsureContent();
-        // 3) Open Filter and click all options (Decrypt -> ... -> All)
-        iterateFilterOptionsAndClickAll();
-        // 4) After clicking 'All', scroll to top and assert Revenues visible
+
+        // 3) Run Filter flow using codegen-style locators
+        // page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^Filter$"))).click();
+        logger.info("[Revenues] Opening Filter dropdown via Filter div (codegen flow)");
+        Locator filterDiv = page.locator("div").filter(new Locator.FilterOptions()
+                .setHasText(java.util.regex.Pattern.compile("^Filter$")));
+        if (filterDiv.count() == 0) {
+            throw new RuntimeException("Filter activator div not found in Last report section");
+        }
+        Locator filterActivator = filterDiv.first();
+        try { filterActivator.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+        waitVisible(filterActivator, DEFAULT_WAIT);
+        clickWithRetry(filterActivator, 1, 150);
+
+        // First, in the menu, click All
+        logger.info("[Revenues] Selecting 'All' from Filter menu");
+        Locator menu = page.getByRole(AriaRole.MENU);
+        waitVisible(menu.first(), DEFAULT_WAIT);
+        Locator allOpt = menu.first().getByText("All");
+        waitVisible(allOpt.first(), DEFAULT_WAIT);
+        clickWithRetry(allOpt.first(), 1, 120);
+
+        // Click Filter again and then 'Monthly subscription'
+        logger.info("[Revenues] Selecting 'Monthly subscription' using Filter button");
+        waitVisible(page.getByText("Filter"), DEFAULT_WAIT);
+        clickWithRetry(page.getByText("Filter"), 1, 120);
+        Locator monthlySub = page.getByText("Monthly subscription", new Page.GetByTextOptions().setExact(true));
+        waitVisible(monthlySub, DEFAULT_WAIT);
+        clickWithRetry(monthlySub, 1, 120);
+
+        // Use .ant-dropdown-trigger first() to select Stream then Collection
+        logger.info("[Revenues] Selecting 'Stream' then 'Collection' using ant-dropdown-trigger");
+        Locator trigger = page.locator(".ant-dropdown-trigger").first();
+        waitVisible(trigger, DEFAULT_WAIT);
+        clickWithRetry(trigger, 1, 120);
+        Locator streamOpt = page.getByText("Stream");
+        waitVisible(streamOpt, DEFAULT_WAIT);
+        clickWithRetry(streamOpt, 1, 120);
+
+        trigger = page.locator(".ant-dropdown-trigger").first();
+        waitVisible(trigger, DEFAULT_WAIT);
+        clickWithRetry(trigger, 1, 120);
+        Locator collectionOpt = page.getByText("Collection");
+        waitVisible(collectionOpt, DEFAULT_WAIT);
+        clickWithRetry(collectionOpt, 1, 120);
+
+        // Now use change icon to iterate Medias push, Private medias, Live, Decrypt
+        logger.info("[Revenues] Selecting 'Medias push' via change icon");
+        Locator changeIconImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("change"));
+        waitVisible(changeIconImg.first(), DEFAULT_WAIT);
+        clickWithRetry(changeIconImg.first(), 1, 120);
+        Locator mediasPush = page.getByText("Medias push");
+        waitVisible(mediasPush, DEFAULT_WAIT);
+        clickWithRetry(mediasPush, 1, 120);
+
+        logger.info("[Revenues] Selecting 'Private medias' via change icon");
+        waitVisible(changeIconImg.first(), DEFAULT_WAIT);
+        clickWithRetry(changeIconImg.first(), 1, 120);
+        Locator privateMedias = page.getByText("Private medias");
+        waitVisible(privateMedias, DEFAULT_WAIT);
+        clickWithRetry(privateMedias, 1, 120);
+
+        logger.info("[Revenues] Selecting 'Live' via change icon");
+        waitVisible(changeIconImg.first(), DEFAULT_WAIT);
+        clickWithRetry(changeIconImg.first(), 1, 120);
+        Locator liveOpt = page.getByText("Live");
+        waitVisible(liveOpt, DEFAULT_WAIT);
+        clickWithRetry(liveOpt, 1, 120);
+
+        logger.info("[Revenues] Selecting 'Decrypt' via change icon");
+        waitVisible(changeIconImg.first(), DEFAULT_WAIT);
+        clickWithRetry(changeIconImg.first(), 1, 120);
+        Locator decryptOpt = page.getByText("Decrypt");
+        waitVisible(decryptOpt, DEFAULT_WAIT);
+        clickWithRetry(decryptOpt, 1, 120);
+
+        // 4) After completing filter interactions, scroll to top and assert Revenues visible
         scrollToTopUntilRevenuesVisible();
     }
 }
