@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.regex.Pattern;
 
 public class FanDiscoverPage extends BasePage {
     private static final Logger logger = LoggerFactory.getLogger(FanDiscoverPage.class);
@@ -108,31 +106,22 @@ public class FanDiscoverPage extends BasePage {
 
     @Step("Open a random visible Discover profile from a feed")
     public void openRandomVisibleDiscoverProfile() {
-        Locator candidates = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^creatorDiscover profile$"))).locator("span");
-        int count = Math.max(0, candidates.count());
-        if (count == 0) {
-            try { page.mouse().wheel(0, 1200); page.waitForTimeout(200); } catch (Exception ignored) {}
-            count = candidates.count();
+        // Codegen equivalent: page.getByText("Discover profile").first().click();
+        // Try to surface a "Discover profile" element by scrolling a few times
+        Locator profileText = page.getByText("Discover profile");
+        int attempts = 0;
+        while ((profileText.count() == 0 || !safeIsVisible(profileText.first())) && attempts++ < 6) {
+            try { page.mouse().wheel(0, 1200); } catch (Exception ignored) {}
+            try { page.waitForTimeout(200); } catch (Exception ignored) {}
+            profileText = page.getByText("Discover profile");
         }
-        if (count == 0) throw new RuntimeException("No discover profile elements found on Discover feed");
 
-        List<Integer> visibleIdx = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            Locator el = candidates.nth(i);
-            if (safeIsVisible(el)) visibleIdx.add(i);
+        if (profileText.count() == 0) {
+            throw new RuntimeException("No 'Discover profile' text found on Fan Discover feed");
         }
-        if (visibleIdx.isEmpty()) {
-            int lim = Math.min(5, count);
-            for (int i = 0; i < lim; i++) {
-                Locator el = candidates.nth(i);
-                try { el.scrollIntoViewIfNeeded(); page.waitForTimeout(100); } catch (Exception ignored) {}
-                if (safeIsVisible(el)) visibleIdx.add(i);
-            }
-        }
-        if (visibleIdx.isEmpty()) throw new RuntimeException("No visible discover profile element to click");
 
-        int pick = visibleIdx.get(new Random().nextInt(visibleIdx.size()));
-        Locator target = candidates.nth(pick);
+        Locator target = profileText.first();
+        try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
         clickWithRetry(target, 2, 150);
     }
 
