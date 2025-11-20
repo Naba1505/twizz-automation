@@ -108,6 +108,91 @@ public class CreatorMessagingPage extends BasePage {
         }
     }
 
+    @Step("Select {countToSelect} media items from Quick Files album button: {albumButtonName}")
+    public void selectMediaFromQuickFilesAlbum(String albumButtonName, int countToSelect) {
+        String targetName = (albumButtonName == null || albumButtonName.isBlank())
+                ? "icon mixalbum_251119_134546" : albumButtonName;
+        logger.info("[Messaging][QuickFiles] Selecting media from Quick Files album button: {}", targetName);
+
+        // Ensure Quick Files albums screen is visible (codegen checks 'My albums')
+        try {
+            logger.info("[Messaging][QuickFiles] Waiting for 'My albums' label");
+            waitVisible(page.getByText("My albums"), 15_000);
+        } catch (Throwable ignored) {
+            logger.info("[Messaging][QuickFiles] 'My albums' not visible quickly; calling ensureQuickFilesAlbumsVisible()");
+            ensureQuickFilesAlbumsVisible();
+        }
+
+        // Scroll to surface albums near the bottom and click the specific album button
+        Locator container = importationContainer();
+        long end = System.currentTimeMillis() + 30_000;
+        boolean clickedAlbum = false;
+        while (System.currentTimeMillis() < end && !clickedAlbum) {
+            // Prefer exact name match inside the Importation/Quick Files container (as in codegen)
+            Locator albumBtn = container.getByRole(AriaRole.BUTTON,
+                    new Locator.GetByRoleOptions().setName(targetName));
+            int count = albumBtn.count();
+            if (count > 0) {
+                logger.info("[Messaging][QuickFiles] Found {} album BUTTON(s) named '{}'; clicking first", count, targetName);
+                Locator btn = albumBtn.first();
+                try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                clickWithRetry(btn, 1, 200);
+                clickedAlbum = true;
+                break;
+            }
+            // Scroll down more aggressively to reach albums near the bottom
+            logger.info("[Messaging][QuickFiles] Album button '{}' not yet visible; scrolling down", targetName);
+            try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+        }
+        if (!clickedAlbum) {
+            logger.warn("[Messaging][QuickFiles] Failed to find album button '{}' within scroll timeout", targetName);
+            throw new RuntimeException("Quick Files album button not found: " + targetName);
+        }
+
+        // Ensure we are inside the album by waiting for the 'Select media' prompt
+        try {
+            Locator selectMediaTitle = page.getByText("Select media");
+            waitVisible(selectMediaTitle.first(), 10_000);
+        } catch (Throwable ignored) {}
+
+        // Wait for media thumbs to appear
+        Locator thumbs = page.locator(".select-quick-file-media-thumb");
+        long endThumbs = System.currentTimeMillis() + 10_000;
+        while (thumbs.count() == 0 && System.currentTimeMillis() < endThumbs) {
+            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        }
+        if (thumbs.count() == 0) {
+            logger.warn("[Messaging][QuickFiles] No .select-quick-file-media-thumb elements visible after album click for '{}'", targetName);
+            throw new RuntimeException("No Quick Files media thumbnails visible inside album: " + targetName);
+        }
+
+        int max = Math.min(Math.max(1, countToSelect), thumbs.count());
+        logger.info("[Messaging][QuickFiles] Selecting {} Quick Files media thumb(s) out of {}", max, thumbs.count());
+        for (int i = 0; i < max; i++) {
+            Locator t = thumbs.nth(i);
+            try { t.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            clickWithRetry(t, 1, 120);
+        }
+
+        // Click dynamic Select (N) button; fallback to plain Select
+        logger.info("[Messaging][QuickFiles] Attempting to click dynamic 'Select (N)' button");
+        Locator selectDynamic = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                .setName(Pattern.compile("^Select \\([0-9]+\\)$")));
+        if (selectDynamic.count() > 0) {
+            clickWithRetry(selectDynamic.first(), 1, 200);
+        } else {
+            logger.info("[Messaging][QuickFiles] Dynamic 'Select (N)' not found; falling back to plain 'Select' button");
+            Locator selectPlain = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select"));
+            if (selectPlain.count() > 0) {
+                clickWithRetry(selectPlain.first(), 1, 200);
+            } else {
+                logger.warn("[Messaging][QuickFiles] Neither dynamic 'Select (N)' nor plain 'Select' button could be located");
+                throw new RuntimeException("Quick Files: 'Select' button not found after choosing media");
+            }
+        }
+    }
+
     @Step("Filter: select 'All ( by default )'")
     public void filterAllByDefault() {
         Locator byDiv = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^All \\( by default \\)$")));
@@ -640,6 +725,25 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Click any Quick Files album by regex (video/image/mix) with index fallbacks like codegen")
     public void clickAnyQuickFilesAlbumByRegex() {
         logger.info("[Messaging] Clicking a Quick Files album using regex selector and index fallbacks");
+        // Fast-path: scroll and prefer the specific mixalbum button used in current staging data
+        try {
+            long endFast = System.currentTimeMillis() + 15_000;
+            while (System.currentTimeMillis() < endFast) {
+                Locator specificAlbumBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                        .setName("icon mixalbum_251119_134546"));
+                if (specificAlbumBtn.count() > 0) {
+                    Locator chosen = specificAlbumBtn.first();
+                    try { chosen.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                    clickWithRetry(chosen, 1, 200);
+                    logger.info("[Messaging] Clicked Quick Files album via BUTTON fast-path: icon mixalbum_251119_134546");
+                    return;
+                }
+                // Scroll down a bit to surface albums near the bottom
+                try { page.mouse().wheel(0, 700); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+            }
+        } catch (Throwable ignored) {}
+
         // First, try the exact regex pattern family used in codegen
         Locator byText = page.locator("div").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^(?i)(video|image|mix).*")));
@@ -710,27 +814,48 @@ public class CreatorMessagingPage extends BasePage {
         long end = System.currentTimeMillis() + Math.max(5_000, timeoutMs);
         while (System.currentTimeMillis() < end) {
             try {
+                // Prefer new Quick Files media thumb tiles
+                Locator firstThumb = page.locator(".select-quick-file-media-thumb").first();
+                if (firstThumb.count() > 0 && safeIsVisible(firstThumb)) {
+                    logger.info("[Messaging][QuickFiles] Items grid visible with .select-quick-file-media-thumb elements");
+                    return;
+                }
+                // Fallback to legacy .cover tiles if still present
                 Locator firstCover = page.locator(".cover").first();
                 if (firstCover.count() > 0 && safeIsVisible(firstCover)) {
-                    logger.info("[Messaging][QuickFiles] Items grid visible with .cover elements");
+                    logger.info("[Messaging][QuickFiles] Items grid visible with .cover elements (fallback)");
                     return;
                 }
             } catch (Throwable ignored) {}
             try { page.waitForTimeout(200); } catch (Throwable ignored) {}
         }
         // Final assertion to bubble up
-        waitVisible(page.locator(".cover").first(), Math.max(3_000, timeoutMs));
+        Locator thumbOrCover = page.locator(".select-quick-file-media-thumb, .cover").first();
+        waitVisible(thumbOrCover, Math.max(3_000, timeoutMs));
     }
 
     @Step("Pick first two covers or up to {n} items as fallback")
     public void pickFirstTwoCoversOrUpToN(int n) {
         try {
-            Locator first = page.locator(".cover").first();
-            Locator second = page.locator("div:nth-child(2) > .cover");
-            waitVisible(first, 10_000);
-            clickWithRetry(first, 1, 120);
-            if (second.count() > 0 && safeIsVisible(second.first())) {
-                clickWithRetry(second.first(), 1, 120);
+            // Prefer new Quick Files media thumb tiles as in latest codegen
+            Locator thumbs = page.locator(".select-quick-file-media-thumb");
+            if (thumbs.count() > 0) {
+                int max = Math.min(Math.max(1, n), thumbs.count());
+                waitVisible(thumbs.first(), 10_000);
+                for (int i = 0; i < max; i++) {
+                    Locator t = thumbs.nth(i);
+                    try { t.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                    clickWithRetry(t, 1, 120);
+                }
+            } else {
+                // Fallback to legacy .cover-based selection
+                Locator first = page.locator(".cover").first();
+                Locator second = page.locator("div:nth-child(2) > .cover");
+                waitVisible(first, 10_000);
+                clickWithRetry(first, 1, 120);
+                if (second.count() > 0 && safeIsVisible(second.first())) {
+                    clickWithRetry(second.first(), 1, 120);
+                }
             }
             return;
         } catch (Throwable e) {
@@ -802,39 +927,60 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Choose 'Quick Files' to import from albums")
     public void chooseQuickFilesForMedia() {
         logger.info("[Messaging] Choosing 'Quick Files' for media import");
-        Locator container = importationContainer();
-        // Build candidate locators in order of preference
-        Locator[] candidates = new Locator[] {
-                container.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Quick Files")),
-                container.locator("button:has-text('Quick Files')"),
-                // exact text node within common clickable wrappers
-                container.locator("xpath=.//*[self::button or self::div or self::span][normalize-space(text())='Quick Files']"),
-                // more permissive contains text
-                container.locator("xpath=.//*[contains(normalize-space(.), 'Quick Files')]")
-        };
-        Locator picked = null;
-        for (Locator cand : candidates) {
-            if (cand != null && cand.count() > 0) {
-                Locator first = cand.first();
-                if (safeIsVisible(first)) { picked = first; break; }
+        // First, try a direct codegen-style ROLE=BUTTON click for 'Quick Files'
+        try {
+            Locator directBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
+            if (directBtn.count() > 0 && safeIsVisible(directBtn.first())) {
+                logger.info("[Messaging] Clicking 'Quick Files' via direct BUTTON locator");
+                try { directBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                clickWithRetry(directBtn.first(), 1, 200);
+            } else {
+                throw new RuntimeException("Direct Quick Files BUTTON not visible");
+            }
+        } catch (Throwable primary) {
+            logger.warn("[Messaging] Direct 'Quick Files' BUTTON click failed or not visible; falling back to container-based locators: {}", primary.getMessage());
+            Locator container = importationContainer();
+            // Build candidate locators in order of preference
+            Locator[] candidates = new Locator[] {
+                    container.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Quick Files")),
+                    container.locator("button:has-text('Quick Files')"),
+                    // exact text node within common clickable wrappers
+                    container.locator("xpath=.//*[self::button or self::div or self::span][normalize-space(text())='Quick Files']"),
+                    // more permissive contains text
+                    container.locator("xpath=.//*[contains(normalize-space(.), 'Quick Files')]")
+            };
+            Locator picked = null;
+            for (Locator cand : candidates) {
+                if (cand != null && cand.count() > 0) {
+                    Locator first = cand.first();
+                    if (safeIsVisible(first)) { picked = first; break; }
+                }
+            }
+            if (picked == null || picked.count() == 0) {
+                // As a last resort, fall back to global text search
+                picked = page.getByText("Quick Files");
+            }
+            if (picked == null || picked.count() == 0) {
+                throw new RuntimeException("Quick Files option not found in Importation popup");
+            }
+            try { picked.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            try {
+                clickWithRetry(picked.first(), 1, 200);
+            } catch (RuntimeException e) {
+                try { picked.first().click(new Locator.ClickOptions().setForce(true)); }
+                catch (Throwable ignore) { throw e; }
             }
         }
-        if (picked == null) {
-            // As a last resort, fall back to global text search
-            picked = page.getByText("Quick Files").first();
-        }
-        waitVisible(picked, DEFAULT_WAIT);
-        try { picked.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+
+        // Ensure we are on Quick Files albums screen (codegen: My albums visible)
         try {
-            clickWithRetry(picked, 1, 200);
-        } catch (RuntimeException e) {
-            try { picked.click(new Locator.ClickOptions().setForce(true)); }
-            catch (Throwable ignore) { throw e; }
+            Locator myAlbums = page.getByText("My albums");
+            waitVisible(myAlbums.first(), 15_000);
+            logger.info("[Messaging] 'My albums' label visible on Quick Files screen");
+        } catch (Throwable e) {
+            logger.warn("[Messaging] 'My albums' label not quickly visible after clicking Quick Files; falling back to generic Quick Files screen assertion: {}", e.getMessage());
+            assertQuickFilesScreen();
         }
-        // Ensure we are on Quick Files screen
-        Locator qfTitle = page.getByText("Quick Files");
-        waitVisible(qfTitle, 15_000);
-        logger.info("[Messaging] 'Quick Files' title visible");
     }
 
     @Step("Assert Quick Files screen (title + 'My albums') is visible")
@@ -894,8 +1040,13 @@ public class CreatorMessagingPage extends BasePage {
     }
 
     private Locator quickFilesItemThumbs() {
-        // Items typically render inside the Importation container, exclude album rows
+        // Items typically render inside the Importation container.
+        // Prefer the dedicated Quick Files media thumb class, fallback to legacy tiles.
         Locator container = importationContainer();
+        Locator thumbs = container.locator(".select-quick-file-media-thumb");
+        if (thumbs.count() > 0) {
+            return thumbs;
+        }
         return container.locator(
                 ".ant-image:visible, .ant-card:visible, img:visible:not([alt*='album' i])"
         );

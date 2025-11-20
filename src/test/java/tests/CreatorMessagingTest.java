@@ -1,7 +1,6 @@
 package tests;
 
 import org.testng.annotations.Test;
-import org.testng.SkipException;
 import pages.BaseTestClass;
 import pages.CreatorLoginPage;
 import pages.CreatorMessagingPage;
@@ -126,37 +125,11 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.openMessagingFromProfile();
         msg.openFirstFanConversation();
 
-        // Open media picker and switch to Quick Files
+        // Open media picker and switch to Quick Files, then select media from specific mixalbum
         msg.openMediaPicker();
         msg.ensureImportationVisible();
         msg.chooseQuickFilesForMedia();
-        // Assert Quick Files screen like codegen: title + My albums
-        msg.assertQuickFilesScreen();
-        try {
-            msg.ensureQuickFilesAlbumsVisible();
-        } catch (SkipException se) {
-            throw se; // skip if no albums
-        }
-
-        // Click a Quick Files album similar to codegen (regex + index), fallback to CSS
-        try {
-            msg.clickAnyQuickFilesAlbumByRegex();
-        } catch (RuntimeException e) {
-            // Secondary fallback
-            try {
-                msg.selectQuickFilesAlbumWithCssFallback();
-            } catch (RuntimeException e2) {
-                if (e2.getMessage() != null && e2.getMessage().toLowerCase().contains("no quick files")) {
-                    throw new SkipException("No Quick Files albums available; skipping test");
-                }
-                throw e2;
-            }
-        }
-
-        // Ensure album inner prompt is visible and choose items like codegen
-        msg.assertAlbumMediaPrompt();
-        msg.pickFirstTwoCoversOrUpToN(3);
-        msg.confirmQuickFilesSelection();
+        msg.selectMediaFromQuickFilesAlbum("icon mixalbum_251119_134546", 6);
 
         // Allow any post-selection processing/spinners to settle
         msg.waitForUploadSpinnerToDisappear(30_000);
@@ -419,39 +392,12 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.openMessagingFromProfile();
         msg.openFirstFanConversation();
 
-        // Open Private media screen and choose Quick Files to import
+        // Open Private media screen and choose Quick Files to import using the specific mixalbum
         msg.openPrivateMediaScreen();
         msg.clickPrivateMediaAddPlus();
         msg.ensureImportationVisible();
         msg.chooseQuickFilesForMedia();
-        // Assert Quick Files screen like codegen: title + My albums
-        msg.assertQuickFilesScreen();
-        try {
-            msg.ensureQuickFilesAlbumsVisible();
-        } catch (SkipException se) {
-            throw se; // skip if no albums
-        }
-
-        // Click a Quick Files album similar to codegen (regex + index), fallback to CSS
-        try {
-            msg.clickAnyQuickFilesAlbumByRegex();
-        } catch (RuntimeException e) {
-            // Secondary fallback
-            try {
-                msg.selectQuickFilesAlbumWithCssFallback();
-            } catch (RuntimeException e2) {
-                if (e2.getMessage() != null && e2.getMessage().toLowerCase().contains("no quick files")) {
-                    throw new SkipException("No Quick Files albums available; skipping test");
-                }
-                throw e2;
-            }
-        }
-
-        // Ensure album inner prompt is visible and choose items like codegen
-        msg.assertAlbumMediaPrompt();
-        msg.pickFirstTwoCoversOrUpToN(3);
-        msg.confirmQuickFilesSelection();
-        // Allow any post-selection processing/spinners to settle
+        msg.selectMediaFromQuickFilesAlbum("icon mixalbum_251119_134546", 6);
         msg.waitForUploadSpinnerToDisappear(60_000);
         try { page.waitForTimeout(1000); } catch (Throwable ignored) {}
     }
