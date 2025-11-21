@@ -31,6 +31,7 @@
             <class name="tests.CreatorCollectionsHistoryTest"/>
             <class name="tests.CreatorPaymentMethodTest"/>
             <class name="tests.CreatorAutomaticMessageTest"/>
+            <class name="tests.CreatorScriptsTest"/>
             <class name="tests.CleanupDeletePromoCodesTest"/>
             <class name="tests.CreatorQuickFilesDeleteTest"/>
             <class name="tests.CreatorCollectionDeleteTest"/>
