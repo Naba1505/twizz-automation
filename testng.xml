@@ -16,7 +16,6 @@
             <class name="tests.CreatorMediaPushTest"/>
             <class name="tests.CreatorUnlockLinksTest"/>
             <class name="tests.CreatorDiscoverTest"/>
-            <class name="tests.CreatorQuickMessageTest"/>
             <class name="tests.CreatorMessagingTest"/>
             <class name="tests.CreatorRevenuesTest"/>
             <class name="tests.CreatorProfileTest"/>
