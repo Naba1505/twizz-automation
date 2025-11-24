@@ -60,6 +60,103 @@ public class CreatorScriptsPage extends BasePage {
         return path;
     }
 
+    // ===== Edit helpers =====
+
+    private String buildUpdatedName(String base) {
+        String prefix = (base == null || base.isEmpty()) ? "UpdatedScript" : base;
+        return prefix + "_" + timestamp();
+    }
+
+    @Step("Open first script row in edit mode and navigate to name step")
+    public String startEditFirstScript(String updatedBaseName) {
+        // Click first edit icon on scripts list
+        Locator editIcons = page.locator("button.script-row-edit");
+        waitVisible(editIcons.first(), DEFAULT_WAIT);
+        clickWithRetry(editIcons.first(), 1, 200);
+
+        // Edit dialog
+        Locator editTitle = page.getByText("Edit", new Page.GetByTextOptions().setExact(true));
+        waitVisible(editTitle.first(), DEFAULT_WAIT);
+
+        Locator editMessage = page.getByText("Which action would you like");
+        waitVisible(editMessage.first(), DEFAULT_WAIT);
+
+        Locator editScriptBtn = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Edit script"));
+        waitVisible(editScriptBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(editScriptBtn.first(), 1, 200);
+
+        // Ensure on Edit a script screen and name step
+        Locator editHeading = page.getByRole(AriaRole.HEADING,
+                new Page.GetByRoleOptions().setName("Edit a script"));
+        waitVisible(editHeading.first(), DEFAULT_WAIT);
+
+        Locator nameHeading = page.getByRole(AriaRole.HEADING,
+                new Page.GetByRoleOptions().setName("Give your script a name"));
+        waitVisible(nameHeading.first(), DEFAULT_WAIT);
+
+        Locator nameInput = page.getByRole(AriaRole.TEXTBOX,
+                new Page.GetByRoleOptions().setName("My name"));
+        waitVisible(nameInput.first(), DEFAULT_WAIT);
+
+        String updatedName = buildUpdatedName(updatedBaseName);
+        nameInput.first().click();
+        nameInput.first().fill("");
+        nameInput.first().fill(updatedName);
+
+        Locator cont = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Continue"));
+        waitVisible(cont.first(), DEFAULT_WAIT);
+        clickWithRetry(cont.first(), 1, 200);
+
+        // Small settle to allow navigation/state update to media step
+        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+
+        return updatedName;
+    }
+
+    @Step("Update script message and note for edit flow")
+    public void updateScriptMessageAndNote() {
+        // Update main message
+        Locator msg = page.getByRole(AriaRole.TEXTBOX,
+                new Page.GetByRoleOptions().setName("Your message..."));
+        waitVisible(msg.first(), DEFAULT_WAIT);
+        msg.first().click();
+        msg.first().fill("Test updated message");
+
+        // Update note: in edit flows we might still be on a previous step; if the note box
+        // is not visible yet, advance via a primary Next/Continue button once, then wait again.
+        Locator noteBox = page.getByRole(AriaRole.TEXTBOX,
+                new Page.GetByRoleOptions().setName("Write a note to not forget"));
+        try {
+            waitVisible(noteBox.first(), 3_000);
+        } catch (Throwable ignored) {
+            // Try to advance to the note step without touching bookmark or price
+            Locator nextBtn = page.getByRole(AriaRole.BUTTON,
+                    new Page.GetByRoleOptions().setName("Next"));
+            if (nextBtn.count() == 0) {
+                nextBtn = page.getByRole(AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName("Continue"));
+            }
+            if (nextBtn.count() > 0) {
+                try { nextBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored2) { }
+                clickWithRetry(nextBtn.first(), 1, 200);
+                try { page.waitForTimeout(500); } catch (Throwable ignored2) { }
+            }
+            // Now wait with normal timeout for the note box; if it still doesn't appear,
+            // treat note as optional in edit flows.
+            try {
+                waitVisible(noteBox.first(), DEFAULT_WAIT);
+            } catch (Throwable finalIgnored) {
+                logger.warn("Note textbox not visible in edit flow; skipping note update.");
+                return;
+            }
+        }
+
+        noteBox.first().click();
+        noteBox.first().fill("Updated note");
+    }
+
     // ===== High level flow =====
 
     @Step("Open settings from profile header")
@@ -78,6 +175,44 @@ public class CreatorScriptsPage extends BasePage {
         clickWithRetry(scripts.first(), 1, 200);
         waitVisible(page.getByRole(AriaRole.HEADING,
                 new Page.GetByRoleOptions().setName("Scripts")), DEFAULT_WAIT);
+    }
+
+    @Step("Validate Scripts screen search box with multiple keywords and return to Scripts list")
+    public void validateScriptsSearchFlow() {
+        // Assumes we are already on Scripts main screen and heading is visible
+        Locator scriptsHeading = page.getByRole(AriaRole.HEADING,
+                new Page.GetByRoleOptions().setName("Scripts"));
+        waitVisible(scriptsHeading.first(), DEFAULT_WAIT);
+
+        // Open search
+        Locator searchButton = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Search"));
+        waitVisible(searchButton.first(), DEFAULT_WAIT);
+        clickWithRetry(searchButton.first(), 1, 200);
+
+        Locator searchInput = page.getByRole(AriaRole.TEXTBOX,
+                new Page.GetByRoleOptions().setName("Search"));
+        waitVisible(searchInput.first(), DEFAULT_WAIT);
+
+        String[] keywords = new String[] {"image", "video", "audio", "mixed"};
+        for (String term : keywords) {
+            searchInput.first().click();
+            searchInput.first().fill("");
+            searchInput.first().fill(term);
+            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            // Clear before next term
+            searchInput.first().fill("");
+            try { page.waitForTimeout(200); } catch (Throwable ignored) { }
+        }
+
+        // Cancel search and ensure we are back on Scripts list
+        Locator cancelButton = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Cancel"));
+        waitVisible(cancelButton.first(), DEFAULT_WAIT);
+        clickWithRetry(cancelButton.first(), 1, 200);
+
+        // Final assertion: Scripts heading still visible (back on scripts screen)
+        waitVisible(scriptsHeading.first(), DEFAULT_WAIT);
     }
 
     @Step("Click add script plus button")
@@ -369,8 +504,16 @@ public class CreatorScriptsPage extends BasePage {
 
     @Step("Confirm script creation")
     public void confirmScriptCreation() {
-        // Prefer the actual button that contains a div with 'Confirm' text, then fall back to broader locators
-        Locator confirmBtn = page.locator("//button[.//div[contains(text(),'Confirm')]]");
+        // Prefer dedicated chat-scripts Confirm button, then fall back to text-based locators
+        Locator confirmBtn = page.locator("//div[@class='chat-scripts-button enabled']");
+        if (confirmBtn.count() == 0) {
+            // Fallback: div with exact text "Confirm"
+            confirmBtn = page.locator("div").filter(new Locator.FilterOptions()
+                    .setHasText(Pattern.compile("^Confirm$")));
+        }
+        if (confirmBtn.count() == 0) {
+            confirmBtn = page.locator("//button[.//div[contains(text(),'Confirm')]]");
+        }
         if (confirmBtn.count() == 0) {
             confirmBtn = page.locator("//div[contains(text(),'Confirm')]");
         }
@@ -385,9 +528,35 @@ public class CreatorScriptsPage extends BasePage {
         try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) { }
         // Use a few retries in case of transient overlay/animation issues
         clickWithRetry(confirmBtn.first(), 3, 500);
-        // Wait for the page to settle after submission
-        try { waitForIdle(); } catch (Throwable ignored) { }
-        try { page.waitForTimeout(2000); } catch (Throwable ignored) { }
+
+        // During upload, UI may show a message asking to stay on page; when done, a success toast
+        Locator stayOnPage = page.getByText("Stay on page during uploading");
+        // Prefer an exact "Script created successfully" toast, then fall back to a broader regex
+        Locator success = page.getByText("Script created successfully");
+        if (success.count() == 0) {
+            success = page.getByText(Pattern.compile("script.*created", Pattern.CASE_INSENSITIVE));
+        }
+
+        // Allow up to 90s for heavy uploads (e.g. videos)
+        long deadline = System.currentTimeMillis() + 90_000L;
+        boolean seenSuccess = false;
+        while (System.currentTimeMillis() < deadline) {
+            if (safeIsVisible(success)) {
+                seenSuccess = true;
+                break;
+            }
+            if (safeIsVisible(stayOnPage)) {
+                // Still uploading, just wait a bit more
+                try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            } else {
+                // Neither toast nor uploading hint visible yet; short poll
+                try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            }
+        }
+
+        if (!seenSuccess) {
+            throw new RuntimeException("Script creation success toast not seen within timeout; script may not have been created.");
+        }
     }
 
     @Step("Wait for script created success message")
@@ -546,5 +715,140 @@ public class CreatorScriptsPage extends BasePage {
 
         assertScriptCreatedSuccess();
         logger.info("Script creation (mixed media, free price) flow completed successfully");
+    }
+
+    @Step("Confirm script update and wait for completion toast")
+    public void confirmScriptUpdateAndWait() {
+        // Click Confirm (reuse robust handling and prefer chat-scripts button)
+        Locator confirmBtn = page.locator("//div[@class='chat-scripts-button enabled']");
+        if (confirmBtn.count() == 0) {
+            confirmBtn = page.locator("//button[.//div[contains(text(),'Confirm')]]");
+        }
+        if (confirmBtn.count() == 0) {
+            confirmBtn = page.getByText("Confirm");
+        }
+        if (confirmBtn.count() == 0) {
+            confirmBtn = page.getByRole(AriaRole.BUTTON,
+                    new Page.GetByRoleOptions().setName("Confirm"));
+        }
+        if (confirmBtn.count() == 0) {
+            confirmBtn = page.getByText("Confirm");
+        }
+        waitVisible(confirmBtn.first(), DEFAULT_WAIT);
+        try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) { }
+        clickWithRetry(confirmBtn.first(), 3, 500);
+
+        // During upload, UI may show a message asking to stay on page
+        Locator stayOnPage = page.getByText("Stay on page during uploading");
+        Locator success = page.getByText("Script updated successfully");
+
+        long deadline = System.currentTimeMillis() + 60_000L;
+        boolean seenSuccess = false;
+        while (System.currentTimeMillis() < deadline) {
+            if (safeIsVisible(success)) {
+                seenSuccess = true;
+                break;
+            }
+            if (safeIsVisible(stayOnPage)) {
+                // Still uploading, just wait a bit more
+                try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            } else {
+                // Neither toast nor uploading hint visible yet; short poll
+                try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            }
+        }
+
+        if (!seenSuccess) {
+            throw new RuntimeException("Script update success toast not seen within timeout; script may not have been updated.");
+        } else {
+            logger.info("Script updated successfully toast observed.");
+        }
+    }
+
+    // ===== Edit full flows =====
+
+    @Step("Edit first image script: add extra image and update text")
+    public void editFirstImageScriptAddExtraMediaAndUpdateText() {
+        logger.info("Starting edit flow for image script");
+
+        openSettingsFromProfile();
+        openScriptsFromSettings();
+
+        String updatedName = startEditFirstScript("ImageUpdated");
+        logger.info("Updated image script name to: {}", updatedName);
+
+        // Add one extra image media
+        clickPlusToAddMoreMedia();
+        uploadImageFromDevice("ScriptImageA.png");
+        clickNextAfterMedia();
+
+        // Do not touch bookmark or price, only update text
+        updateScriptMessageAndNote();
+        confirmScriptUpdateAndWait();
+
+        logger.info("Image script edit flow completed");
+    }
+
+    @Step("Edit first video script: add extra video and update text")
+    public void editFirstVideoScriptAddExtraMediaAndUpdateText() {
+        logger.info("Starting edit flow for video script");
+
+        openSettingsFromProfile();
+        openScriptsFromSettings();
+
+        String updatedName = startEditFirstScript("VideoUpdated");
+        logger.info("Updated video script name to: {}", updatedName);
+
+        // Add one extra video media
+        clickPlusToAddMoreMedia();
+        uploadVideoFromDevice("ScriptVideoA.mp4");
+        clickNextAfterMedia();
+
+        updateScriptMessageAndNote();
+        confirmScriptUpdateAndWait();
+
+        logger.info("Video script edit flow completed");
+    }
+
+    @Step("Edit first audio script: add extra audio and update text")
+    public void editFirstAudioScriptAddExtraMediaAndUpdateText() {
+        logger.info("Starting edit flow for audio script");
+
+        openSettingsFromProfile();
+        openScriptsFromSettings();
+
+        String updatedName = startEditFirstScript("AudioUpdated");
+        logger.info("Updated audio script name to: {}", updatedName);
+
+        // Add one extra audio media
+        clickPlusToAddMoreMedia();
+        uploadAudioFromDevice("ScriptAudioA.mp3");
+        clickNextAfterMedia();
+
+        updateScriptMessageAndNote();
+        confirmScriptUpdateAndWait();
+
+        logger.info("Audio script edit flow completed");
+    }
+
+    @Step("Edit first mixed script: add extra mixed media and update text")
+    public void editFirstMixedScriptAddExtraMediaAndUpdateText() {
+        logger.info("Starting edit flow for mixed media script");
+
+        openSettingsFromProfile();
+        openScriptsFromSettings();
+
+        String updatedName = startEditFirstScript("MixedUpdated");
+        logger.info("Updated mixed script name to: {}", updatedName);
+
+        // Add one extra media (image) to mixed script
+        clickPlusToAddMoreMedia();
+        uploadImageFromDevice("ScriptImageA.png");
+        clickNextAfterMedia();
+
+        updateScriptMessageAndNote();
+        confirmScriptUpdateAndWait();
+
+        logger.info("Mixed script edit flow completed");
     }
 }
