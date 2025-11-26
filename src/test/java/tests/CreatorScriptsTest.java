@@ -116,8 +116,7 @@ public class CreatorScriptsTest extends BaseTestClass {
         scripts.validateScriptsSearchFlow();
     }
 
-    @Test(priority = 6,
-            description = "Creator can edit an existing image script by adding extra media and updating text")
+    @Test(priority = 6, description = "Creator can edit an existing image script by adding extra media and updating text")
     public void creatorCanEditImageScript() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -138,8 +137,7 @@ public class CreatorScriptsTest extends BaseTestClass {
         scripts.editFirstImageScriptAddExtraMediaAndUpdateText();
     }
 
-    @Test(priority = 7,
-            description = "Creator can edit an existing video script by adding extra media and updating text")
+    @Test(priority = 7, description = "Creator can edit an existing video script by adding extra media and updating text")
     public void creatorCanEditVideoScript() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -160,8 +158,7 @@ public class CreatorScriptsTest extends BaseTestClass {
         scripts.editFirstVideoScriptAddExtraMediaAndUpdateText();
     }
 
-    @Test(priority = 8,
-            description = "Creator can edit an existing audio script by adding extra media and updating text")
+    @Test(priority = 8, description = "Creator can edit an existing audio script by adding extra media and updating text")
     public void creatorCanEditAudioScript() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -182,8 +179,7 @@ public class CreatorScriptsTest extends BaseTestClass {
         scripts.editFirstAudioScriptAddExtraMediaAndUpdateText();
     }
 
-    @Test(priority = 9,
-            description = "Creator can edit an existing mixed media script by adding extra media and updating text")
+    @Test(priority = 9, description = "Creator can edit an existing mixed media script by adding extra media and updating text")
     public void creatorCanEditMixedMediaScript() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -202,5 +198,71 @@ public class CreatorScriptsTest extends BaseTestClass {
         // Edit first mixed media script
         CreatorScriptsPage scripts = new CreatorScriptsPage(page);
         scripts.editFirstMixedScriptAddExtraMediaAndUpdateText();
+    }
+
+    @Test(priority = 10,
+            description = "Creator can create an image script using Quick Files album (requires CreatorQuickFilesTest image album)")
+    public void creatorCanCreateImageScriptFromQuickFiles() {
+        // Arrange: credentials
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+
+        // Login as Creator
+        CreatorLoginPage login = new CreatorLoginPage(page);
+        login.navigate();
+        login.login(username, password);
+
+        // Navigate to profile landing
+        CreatorProfilePage profile = new CreatorProfilePage(page);
+        profile.navigateToProfile();
+        profile.assertOnProfileUrl();
+
+        // Use Quick Files images album to create script
+        CreatorScriptsPage scripts = new CreatorScriptsPage(page);
+        scripts.createImageScriptFromQuickFiles();
+    }
+
+    @Test(priority = 11,
+            description = "Creator can create a video script using Quick Files album with promo (requires CreatorQuickFilesTest video album)")
+    public void creatorCanCreateVideoScriptFromQuickFilesWithPromo() {
+        // Arrange: credentials
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+
+        // Login as Creator
+        CreatorLoginPage login = new CreatorLoginPage(page);
+        login.navigate();
+        login.login(username, password);
+
+        // Navigate to profile landing
+        CreatorProfilePage profile = new CreatorProfilePage(page);
+        profile.navigateToProfile();
+        profile.assertOnProfileUrl();
+
+        // Use Quick Files videos album to create script with promo
+        CreatorScriptsPage scripts = new CreatorScriptsPage(page);
+        scripts.createVideoScriptFromQuickFilesWithPromo();
+    }
+
+    @Test(priority = 12,
+            description = "Creator can create an audio script using Quick Files album with promo (requires CreatorQuickFilesTest audio album)")
+    public void creatorCanCreateAudioScriptFromQuickFilesWithPromo() {
+        // Arrange: credentials
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+
+        // Login as Creator
+        CreatorLoginPage login = new CreatorLoginPage(page);
+        login.navigate();
+        login.login(username, password);
+
+        // Navigate to profile landing
+        CreatorProfilePage profile = new CreatorProfilePage(page);
+        profile.navigateToProfile();
+        profile.assertOnProfileUrl();
+
+        // Use Quick Files audio album to create script with promo
+        CreatorScriptsPage scripts = new CreatorScriptsPage(page);
+        scripts.createAudioScriptFromQuickFilesWithPromo();
     }
 }

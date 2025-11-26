@@ -11,7 +11,7 @@ import java.util.List;
 public class CreatorQuickFilesTest extends BaseCreatorTest {
     private static final int POST_CONFIRM_PAUSE_MS = 1000;
 
-    @Test(priority = 1, description = "Create Quick Files album with videos only", groups = {"quickfiles-create"})
+    @Test(priority = 1, description = "Create Quick Files album with videos only")
     public void creatorCreatesQuickAlbum_VideosOnly() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("videoalbum_");
@@ -26,11 +26,14 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         settings.addMediaFiles(videos);
         settings.confirmUploadAndStay();
         // brief settle and navigate back to profile to keep uploads processing in background
-        try { page.waitForTimeout(POST_CONFIRM_PAUSE_MS); } catch (Exception ignored) {}
+        try {
+            page.waitForTimeout(POST_CONFIRM_PAUSE_MS);
+        } catch (Exception ignored) {
+        }
         settings.navigateBackToProfile(2);
     }
 
-    @Test(priority = 2, description = "Create Quick Files album with images only", groups = {"quickfiles-create"})
+    @Test(priority = 2, description = "Create Quick Files album with images only")
     public void creatorCreatesQuickAlbum_ImagesOnly() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("imagealbum_");
@@ -45,11 +48,14 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         settings.addMediaFiles(images);
         settings.confirmUploadAndStay();
         // brief settle and navigate back to profile to keep uploads processing in background
-        try { page.waitForTimeout(POST_CONFIRM_PAUSE_MS); } catch (Exception ignored) {}
+        try {
+            page.waitForTimeout(POST_CONFIRM_PAUSE_MS);
+        } catch (Exception ignored) {
+        }
         settings.navigateBackToProfile(2);
     }
 
-    @Test(priority = 3, description = "Create Quick Files album with both videos and images", groups = {"quickfiles-create"})
+    @Test(priority = 3, description = "Create Quick Files album with both videos and images")
     public void creatorCreatesQuickAlbum_MixedMedia() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("mixalbum_");
@@ -67,11 +73,14 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         settings.addMediaFiles(mixed);
         settings.confirmUploadAndStay();
         // brief settle and navigate back to profile to keep uploads processing in background
-        try { page.waitForTimeout(POST_CONFIRM_PAUSE_MS); } catch (Exception ignored) {}
+        try {
+            page.waitForTimeout(POST_CONFIRM_PAUSE_MS);
+        } catch (Exception ignored) {
+        }
         settings.navigateBackToProfile(2);
     }
 
-    @Test(priority = 4, description = "Create Quick Files album with audio only", groups = {"quickfiles-create"})
+    @Test(priority = 4, description = "Create Quick Files album with audio only")
     public void creatorCreatesQuickAlbum_AudioOnly() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
 
@@ -84,11 +93,14 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         System.out.println("Created audio album: " + albumName);
 
         // brief settle and navigate back to profile to keep processing in background
-        try { page.waitForTimeout(POST_CONFIRM_PAUSE_MS); } catch (Exception ignored) {}
+        try {
+            page.waitForTimeout(POST_CONFIRM_PAUSE_MS);
+        } catch (Exception ignored) {
+        }
         settings.navigateBackToProfile(2);
     }
 
-    @Test(priority = 5, description = "Create Quick Files album with recorded audio", groups = {"quickfiles-create"})
+    @Test(priority = 5, description = "Create Quick Files album with recorded audio")
     public void creatorCreatesQuickAlbum_AudioRecording() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
 
@@ -104,7 +116,10 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         String albumName = settings.createAudioAlbumByRecording(albumPrefix, recordingNameBase, durationMs);
         System.out.println("Created audio recording album: " + albumName);
 
-        try { page.waitForTimeout(POST_CONFIRM_PAUSE_MS); } catch (Exception ignored) {}
+        try {
+            page.waitForTimeout(POST_CONFIRM_PAUSE_MS);
+        } catch (Exception ignored) {
+        }
         settings.navigateBackToProfile(2);
     }
 }

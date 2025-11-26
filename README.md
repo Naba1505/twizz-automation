@@ -108,35 +108,52 @@
 ## Scripts (Creator)
 - Page object: `src/test/java/pages/CreatorScriptsPage.java`
 - Tests class: `src/test/java/tests/CreatorScriptsTest.java`
-- Scenarios (4 tests, by priority):
-  1. **Images script** (priority 1)
+- Scenarios (by priority):
+  1. **Images script (device)** (priority 1)
      - Name prefix: `ImageScript_`
      - Media: 2 images from device:
        - `src/test/resources/Images/ScriptImageA.png`
        - `src/test/resources/Images/ScriptImageB.png`
      - Flow: Login → Profile → Settings → Scripts → `+` → Create script with 2 blurred images → price `15€` → bookmark → message (`Test /name`) → note → Confirm.
-  2. **Videos script with promo** (priority 2)
+  2. **Videos script with promo (device)** (priority 2)
      - Name prefix: `ScriptVideo_`
      - Media: 2 videos from device:
        - `src/test/resources/Videos/ScriptVideoA.mp4`
        - `src/test/resources/Videos/ScriptVideoB.mp4`
      - Flow: same entry as above, but media are videos, price set to `10€` via spinbutton, promo slider enabled with `2`€ discount and validity `Unlimited`, then note and Confirm.
-  3. **Audios script with promo** (priority 3)
+  3. **Audios script with promo (device)** (priority 3)
      - Name prefix: `ScriptAudio_`
      - Media: 2 audios from device:
        - `src/test/resources/Audios/ScriptAudioA.mp3`
        - `src/test/resources/Audios/ScriptAudioB.mp3`
      - Flow: media are audios, price set to `50€`, promo slider using second discount input with `20`% and validity `7 days`, then note and Confirm.
-  4. **Mixed media free script** (priority 4)
+  4. **Mixed media free script (device)** (priority 4)
      - Name prefix: `ScriptMixed_`
      - Media: 1 image + 1 video + 1 audio:
        - `ScriptImageA.png`, `ScriptVideoA.mp4`, `ScriptAudioA.mp3` (same folders as above)
      - Flow: create script with the 3 mixed media, **keep default free price** (no price change), then bookmark, message, note and Confirm.
+  5. **Scripts search** (priority 5)
+     - Flow: from Scripts screen, open Search, enter multiple keywords (`image`, `video`, `audio`, `mixed`) in sequence, clear between them, Cancel, and assert Scripts heading is still visible.
+  6. **Edit scripts (image/video/audio/mixed)** (priorities 6–9)
+     - Each test logs in, navigates to Scripts, opens the first script in edit mode, renames it to `ImageUpdated_*`, `VideoUpdated_*`, `AudioUpdated_*` or `MixedUpdated_*`, adds one extra media item of the corresponding type, updates message and (optionally) note, clicks Confirm, and waits for the `Script updated successfully` toast.
+  7. **Quick Files image script** (priority 10)
+     - Name prefix: `ImageScriptQF_`
+     - Media: 2 images selected from a Quick Files album whose name starts with `imagealbum_` (created by `CreatorQuickFilesTest`).
+  8. **Quick Files video script with promo** (priority 11)
+     - Name prefix: `ScriptVideoQF_`
+     - Media: 2 videos selected from a Quick Files album whose name starts with `videoalbum_` (created by `CreatorQuickFilesTest`).
+     - Price/promo: custom price `10€` + promo slider with `2`€ discount and `Unlimited` validity.
+  9. **Quick Files audio script with promo** (priority 12)
+     - Name prefix: `ScriptAudioQF_`
+     - Media: 1 audio selected from a Quick Files album whose name starts with `audioalbum_` (created by `CreatorQuickFilesTest`).
+     - Price/promo: price `50€` + promo slider second discount input `20`% with validity `7 days`.
 - Notes:
-  - All flows use robust upload handling (`input[type='file']` / Playwright file chooser) and a hardened Confirm click (`//button[.//div[contains(text(),'Confirm')]]` with fallbacks).
-  - The "script created" toast is treated as a **soft assertion**: the tests attempt to wait for any toast containing "script" and "created" (case-insensitive), but only log a warning if not seen, to reduce flakiness.
+  - All flows use robust upload handling (`input[type='file']` / Playwright file chooser / Quick Files album selection) and a hardened Confirm click (prefers `//div[@class='chat-scripts-button enabled']` with fallbacks).
+  - Script creation and update success toasts (`"Script created successfully"`, `"Script updated successfully"`) are treated as **hard assertions** in the POM: missing toasts cause the test to fail, ensuring scripts are really created/updated.
+  - Quick Files based tests expect Quick Files albums to exist. Run `CreatorQuickFilesTest` first to create `videoalbum_*`, `imagealbum_*`, `mixalbum_*`, and `audioalbum_*` albums.
 - Run example:
   ```bash
+  mvn -Dtest=CreatorQuickFilesTest test
   mvn -Dtest=CreatorScriptsTest test
   ```
 
