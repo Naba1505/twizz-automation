@@ -4,6 +4,8 @@ import com.microsoft.playwright.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 public class BrowserFactory {
     private static final Logger logger = LoggerFactory.getLogger(BrowserFactory.class);
     // Thread-local Playwright, Browser, Context, and Page for full isolation
@@ -66,7 +68,9 @@ public class BrowserFactory {
                     .setViewportSize(
                             Integer.parseInt(ConfigReader.getProperty("viewport.width", "1280")),
                             Integer.parseInt(ConfigReader.getProperty("viewport.height", "720"))
-                    );
+                    )
+                    // Grant microphone permission so Chrome does not show an OS-level allow popup
+                    .setPermissions(Arrays.asList("microphone"));
             ctx = browser.newContext(options);
             tlContext.set(ctx);
             logger.info("New browser context created for thread {} (incognito: {})", Thread.currentThread().getName(), ConfigReader.isIncognito());

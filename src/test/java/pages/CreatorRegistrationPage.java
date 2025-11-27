@@ -46,8 +46,6 @@ public class CreatorRegistrationPage {
     // Fifth Page Locators
     private final String fifthPageHeader = "Identity verification";
     private final String firstImageUploadButton = "role=img[name='document'] >> nth=0";
-    private final String firstFileInput = ".ant-upload input[type='file'] >> nth=0";
-    private final String secondFileInput = ".ant-upload input[type='file'] >> nth=1";
     private final String finishButton = "role=button[name='FINISH']";
     // Final Confirmation
     private final String finalConfirmationText = "Thank you for your interest!";
@@ -542,73 +540,30 @@ public class CreatorRegistrationPage {
     public void uploadDocuments(String identityFilePath, String selfieFilePath) {
         // Ensure fifth page is fully loaded
         isFifthPageVisible();
-        page.waitForTimeout(5000); // Wait for UI stabilization
+        page.waitForTimeout(2000); // brief stabilization
 
-        // Click first document image
-        Locator firstButton = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("document")).first();
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                firstButton.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(30000));
-                firstButton.click(new Locator.ClickOptions().setForce(true).setTimeout(10000));
-                logger.info("Clicked first document image (attempt {})", attempt);
-                break;
-            } catch (Exception e) {
-                logger.warn("Failed to click first document image (attempt {}): {}", attempt, e.getMessage());
-                if (attempt == 3) {
-                    logger.info("Falling back to JavaScript click for first document image");
-                    page.evaluate("() => { const img = document.querySelector('[role=\"img\"][name=\"document\"]'); if (img) img.click(); }");
-                    logger.info("Clicked first document image using JavaScript");
-                }
-                page.waitForTimeout(2000);
-            }
+        // Drive the underlying Ant Upload file inputs directly to avoid native OS dialogs.
+        Locator inputs = page.locator(".ant-upload input[type='file']");
+
+        long deadline = System.currentTimeMillis() + 5_000L;
+        while (inputs.count() < 2 && System.currentTimeMillis() < deadline) {
+            try { page.waitForTimeout(200); } catch (Throwable ignored) { }
         }
 
-        // Upload first image
-        try {
-            Locator fileInputLocator = page.locator(firstFileInput);
-            fileInputLocator.setInputFiles(Paths.get(identityFilePath));
-            logger.info("Uploaded identity document: {}", identityFilePath);
-        } catch (Exception e) {
-            logger.warn("File input failed for identity document: {}", e.getMessage());
-            page.evaluate(
-                    "([selector, path]) => { const input = document.querySelector(selector); input.value = ''; const file = new File([path], path.split('/').pop(), { type: 'image/png' }); const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; input.dispatchEvent(new Event('change', { bubbles: true })); }",
-                    new String[]{firstFileInput, identityFilePath}
-            );
-            logger.info("Uploaded identity document via JavaScript: {}", identityFilePath);
+        int count = inputs.count();
+        if (count < 2) {
+            throw new RuntimeException("Expected two Ant Upload file inputs for identity/selfie, but found " + count);
         }
 
-        // Click second document image
-        Locator secondButton = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("document")).nth(1);
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try {
-                secondButton.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(30000));
-                secondButton.click(new Locator.ClickOptions().setForce(true).setTimeout(10000));
-                logger.info("Clicked second document image (attempt {})", attempt);
-                break;
-            } catch (Exception e) {
-                logger.warn("Failed to click second document image (attempt {}): {}", attempt, e.getMessage());
-                if (attempt == 3) {
-                    logger.info("Falling back to JavaScript click for second document image");
-                    page.evaluate("() => { const img = document.querySelectorAll('[role=\"img\"][name=\"document\"]')[1]; if (img) img.click(); }");
-                    logger.info("Clicked second document image using JavaScript");
-                }
-                page.waitForTimeout(2000);
-            }
-        }
+        // Upload identity document via first input
+        Locator firstInput = inputs.nth(0);
+        firstInput.setInputFiles(Paths.get(identityFilePath));
+        logger.info("Uploaded identity document via input[type=file]: {}", identityFilePath);
 
-        // Upload second image
-        try {
-            Locator fileInputLocator = page.locator(secondFileInput);
-            fileInputLocator.setInputFiles(Paths.get(selfieFilePath));
-            logger.info("Uploaded selfie document: {}", selfieFilePath);
-        } catch (Exception e) {
-            logger.warn("File input failed for selfie document: {}", e.getMessage());
-            page.evaluate(
-                    "([selector, path]) => { const input = document.querySelector(selector); input.value = ''; const file = new File([path], path.split('/').pop(), { type: 'image/jpeg' }); const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; input.dispatchEvent(new Event('change', { bubbles: true })); }",
-                    new String[]{secondFileInput, selfieFilePath}
-            );
-            logger.info("Uploaded selfie document via JavaScript: {}", selfieFilePath);
-        }
+        // Upload selfie document via second input
+        Locator secondInput = inputs.nth(1);
+        secondInput.setInputFiles(Paths.get(selfieFilePath));
+        logger.info("Uploaded selfie document via input[type=file]: {}", selfieFilePath);
     }
 
     public void submitFifthPage() {

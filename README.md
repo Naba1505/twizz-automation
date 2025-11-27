@@ -312,8 +312,8 @@ Key entries (with defaults):
     - Images only: prefix `imagealbum_`
     - Mixed media: prefix `mixalbum_`
 - Upload strategy:
-  - Prefer sequential per-file uploads via the PLUS button with tab switching to the appropriate media tab.
-  - If PLUS is not a native input (e.g., Ant Upload wrapper), fallback to `input[type=file]` and set files (batch or sequential by `multiple`).
+  - Uses Playwright's `input[type="file"].setInputFiles(...)` for all media uploads (videos, images, audio, recordings) to avoid native OS file chooser dialogs.
+  - Prefer sequential per-file uploads via the PLUS button with tab switching to the appropriate media tab; when PLUS is a wrapper (e.g., Ant Upload), the code locates the underlying `input[type='file']` instead of clicking the button that would open a native dialog.
 - Timing constants used (see `pages/CreatorSettingsPage.java`):
   - `SHORT_PAUSE_MS = 300`
   - `SEQUENTIAL_PAUSE_MS = 500`
@@ -338,6 +338,8 @@ Key entries (with defaults):
  - Notes:
    - The test asserts only the success toast "Collection is created successfully" and dismisses it.
    - Interactions prefer mouse hover and clicks to mimic real user behavior.
+   - Device-based media uploads for collections (image/video from "My Device") also drive `input[type='file']` directly and dismiss the Importation bottom sheet via its Cancel button to avoid native OS file choosers and overlay blocking.
+   - Creator Quick Files, Creator Collections, and Creator Registration use no-native-dialog uploads via `input[type='file'].setInputFiles`, and microphone permission is granted in `BrowserFactory` to avoid Chrome popups.
 
 ## Media Push (Creator)
 - __Page object__: `pages/CreatorMediaPushPage`

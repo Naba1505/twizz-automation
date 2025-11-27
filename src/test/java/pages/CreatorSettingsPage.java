@@ -525,33 +525,27 @@ public class CreatorSettingsPage extends BasePage {
         return null;
     }
 
-    // Always upload sequentially via PLUS within a specific tab/section; returns true if all succeeded
+    // Always upload sequentially within a specific tab/section using input[type=file] directly; returns true if all succeeded
     private boolean uploadSequentialViaPlus(String tabName, List<Path> files) {
         if (files == null || files.isEmpty()) return true;
         clickTabIfPresent(tabName);
         for (int i = 0; i < files.size(); i++) {
             Path f = files.get(i);
             try {
-                Locator plus = getPlusButton();
-                if (plus == null) {
-                    log.info("PLUS button not available for tab '{}' ; aborting sequential PLUS path", tabName);
-                    return false;
-                }
-                // Click plus to reveal the hidden input, then set files on the actual input element
-                clickWithRetry(plus, 1, 150);
                 log.info("[PLUS] Sequential ({}/{}) : {} in tab '{}'", i + 1, files.size(), f.getFileName(), tabName);
-                Locator input = page.locator("input[type=file]");
-                // Prefer the last input as many UIs inject a new input per click
-                if (input.count() == 0) {
-                    // Try to reveal again explicitly and re-scan
-                    revealUploadTrigger();
-                    input = page.locator("input[type=file]");
+
+                // Prefer Ant Upload inputs within the media area to avoid clicking buttons that trigger native dialogs
+                Locator inputs = page.locator(".ant-upload input[type='file']");
+                if (inputs.count() == 0) {
+                    inputs = page.locator("input[type='file']");
                 }
-                if (input.count() == 0) {
-                    log.warn("[PLUS] No file input found after plus click for '{}'", f.getFileName());
+                if (inputs.count() == 0) {
+                    log.warn("[PLUS] No file input found for '{}' in tab '{}'", f.getFileName(), tabName);
                     return false;
                 }
-                Locator targetInput = input.nth(input.count() - 1);
+
+                // Use the last input as many UIs append new upload controls at the end
+                Locator targetInput = inputs.nth(inputs.count() - 1);
                 targetInput.setInputFiles(new Path[]{f});
                 try { page.waitForTimeout(SHORT_PAUSE_MS); } catch (Exception ignored) {}
             } catch (RuntimeException ex) {
@@ -783,20 +777,19 @@ public class CreatorSettingsPage extends BasePage {
         Locator importMsg = page.getByText("Import or record an audio by");
         waitVisible(importMsg.first(), DEFAULT_WAIT);
 
-        Locator importAudioBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Import an audio file"));
-        waitVisible(importAudioBtn.first(), DEFAULT_WAIT);
-        clickWithRetry(importAudioBtn.first(), 1, 200);
-
-        // After clicking import, find the underlying input[type=file] and upload the audio file
-        Locator inputs = page.locator("input[type=file]");
+        // Prefer driving the underlying Ant Upload input[type=file] directly to avoid native OS dialogs.
+        // Scope to the audio import section first (if possible), then fall back to any .ant-upload input.
+        Locator section = page.locator("div").filter(new Locator.FilterOptions().setHasText("Import or record an audio by"));
+        Locator inputs = section.locator(".ant-upload input[type='file']");
         if (inputs.count() == 0) {
-            // Try to reveal again via plus/import button once more
-            log.warn("No file input found immediately after clicking 'Import an audio file'; retrying once");
-            clickWithRetry(importAudioBtn.first(), 1, 200);
-            inputs = page.locator("input[type=file]");
+            inputs = page.locator(".ant-upload input[type='file']");
         }
         if (inputs.count() == 0) {
-            throw new IllegalStateException("No file input available for audio upload after 'Import an audio file'");
+            // Last resort: any file input on the page
+            inputs = page.locator("input[type='file']");
+        }
+        if (inputs.count() == 0) {
+            throw new IllegalStateException("No file input available for audio upload in Quick Files audio album");
         }
         Locator audioInput = inputs.nth(inputs.count() - 1);
         audioInput.setInputFiles(audioFile);

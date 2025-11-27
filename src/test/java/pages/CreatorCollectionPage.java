@@ -1,6 +1,5 @@
 package pages;
 
-import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -24,7 +23,6 @@ public class CreatorCollectionPage extends BasePage {
     private static final String TITLE_PLACEHOLDER = "Title";
     private static final String CREATE_BTN = "Create";
     private static final String IMPORTATION = "Importation";
-    private static final String MY_DEVICE_BTN = "My Device";
     private static final String ADD_MEDIA_TITLE = "Add media";
     private static final String DESC_PLACEHOLDER = "Your message....";
     private static final String VALIDATE_COLLECTION_BTN = "Validate the collection";
@@ -986,13 +984,21 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Open Add Media dialog")
     public void clickAddMediaPlus() {
-        Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plus.first(), 10000);
-        Locator svg = plus.locator("svg");
-        if (svg.count() > 0 && svg.first().isVisible()) {
-            clickWithRetry(svg.first(), 2, 200);
+        // Preferred: codegen locator IMG[name='add'] used for Add Media
+        Locator addImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("add"));
+        if (addImg.count() > 0) {
+            waitVisible(addImg.first(), 10000);
+            clickWithRetry(addImg.first(), 2, 200);
         } else {
-            clickWithRetry(plus.first(), 2, 200);
+            // Fallback: legacy plus icon behavior
+            Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+            waitVisible(plus.first(), 10000);
+            Locator svg = plus.locator("svg");
+            if (svg.count() > 0 && svg.first().isVisible()) {
+                clickWithRetry(svg.first(), 2, 200);
+            } else {
+                clickWithRetry(plus.first(), 2, 200);
+            }
         }
         // Ensure Importation is displayed
         waitVisible(page.getByText(IMPORTATION).first(), 10000);
@@ -1196,9 +1202,11 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Choose 'My Device' in Importation dialog")
     public void chooseMyDevice() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(MY_DEVICE_BTN));
-        waitVisible(btn.first(), 10000);
-        clickWithRetry(btn.first(), 2, 200);
+        // To avoid native OS dialogs, do not click the actual 'My Device' button here.
+        // Instead, just ensure the Importation/Add media section is visible; the
+        // underlying input[type='file'] will be driven directly by uploadMediaFromDevice.
+        Locator importTitle = page.getByText(IMPORTATION);
+        waitVisible(importTitle.first(), 10000);
     }
 
     @Step("Upload media from device: {file}")
@@ -1206,25 +1214,31 @@ public class CreatorCollectionPage extends BasePage {
         if (file == null || !Files.exists(file)) {
             throw new RuntimeException("Media file not found: " + file);
         }
-        // Try direct input[type=file]
-        Locator input = page.locator("input[type='file']");
-        if (input.count() > 0) {
-            input.first().setInputFiles(file);
-            return;
+        // Prefer Ant Upload file inputs inside the Add media dialog to avoid native OS dialogs.
+        Locator inputs = page.locator(".ant-upload input[type='file']");
+        if (inputs.count() == 0) {
+            // Fallback: any visible file input on the page
+            inputs = page.locator("input[type='file']");
         }
-        // Otherwise rely on FileChooser triggered by 'My Device'
+        if (inputs.count() == 0) {
+            throw new RuntimeException("No file input available on Add media screen to upload: " + file.getFileName());
+        }
+        // Use the last input as many UIs append new upload controls at the end
+        Locator target = inputs.nth(inputs.count() - 1);
+        target.setInputFiles(file);
+
+        // If the Importation bottom sheet is still visible, dismiss it so it doesn't block
+        // subsequent clicks (e.g., on the Next button). This avoids clicking 'My Device'
+        // directly, which would trigger a native file chooser.
         try {
-            FileChooser chooser = page.waitForFileChooser(this::chooseMyDevice);
-            chooser.setFiles(file);
-        } catch (Exception e) {
-            // Last attempt: global setInputFiles on any visible file input that may appear late
-            Locator any = page.locator("input[type='file']");
-            if (any.count() > 0) {
-                any.first().setInputFiles(file);
-            } else {
-                throw new RuntimeException("Failed to upload media via file chooser: " + e.getMessage());
+            Locator bottomSheet = page.locator(".bottom-modal-overlay");
+            if (bottomSheet.count() > 0 && bottomSheet.first().isVisible()) {
+                Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                if (cancel.count() > 0) {
+                    clickWithRetry(cancel.first(), 1, 150);
+                }
             }
-        }
+        } catch (Exception ignored) {}
     }
 
     // (Quick Files iteration/assert helper removed)
