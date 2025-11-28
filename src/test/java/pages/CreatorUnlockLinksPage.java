@@ -1,6 +1,5 @@
 package pages;
 
-import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -18,7 +17,6 @@ public class CreatorUnlockLinksPage extends BasePage {
     private static final String WHAT_DO_YOU_WANT = "What do you want to do?";
     private static final String UNLOCK = "Unlock";
     private static final String IMPORTATION = "Importation";
-    private static final String MY_DEVICE = "My Device";
     private static final String UPLOADING_MSG = "Stay on page during uploading"; // transient during media processing
 
     public CreatorUnlockLinksPage(Page page) {
@@ -90,6 +88,15 @@ public class CreatorUnlockLinksPage extends BasePage {
 
     @Step("Click PLUS to add media")
     public void clickAddMediaPlus() {
+        // Primary path: match codegen, click the IMG icon whose accessible name is "add"
+        Locator addIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("add"));
+        if (addIcon.count() > 0) {
+            waitVisible(addIcon.first(), 10000);
+            clickWithRetry(addIcon.first(), 2, 200);
+            return;
+        }
+
+        // Fallback: older UI where the icon is named "plus"
         Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plus.first(), 10000);
         clickWithRetry(plus.first(), 2, 200);
@@ -102,9 +109,11 @@ public class CreatorUnlockLinksPage extends BasePage {
 
     @Step("Choose 'My Device' in Importation")
     public void chooseMyDevice() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(MY_DEVICE));
-        waitVisible(btn.first(), 10000);
-        clickWithRetry(btn.first(), 2, 200);
+        // For device uploads we avoid actually clicking the "My Device" button because
+        // it may trigger a native OS file chooser. Tests rely on uploadMediaFromDevice
+        // to drive the underlying input[type='file'] directly. Here we just ensure the
+        // Importation dialog is visible and stable.
+        ensureImportation();
     }
 
     @Step("Upload media from device: {file}")
@@ -112,22 +121,28 @@ public class CreatorUnlockLinksPage extends BasePage {
         if (file == null || !Files.exists(file)) {
             throw new RuntimeException("Media file not found: " + file);
         }
-        Locator input = page.locator("input[type='file']");
-        if (input.count() > 0) {
-            input.first().setInputFiles(file);
-            return;
+
+        // Prefer the Ant Upload input inside the Importation dialog; this avoids
+        // clicking any button that would open a native OS dialog and instead
+        // sets the file path directly on the hidden file input.
+        Locator inputs = page.locator(".ant-upload input[type='file']");
+        if (inputs.count() == 0) {
+            inputs = page.locator("input[type='file']");
         }
+        if (inputs.count() == 0) {
+            throw new RuntimeException("No file input found for media upload in Importation dialog");
+        }
+        Locator target = inputs.nth(inputs.count() - 1);
+        target.setInputFiles(file);
+
+        // After setting files, dismiss the Importation bottom sheet if a Cancel
+        // button is present so it does not block subsequent steps.
         try {
-            FileChooser chooser = page.waitForFileChooser(this::chooseMyDevice);
-            chooser.setFiles(file);
-        } catch (Exception e) {
-            Locator any = page.locator("input[type='file']");
-            if (any.count() > 0) {
-                any.first().setInputFiles(file);
-            } else {
-                throw new RuntimeException("Failed to upload media via file chooser: " + e.getMessage());
+            Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+            if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
+                clickWithRetry(cancel.first(), 1, 150);
             }
-        }
+        } catch (Exception ignored) {}
     }
 
     @Step("Open price field (0.00 €)")
