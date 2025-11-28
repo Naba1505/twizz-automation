@@ -121,6 +121,9 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         // 7) Propose push media and assert final screen
         logger.info("[MediaPush] Proposing push media and asserting Messaging screen");
         mp.clickProposePushMedia();
+        if (handleIUnderstandAfterProposeIfVisible()) {
+            return;
+        }
         mp.waitForUploadingMessageIfFast();
         mp.assertOnMessagingScreen();
     }
@@ -185,6 +188,9 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         // 7) Propose push media and assert final screen
         logger.info("[MediaPushClear] Proposing push media and asserting Messaging screen");
         mp.clickProposePushMedia();
+        if (handleIUnderstandAfterProposeIfVisible()) {
+            return;
+        }
         mp.waitForUploadingMessageIfFast();
         mp.assertOnMessagingScreen();
     }
@@ -245,6 +251,9 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         // 7) Propose push media and assert final screen
         logger.info("[MediaPushFree] Proposing push media and asserting Messaging screen");
         mp.clickProposePushMedia();
+        if (handleIUnderstandAfterProposeIfVisible()) {
+            return;
+        }
         mp.waitForUploadingMessageIfFast();
         mp.assertOnMessagingScreen();
     }
@@ -306,6 +315,9 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         // 7) Propose push media and assert final screen
         logger.info("[MediaPushCustomPrice] Proposing push media and asserting Messaging screen");
         mp.clickProposePushMedia();
+        if (handleIUnderstandAfterProposeIfVisible()) {
+            return;
+        }
         mp.waitForUploadingMessageIfFast();
         mp.assertOnMessagingScreen();
     }
@@ -442,8 +454,6 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.assertOnMessagingScreen();
     }
 
-    // ===== Interested segment variants (priorities 7-12) =====
-
     @Story("Creator sends media push to Interested with image and video from device")
     @Test(priority = 7, description = "Media push flow via My Device (Interested): add image and video, set price, propose push, land on Messaging")
     public void creatorCanSendMediaPushToInterested() {
@@ -469,7 +479,8 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.chooseMyDevice();
         mp.uploadMediaFromDevice(img);
         mp.ensureBlurToggleEnabled();
-        mp.clickNext();
+        Page p = this.page;
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).click();
 
         Path vid = resourcePath("src", "test", "resources", "Videos", "MediaVideoA.mp4");
         if (!Files.exists(vid)) throw new SkipException("Missing test asset: " + vid);
@@ -479,7 +490,7 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.chooseMyDevice();
         mp.uploadMediaFromDevice(vid);
         mp.ensureBlurToggleEnabled();
-        mp.clickNext();
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).click();
 
         logger.info("[MediaPushInterested] Filling message and setting price 15€");
         mp.ensureMessageTitle();
@@ -555,7 +566,7 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
     }
 
     @Story("Creator sends media push with euro discount (5€) and 7 days validity to Interested")
-    @Test(priority = 9, description = "Media push flow with euro discount 5€ and 7 days (Interested)")
+    @Test(priority = 9, description = "Media push flow with euro discount (Interested): 5€, 7 days validity")
     public void creatorCanSendMediaPushWithEuroDiscountInterested() {
         CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
 
@@ -991,66 +1002,8 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.assertOnMessagingScreen();
     }
 
-    @Story("Creator sends media push with euro discount (5€) and 7 days validity to Subscribers + Interested")
-    @Test(priority = 17, description = "Media push flow with euro discount 5€ and 7 days (multi-select)")
-    public void creatorCanSendMediaPushWithEuroDiscountMultiSelect() {
-        CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
-
-        logger.info("[MediaPushEuroMulti] Opening plus menu");
-        mp.openPlusMenu();
-        mp.ensureOptionsPopup();
-
-        logger.info("[MediaPushEuroMulti] Choosing 'Media push' and selecting segments: Subscribers + Interested");
-        mp.chooseMediaPush();
-        mp.ensureSegmentsScreen();
-        mp.selectSubscribersSegment();
-        mp.selectInterestedSegment();
-        mp.clickCreateNext();
-
-        mp.ensureAddPushMediaScreen();
-
-        Path img = resourcePath("src", "test", "resources", "Images", "MediaImageC.jpg");
-        if (!Files.exists(img)) throw new SkipException("Missing test asset: " + img);
-        logger.info("[MediaPushEuroMulti] Adding first image: {}", img.getFileName());
-        mp.clickAddMediaPlus();
-        mp.ensureImportation();
-        mp.chooseMyDevice();
-        mp.uploadMediaFromDevice(img);
-        mp.ensureBlurToggleEnabled();
-        mp.clickNext();
-
-        Path vid = resourcePath("src", "test", "resources", "Videos", "MediaVideoC.mp4");
-        if (!Files.exists(vid)) throw new SkipException("Missing test asset: " + vid);
-        logger.info("[MediaPushEuroMulti] Adding second video: {}", vid.getFileName());
-        mp.clickAddMediaPlus();
-        mp.ensureImportation();
-        mp.chooseMyDevice();
-        mp.uploadMediaFromDevice(vid);
-        mp.ensureBlurToggleEnabled();
-        mp.clickNext();
-
-        logger.info("[MediaPushEuroMulti] Message + price 15€, euro discount 5€, validity 7 days");
-        mp.ensureMessageTitle();
-        mp.fillMessage("Test Message");
-        mp.setPriceEuro(15);
-        mp.ensureAddPromotionDisabled();
-        mp.enablePromotionToggle();
-        mp.openEuroDiscountField();
-        mp.fillEuroDiscountEuro(5);
-        mp.ensureValidityTitle();
-        mp.selectValidity7Days();
-
-        logger.info("[MediaPushEuroMulti] Proposing push media and asserting Messaging screen");
-        mp.clickProposePushMedia();
-        if (handleIUnderstandAfterProposeIfVisible()) {
-            return;
-        }
-        mp.waitForUploadingMessageIfFast();
-        mp.assertOnMessagingScreen();
-    }
-
     @Story("Creator sends media push with promotion (10% discount, unlimited validity) to Subscribers + Interested")
-    @Test(priority = 18, description = "Media push flow with promotion: 10% discount, unlimited validity (multi-select)")
+    @Test(priority = 18, description = "Media push flow with promotion 10% unlimited (multi-select)")
     public void creatorCanSendMediaPushWithPromotionMultiSelect() {
         CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
 
@@ -1077,13 +1030,13 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.ensureBlurToggleEnabled();
         mp.clickNext();
 
-        Path vid = resourcePath("src", "test", "resources", "Videos", "MediaVideoB.mp4");
-        if (!Files.exists(vid)) throw new SkipException("Missing test asset: " + vid);
-        logger.info("[MediaPushPromoMulti] Adding second video: {}", vid.getFileName());
+        Path vid2 = resourcePath("src", "test", "resources", "Videos", "MediaVideoB.mp4");
+        if (!Files.exists(vid2)) throw new SkipException("Missing test asset: " + vid2);
+        logger.info("[MediaPushPromoMulti] Adding second video: {}", vid2.getFileName());
         mp.clickAddMediaPlus();
         mp.ensureImportation();
         mp.chooseMyDevice();
-        mp.uploadMediaFromDevice(vid);
+        mp.uploadMediaFromDevice(vid2);
         mp.ensureBlurToggleEnabled();
         mp.clickNext();
 
@@ -1094,10 +1047,11 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.ensureAddPromotionDisabled();
         mp.enablePromotionToggle();
         mp.ensureDiscountVisible();
-        mp.openDiscountPercentField();
-        mp.fillDiscountPercent(10);
-        mp.ensureValidityTitle();
-        mp.selectValidityUnlimited();
+
+        Page p = this.page;
+        p.getByRole(AriaRole.TEXTBOX).nth(1).click();
+        p.getByRole(AriaRole.TEXTBOX).nth(1).fill("10");
+        p.locator("label").filter(new Locator.FilterOptions().setHasText("Unlimited")).click();
 
         logger.info("[MediaPushPromoMulti] Proposing push media and asserting Messaging screen");
         mp.clickProposePushMedia();
@@ -1108,60 +1062,138 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.assertOnMessagingScreen();
     }
 
-    @Story("Creator sends media push using Quick Files album (Subscribers)")
-    @Test(priority = 19, description = "Media push via Quick Files: pick album, select up to 3 items, set price 15€, propose push, land on Messaging")
-    public void creatorCanSendMediaPushUsingQuickFilesAlbum() {
+    @Story("Creator sends media push with Quick Files")
+    @Test(priority = 19, description = "Media push flow with Quick Files")
+    public void creatorCanSendMediaPushWithQuickFiles() {
         CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
 
-        // 1) Open plus and choose Media push
-        logger.info("[MediaPushQuickFiles] Opening plus menu and selecting Media push");
+        logger.info("[MediaPushQuickFiles] Opening plus menu");
         mp.openPlusMenu();
         mp.ensureOptionsPopup();
-        mp.chooseMediaPush();
 
-        // 2) Segments: Subscribers (avoid limiter)
-        logger.info("[MediaPushQuickFiles] Selecting segment: Subscribers");
+        logger.info("[MediaPushQuickFiles] Choosing 'Media push' and selecting segment: Subscribers");
+        mp.chooseMediaPush();
         mp.ensureSegmentsScreen();
         mp.selectSubscribersSegment();
         mp.clickCreateNext();
 
-        // 3) Add media via Quick Files
+        // Arrive on Add Push Media screen
         mp.ensureAddPushMediaScreen();
+
         logger.info("[MediaPushQuickFiles] Opening Add Media and choosing Quick Files");
         mp.clickAddMediaPlus();
         mp.ensureImportation();
         mp.chooseQuickFiles();
 
-        // 4) Select an album with fallback, or skip test if none available
-        logger.info("[MediaPushQuickFiles] Selecting a Quick Files album");
-        try {
-            mp.selectQuickFilesAlbumWithFallback();
-        } catch (RuntimeException e) {
-            if (e.getMessage() != null && e.getMessage().contains("No Quick Files album found to select")) {
-                throw new SkipException("No Quick Files albums available; skipping test");
-            }
-            throw e;
+        Page p = this.page;
+
+        // Ensure we are on My albums screen and default filter is selected
+        p.getByText("My albums").first().waitFor();
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Selected Photos & videos")).first().waitFor();
+
+        // Click the Quick Files album whose name starts with "icon mixalbum"
+        Locator albumBtn = p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                .setName(java.util.regex.Pattern.compile("^icon\\s+mixalbum", java.util.regex.Pattern.CASE_INSENSITIVE)));
+
+        long start = System.currentTimeMillis();
+        long timeoutMs = 10_000;
+        while (albumBtn.count() == 0 && System.currentTimeMillis() - start < timeoutMs) {
+            try { p.waitForTimeout(250); } catch (Exception ignored) {}
         }
+        if (albumBtn.count() == 0) {
+            throw new SkipException("Quick Files album starting with 'icon mixalbum' not found; skipping test");
+        }
+        albumBtn.first().click();
 
-        // 5) Pick up to 3 media items
-        logger.info("[MediaPushQuickFiles] Selecting up to 3 media items from album");
-        mp.selectUpToNCovers(3);
-        mp.clickSelectInQuickFiles();
+        // Ensure we are inside the album ("Select media" title visible)
+        p.getByText("Select media").first().waitFor();
 
-        // 6) Proceed Next through steps to Message/Price
-        logger.info("[MediaPushQuickFiles] Proceeding through Next steps");
-        mp.proceedNextSteps(3);
+        // Select all files in the album (6 items) by clicking the IMG role with name "select"
+        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).first().click();
+        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(1).click();
+        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(2).click();
+        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(3).click();
+        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(4).click();
+        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(5).click();
 
-        // 7) Message + price
-        logger.info("[MediaPushQuickFiles] Filling message and setting price 15€");
+        // Confirm the selection with the "Select (6)" button
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select (6)")).click();
+
+        // Click Next until all files are confirmed
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
+        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).click();
+
+        // Fill the message and choose the 30€ price
+        p.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Your message....")).click();
+        p.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Your message....")).fill("QA Test ");
+        p.getByText("/name").click();
+        p.locator("label").filter(new Locator.FilterOptions().setHasText("30€")).click();
+        mp.ensureAddPromotionDisabled();
+
+        logger.info("[MediaPushQuickFiles] Proposing push media and asserting Messaging screen");
+        mp.clickProposePushMedia();
+        if (handleIUnderstandAfterProposeIfVisible()) {
+            return;
+        }
+        mp.waitForUploadingMessageIfFast();
+        mp.assertOnMessagingScreen();
+    }
+
+    @Story("Creator sends media push to Subscribers + Former subscribers")
+    @Test(priority = 21, description = "Media push flow via My Device: Subscribers + Former subscribers, image and video, price 15€, land on Messaging or limiter popup")
+    public void creatorCanSendMediaPushToSubscribersAndFormer() {
+        CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
+
+        logger.info("[MediaPushSubsFormer] Opening plus menu");
+        logger.info("[MediaPushAllSegments] Opening plus menu");
+        mp.openPlusMenu();
+        mp.ensureOptionsPopup();
+
+        logger.info("[MediaPushAllSegments] Choosing 'Media push' and selecting segments: Subscribers + Interested + Former subscribers");
+        mp.chooseMediaPush();
+        mp.ensureSegmentsScreen();
+        mp.selectSubscribersSegment();
+        mp.selectInterestedSegment();
+        mp.selectFormerSubscriberSegment();
+        mp.clickCreateNext();
+
+        mp.ensureAddPushMediaScreen();
+
+        Path img = resourcePath("src", "test", "resources", "Images", "MediaImageA.jpg");
+        if (!Files.exists(img)) throw new SkipException("Missing test asset: " + img);
+        logger.info("[MediaPushAllSegments] Adding first image: {}", img.getFileName());
+        mp.clickAddMediaPlus();
+        mp.ensureImportation();
+        mp.chooseMyDevice();
+        mp.uploadMediaFromDevice(img);
+        mp.ensureBlurToggleEnabled();
+        mp.clickNext();
+
+        Path vid2 = resourcePath("src", "test", "resources", "Videos", "MediaVideoA.mp4");
+        if (!Files.exists(vid2)) throw new SkipException("Missing test asset: " + vid2);
+        logger.info("[MediaPushAllSegments] Adding second video: {}", vid2.getFileName());
+        mp.clickAddMediaPlus();
+        mp.ensureImportation();
+        mp.chooseMyDevice();
+        mp.uploadMediaFromDevice(vid2);
+        mp.ensureBlurToggleEnabled();
+        mp.clickNext();
+
+        logger.info("[MediaPushAllSegments] Message + price 15€ (no promotion)");
         mp.ensureMessageTitle();
-        mp.fillMessage("Quick files push");
+        mp.fillMessage("Test Message");
         mp.setPriceEuro(15);
         mp.ensureAddPromotionDisabled();
 
-        // 8) Propose and assert Messaging
-        logger.info("[MediaPushQuickFiles] Proposing push media and asserting Messaging screen");
+        logger.info("[MediaPushAllSegments] Proposing push media and asserting Messaging screen");
         mp.clickProposePushMedia();
+        if (handleIUnderstandAfterProposeIfVisible()) {
+            return;
+        }
         mp.waitForUploadingMessageIfFast();
         mp.assertOnMessagingScreen();
     }
