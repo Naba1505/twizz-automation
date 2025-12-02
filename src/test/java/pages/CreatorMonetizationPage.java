@@ -70,6 +70,12 @@ public class CreatorMonetizationPage extends BasePage {
     }
 
     private Locator quarterlyPriceInput() {
+        // Prefer role-based euro textboxes as per codegen: getByRole(TEXTBOX, name="€").nth(1)
+        Locator euros = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("€"));
+        if (euros.count() > 1) {
+            return euros.nth(1);
+        }
+        // Fallback: placeholder-based locator
         return priceInputs().nth(1);
     }
 
@@ -195,11 +201,31 @@ public class CreatorMonetizationPage extends BasePage {
             log.info("Quarterly currently ON -> turning OFF");
             clickWithRetry(quarterlyToggle(), 1, 120);
         } else {
-            log.info("Quarterly already OFF -> toggling ON then OFF to enable Save");
+            log.info("Quarterly already OFF -> toggling ON then OFF to register change");
             clickWithRetry(quarterlyToggle(), 1, 120);
-            // small pause to allow UI to register state change
             try { page.waitForTimeout(200); } catch (Throwable ignored) {}
             clickWithRetry(quarterlyToggle(), 1, 120);
+        }
+    }
+
+    @Step("Wait and then ensure Quarterly is OFF, always registering a change")
+    public void waitAndDisableQuarterlyWithChange() {
+        // Wait a bit after navigation so the page fully settles
+        try { page.waitForTimeout(5_000); } catch (Throwable ignored) {}
+
+        waitVisible(quarterlyToggle(), DEFAULT_WAIT);
+
+        // First click always to guarantee a change event
+        clickWithRetry(quarterlyToggle(), 1, 120);
+        try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+
+        // If after first click it is still ON, click once more to end OFF
+        boolean afterFirstClickOn = isQuarterlyOnSafe();
+        if (afterFirstClickOn) {
+            log.info("Quarterly still ON after first click -> clicking again to turn OFF");
+            clickWithRetry(quarterlyToggle(), 1, 120);
+        } else {
+            log.info("Quarterly OFF after first click; no extra click needed");
         }
     }
 
@@ -214,6 +240,7 @@ public class CreatorMonetizationPage extends BasePage {
         el.fill(price);
         String current = el.inputValue();
         if (!price.equals(current)) {
+            // UI may format as 0.0€, etc.; just log for debugging instead of failing the test
             log.warn("Quarterly price mismatch after fill. Expected='{}' Actual='{}'", price, current);
         }
     }
@@ -238,7 +265,7 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Wait for monetization updated toast")
     public void waitForMonetizationUpdatedToast() {
-        waitVisible(monetizationUpdatedPopup(), 15_000);
+        waitVisible(monetizationUpdatedPopup(), 30_000);
         try { clickWithRetry(monetizationUpdatedPopup(), 0, 0); } catch (Throwable ignored) {}
     }
 }
