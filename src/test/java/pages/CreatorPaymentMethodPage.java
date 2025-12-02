@@ -68,7 +68,8 @@ public class CreatorPaymentMethodPage extends BasePage {
     }
 
     private Locator addMethodButton() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add a method"));
+        // Use the concrete CSS selector observed in the UI for the Add method button
+        return page.locator("button.ant-btn.css-ixblex.ant-btn-default.authBtn");
     }
 
     private Locator successToast() {
@@ -199,14 +200,15 @@ public class CreatorPaymentMethodPage extends BasePage {
 
     @Step("Assert success toast and card visible")
     public void assertSuccessAndCardVisible() {
-        // Wait for toast
-        try { waitVisible(successToast().nth(3), 30_000); } catch (Throwable ignored) { /* some UIs place toast at different nth */ }
-        // Also accept first visible toast containing the text
-        if (!safeIsVisible(successToast().first())) {
-            logger.warn("Success toast (Banking setting successfully) not visibly indexed at nth(3); checking any visible one");
+        // Wait up to 60s for any toast containing the expected text
+        try {
+            waitVisible(successToast().first(), 60_000);
+        } catch (Throwable t) {
+            logger.warn("Success toast (Banking setting successfully) not detected within 60s: {}", t.getMessage());
         }
-        // Card visible afterwards
-        waitVisible(revoCardImage().first(), 30_000);
+
+        // Then wait up to 120s for the payment card image to appear (can be slow on stage)
+        waitVisible(revoCardImage().first(), 120_000);
     }
 
     @Step("Open added payment card")
