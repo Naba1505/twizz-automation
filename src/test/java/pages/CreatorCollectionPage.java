@@ -1153,6 +1153,27 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Select up to {n} media items (covers) from the Quick Files album")
     public void selectUpToNCovers(int n) {
+        int need = Math.max(1, n);
+
+        // Primary path: follow codegen by clicking IMG icons named "select"
+        Locator selectIcons = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select"));
+        int iconCount = selectIcons.count();
+        if (iconCount > 0) {
+            int picked = 0;
+            for (int i = 0; i < iconCount && picked < need; i++) {
+                Locator icon = selectIcons.nth(i);
+                try {
+                    waitVisible(icon, 10000);
+                    try { icon.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                    clickWithRetry(icon, 1, 120);
+                    try { page.waitForTimeout(150); } catch (Exception ignored) {}
+                    picked++;
+                } catch (Exception ignored) { }
+            }
+            return;
+        }
+
+        // Fallback: legacy behavior using thumbnail/cover divs
         Locator thumbs = page.locator(".select-quick-file-media-thumb");
         if (thumbs.count() == 0) {
             thumbs = page.locator(".cover");
@@ -1161,7 +1182,6 @@ public class CreatorCollectionPage extends BasePage {
             throw new RuntimeException("No media thumbnails found in Quick Files album");
         }
         waitVisible(thumbs.first(), 10000);
-        int need = Math.max(1, n);
         int total = thumbs.count();
         int picked = 0;
         for (int i = 0; i < total && picked < need; i++) {
@@ -1169,7 +1189,7 @@ public class CreatorCollectionPage extends BasePage {
             try {
                 try { thumb.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
                 clickWithRetry(thumb, 1, 120);
-                page.waitForTimeout(150);
+                try { page.waitForTimeout(150); } catch (Exception ignored) {}
                 picked++;
             } catch (Exception ignored) { }
         }
