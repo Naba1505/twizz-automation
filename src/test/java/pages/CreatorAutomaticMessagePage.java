@@ -96,10 +96,6 @@ public class CreatorAutomaticMessagePage extends BasePage {
         return page.locator(".addCircle");
     }
 
-    private Locator myDeviceButton() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
-    }
-
     private Locator nextButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
     }
@@ -151,6 +147,10 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     private Locator modalOrDrawerMasks() {
         return page.locator(".ant-modal-mask, .ant-drawer-mask");
+    }
+
+    private Locator importationCancelButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
     }
 
     private Locator deleteButtons() {
@@ -250,55 +250,43 @@ public class CreatorAutomaticMessagePage extends BasePage {
         waitVisible(plusImage(), DEFAULT_WAIT);
         clickWithRetry(plusImage(), 1, 150);
         waitVisible(importationTitle(), DEFAULT_WAIT);
-        waitVisible(myDeviceButton(), DEFAULT_WAIT);
-        clickWithRetry(myDeviceButton(), 1, 150);
-        // Set file on input
-        Path path = Paths.get(filePath);
-        Locator fileInput = page.locator("input[type='file']");
-        if (fileInput.count() == 0) {
-            throw new RuntimeException("File input not found after clicking My Device in plus flow");
-        }
-        Locator target = fileInput.nth(fileInput.count() - 1);
-        target.setInputFiles(path);
+        // Avoid native OS file dialog: directly set files on hidden inputs in Importation dialog
+        uploadMediaFromDevice(Paths.get(filePath));
     }
 
     @Step("Add media from My Device: {filePath}")
     public void addMediaFromMyDevice(String filePath) {
         waitVisible(addCircle(), DEFAULT_WAIT);
         clickWithRetry(addCircle(), 1, 150);
-        waitVisible(myDeviceButton(), DEFAULT_WAIT);
-        clickWithRetry(myDeviceButton(), 1, 150);
-        // Locate a real file input and set file
-        Path path = Paths.get(filePath);
-        Locator fileInput = page.locator("input[type='file']").first();
-        // Give it some time to attach
-        for (int i = 0; i < 20 && fileInput.count() == 0; i++) {
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        waitVisible(importationTitle(), DEFAULT_WAIT);
+        // Avoid native OS file dialog: directly set files on hidden inputs in Importation dialog
+        uploadMediaFromDevice(Paths.get(filePath));
+    }
+
+    @Step("Upload media from device: {file}")
+    private void uploadMediaFromDevice(Path file) {
+        if (file == null || !java.nio.file.Files.exists(file)) {
+            throw new RuntimeException("Media file not found: " + file);
         }
-        if (fileInput.count() == 0) {
-            // Try common alternative containers
-            fileInput = page.locator(".ant-upload input[type='file'], input[type='file'][accept]").first();
+
+        // Prefer ant-upload file inputs inside Importation dialog
+        Locator inputs = page.locator(".ant-upload input[type='file']");
+        if (inputs.count() == 0) {
+            inputs = page.locator("input[type='file']");
         }
-        // Final attempt, error if still not present
-        if (fileInput.count() == 0) {
-            throw new RuntimeException("File input element not found after selecting 'My Device'");
+        if (inputs.count() == 0) {
+            throw new RuntimeException("No file input found for media upload in Importation dialog");
         }
-        // Retry setting files a few times
-        Throwable lastErr = null;
-        for (int i = 0; i < 3; i++) {
-            try {
-                fileInput.setInputFiles(path);
-                lastErr = null;
-                break;
-            } catch (Throwable t) {
-                lastErr = t;
-                try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+        Locator target = inputs.nth(inputs.count() - 1);
+        target.setInputFiles(file);
+
+        // Optionally dismiss Importation sheet if a Cancel button is present
+        try {
+            Locator cancel = importationCancelButton();
+            if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
+                clickWithRetry(cancel.first(), 1, 150);
             }
-        }
-        if (lastErr != null) {
-            logger.error("File upload failed via input[type=file]: {}", lastErr.toString());
-            throw new RuntimeException(lastErr);
-        }
+        } catch (Exception ignored) {}
     }
 
     @Step("Click Next in auto message flow")
