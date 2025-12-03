@@ -31,17 +31,7 @@ public class BaseTestClass {
         page.setDefaultNavigationTimeout(60000);
         page.setDefaultTimeout(60000);
 
-        // Optionally start tracing early if enabled
-        try {
-            boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));
-            if (traceEnabled) {
-                page.context().tracing().start(new Tracing.StartOptions()
-                        .setScreenshots(true)
-                        .setSnapshots(true)
-                        .setSources(true));
-            }
-        } catch (Exception ignored) {
-        }
+        // Tracing is started in BrowserFactory.initialize() - no need to start again here
 
         String landingPageUrl = ConfigReader.getLandingPageUrl();
         // Robust navigation with waitUntil + extra load-state wait and a single retry

@@ -2,7 +2,6 @@ package pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import io.qameta.allure.Step;
@@ -277,12 +276,19 @@ public class CreatorMessagingPage extends BasePage {
             // Codegen-priority selectors
             page.locator(".addCircleGreen"),
             page.locator(".addCircle"),
+            // Role IMG/name "add" (used in other pages, may apply here too)
+            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("add")),
             // Role IMG/name plus (primary)
             page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus")),
             // Role BUTTON/name plus
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("plus")),
+            // Role BUTTON/name add
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("add")),
             // Button with aria-label
             page.locator("button[aria-label='plus']"),
+            page.locator("button[aria-label='add']"),
+            // img with alt="add"
+            page.locator("img[alt='add']"),
             // Any element with data-icon=plus, click its closest button
             page.locator("xpath=(//*[@data-icon='plus'])[1]/ancestor::button[1]"),
             // Any svg with aria-label plus, click its closest button
@@ -1459,12 +1465,6 @@ public class CreatorMessagingPage extends BasePage {
         return page.getByText("Media sent");
     }
 
-    private Locator myDeviceButton() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
-    }
-
-    
-
     private Locator acceptedImageBadge() {
         return page.locator("xpath=//img[@alt='accepted']");
     }
@@ -1622,9 +1622,9 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Choose 'My Device' to import files")
     public void chooseMyDeviceForMedia() {
-        logger.info("[Messaging] Choosing 'My Device' for media upload");
-        waitVisible(myDeviceButton(), DEFAULT_WAIT);
-        clickWithRetry(myDeviceButton(), 1, 200);
+        // This method is now a no-op; uploadMessageMedia handles file input directly
+        // to avoid triggering the OS file dialog.
+        logger.info("[Messaging] chooseMyDeviceForMedia called (file input will be set directly in uploadMessageMedia)");
     }
 
     @Step("Upload message media from device: {file}")
@@ -1632,27 +1632,27 @@ public class CreatorMessagingPage extends BasePage {
         if (file == null || !java.nio.file.Files.exists(file)) {
             throw new RuntimeException("Message media file not found: " + file);
         }
-        // Prefer direct input[type=file] if present
-        Locator input = page.locator("input[type='file']");
-        if (input.count() > 0) {
+        // Use setInputFiles directly on hidden file input to avoid OS dialog
+        // Prefer the Ant Upload input inside the Importation dialog
+        Locator inputs = page.locator(".ant-upload input[type='file']");
+        if (inputs.count() == 0) {
+            inputs = page.locator("input[type='file']");
+        }
+        if (inputs.count() > 0) {
             logger.info("[Messaging] Using input[type=file] to upload: {}", file.getFileName());
-            input.first().setInputFiles(file);
+            Locator target = inputs.nth(inputs.count() - 1);
+            target.setInputFiles(file);
+            // After setting files, dismiss the Importation bottom sheet if Cancel is visible
+            try {
+                Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
+                    clickWithRetry(cancel.first(), 1, 150);
+                }
+            } catch (Exception ignored) {}
             return;
         }
-        // Fallback to FileChooser triggered by My Device button
-        try {
-            logger.info("[Messaging] Waiting for FileChooser to select: {}", file.getFileName());
-            FileChooser chooser = page.waitForFileChooser(this::chooseMyDeviceForMedia);
-            chooser.setFiles(file);
-        } catch (Exception e) {
-            // Last resort: re-scan for any input[type=file]
-            Locator any = page.locator("input[type='file']");
-            if (any.count() > 0) {
-                any.first().setInputFiles(file);
-            } else {
-                throw new RuntimeException("Failed to upload message media via file chooser: " + e.getMessage());
-            }
-        }
+        // Fallback: if no file input found, throw error
+        throw new RuntimeException("No file input found for media upload in Importation dialog");
     }
 
     @Step("Assert that accepted badge for sent media is visible")

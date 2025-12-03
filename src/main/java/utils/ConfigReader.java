@@ -129,4 +129,41 @@ public class ConfigReader {
     public static Properties getProperties() {
         return properties;
     }
+
+    // ===== Centralized Timeout Constants =====
+
+    /**
+     * Default timeout for most operations (60 seconds)
+     */
+    public static int getDefaultTimeout() {
+        return Integer.parseInt(getProperty("timeout.default", "60000"));
+    }
+
+    /**
+     * Short timeout for quick checks (10 seconds)
+     */
+    public static int getShortTimeout() {
+        return Integer.parseInt(getProperty("timeout.short", "10000"));
+    }
+
+    /**
+     * Long timeout for slow operations like uploads (120 seconds)
+     */
+    public static int getLongTimeout() {
+        return Integer.parseInt(getProperty("timeout.long", "120000"));
+    }
+
+    /**
+     * Navigation timeout (60 seconds)
+     */
+    public static int getNavigationTimeout() {
+        return Integer.parseInt(getProperty("timeout.navigation", "60000"));
+    }
+
+    /**
+     * Element visibility wait timeout (20 seconds)
+     */
+    public static int getVisibilityTimeout() {
+        return Integer.parseInt(getProperty("timeout.visibility", "20000"));
+    }
 }
