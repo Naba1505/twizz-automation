@@ -62,7 +62,13 @@ public class FanHomePage extends BasePage {
         }
         if (likeBtn != null && likeBtn.count() > 0) {
             waitVisible(likeBtn.first(), DEFAULT_WAIT);
-            clickWithRetry(likeBtn.first(), 1, 150);
+            // Use force click to bypass video container overlay interception
+            try {
+                likeBtn.first().click(new Locator.ClickOptions().setForce(true));
+            } catch (Throwable e) {
+                logger.warn("Force click failed, retrying with standard click: {}", e.getMessage());
+                clickWithRetry(likeBtn.first(), 1, 150);
+            }
         }
     }
 
@@ -78,7 +84,13 @@ public class FanHomePage extends BasePage {
         }
         if (bookmark != null && bookmark.count() > 0) {
             waitVisible(bookmark.first(), DEFAULT_WAIT);
-            clickWithRetry(bookmark.first(), 1, 150);
+            // Use force click to bypass video container overlay interception
+            try {
+                bookmark.first().click(new Locator.ClickOptions().setForce(true));
+            } catch (Throwable e) {
+                logger.warn("Force click failed on bookmark, retrying with standard click: {}", e.getMessage());
+                clickWithRetry(bookmark.first(), 1, 150);
+            }
         }
     }
 

@@ -374,7 +374,7 @@ public class CreatorMessagingTest extends BaseTestClass {
 
         // Ensure we land back on the conversation screen
         msg.assertConversationInputVisible(60_000);
-    }   
+    }
 
     @Test(priority = 11, description = "Creator sends a Private media message using Quick Files (multi-select)")
     public void creatorCanSendPrivateMediaViaQuickFiles() {
@@ -399,7 +399,26 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.chooseQuickFilesForMedia();
         msg.selectMediaFromQuickFilesAlbum("icon mixalbum_251119_134546", 6);
         msg.waitForUploadSpinnerToDisappear(60_000);
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) {}
+
+        // Click Next 6 times (once per selected file) to advance through each media item
+        for (int i = 0; i < 6; i++) {
+            msg.clickNext();
+        }
+
+        // Fill message and set price to 15€
+        msg.assertPrivateMessagePlaceholder();
+        msg.fillPrivateMessage("Message ");
+        msg.clickMessageTemplate("/name");
+        msg.setPriceEuro(15);
+
+        // Propose private media and wait for success
+        msg.clickProposePrivateMedia();
+        msg.waitForUploadingBanner();
+        msg.waitForUploadingBannerToDisappear(60_000);
+        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+
+        // Ensure we land back on the conversation screen
+        msg.assertConversationInputVisible(60_000);
     }
 
 

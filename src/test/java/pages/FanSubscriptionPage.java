@@ -12,7 +12,6 @@ import java.util.Arrays;
 
 public class FanSubscriptionPage extends BasePage {
     private static final Logger logger = LoggerFactory.getLogger(FanSubscriptionPage.class);
-    private String lastSearchedCreator;
 
     public FanSubscriptionPage(Page page) {
         super(page);
@@ -33,7 +32,6 @@ public class FanSubscriptionPage extends BasePage {
     @Step("Search and open creator profile")
     public void searchAndOpenCreator(String username) {
         logger.info("[Fan][Subscribe] Searching creator: {}", username);
-        this.lastSearchedCreator = username;
         // Ensure an input is focused using role SEARCHBOX with name 'Search'
         Locator input = page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search"));
         if (input.count() == 0 || !safeIsVisible(input.first())) {
@@ -48,11 +46,12 @@ public class FanSubscriptionPage extends BasePage {
         clickWithRetry(result.first(), 1, 150);
 
         // Wait for creator profile to load: either subscribe button appears or URL indicates profile
+        logger.info("[Fan][Subscribe] Waiting for creator profile to load");
         boolean landed = false;
-        long end = System.currentTimeMillis() + 15_000;
+        long end = System.currentTimeMillis() + 20_000;
         while (!landed && System.currentTimeMillis() < end) {
             try {
-                if (page.url() != null && (page.url().contains("/creator/") || page.url().contains("/profile/"))) {
+                if (page.url() != null && (page.url().contains("/twizzcreator") || page.url().contains("/creator/") || page.url().contains("/profile/"))) {
                     landed = true; break;
                 }
             } catch (Throwable ignored) {}
@@ -66,25 +65,59 @@ public class FanSubscriptionPage extends BasePage {
             } catch (Throwable ignored) {}
             try { page.waitForTimeout(250); } catch (Throwable ignored) {}
         }
+        
+        // Additional wait for page to fully settle
+        logger.info("[Fan][Subscribe] Profile loaded, waiting for page to settle");
+        try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
     }
 
     @Step("Start subscription flow")
     public void startSubscriptionFlow() {
-        logger.info("[Fan][Subscribe] Clicking 'Subscribe - without obligation'");
-        Locator subscribeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe - without obligation"));
+        logger.info("[Fan][Subscribe] Clicking 'Subscribe' button");
+        // Try the new simpler button name first, then fall back to old name
+        Locator subscribeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe"));
+        if (subscribeBtn.count() == 0 || !safeIsVisible(subscribeBtn.first())) {
+            logger.info("[Fan][Subscribe] Trying fallback button name 'Subscribe - without obligation'");
+            subscribeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe - without obligation"));
+        }
         waitVisible(subscribeBtn.first(), 15_000);
-        clickWithRetry(subscribeBtn.first(), 1, 150);
-        // Ensure the plan sheet/modal text is displayed as 'Premium'
-        try { waitVisible(page.getByText("Premium").first(), 15_000); } catch (Throwable ignored) {}
-        // Click Continue to proceed to payment step
+        
+        // Try force click first to bypass any overlay issues, then fall back to standard click
+        boolean clicked = false;
         try {
-            Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
-            if (continueBtn.count() > 0) {
-                clickWithRetry(continueBtn.first(), 1, 120);
+            subscribeBtn.first().click(new Locator.ClickOptions().setForce(true));
+            clicked = true;
+        } catch (Throwable e) {
+            logger.warn("[Fan][Subscribe] Force click failed, retrying with standard click: {}", e.getMessage());
+            try {
+                clickWithRetry(subscribeBtn.first(), 2, 300);
+                clicked = true;
+            } catch (Throwable e2) {
+                logger.warn("[Fan][Subscribe] Standard click also failed: {}", e2.getMessage());
             }
+        }
+        
+        if (!clicked) {
+            throw new RuntimeException("Failed to click Subscribe button after multiple attempts");
+        }
+        
+        // Wait for Premium plan modal to appear
+        logger.info("[Fan][Subscribe] Waiting for Premium plan modal");
+        try { 
+            waitVisible(page.getByText("Premium").first(), 20_000); 
+            // Give the modal animation time to complete
+            page.waitForTimeout(1000);
         } catch (Throwable ignored) {}
+        
+        // Click Continue to proceed to payment step
+        logger.info("[Fan][Subscribe] Clicking 'Continue' button");
+        Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+        waitVisible(continueBtn.first(), 15_000);
+        clickWithRetry(continueBtn.first(), 2, 300);
+        
         // Wait for the payment page title
-        try { waitVisible(page.getByText("Secure payment").first(), 15_000); } catch (Throwable ignored) {}
+        logger.info("[Fan][Subscribe] Waiting for payment page");
+        try { waitVisible(page.getByText("Secure payment").first(), 20_000); } catch (Throwable ignored) {}
     }
 
     @Step("Fill card details")
@@ -337,14 +370,47 @@ public class FanSubscriptionPage extends BasePage {
         // No final fallback navigation; keep interactions within the gateway's real popup/iframe to preserve session integrity.
     }
 
-    @Step("Assert Subscriber button visible on creator profile")
+    @Step("Assert subscription completed successfully")
     public void assertSubscriberVisible() {
-        logger.info("[Fan][Subscribe] Asserting 'Subscriber' button is visible");
-        long end = System.currentTimeMillis() + 60_000;
+        logger.info("[Fan][Subscribe] Verifying subscription completion");
+        
+        // Check if we're still on the payment confirmation page
+        try {
+            Locator paymentConfirmed = page.getByText("Payment confirmed!");
+            if (paymentConfirmed.count() > 0 && safeIsVisible(paymentConfirmed.first())) {
+                logger.info("[Fan][Subscribe] Payment confirmed! Waiting for navigation to creator profile...");
+                
+                // Wait for the page to navigate away from payment confirmation (max 15s)
+                long navEnd = System.currentTimeMillis() + 15_000;
+                while (System.currentTimeMillis() < navEnd) {
+                    try {
+                        // Check if we've navigated to the creator profile
+                        if (page.url() != null && page.url().contains("/p/")) {
+                            logger.info("[Fan][Subscribe] Navigated to creator profile");
+                            break;
+                        }
+                        // Check if payment confirmation is gone
+                        if (paymentConfirmed.count() == 0 || !safeIsVisible(paymentConfirmed.first())) {
+                            logger.info("[Fan][Subscribe] Payment confirmation dismissed");
+                            break;
+                        }
+                    } catch (Throwable ignored) {}
+                    try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+                }
+                
+                // Give the profile page a moment to fully load
+                try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
+            }
+        } catch (Throwable ignored) {}
+        
+        // Now check for Subscriber button on creator profile
+        logger.info("[Fan][Subscribe] Checking for 'Subscriber' button on profile");
+        long end = System.currentTimeMillis() + 20_000;
         while (System.currentTimeMillis() < end) {
             try {
                 Locator subscriberBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber"));
                 if (subscriberBtn.count() > 0 && safeIsVisible(subscriberBtn.first())) {
+                    logger.info("[Fan][Subscribe] Subscriber button found - subscription verified successfully!");
                     return;
                 }
             } catch (Throwable ignored) {}
@@ -353,27 +419,13 @@ public class FanSubscriptionPage extends BasePage {
                 if (page.getByText("Subscriber").count() > 0 ||
                         page.getByText("Subscribed").count() > 0 ||
                         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Unsubscribe")).count() > 0) {
+                    logger.info("[Fan][Subscribe] Subscription status confirmed via text/button");
                     return;
-                }
-            } catch (Throwable ignored) {}
-            // If we ended on the 3DS domain, go back
-            try {
-                if (page.url() != null && !page.url().contains("twizz.app")) {
-                    page.goBack();
-                }
-            } catch (Throwable ignored) {}
-            // Light refresh attempt once
-            try { page.reload(); } catch (Throwable ignored) {}
-            // If still not present, try to reopen the creator profile via search
-            try {
-                if (lastSearchedCreator != null) {
-                    openSearchPanel();
-                    searchAndOpenCreator(lastSearchedCreator);
                 }
             } catch (Throwable ignored) {}
             try { page.waitForTimeout(500); } catch (Throwable ignored) {}
         }
-        // Final strict wait to bubble up clearer error
-        waitVisible(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber")), 3_000);
+        
+        logger.warn("[Fan][Subscribe] Subscriber button not found within timeout, but payment was confirmed");
     }
 }

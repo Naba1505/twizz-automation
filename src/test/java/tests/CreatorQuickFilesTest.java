@@ -1,5 +1,7 @@
 package tests;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 import pages.CreatorSettingsPage;
 import utils.ConfigReader;
@@ -9,13 +11,14 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class CreatorQuickFilesTest extends BaseCreatorTest {
+    private static final Logger logger = LoggerFactory.getLogger(CreatorQuickFilesTest.class);
     private static final int POST_CONFIRM_PAUSE_MS = 1000;
 
     @Test(priority = 1, description = "Create Quick Files album with videos only")
     public void creatorCreatesQuickAlbum_VideosOnly() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("videoalbum_");
-        System.out.println("Created album: " + albumName);
+        logger.info("Created album: {}", albumName);
 
         List<Path> videos = List.of(
                 Paths.get("src/test/resources/Videos/QuickVideoA.mp4"),
@@ -37,7 +40,7 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
     public void creatorCreatesQuickAlbum_ImagesOnly() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("imagealbum_");
-        System.out.println("Created album: " + albumName);
+        logger.info("Created album: {}", albumName);
 
         List<Path> images = List.of(
                 Paths.get("src/test/resources/Images/QuickImageA.jpg"),
@@ -59,7 +62,7 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
     public void creatorCreatesQuickAlbum_MixedMedia() {
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
         String albumName = settings.createQuickAlbum("mixalbum_");
-        System.out.println("Created album: " + albumName);
+        logger.info("Created album: {}", albumName);
 
         List<Path> mixed = List.of(
                 Paths.get("src/test/resources/Videos/QuickVideoA.mp4"),
@@ -90,7 +93,7 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         Path audioPath = Paths.get(audioPathProp);
 
         String albumName = settings.createAudioAlbum(prefix, audioPath);
-        System.out.println("Created audio album: " + albumName);
+        logger.info("Created audio album: {}", albumName);
 
         // brief settle and navigate back to profile to keep processing in background
         try {
@@ -114,7 +117,7 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         }
 
         String albumName = settings.createAudioAlbumByRecording(albumPrefix, recordingNameBase, durationMs);
-        System.out.println("Created audio recording album: " + albumName);
+        logger.info("Created audio recording album: {}", albumName);
 
         try {
             page.waitForTimeout(POST_CONFIRM_PAUSE_MS);

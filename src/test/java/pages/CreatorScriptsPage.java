@@ -300,44 +300,77 @@ public class CreatorScriptsPage extends BasePage {
         waitVisible(quickFilesBtn.first(), DEFAULT_WAIT);
         clickWithRetry(quickFilesBtn.first(), 1, 200);
 
+        // Wait for 'My albums' label to ensure Quick Files screen is loaded
+        Locator myAlbumsLabel = page.getByText("My albums");
+        waitVisible(myAlbumsLabel.first(), DEFAULT_WAIT);
+
         // Ensure default tab for photos & videos
         Locator photosVideosTab = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Selected Photos & videos"));
         waitVisible(photosVideosTab.first(), DEFAULT_WAIT);
 
-        // Click album row whose title starts with the given prefix (image / video / mix)
-        String normalizedPrefix = albumPrefix.toLowerCase();
-        Locator albumTitle = page.locator("//div[@class='qf-row-title' and starts-with(normalize-space(.), '" + normalizedPrefix + "')]");
-        waitVisible(albumTitle.first(), DEFAULT_WAIT);
-        clickWithRetry(albumTitle.first(), 1, 200);
+        // Find the scrollable container for albums
+        Locator container = page.locator(".qf-albums-container, .ant-modal-body, .ant-drawer-body").first();
+        if (container.count() == 0) {
+            container = page.locator("body");
+        }
 
-        // Inside album
+        // Click album row whose title starts with the given prefix (image / video / mix)
+        // Use XPath to find div.qf-row[role='button'] containing div.qf-row-title with matching prefix
+        String normalizedPrefix = albumPrefix.toLowerCase();
+        String xpathExpr = "//div[@class='qf-row' and @role='button'][.//div[@class='qf-row-title' and starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '" + normalizedPrefix + "')]]";
+        
+        boolean clickedAlbum = false;
+        long end = System.currentTimeMillis() + 15_000L;
+        while (System.currentTimeMillis() < end && !clickedAlbum) {
+            Locator albumRows = page.locator("xpath=" + xpathExpr);
+            int rowCount = albumRows.count();
+            if (rowCount > 0) {
+                logger.info("Found {} album row(s) with prefix '{}'; clicking first", rowCount, normalizedPrefix);
+                Locator row = albumRows.first();
+                try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                clickWithRetry(row, 1, 200);
+                clickedAlbum = true;
+                break;
+            }
+            // Scroll down to find the album
+            logger.info("Album row with prefix '{}' not yet visible; scrolling down", normalizedPrefix);
+            try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+        }
+
+        if (!clickedAlbum) {
+            throw new RuntimeException("Could not find Quick Files album with prefix: " + normalizedPrefix);
+        }
+
+        // Inside album - wait for 'Select media' text
         waitVisible(page.getByText("Select media"), DEFAULT_WAIT);
 
-        Locator mediaThumbs = page.locator(".select-quick-file-media-thumb");
-        // Thumbnails can take a moment to render; poll for a short window before failing
+        // Select media using role=IMG name='select' icons (as in codegen)
+        Locator selectIcons = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select"));
+        
+        // Wait for media thumbnails to load
         long thumbDeadline = System.currentTimeMillis() + 10_000L;
-        while (mediaThumbs.count() == 0 && System.currentTimeMillis() < thumbDeadline) {
-            try {
-                page.waitForTimeout(300);
-            } catch (Throwable ignored) {
-            }
+        while (selectIcons.count() == 0 && System.currentTimeMillis() < thumbDeadline) {
+            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
         }
-        if (mediaThumbs.count() == 0) {
-            throw new RuntimeException("No media thumbs found in Quick Files album with prefix: " + albumPrefix);
+        
+        if (selectIcons.count() == 0) {
+            throw new RuntimeException("No media select icons found in Quick Files album with prefix: " + albumPrefix);
         }
 
-        Locator targetThumb = mediaThumbs.first();
-        waitVisible(targetThumb, DEFAULT_WAIT);
-        clickWithRetry(targetThumb, 1, 200);
+        // Click the first media item (index 0)
+        logger.info("Selecting media item at index 0 from Quick Files album");
+        waitVisible(selectIcons.first(), DEFAULT_WAIT);
+        clickWithRetry(selectIcons.first(), 1, 200);
 
-        // Final select inside album ("Select (1)")
+        // Click dynamic "Select (1)" button
         Locator selectBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Select (1)"));
         waitVisible(selectBtn.first(), DEFAULT_WAIT);
         clickWithRetry(selectBtn.first(), 1, 200);
 
-        // Advance one step in the script flow (Next/Continue), same as codegen
+        // Advance one step in the script flow (Next/Continue)
         Locator nextBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Next"));
         if (nextBtn.count() == 0) {
@@ -360,16 +393,48 @@ public class CreatorScriptsPage extends BasePage {
         waitVisible(quickFilesBtn.first(), DEFAULT_WAIT);
         clickWithRetry(quickFilesBtn.first(), 1, 200);
 
+        // Wait for 'My albums' label
+        Locator myAlbumsLabel = page.getByText("My albums");
+        waitVisible(myAlbumsLabel.first(), DEFAULT_WAIT);
+
         // Switch to Audios tab
         Locator audiosTab = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Audios"));
         waitVisible(audiosTab.first(), DEFAULT_WAIT);
         clickWithRetry(audiosTab.first(), 1, 200);
 
+        // Find the scrollable container for albums
+        Locator container = page.locator(".qf-albums-container, .ant-modal-body, .ant-drawer-body").first();
+        if (container.count() == 0) {
+            container = page.locator("body");
+        }
+
         // Click audio album row whose title starts with 'audio'
-        Locator albumTitle = page.locator("//div[@class='qf-row-title' and starts-with(normalize-space(.), 'audio')]");
-        waitVisible(albumTitle.first(), DEFAULT_WAIT);
-        clickWithRetry(albumTitle.first(), 1, 200);
+        // Use XPath to find div.qf-row[role='button'] containing div.qf-row-title with 'audio' prefix
+        String xpathExpr = "//div[@class='qf-row' and @role='button'][.//div[@class='qf-row-title' and starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'audio')]]";
+        
+        boolean clickedAlbum = false;
+        long end = System.currentTimeMillis() + 15_000L;
+        while (System.currentTimeMillis() < end && !clickedAlbum) {
+            Locator albumRows = page.locator("xpath=" + xpathExpr);
+            int rowCount = albumRows.count();
+            if (rowCount > 0) {
+                logger.info("Found {} audio album row(s); clicking first", rowCount);
+                Locator row = albumRows.first();
+                try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                clickWithRetry(row, 1, 200);
+                clickedAlbum = true;
+                break;
+            }
+            // Scroll down to find the album
+            logger.info("Audio album row not yet visible; scrolling down");
+            try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+        }
+
+        if (!clickedAlbum) {
+            throw new RuntimeException("Could not find Quick Files audio album");
+        }
 
         // Pick first audio entry (role=button, label starts with 'audio '), as in codegen
         Locator audioBtn = page.getByRole(AriaRole.BUTTON,

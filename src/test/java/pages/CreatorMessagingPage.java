@@ -126,27 +126,50 @@ public class CreatorMessagingPage extends BasePage {
         Locator container = importationContainer();
         long end = System.currentTimeMillis() + 30_000;
         boolean clickedAlbum = false;
-        while (System.currentTimeMillis() < end && !clickedAlbum) {
-            // Prefer exact name match inside the Importation/Quick Files container (as in codegen)
-            Locator albumBtn = container.getByRole(AriaRole.BUTTON,
-                    new Locator.GetByRoleOptions().setName(targetName));
-            int count = albumBtn.count();
-            if (count > 0) {
-                logger.info("[Messaging][QuickFiles] Found {} album BUTTON(s) named '{}'; clicking first", count, targetName);
-                Locator btn = albumBtn.first();
-                try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                clickWithRetry(btn, 1, 200);
-                clickedAlbum = true;
-                break;
+        // Derive a relaxed prefix for regex fallback (imagealbum_/videoalbum_/mixalbum_)
+        String relaxedPrefix = targetName;
+        try {
+            String lower = targetName.toLowerCase();
+            if (lower.contains("mixalbum_")) {
+                relaxedPrefix = "mixalbum_";
+            } else if (lower.contains("imagealbum_")) {
+                relaxedPrefix = "imagealbum_";
+            } else if (lower.contains("videoalbum_")) {
+                relaxedPrefix = "videoalbum_";
             }
+        } catch (Throwable ignored) {}
+
+        while (System.currentTimeMillis() < end && !clickedAlbum) {
+            // Find div.qf-row[role='button'] containing div.qf-row-title whose text starts with relaxed prefix
+            try {
+                // XPath: div[@class='qf-row' and @role='button'][.//div[@class='qf-row-title' and starts-with(normalize-space(.), '<prefix>')]]
+                String xpathExpr = "//div[@class='qf-row' and @role='button'][.//div[@class='qf-row-title' and starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '" + relaxedPrefix.toLowerCase() + "')]]";
+                Locator albumRows = container.locator("xpath=" + xpathExpr);
+                int rowCount = albumRows.count();
+                if (rowCount > 0) {
+                    logger.info("[Messaging][QuickFiles] Found {} album row(s) by qf-row-title prefix '{}'; clicking first", rowCount, relaxedPrefix);
+                    Locator row = albumRows.first();
+                    try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                    clickWithRetry(row, 1, 200);
+                    clickedAlbum = true;
+                    break;
+                }
+            } catch (Throwable ignored) {}
+
             // Scroll down more aggressively to reach albums near the bottom
-            logger.info("[Messaging][QuickFiles] Album button '{}' not yet visible; scrolling down", targetName);
+            logger.info("[Messaging][QuickFiles] Album row with prefix '{}' not yet visible; scrolling down", relaxedPrefix);
             try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable ignored) {}
             try { page.waitForTimeout(300); } catch (Throwable ignored) {}
         }
         if (!clickedAlbum) {
-            logger.warn("[Messaging][QuickFiles] Failed to find album button '{}' within scroll timeout", targetName);
-            throw new RuntimeException("Quick Files album button not found: " + targetName);
+            logger.warn("[Messaging][QuickFiles] Failed to find album button '{}' within scroll timeout; falling back to generic album click by regex", targetName);
+            try {
+                clickAnyQuickFilesAlbumByRegex();
+                clickedAlbum = true;
+            } catch (Throwable e) {
+                logger.warn("[Messaging][QuickFiles] Generic Quick Files album click by regex also failed: {}", e.toString());
+                throw new RuntimeException("Quick Files album button not found (including regex fallback): " + targetName, e);
+            }
         }
 
         // Ensure we are inside the album by waiting for the 'Select media' prompt
@@ -155,19 +178,36 @@ public class CreatorMessagingPage extends BasePage {
             waitVisible(selectMediaTitle.first(), 10_000);
         } catch (Throwable ignored) {}
 
-        // Wait for media thumbs to appear
-        Locator thumbs = page.locator(".select-quick-file-media-thumb");
+        // Wait for media thumbs/icons to appear, preferring role=IMG name "select" like codegen
+        Locator thumbs = null;
         long endThumbs = System.currentTimeMillis() + 10_000;
-        while (thumbs.count() == 0 && System.currentTimeMillis() < endThumbs) {
+        while (System.currentTimeMillis() < endThumbs) {
+            try {
+                Locator byRoleImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select"));
+                if (byRoleImg.count() > 0) {
+                    thumbs = byRoleImg;
+                    break;
+                }
+            } catch (Throwable ignored) {}
+
+            try {
+                Locator cssThumbs = page.locator(".select-quick-file-media-thumb");
+                if (cssThumbs.count() > 0) {
+                    thumbs = cssThumbs;
+                    break;
+                }
+            } catch (Throwable ignored) {}
+
             try { page.waitForTimeout(200); } catch (Throwable ignored) {}
         }
-        if (thumbs.count() == 0) {
-            logger.warn("[Messaging][QuickFiles] No .select-quick-file-media-thumb elements visible after album click for '{}'", targetName);
+
+        if (thumbs == null || thumbs.count() == 0) {
+            logger.warn("[Messaging][QuickFiles] No media elements visible after album click for '{}' (role IMG 'select' or .select-quick-file-media-thumb)", targetName);
             throw new RuntimeException("No Quick Files media thumbnails visible inside album: " + targetName);
         }
 
         int max = Math.min(Math.max(1, countToSelect), thumbs.count());
-        logger.info("[Messaging][QuickFiles] Selecting {} Quick Files media thumb(s) out of {}", max, thumbs.count());
+        logger.info("[Messaging][QuickFiles] Selecting {} Quick Files media item(s) out of {}", max, thumbs.count());
         for (int i = 0; i < max; i++) {
             Locator t = thumbs.nth(i);
             try { t.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
@@ -1023,6 +1063,8 @@ public class CreatorMessagingPage extends BasePage {
                 "span.ant-typography.QuickLinkAlbumName.css-ixblex, " +
                 "span.ant-typography.QuickLinkAlbumName, " +
                 ".QuickLinkAlbumName, " +
+                // New Quick Files list row/title classes (from current DOM)
+                ".qf-row-title, .qf-row, " +
                 "[data-testid='album-name'], " +
                 "[class*='AlbumName'], " +
                 // Case-insensitive contains 'album' OR starts-with 'video'/'image'/'mix'
@@ -1033,6 +1075,7 @@ public class CreatorMessagingPage extends BasePage {
                 " starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'mix')])"
         );
     }
+
 
     private Locator quickFilesAlbumsContainer() {
         // Common containers that hold album rows/cards, including within Importation modal/drawer

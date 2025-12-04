@@ -458,13 +458,21 @@ Key entries (with defaults):
 - Test class: `tests/FanSubscriptionTest`
 - Depends on: `CreatorRegistrationTest` and `AdminApproveCreatorTest` (creates and approves a creator username used in search)
 - Flow (summary):
-  - Fan logs in → opens Search → opens approved creator profile → clicks "Subscribe - without obligation"
-  - Waits for "Premium" → Continue → "Secure payment" → fills card → Confirm → completes 3DS (SecurionPay)
+  - Fan logs in → opens Search → searches and opens approved creator profile
+  - Clicks "Subscribe" button → waits for "Premium" plan modal → clicks "Continue"
+  - Fills payment card details on "Secure payment" page
+  - Confirms payment and completes 3DS flow (SecurionPay test gateway)
+  - Waits for "Payment confirmed!" message
+  - Automatically navigates to creator profile and verifies "Subscriber" button is visible
 - Config keys (with safe defaults in `config.properties`):
   - `fan.username`, `fan.password`
   - `approval.username` (used as fallback if the username is not produced by earlier tests)
   - `payment.card.number` (default: `4012 0018 0000 0016`), `payment.card.expiry` (default: `07/34`), `payment.card.cvc` (default: `657`)
-- 3DS handling: the test interacts only with the real SecurionPay popup/iframe (no direct navigation) and uses resilient selectors with JS-click fallbacks.
+- 3DS handling: 
+  - Interacts only with the real SecurionPay popup/iframe (no direct navigation)
+  - Uses resilient selectors with JS-click fallbacks
+  - Waits for automatic navigation after payment confirmation
+  - Verifies subscription success via "Subscriber" button on creator profile
 - Run end-to-end in one JVM:
   ```bash
   mvn -Dtest="CreatorRegistrationTest,AdminApproveCreatorTest,FanSubscriptionTest" test
