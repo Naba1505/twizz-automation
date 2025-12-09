@@ -1516,4 +1516,210 @@ public class CreatorScriptsPage extends BasePage {
         
         logger.info("Change script order flow completed");
     }
+
+    // ===== Bookmark/Script Cleanup Methods =====
+
+    @Step("Click edit-categories button to manage bookmarks")
+    public void clickEditCategoriesButton() {
+        logger.info("Scrolling to find and click edit-categories button");
+        
+        Locator editCategoriesBtn = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("edit-categories"));
+        
+        // Scroll right until the button is visible
+        int maxScrollAttempts = 10;
+        for (int i = 0; i < maxScrollAttempts; i++) {
+            if (editCategoriesBtn.count() > 0 && safeIsVisible(editCategoriesBtn.first())) {
+                break;
+            }
+            // Scroll right using keyboard or mouse wheel
+            try {
+                page.keyboard().press("ArrowRight");
+                page.waitForTimeout(300);
+            } catch (Throwable ignored) { }
+        }
+        
+        waitVisible(editCategoriesBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(editCategoriesBtn.first(), 1, 200);
+        logger.info("Clicked edit-categories button");
+    }
+
+    @Step("Verify edit categories popup and click I understand")
+    public void handleEditCategoriesPopup() {
+        logger.info("Handling edit categories popup");
+        
+        // Ensure the popup message is visible
+        Locator popupMessage = page.getByText("Close this popup and press 3");
+        waitVisible(popupMessage.first(), DEFAULT_WAIT);
+        logger.info("Edit categories popup message visible");
+        
+        // Click "I understand" button
+        Locator iUnderstandBtn = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("I understand"));
+        waitVisible(iUnderstandBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(iUnderstandBtn.first(), 1, 200);
+        logger.info("Clicked 'I understand' button");
+        
+        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+    }
+
+    @Step("Long press on QA bookmark tab to trigger delete dialog")
+    private void longPressOnBookmarkTab(Locator bookmarkTab) {
+        logger.info("Long pressing on bookmark tab to trigger delete dialog");
+        
+        // Perform long press (hold for ~2 seconds)
+        try {
+            bookmarkTab.first().click(new Locator.ClickOptions().setDelay(2000));
+        } catch (Throwable ignored) {
+            // Fallback: use mouse down/up with delay
+            try {
+                bookmarkTab.first().hover();
+                page.mouse().down();
+                page.waitForTimeout(2000);
+                page.mouse().up();
+            } catch (Throwable ignored2) { }
+        }
+        
+        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+    }
+
+    @Step("Delete a single QA bookmark")
+    private boolean deleteSingleQABookmark() {
+        // Find any bookmark tab starting with "QA_"
+        Locator qaBookmarkTab = page.getByRole(AriaRole.TAB,
+                new Page.GetByRoleOptions().setName(Pattern.compile("^QA_.*")));
+        
+        if (qaBookmarkTab.count() == 0) {
+            logger.info("No QA bookmark tabs found");
+            return false;
+        }
+        
+        String bookmarkName = "";
+        try {
+            bookmarkName = qaBookmarkTab.first().getAttribute("aria-label");
+            if (bookmarkName == null || bookmarkName.isEmpty()) {
+                bookmarkName = qaBookmarkTab.first().textContent();
+            }
+        } catch (Throwable ignored) {
+            bookmarkName = "QA bookmark";
+        }
+        
+        logger.info("Found QA bookmark: {}", bookmarkName);
+        
+        // Long press on the bookmark tab
+        longPressOnBookmarkTab(qaBookmarkTab);
+        
+        // Wait for the delete dialog to appear
+        Locator deleteDialogDesc = page.locator(".edit-category-actions-bottom-modal-desc");
+        try {
+            waitVisible(deleteDialogDesc.first(), 5000);
+            logger.info("Delete dialog appeared");
+        } catch (Throwable e) {
+            logger.warn("Delete dialog did not appear after long press; retrying with click");
+            // Try clicking instead
+            clickWithRetry(qaBookmarkTab.first(), 1, 200);
+            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            longPressOnBookmarkTab(qaBookmarkTab);
+            try {
+                waitVisible(deleteDialogDesc.first(), 5000);
+            } catch (Throwable e2) {
+                logger.error("Delete dialog still not appearing");
+                return false;
+            }
+        }
+        
+        // Click Delete button
+        Locator deleteBtn = page.locator("//button[normalize-space()='Delete']");
+        waitVisible(deleteBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(deleteBtn.first(), 1, 200);
+        logger.info("Clicked Delete button");
+        
+        try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+        
+        // Wait for confirmation dialog
+        Locator confirmTitle = page.locator(".confirm-delete-category-title");
+        waitVisible(confirmTitle.first(), DEFAULT_WAIT);
+        logger.info("Confirmation dialog appeared");
+        
+        // Click Confirm button
+        Locator confirmBtn = page.locator("//button[normalize-space()='Confirm']");
+        waitVisible(confirmBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(confirmBtn.first(), 1, 200);
+        logger.info("Clicked Confirm button - bookmark '{}' deleted", bookmarkName);
+        
+        // Wait for deletion to complete
+        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        
+        return true;
+    }
+
+    @Step("Verify all QA bookmarks are deleted")
+    private boolean verifyAllBookmarksDeleted() {
+        // Primary check: "You haven't created any" text visible (indicates no scripts/bookmarks)
+        Locator noScriptsText = page.getByText("You haven't created any");
+        if (noScriptsText.count() > 0 && safeIsVisible(noScriptsText.first())) {
+            logger.info("'You haven't created any' message visible - all bookmarks deleted");
+            return true;
+        }
+        
+        // Secondary check: note element visible
+        Locator noteElement = page.locator("div[role='note']");
+        if (noteElement.count() > 0 && safeIsVisible(noteElement.first())) {
+            logger.info("Note element visible - all bookmarks deleted");
+            return true;
+        }
+        
+        // Check if any QA bookmarks remain
+        Locator qaBookmarkTab = page.getByRole(AriaRole.TAB,
+                new Page.GetByRoleOptions().setName(Pattern.compile("^QA_.*")));
+        if (qaBookmarkTab.count() == 0) {
+            logger.info("No QA bookmark tabs remaining");
+            return true;
+        }
+        
+        return false;
+    }
+
+    @Step("Delete all QA bookmarks and their associated scripts")
+    public void deleteAllQABookmarks() {
+        logger.info("Starting cleanup: deleting all QA bookmarks and associated scripts");
+        
+        // Navigate to Scripts screen
+        openSettingsFromProfile();
+        openScriptsFromSettings();
+        
+        // Click edit-categories button
+        clickEditCategoriesButton();
+        
+        // Handle the popup
+        handleEditCategoriesPopup();
+        
+        // Delete bookmarks one by one until none remain
+        int deletedCount = 0;
+        int maxAttempts = 20; // Safety limit
+        
+        for (int i = 0; i < maxAttempts; i++) {
+            // Check if all bookmarks are deleted
+            if (verifyAllBookmarksDeleted()) {
+                logger.info("All QA bookmarks have been deleted. Total deleted: {}", deletedCount);
+                break;
+            }
+            
+            // Delete one bookmark
+            boolean deleted = deleteSingleQABookmark();
+            if (deleted) {
+                deletedCount++;
+                logger.info("Deleted bookmark #{}", deletedCount);
+            } else {
+                // No more bookmarks to delete or error occurred
+                logger.info("No more QA bookmarks to delete or deletion failed");
+                break;
+            }
+            
+            // Small delay between deletions
+            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        }
+        
+        logger.info("Bookmark cleanup completed. Total bookmarks deleted: {}", deletedCount);
+    }
 }

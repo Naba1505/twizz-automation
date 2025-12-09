@@ -157,6 +157,21 @@
   mvn -Dtest=CreatorScriptsTest test
   ```
 
+## Scripts Cleanup (Creator)
+- Page object: `src/test/java/pages/CreatorScriptsPage.java`
+- Tests class: `src/test/java/tests/CreatorScriptsCleanupTest.java`
+- Scenarios:
+  1. **Delete all QA bookmarks and scripts** (priority 1)
+     - Flow: Login → Profile → Settings → Scripts → Edit Categories → Handle popup → Long-press each QA_ prefixed bookmark → Delete → Confirm → Repeat until "You haven't created any" message appears.
+- Notes:
+  - Deleting a bookmark automatically deletes all associated scripts.
+  - Uses long-press gesture (2 second hold) to trigger delete dialog.
+  - Should run after `CreatorScriptsTest` to clean up test data.
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorScriptsCleanupTest test
+  ```
+
 
 End-to-end UI automation for Twizz with Creator and Fan flows. The framework emphasizes robust, resilient interactions and uses Allure only for reporting (with Playwright traces and screenshots).
 
