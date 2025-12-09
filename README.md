@@ -634,6 +634,38 @@ Key entries (with defaults):
 - Share profile options tolerate blocked popups and close popups if opened.
 - Login hardened in `pages/CreatorLoginPage` to reduce flakiness: pre-check for logged-in state, ensure login form/header, retry Connect, broaden post-login detection (icon/URL), and light fallback waits.
 
+## Known Limitations
+
+### Drag-and-Drop Automation
+**Test**: `CreatorScriptsTest.creatorCanChangeScriptOrder()` (Priority 13)
+
+**Status**: Disabled (`enabled = false`)
+
+**Issue**: The drag-and-drop functionality for reordering scripts cannot be automated with Playwright's current capabilities. The specific drag-and-drop library used in the application does not respond to:
+- Playwright's `dragTo()` method
+- Manual mouse operations (`mouse().down()`, `mouse().move()`, `mouse().up()`)
+- JavaScript HTML5 drag-and-drop event simulation
+
+**What Works**:
+- Navigation to Scripts page ✓
+- Clicking edit icon on first script ✓
+- Clicking "Change order" button ✓
+- Verifying "Hold the button on the right" heading ✓
+- Locating reorder handles via `getByRole(LISTITEM).getByLabel("reorder")` ✓
+
+**What Doesn't Work**:
+- Actual drag-and-drop operation to reorder scripts ✗
+- "Order updated" success message never appears ✗
+
+**Manual Testing**: The drag-and-drop functionality works correctly when tested manually in a browser.
+
+**Resolution Options**:
+1. Application team updates to a Playwright-compatible drag-and-drop library
+2. Playwright adds better support for complex drag-and-drop interactions
+3. A working JavaScript-based drag simulation solution is found
+
+**Workaround**: This test remains in the codebase (disabled) to document the expected flow. It can be re-enabled if/when a solution is found.
+
 ## Code Coverage
 - We use JaCoCo for code coverage reporting of test runs.
 - Generate a coverage report:

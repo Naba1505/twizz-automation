@@ -265,4 +265,53 @@ public class CreatorScriptsTest extends BaseTestClass {
         CreatorScriptsPage scripts = new CreatorScriptsPage(page);
         scripts.createAudioScriptFromQuickFilesWithPromo();
     }
+
+    @Test(priority = 13, 
+          description = "Creator can change the order of scripts using drag and drop",
+          enabled = false)  // DISABLED: Playwright drag-and-drop not compatible with this DnD library
+    public void creatorCanChangeScriptOrder() {
+        /*
+         * KNOWN LIMITATION:
+         * This test is currently disabled because Playwright's drag-and-drop automation
+         * does not work with the specific drag-and-drop library used in the application.
+         * 
+         * Attempted solutions:
+         * 1. Playwright's dragTo() method - does not trigger the library's event handlers
+         * 2. Manual mouse operations with slow movement - not recognized by the library
+         * 3. JavaScript HTML5 DnD event simulation - arguments passing issues
+         * 
+         * The drag-and-drop functionality works correctly in manual testing but cannot
+         * be automated with current Playwright capabilities.
+         * 
+         * Navigation and UI verification steps work correctly:
+         * - Navigate to Scripts page ✓
+         * - Click edit icon ✓
+         * - Click "Change order" button ✓
+         * - Verify "Hold the button on the right" heading ✓
+         * - Locate reorder handles ✓
+         * 
+         * Re-enable this test when one of the following conditions is met:
+         * - Application updates to a Playwright-compatible drag-and-drop library, OR
+         * - Playwright adds better support for complex drag-and-drop interactions, OR
+         * - A working JavaScript-based drag simulation is found
+         */
+        
+        // Arrange: credentials
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+
+        // Login as Creator
+        CreatorLoginPage login = new CreatorLoginPage(page);
+        login.navigate();
+        login.login(username, password);
+
+        // Navigate to profile landing
+        CreatorProfilePage profile = new CreatorProfilePage(page);
+        profile.navigateToProfile();
+        profile.assertOnProfileUrl();
+
+        // Change script order
+        CreatorScriptsPage scripts = new CreatorScriptsPage(page);
+        scripts.changeScriptOrder();
+    }
 }

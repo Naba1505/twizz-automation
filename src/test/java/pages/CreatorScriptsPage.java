@@ -549,23 +549,103 @@ public class CreatorScriptsPage extends BasePage {
         waitVisible(createBtn.first(), DEFAULT_WAIT);
         clickWithRetry(createBtn.first(), 1, 200);
 
+        // Wait for the bookmark creation to complete and UI to update
+        try { page.waitForTimeout(800); } catch (Throwable ignored) { }
+
+        // Wait for any loading/spinner to disappear
+        Locator spinner = page.locator(".ant-spin, .loading, [class*='spinner']");
+        try {
+            if (spinner.count() > 0 && safeIsVisible(spinner.first())) {
+                spinner.first().waitFor(new Locator.WaitForOptions()
+                        .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN)
+                        .setTimeout(5000));
+            }
+        } catch (Throwable ignored) { }
+
         // After creating, explicitly select the newly created bookmark so that the
         // mandatory bookmark field is satisfied in all flows.
-        Locator bookmarkToggle = page.getByRole(AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Bookmark " + name + " chevron"));
-        if (bookmarkToggle.count() > 0) {
-            clickWithRetry(bookmarkToggle.first(), 1, 200);
+        // First check if the bookmark is already selected (UI may auto-select after creation)
+        boolean bookmarkSelected = false;
+
+        // Check if bookmark is already showing as selected in the main button
+        Locator mainBookmarkButton = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName(Pattern.compile("^Bookmark\\s+" + Pattern.quote(name) + ".*", Pattern.CASE_INSENSITIVE)));
+        if (mainBookmarkButton.count() > 0 && safeIsVisible(mainBookmarkButton.first())) {
+            logger.info("Bookmark '{}' is already selected after creation", name);
+            bookmarkSelected = true;
         }
 
-        Locator bookmarkOption = page.getByRole(AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Bookmark " + name + " chevron " + name));
-        if (bookmarkOption.count() > 0) {
-            clickWithRetry(bookmarkOption.first(), 1, 200);
-            // Wait for the dropdown to close and the main control to reflect the new name
-            try {
-                waitVisible(bookmarkToggle.first(), DEFAULT_WAIT);
-                page.waitForTimeout(300);
-            } catch (Throwable ignored) { }
+        // Strategy 1: Look for a button/option containing the bookmark name in dropdown
+        if (!bookmarkSelected) {
+            Locator bookmarkByName = page.getByRole(AriaRole.BUTTON,
+                    new Page.GetByRoleOptions().setName(Pattern.compile(".*" + Pattern.quote(name) + ".*", Pattern.CASE_INSENSITIVE)));
+            if (bookmarkByName.count() > 0 && safeIsVisible(bookmarkByName.first())) {
+                clickWithRetry(bookmarkByName.first(), 1, 200);
+                try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                bookmarkSelected = true;
+                logger.info("Bookmark '{}' selected using name pattern", name);
+            }
+        }
+
+        // Strategy 2: If dropdown is still open, look for list item or option with the name
+        if (!bookmarkSelected) {
+            Locator listItem = page.locator("li, [role='option'], .bookmark-item, .ant-select-item")
+                    .filter(new Locator.FilterOptions().setHasText(name));
+            if (listItem.count() > 0 && safeIsVisible(listItem.first())) {
+                clickWithRetry(listItem.first(), 1, 200);
+                try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                bookmarkSelected = true;
+                logger.info("Bookmark '{}' selected using list item locator", name);
+            }
+        }
+
+        // Strategy 3: Open the dropdown again and select by text
+        if (!bookmarkSelected) {
+            // Re-open the bookmark dropdown
+            Locator anyToggle = page.getByRole(AriaRole.BUTTON,
+                    new Page.GetByRoleOptions().setName(Pattern.compile("^Bookmark.*chevron.*", Pattern.CASE_INSENSITIVE)));
+            if (anyToggle.count() > 0 && safeIsVisible(anyToggle.first())) {
+                clickWithRetry(anyToggle.first(), 1, 200);
+                try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+
+                // Now look for the bookmark option by text
+                Locator optionByText = page.getByText(name, new Page.GetByTextOptions().setExact(true));
+                if (optionByText.count() > 0 && safeIsVisible(optionByText.first())) {
+                    clickWithRetry(optionByText.first(), 1, 200);
+                    try { page.waitForTimeout(300); } catch (Throwable ignored2) { }
+                    bookmarkSelected = true;
+                    logger.info("Bookmark '{}' selected using text locator after reopening dropdown", name);
+                }
+            }
+        }
+
+        // Strategy 4: Fallback - use ensureAnyBookmarkSelected pattern
+        if (!bookmarkSelected) {
+            logger.warn("Could not select bookmark '{}' with specific locators; using fallback selection", name);
+            ensureAnyBookmarkSelected();
+        }
+
+        // Final verification: check if any bookmark is now showing as selected
+        // Look for a button that shows a bookmark name (not "Select or create a")
+        try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+        Locator selectedBookmark = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName(Pattern.compile("^Bookmark\\s+(?!Select).*", Pattern.CASE_INSENSITIVE)));
+        if (selectedBookmark.count() == 0 || !safeIsVisible(selectedBookmark.first())) {
+            // Still not selected - try one more aggressive approach
+            logger.warn("Bookmark still not showing as selected; attempting final selection");
+            // Click the bookmark dropdown button
+            Locator bookmarkDropdown = page.locator("button").filter(new Locator.FilterOptions().setHasText("Bookmark"));
+            if (bookmarkDropdown.count() > 0 && safeIsVisible(bookmarkDropdown.first())) {
+                clickWithRetry(bookmarkDropdown.first(), 1, 200);
+                try { page.waitForTimeout(400); } catch (Throwable ignored) { }
+                // Click the first visible option with our bookmark name
+                Locator ourBookmark = page.getByText(name, new Page.GetByTextOptions().setExact(true));
+                if (ourBookmark.count() > 0 && safeIsVisible(ourBookmark.first())) {
+                    clickWithRetry(ourBookmark.first(), 1, 200);
+                    try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                    logger.info("Bookmark '{}' selected in final verification step", name);
+                }
+            }
         }
 
         return name;
@@ -575,20 +655,54 @@ public class CreatorScriptsPage extends BasePage {
     // complains that no bookmark is assigned. Uses generic patterns so it
     // works for existing bookmarks too.
     private void ensureAnyBookmarkSelected() {
-        // Open the bookmark dropdown if present
-        Locator anyToggle = page.getByRole(AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName(Pattern.compile("^Bookmark .* chevron.*", Pattern.CASE_INSENSITIVE)));
-        if (anyToggle.count() > 0 && safeIsVisible(anyToggle.first())) {
-            clickWithRetry(anyToggle.first(), 1, 200);
-            try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+        boolean selected = false;
+
+        // Strategy 1: Try to open the bookmark dropdown using various patterns
+        Locator[] togglePatterns = new Locator[] {
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("^Bookmark.*chevron.*", Pattern.CASE_INSENSITIVE))),
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("Bookmark.*Select.*", Pattern.CASE_INSENSITIVE))),
+            page.locator("button").filter(new Locator.FilterOptions().setHasText(Pattern.compile("Bookmark", Pattern.CASE_INSENSITIVE))),
+            page.locator("[class*='bookmark']").filter(new Locator.FilterOptions().setHasText("Bookmark"))
+        };
+
+        for (Locator toggle : togglePatterns) {
+            if (toggle.count() > 0 && safeIsVisible(toggle.first())) {
+                clickWithRetry(toggle.first(), 1, 200);
+                try { page.waitForTimeout(400); } catch (Throwable ignored) { }
+                break;
+            }
         }
 
-        // Select the first bookmark option if available
-        Locator anyOption = page.getByRole(AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName(Pattern.compile("^Bookmark .* chevron .*", Pattern.CASE_INSENSITIVE)));
-        if (anyOption.count() > 0 && safeIsVisible(anyOption.first())) {
-            clickWithRetry(anyOption.first(), 1, 200);
-            try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+        // Strategy 2: Select from dropdown - try various option patterns
+        Locator[] optionPatterns = new Locator[] {
+            // Dropdown option with bookmark name
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("^Bookmark.*chevron.*QA.*", Pattern.CASE_INSENSITIVE))),
+            // Any visible option in a dropdown/list that contains QA (our bookmark prefix)
+            page.locator("li, [role='option'], [role='menuitem']").filter(new Locator.FilterOptions().setHasText(Pattern.compile("QA_", Pattern.CASE_INSENSITIVE))),
+            // Generic bookmark option
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile(".*QA_\\d+.*", Pattern.CASE_INSENSITIVE))),
+            // Text-based selection
+            page.getByText(Pattern.compile("^QA_\\d+$"))
+        };
+
+        for (Locator option : optionPatterns) {
+            if (option.count() > 0 && safeIsVisible(option.first())) {
+                clickWithRetry(option.first(), 1, 200);
+                try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                selected = true;
+                logger.info("Bookmark selected using fallback pattern");
+                break;
+            }
+        }
+
+        // Strategy 3: If still not selected, try clicking any visible item in the dropdown area
+        if (!selected) {
+            Locator dropdownItems = page.locator(".ant-select-dropdown:visible li, .bookmark-dropdown:visible li, [class*='dropdown']:visible [class*='item']");
+            if (dropdownItems.count() > 0 && safeIsVisible(dropdownItems.first())) {
+                clickWithRetry(dropdownItems.first(), 1, 200);
+                try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                logger.info("Bookmark selected using generic dropdown item");
+            }
         }
     }
 
@@ -1151,5 +1265,255 @@ public class CreatorScriptsPage extends BasePage {
         confirmScriptUpdateAndWait();
 
         logger.info("Mixed script edit flow completed");
+    }
+
+    // ===== Change Order Flow =====
+
+    @Step("Ensure 'All' tab is selected on Scripts page")
+    public void ensureAllTabSelected() {
+        logger.info("Ensuring 'All' tab is selected");
+        Locator allTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("All"));
+        waitVisible(allTab.first(), DEFAULT_WAIT);
+        
+        // Check if already selected, if not click it
+        try {
+            String ariaSelected = allTab.first().getAttribute("aria-selected");
+            if (!"true".equals(ariaSelected)) {
+                logger.info("'All' tab not selected, clicking it");
+                clickWithRetry(allTab.first(), 1, 200);
+            } else {
+                logger.info("'All' tab already selected");
+            }
+        } catch (Throwable e) {
+            logger.warn("Could not check tab selection state, clicking anyway: {}", e.getMessage());
+            clickWithRetry(allTab.first(), 1, 200);
+        }
+    }
+
+    @Step("Click edit icon on first script to open edit dialog")
+    public void clickEditIconOnFirstScript() {
+        logger.info("Clicking edit icon on first script");
+        
+        // Use XPath to find all edit buttons and click the first one
+        Locator editButtons = page.locator("//button[@aria-label='edit']");
+        waitVisible(editButtons.first(), DEFAULT_WAIT);
+        clickWithRetry(editButtons.first(), 1, 200);
+    }
+
+    @Step("Verify edit dialog appears")
+    public void verifyEditDialogAppears() {
+        logger.info("Verifying edit dialog appears");
+        
+        // Ensure "Edit" title appears
+        Locator editTitle = page.getByText("Edit", new Page.GetByTextOptions().setExact(true));
+        waitVisible(editTitle.first(), DEFAULT_WAIT);
+        logger.info("Edit title visible");
+        
+        // Ensure "Which action would you like" message appears
+        Locator editMessage = page.getByText("Which action would you like");
+        waitVisible(editMessage.first(), DEFAULT_WAIT);
+        logger.info("Edit dialog message visible");
+    }
+
+    @Step("Click 'Change order' button")
+    public void clickChangeOrderButton() {
+        logger.info("Clicking 'Change order' button");
+        Locator changeOrderBtn = page.getByRole(AriaRole.BUTTON, 
+            new Page.GetByRoleOptions().setName("Change order"));
+        waitVisible(changeOrderBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(changeOrderBtn.first(), 1, 200);
+    }
+
+    @Step("Verify change order screen appears")
+    public void verifyChangeOrderScreenAppears() {
+        logger.info("Verifying change order screen appears");
+        
+        Locator orderHeading = page.getByRole(AriaRole.HEADING, 
+            new Page.GetByRoleOptions().setName("Hold the button on the right"));
+        waitVisible(orderHeading.first(), DEFAULT_WAIT);
+        logger.info("Change order screen heading visible");
+    }
+
+    @Step("Drag first script to bottom to reorder")
+    public void dragFirstScriptToBottom() {
+        logger.info("Attempting to drag first script to bottom");
+        
+        // Wait for the list to be fully loaded
+        try { page.waitForTimeout(1000); } catch (Throwable ignored) {}
+        
+        // Get all list items (script rows)
+        Locator listItems = page.getByRole(AriaRole.LISTITEM);
+        int itemCount = listItems.count();
+        logger.info("Found {} list items (script rows)", itemCount);
+        
+        if (itemCount < 2) {
+            logger.warn("Not enough scripts to reorder (need at least 2), found: {}", itemCount);
+            return;
+        }
+        
+        // Get the reorder handles (drag buttons) for each list item
+        // Each list item has a getByLabel("reorder") button
+        Locator firstItemHandle = listItems.first().getByLabel("reorder");
+        Locator lastItemHandle = listItems.nth(itemCount - 1).getByLabel("reorder");
+        
+        // Verify the handles are visible
+        try {
+            waitVisible(firstItemHandle, 5000);
+            waitVisible(lastItemHandle, 5000);
+            logger.info("Both first and last reorder handles are visible");
+        } catch (Throwable e) {
+            logger.warn("Reorder handles not visible: {}", e.getMessage());
+            return;
+        }
+        
+        // Use the reorder handles for dragging
+        Locator firstHandle = firstItemHandle;
+        Locator lastHandle = lastItemHandle;
+        
+        logger.info("Attempting drag from first to last (total: {} scripts)", itemCount);
+        
+        try {
+            // Scroll both elements into view first
+            try { 
+                firstHandle.scrollIntoViewIfNeeded(); 
+                lastHandle.scrollIntoViewIfNeeded();
+            } catch (Throwable ignored) {}
+            
+            // Wait a moment for scrolling to complete
+            try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+            
+            logger.info("Attempting drag using comprehensive HTML5 DnD simulation");
+            
+            // Use a comprehensive drag-and-drop simulation script
+            // This script properly simulates all HTML5 drag-and-drop events
+            String dndScript = 
+                "(function(source, target) {" +
+                "  function createDragEvent(type, options) {" +
+                "    const event = new DragEvent(type, {" +
+                "      bubbles: true," +
+                "      cancelable: true," +
+                "      composed: true," +
+                "      ...options" +
+                "    });" +
+                "    Object.defineProperty(event, 'dataTransfer', {" +
+                "      value: options.dataTransfer || {" +
+                "        data: {}," +
+                "        effectAllowed: 'all'," +
+                "        dropEffect: 'move'," +
+                "        files: []," +
+                "        items: []," +
+                "        types: []," +
+                "        setData: function(type, val) { this.data[type] = val; }," +
+                "        getData: function(type) { return this.data[type]; }" +
+                "      }" +
+                "    });" +
+                "    return event;" +
+                "  }" +
+                "  const dataTransfer = {" +
+                "    data: {}," +
+                "    effectAllowed: 'all'," +
+                "    dropEffect: 'move'," +
+                "    files: []," +
+                "    items: []," +
+                "    types: []," +
+                "    setData: function(type, val) { this.data[type] = val; this.types.push(type); }," +
+                "    getData: function(type) { return this.data[type]; }," +
+                "    clearData: function() { this.data = {}; this.types = []; }" +
+                "  };" +
+                "  const dragStartEvent = createDragEvent('dragstart', { dataTransfer });" +
+                "  source.dispatchEvent(dragStartEvent);" +
+                "  const dragEnterEvent = createDragEvent('dragenter', { dataTransfer });" +
+                "  target.dispatchEvent(dragEnterEvent);" +
+                "  const dragOverEvent = createDragEvent('dragover', { dataTransfer });" +
+                "  target.dispatchEvent(dragOverEvent);" +
+                "  const dropEvent = createDragEvent('drop', { dataTransfer });" +
+                "  target.dispatchEvent(dropEvent);" +
+                "  const dragEndEvent = createDragEvent('dragend', { dataTransfer });" +
+                "  source.dispatchEvent(dragEndEvent);" +
+                "})(arguments[0], arguments[1]);";
+            
+            try {
+                // Get the actual DOM elements from the locators
+                Object firstElement = firstHandle.evaluate("el => el");
+                Object lastElement = lastHandle.evaluate("el => el");
+                
+                // Execute the drag-and-drop script
+                page.evaluate(dndScript, new Object[]{firstElement, lastElement});
+                logger.info("Comprehensive HTML5 DnD simulation executed");
+                try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
+                
+            } catch (Throwable jsError) {
+                logger.warn("HTML5 DnD simulation failed: {}, trying standard dragTo", jsError.getMessage());
+                
+                // Fallback to standard Playwright dragTo
+                try {
+                    firstHandle.dragTo(lastHandle);
+                    logger.info("Standard dragTo executed as fallback");
+                    try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
+                } catch (Throwable dragError) {
+                    logger.error("Both HTML5 simulation and dragTo failed: {}", dragError.getMessage());
+                }
+            }
+        } catch (Throwable e) {
+            logger.error("Drag operation failed: {}", e.getMessage(), e);
+        }
+    }
+
+    @Step("Verify 'Order updated' message appears")
+    public void verifyOrderUpdatedMessage() {
+        logger.info("Verifying 'Order updated' message appears");
+        
+        // Look for success toast/message
+        Locator orderUpdatedMsg = page.getByText("Order updated");
+        
+        long end = System.currentTimeMillis() + 10_000;
+        boolean found = false;
+        
+        while (System.currentTimeMillis() < end && !found) {
+            try {
+                if (orderUpdatedMsg.count() > 0 && safeIsVisible(orderUpdatedMsg.first())) {
+                    logger.info("'Order updated' message visible - order change successful!");
+                    found = true;
+                    break;
+                }
+            } catch (Throwable ignored) {}
+            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+        }
+        
+        if (!found) {
+            String errorMsg = "'Order updated' message not found - drag operation did not trigger order change";
+            logger.error(errorMsg);
+            throw new AssertionError(errorMsg);
+        }
+    }
+
+    @Step("Click Finish button to save order changes")
+    public void clickFinishButton() {
+        logger.info("Clicking Finish button to save order changes");
+        Locator finishBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Finish"));
+        waitVisible(finishBtn.first(), DEFAULT_WAIT);
+        clickWithRetry(finishBtn.first(), 1, 200);
+        logger.info("Finish button clicked");
+        
+        // Wait for any navigation or UI update
+        try { page.waitForTimeout(1000); } catch (Throwable ignored) {}
+    }
+
+    @Step("Complete change order flow: navigate, reorder, and verify")
+    public void changeScriptOrder() {
+        logger.info("Starting change script order flow");
+        
+        openSettingsFromProfile();
+        openScriptsFromSettings();
+        ensureAllTabSelected();
+        clickEditIconOnFirstScript();
+        verifyEditDialogAppears();
+        clickChangeOrderButton();
+        verifyChangeOrderScreenAppears();
+        dragFirstScriptToBottom();
+        clickFinishButton();  // Click Finish to save the changes
+        verifyOrderUpdatedMessage();
+        
+        logger.info("Change script order flow completed");
     }
 }
