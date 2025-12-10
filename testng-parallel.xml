@@ -41,6 +41,7 @@
             <class name="tests.FanRegistrationTest"/>
             <class name="tests.FanLoginTest"/>
             <class name="tests.FanHomeScreenTest"/>
+            <class name="tests.FanBookmarksTest"/>
             <class name="tests.FanDiscoverTest"/>
             <class name="tests.FanSavedCardsTest"/>
             <class name="tests.FanSubscriptionTest"/>

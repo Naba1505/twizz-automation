@@ -157,6 +157,25 @@
   mvn -Dtest=CreatorScriptsTest test
   ```
 
+## Fan Bookmarks
+- Page object: `src/test/java/pages/FanBookmarksPage.java`
+- Tests class: `src/test/java/tests/FanBookmarksTest.java`
+- Scenarios:
+  1. **Bookmark multiple feeds** (priority 1)
+     - Flow: Login as Fan → Home screen → Bookmark 3 feeds → Verify bookmarkFill icons displayed.
+  2. **View bookmarked feeds** (priority 2, depends on test 1)
+     - Flow: Login as Fan → Settings → Bookmarks → Verify 3 watermarked feeds displayed.
+  3. **Unbookmark feeds** (priority 3, depends on test 2)
+     - Flow: Login as Fan → Settings → Bookmarks → Click watermarked feed → Click bookmarkFill to unbookmark (repeat for all 3) → Navigate back → Hard refresh → Verify "No bookmarks found!" text.
+- Notes:
+  - Tests are dependent and must run in sequence.
+  - Uses `img[alt='watermarked']` to identify bookmarked feeds on the bookmarks screen.
+  - Uses `bookmarkFill` icon to identify highlighted/bookmarked state.
+- Run example:
+  ```bash
+  mvn -Dtest=FanBookmarksTest test
+  ```
+
 ## Scripts Cleanup (Creator)
 - Page object: `src/test/java/pages/CreatorScriptsPage.java`
 - Tests class: `src/test/java/tests/CreatorScriptsCleanupTest.java`
