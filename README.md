@@ -176,6 +176,21 @@
   mvn -Dtest=FanBookmarksTest test
   ```
 
+## Fan My Creators
+- Page object: `src/test/java/pages/FanMyCreatorsPage.java`
+- Tests class: `src/test/java/tests/FanMyCreatorsTest.java`
+- Scenarios:
+  1. **View My Creators and subscription details** (priority 1)
+     - Flow: Login as Fan → Home screen → Settings → My creators → Click first creator arrow → View details → Cancel → Click "See all results" → Scroll to end → Click last creator arrow → View details → Cancel → Scroll to top → Verify title → Navigate back to home.
+- Notes:
+  - Views subscribed creators list and individual subscription details.
+  - Uses "See all results" to load all creators.
+  - Navigates back to home screen at the end.
+- Run example:
+  ```bash
+  mvn -Dtest=FanMyCreatorsTest test
+  ```
+
 ## Scripts Cleanup (Creator)
 - Page object: `src/test/java/pages/CreatorScriptsPage.java`
 - Tests class: `src/test/java/tests/CreatorScriptsCleanupTest.java`
