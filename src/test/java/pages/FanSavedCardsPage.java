@@ -3,12 +3,10 @@ package pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FanSavedCardsPage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(FanSavedCardsPage.class);
 
     public FanSavedCardsPage(Page page) { super(page); }
 
@@ -42,6 +40,14 @@ public class FanSavedCardsPage extends BasePage {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add a card"));
         waitVisible(btn.first(), 10000);
         clickWithRetry(btn.first(), 1, 120);
+        logger.info("[Saved Cards] Clicked 'Add a card' button");
+    }
+
+    @Step("Assert on Card information screen")
+    public void assertOnCardInformationScreen() {
+        Locator cardInfoHeading = page.getByText("Card information");
+        waitVisible(cardInfoHeading.first(), 15000);
+        logger.info("[Saved Cards] On Card information screen - heading visible");
     }
 
     @Step("Fill cardholder first name: {firstName}")

@@ -1,11 +1,14 @@
 package pages;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import utils.ConfigReader;
 
 public class BasePage {
     protected static final int DEFAULT_WAIT = 10_000;
@@ -53,6 +56,44 @@ public class BasePage {
             }
         }
         throw last != null ? last : new RuntimeException("Click failed after retries");
+    }
+
+    // Enhanced methods using configurable timeouts
+    protected void clickWithConfigurableRetry(Locator locator) {
+        clickWithRetry(locator, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+    }
+
+    protected void waitForAnimation() {
+        try { 
+            page.waitForTimeout(ConfigReader.getAnimationTimeout()); 
+        } catch (Exception ignored) {}
+    }
+
+    protected void waitForUiToSettle() {
+        try { 
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout()); 
+        } catch (Exception ignored) {}
+    }
+
+    protected void waitForPageLoad() {
+        try { 
+            page.waitForTimeout(ConfigReader.getPageLoadTimeout()); 
+        } catch (Exception ignored) {}
+    }
+
+    protected void smartScroll(int direction, String targetDescription) {
+        int maxAttempts = ConfigReader.getMaxScrollAttempts();
+        int stepSize = ConfigReader.getScrollStepSize();
+        int waitBetween = ConfigReader.getScrollWaitBetween();
+        
+        logger.info("Smart scrolling {} for: {}", direction > 0 ? "down" : "up", targetDescription);
+        
+        for (int i = 0; i < maxAttempts; i++) {
+            page.mouse().wheel(0, direction * stepSize);
+            try { 
+                page.waitForTimeout(waitBetween); 
+            } catch (Exception ignored) {}
+        }
     }
 
     protected void typeAndAssert(Locator locator, String value) {

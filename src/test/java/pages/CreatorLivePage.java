@@ -1,14 +1,5 @@
 package pages;
 
-import com.microsoft.playwright.Locator;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.AriaRole;
-import io.qameta.allure.Step;
-import io.qameta.allure.Allure;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import utils.WaitUtils;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,8 +8,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+
+import io.qameta.allure.Allure;
+import io.qameta.allure.Step;
+import utils.WaitUtils;
+
 public class CreatorLivePage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(CreatorLivePage.class);
 
     // UI strings
     private static final String CONVERSION_TOOLS_TEXT = "Vos meilleurs outils de conversion";
@@ -499,7 +497,7 @@ public class CreatorLivePage extends BasePage {
                 Locator anySelector = page.locator(".ant-select-selector");
                 if (anySelector.count() > 0) {
                     anySelector.first().click();
-                    opened = true;
+                    logger.debug("Opened time selector using fallback method");
                 }
             }
         } catch (Exception ignored) {}

@@ -1,20 +1,18 @@
 package pages;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import utils.ConfigReader;
 import utils.WaitUtils;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
  
 
 public class CreatorPublicationPage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(CreatorPublicationPage.class);
 
     // UI strings (some localized)
     private static final String CONVERSION_TOOLS_TEXT = "Vos meilleurs outils de conversion";

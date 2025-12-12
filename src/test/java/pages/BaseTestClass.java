@@ -1,21 +1,24 @@
 package pages;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+
+import org.testng.ITestResult;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitUntilState;
+
 import io.qameta.allure.Allure;
-import org.testng.ITestResult;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import utils.BrowserFactory;
 import utils.ConfigReader;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.io.ByteArrayInputStream;
-import java.nio.file.Path;
 
 public class BaseTestClass {
     static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
@@ -70,14 +73,14 @@ public class BaseTestClass {
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
                 // Allure attachment
                 Allure.addAttachment("Failure Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
-            } catch (Exception e) {
+            } catch (IOException | RuntimeException e) {
                 // swallow attachment errors, already failing test
             }
             // Attach current page HTML to Allure
             try {
                 String html = page.content();
                 Allure.addAttachment("Page HTML", "text/html", new ByteArrayInputStream(html.getBytes()), ".html");
-            } catch (Exception ignored) {}
+            } catch (RuntimeException ignored) {}
             // Export Playwright trace on failure
             try {
                 boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));
@@ -89,7 +92,7 @@ public class BaseTestClass {
                     page.context().tracing().stop(new Tracing.StopOptions().setPath(tracePath));
                     Allure.addAttachment("Playwright Trace", "application/zip", Files.newInputStream(tracePath), ".zip");
                 }
-            } catch (Exception e) { }
+            } catch (IOException | RuntimeException e) { }
         } else if (ITestResult.SUCCESS == result.getStatus() && Boolean.parseBoolean(ConfigReader.getProperty("screenshot.on.success", "false"))) {
             try {
                 String screenshotDir = ConfigReader.getProperty("screenshot.dir", "screenshots");
@@ -99,7 +102,7 @@ public class BaseTestClass {
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
                 // Allure attachment
                 Allure.addAttachment("Success Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
-            } catch (Exception e) {
+            } catch (IOException | RuntimeException e) {
                 // swallow attachment errors
             }
             // Optionally export trace on success
@@ -113,7 +116,7 @@ public class BaseTestClass {
                     page.context().tracing().stop(new Tracing.StopOptions().setPath(tracePath));
                     Allure.addAttachment("Playwright Trace (Success)", "application/zip", Files.newInputStream(tracePath), ".zip");
                 }
-            } catch (Exception e) { }
+            } catch (IOException | RuntimeException e) { }
         }
         BrowserFactory.close();
     }

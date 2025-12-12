@@ -1,17 +1,15 @@
 package pages;
 
-import com.microsoft.playwright.Locator;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.AriaRole;
-import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+
+import io.qameta.allure.Step;
+
 public class FanDiscoverPage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(FanDiscoverPage.class);
 
     private static final String DISCOVER_PATH_FRAGMENT = "/common/discover";
     private static final String FEED_XPATH = "//div[@class='hls-video-player']";

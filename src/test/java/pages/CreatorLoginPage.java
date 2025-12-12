@@ -4,12 +4,10 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import utils.ConfigReader;
 
 public class CreatorLoginPage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(CreatorLoginPage.class);
 
     private final String usernamePlaceholder = "Email address or username";
     private final String passwordPlaceholder = "Password";

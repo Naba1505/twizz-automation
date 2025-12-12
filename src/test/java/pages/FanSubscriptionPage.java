@@ -1,17 +1,15 @@
 package pages;
 
+import java.util.Arrays;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.KeyboardModifier;
-import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import io.qameta.allure.Step;
 
 public class FanSubscriptionPage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(FanSubscriptionPage.class);
 
     public FanSubscriptionPage(Page page) {
         super(page);
@@ -30,6 +28,7 @@ public class FanSubscriptionPage extends BasePage {
     }
 
     @Step("Search and open creator profile")
+    @SuppressWarnings("unused") // Variables used for control flow but IDE doesn't recognize pattern
     public void searchAndOpenCreator(String username) {
         logger.info("[Fan][Subscribe] Searching creator: {}", username);
         // Ensure an input is focused using role SEARCHBOX with name 'Search'
@@ -50,18 +49,26 @@ public class FanSubscriptionPage extends BasePage {
         boolean landed = false;
         long end = System.currentTimeMillis() + 20_000;
         while (!landed && System.currentTimeMillis() < end) {
+            // Check if we've successfully landed on the profile page
             try {
                 if (page.url() != null && (page.url().contains("/twizzcreator") || page.url().contains("/creator/") || page.url().contains("/profile/"))) {
-                    landed = true; break;
+                    logger.debug("[Fan][Subscribe] Profile page detected via URL");
+                    return; // Exit method immediately when profile is found
                 }
             } catch (Throwable ignored) {}
             try {
                 Locator subBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe - without obligation"));
-                if (subBtn.count() > 0 && safeIsVisible(subBtn.first())) { landed = true; break; }
+                if (subBtn.count() > 0 && safeIsVisible(subBtn.first())) {
+                    logger.debug("[Fan][Subscribe] Subscribe button found");
+                    return; // Exit method immediately when subscribe button is found
+                }
             } catch (Throwable ignored) {}
             try {
                 Locator altBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe"));
-                if (altBtn.count() > 0 && safeIsVisible(altBtn.first())) { landed = true; break; }
+                if (altBtn.count() > 0 && safeIsVisible(altBtn.first())) {
+                    logger.debug("[Fan][Subscribe] Alternative subscribe button found");
+                    return; // Exit method immediately when alternative subscribe button is found
+                }
             } catch (Throwable ignored) {}
             try { page.waitForTimeout(250); } catch (Throwable ignored) {}
         }
@@ -181,6 +188,7 @@ public class FanSubscriptionPage extends BasePage {
     }
 
     @Step("Confirm payment and complete 3DS test flow")
+    @SuppressWarnings("unused") // Variables used for control flow but IDE doesn't recognize pattern
     public void confirmAndComplete3DS() {
         logger.info("[Fan][Subscribe] Confirming payment and completing 3DS test flow");
         Page appPage = page;
@@ -221,6 +229,7 @@ public class FanSubscriptionPage extends BasePage {
                             try { altBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); } catch (Throwable ignored) {}
                         }
                         clicked = true;
+                        logger.debug("[Fan][Subscribe] Successfully clicked 3DS button");
                         break;
                     }
                 }
@@ -230,7 +239,10 @@ public class FanSubscriptionPage extends BasePage {
                         Locator anyBtn = appPage.locator("button:visible").first();
                         if (safeIsVisible(anyBtn)) {
                             try { anyBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                            try { anyBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); clicked = true; } catch (Throwable ignored) {}
+                            try { 
+                                anyBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); 
+                                logger.debug("[Fan][Subscribe] Clicked fallback button");
+                            } catch (Throwable ignored) {}
                         }
                     } catch (Throwable ignored) {}
                 }
@@ -308,7 +320,10 @@ public class FanSubscriptionPage extends BasePage {
                 }
                 // As a last resort, try submitting first form
                 if (!submitted && !threeDSPage.isClosed()) {
-                    try { threeDSPage.evaluate("() => { const f = document.querySelector('form'); if (f) { if (f.requestSubmit) f.requestSubmit(); else f.submit(); } }"); submitted = true; } catch (Throwable ignored) {}
+                    try { 
+                        threeDSPage.evaluate("() => { const f = document.querySelector('form'); if (f) { if (f.requestSubmit) f.requestSubmit(); else f.submit(); } }"); 
+                        logger.debug("[Fan][Subscribe] Submitted form via JavaScript");
+                    } catch (Throwable ignored) {}
                 }
                 // Wait for confirmation text
                 try { if (!threeDSPage.isClosed()) threeDSPage.waitForSelector("text=Payment confirmed!", new Page.WaitForSelectorOptions().setTimeout(15_000)); } catch (Throwable ignored) {}

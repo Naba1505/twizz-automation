@@ -1,15 +1,14 @@
 package pages;
 
+import java.util.regex.Pattern;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import utils.ConfigReader;
-import java.util.regex.Pattern;
 
 public class FanRegistrationPage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(FanRegistrationPage.class);
 
     // Locators (using helpers by placeholder/button name when needed)
 

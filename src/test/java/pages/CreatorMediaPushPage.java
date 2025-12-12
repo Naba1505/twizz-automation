@@ -1,18 +1,16 @@
 package pages;
 
-import com.microsoft.playwright.Locator;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.AriaRole;
-import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+
+import io.qameta.allure.Step;
+
 public class CreatorMediaPushPage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(CreatorMediaPushPage.class);
 
     // Visible texts / placeholders
     private static final String WHAT_DO_YOU_WANT = "What do you want to do?";

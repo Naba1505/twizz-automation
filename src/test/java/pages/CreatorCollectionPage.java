@@ -1,21 +1,19 @@
 package pages;
 
-import com.microsoft.playwright.Locator;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.AriaRole;
-import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import utils.WaitUtils;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+
+import io.qameta.allure.Step;
+import utils.WaitUtils;
+
 public class CreatorCollectionPage extends BasePage {
-    private static final Logger logger = LoggerFactory.getLogger(CreatorCollectionPage.class);
 
     // Strings
     private static final String I_UNDERSTAND_BTN = "I understand";
@@ -654,7 +652,7 @@ public class CreatorCollectionPage extends BasePage {
             logger.info("[Cleanup] Tile counts after discovery: roleTiles={}, nameLikeTiles={}, xpathTiles={}", rc, nc, xc);
 
             // Prefer role tile nth(2) (3rd tile) if present; else nth(1); else first; else fallback to nameLike, then xpath tiles
-            Locator chosenTile = null;
+            Locator chosenTile;
             if (rc >= 3) {
                 chosenTile = roleTiles.nth(2);
                 logger.info("[Cleanup] Choosing ROLE tile nth(2)");
@@ -1372,7 +1370,7 @@ public class CreatorCollectionPage extends BasePage {
                                 }
                             }
                         }
-                    } catch (Throwable ignored) { /* percentage may not always be present */ }
+                    } catch (RuntimeException ignored) { /* percentage may not always be present */ }
                 } else {
                     // If we had seen uploading and it's now gone, break to post-upload checks
                     if (sawUploading) {

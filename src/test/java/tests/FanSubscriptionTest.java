@@ -1,6 +1,9 @@
 package tests;
 
+import java.io.IOException;
+
 import org.testng.annotations.Test;
+
 import pages.BaseTestClass;
 import pages.FanLoginPage;
 import pages.FanSubscriptionPage;
@@ -24,7 +27,7 @@ public class FanSubscriptionTest extends BaseTestClass {
                     String fileVal = java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8).trim();
                     if (!fileVal.isBlank()) { candidate = fileVal; }
                 }
-            } catch (Exception ignored) {}
+            } catch (IOException | RuntimeException ignored) {}
         }
         if (candidate == null || candidate.isBlank()) {
             // Fallback 2: try freshly created username from registration flow (same JVM run)
@@ -38,7 +41,7 @@ public class FanSubscriptionTest extends BaseTestClass {
                     String fileVal = java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8).trim();
                     if (!fileVal.isBlank()) { candidate = fileVal; }
                 }
-            } catch (Exception ignored) {}
+            } catch (IOException | RuntimeException ignored) {}
         }
         if (candidate == null || candidate.isBlank()) {
             // Final fallback: configured username

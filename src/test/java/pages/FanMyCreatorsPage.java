@@ -3,7 +3,9 @@ package pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+
 import io.qameta.allure.Step;
+import utils.ConfigReader;
 
 
 /**
@@ -27,7 +29,7 @@ public class FanMyCreatorsPage extends BasePage {
         waitVisible(settingsIcon.first(), DEFAULT_WAIT);
         settingsIcon.click();
         
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        waitForAnimation();
         logger.info("Clicked Settings icon");
     }
 
@@ -45,7 +47,7 @@ public class FanMyCreatorsPage extends BasePage {
         waitVisible(myCreatorsTile.first(), DEFAULT_WAIT);
         myCreatorsTile.first().click();
         
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        waitForAnimation();
         logger.info("Clicked My creators tile");
     }
 
@@ -94,7 +96,7 @@ public class FanMyCreatorsPage extends BasePage {
         waitVisible(cancelButton.first(), DEFAULT_WAIT);
         cancelButton.click();
         
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        waitForAnimation();
         logger.info("Clicked Cancel button");
     }
 
@@ -104,35 +106,32 @@ public class FanMyCreatorsPage extends BasePage {
         
         Locator seeAllResults = page.getByText("See all results");
         
-        // Scroll down until element is visible
-        int maxScrollAttempts = 10;
+        // Scroll down until element is visible using configurable parameters
+        int maxScrollAttempts = ConfigReader.getMaxScrollAttempts();
+        int scrollStep = ConfigReader.getScrollStepSize();
+        int waitBetween = ConfigReader.getScrollWaitBetween();
+        
         for (int i = 0; i < maxScrollAttempts; i++) {
             if (seeAllResults.count() > 0 && safeIsVisible(seeAllResults.first())) {
                 break;
             }
-            page.mouse().wheel(0, 400);
-            try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+            page.mouse().wheel(0, scrollStep);
+            try { page.waitForTimeout(waitBetween); } catch (Throwable ignored) { }
         }
         
         waitVisible(seeAllResults.first(), DEFAULT_WAIT);
         seeAllResults.click();
         
         // Wait for screen to buffer and load remaining creators
-        try { page.waitForTimeout(2000); } catch (Throwable ignored) { }
+        waitForPageLoad();
         logger.info("Clicked See all results - loading more creators");
     }
 
     @Step("Scroll to end of creators list")
     public void scrollToEndOfList() {
         logger.info("Scrolling to end of creators list");
-        
-        // Scroll down multiple times to reach the end
-        for (int i = 0; i < 15; i++) {
-            page.mouse().wheel(0, 500);
-            try { page.waitForTimeout(300); } catch (Throwable ignored) { }
-        }
-        
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        smartScroll(1, "end of creators list");
+        waitForUiToSettle();
         logger.info("Scrolled to end of creators list");
     }
 
@@ -140,24 +139,23 @@ public class FanMyCreatorsPage extends BasePage {
     public void clickLastCreatorArrow() {
         logger.info("Clicking on last creator arrow to view details");
         
-        // Try the specific locator for the last creator
-        Locator lastCreatorArrow = page.locator("div:nth-child(19) > .ant-space-item > .ant-row.w-full > .chevron-right");
+        // Use robust approach: find all arrow right icons and click the last one
+        Locator arrowRights = page.getByRole(AriaRole.IMG, 
+                new Page.GetByRoleOptions().setName("arrow right"));
+        int count = arrowRights.count();
         
-        if (lastCreatorArrow.count() > 0 && safeIsVisible(lastCreatorArrow.first())) {
-            lastCreatorArrow.click();
-            logger.info("Clicked on last creator arrow using specific locator");
+        if (count > 0) {
+            // Click the last available arrow
+            Locator lastArrow = arrowRights.nth(count - 1);
+            waitVisible(lastArrow, DEFAULT_WAIT);
+            clickWithConfigurableRetry(lastArrow);
+            logger.info("Clicked on last creator arrow (index {} of {})", count - 1, count);
         } else {
-            // Fallback: click on the last visible arrow right icon
-            Locator arrowRights = page.getByRole(AriaRole.IMG, 
-                    new Page.GetByRoleOptions().setName("arrow right"));
-            int count = arrowRights.count();
-            if (count > 0) {
-                arrowRights.nth(count - 1).click();
-                logger.info("Clicked on last creator arrow using fallback (index {})", count - 1);
-            }
+            logger.warn("No arrow right icons found for creators");
+            throw new RuntimeException("No creators available to interact with");
         }
         
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        waitForUiToSettle();
     }
 
     @Step("Scroll to top of creators list")
@@ -189,7 +187,7 @@ public class FanMyCreatorsPage extends BasePage {
         waitVisible(arrowLeft.first(), DEFAULT_WAIT);
         arrowLeft.click();
         
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        waitForAnimation();
         logger.info("Clicked arrow left");
     }
 

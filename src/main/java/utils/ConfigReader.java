@@ -9,44 +9,51 @@ import org.slf4j.LoggerFactory;
 
 public class ConfigReader {
     private static final Logger logger = LoggerFactory.getLogger(ConfigReader.class);
-    private static Properties properties = new Properties();
-    private static String env;
+    private static final Properties properties;
+    private static final String ENVIRONMENT;
 
     static {
+        Properties tempProperties = new Properties();
+        String tempEnv;
+        
         try (InputStream input = ConfigReader.class.getClassLoader().getResourceAsStream("config.properties")) {
             if (input == null) {
                 logger.error("Unable to find config.properties");
                 throw new RuntimeException("Unable to find config.properties");
             }
-            properties.load(input);
-            env = properties.getProperty("environment", "dev").toLowerCase();
-            if (!env.matches("dev|stage|prod")) {
-                logger.error("Invalid environment: {}. Allowed values: dev, stage, prod", env);
-                throw new RuntimeException("Invalid environment: " + env);
+            tempProperties.load(input);
+            tempEnv = tempProperties.getProperty("environment", "dev").toLowerCase();
+            if (!tempEnv.matches("dev|stage|prod")) {
+                logger.error("Invalid environment: {}. Allowed values: dev, stage, prod", tempEnv);
+                throw new RuntimeException("Invalid environment: " + tempEnv);
             }
-            logger.info("Selected environment: {}", env);
-            logger.info("Loaded properties: {}", properties);
+            logger.info("Selected environment: {}", tempEnv);
+            logger.info("Loaded properties: {}", tempProperties);
         } catch (IOException e) {
             logger.error("Failed to load config.properties", e);
             throw new RuntimeException("Failed to load config.properties", e);
         }
+        
+        // Assign to final static variables
+        properties = tempProperties;
+        ENVIRONMENT = tempEnv;
     }
 
     public static String getLandingPageUrl() {
-        String url = properties.getProperty(env + ".landingPageUrl");
+        String url = properties.getProperty(ENVIRONMENT + ".landingPageUrl");
         if (url == null) {
-            logger.error("Landing URL not found for environment: {}", env);
-            throw new RuntimeException("Landing URL not found for environment: " + env);
+            logger.error("Landing URL not found for environment: {}", ENVIRONMENT);
+            throw new RuntimeException("Landing URL not found for environment: " + ENVIRONMENT);
         }
         logger.info("Loaded base URL: {}", url);
         return url;
     }
 
     public static String getCreatorRegistrationUrl() {
-        String url = properties.getProperty(env + ".creatorRegistrationUrl");
+        String url = properties.getProperty(ENVIRONMENT + ".creatorRegistrationUrl");
         if (url == null) {
-            logger.error("Creator Registration URL not found for environment: {}", env);
-            throw new RuntimeException("Creator Registration URL not found for environment: " + env);
+            logger.error("Creator Registration URL not found for environment: {}", ENVIRONMENT);
+            throw new RuntimeException("Creator Registration URL not found for environment: " + ENVIRONMENT);
         }
         logger.info("Loaded Creator Registration URL: {}", url);
         return url;
@@ -56,13 +63,13 @@ public class ConfigReader {
      * Returns the environment-specific login URL, falling back to base landing URL + /auth/signIn
      */
     public static String getLoginUrl() {
-        String key = env + ".loginUrl";
+        String key = ENVIRONMENT + ".loginUrl";
         String url = properties.getProperty(key);
         if (url == null) {
-            String base = properties.getProperty(env + ".landingPageUrl");
+            String base = properties.getProperty(ENVIRONMENT + ".landingPageUrl");
             if (base == null) {
-                logger.error("Neither {} nor {} present in config.properties", key, env + ".landingPageUrl");
-                throw new RuntimeException("Login URL not configured for environment: " + env);
+                logger.error("Neither {} nor {} present in config.properties", key, ENVIRONMENT + ".landingPageUrl");
+                throw new RuntimeException("Login URL not configured for environment: " + ENVIRONMENT);
             }
             if (base.endsWith("/")) {
                 base = base.substring(0, base.length() - 1);
@@ -74,15 +81,15 @@ public class ConfigReader {
     }
 
     public static String getFanSignupUrl() {
-        String key = env + ".fanSignupUrl";
+        String key = ENVIRONMENT + ".fanSignupUrl";
         String url = properties.getProperty(key);
         if (url == null) {
-            // Fallback to generic property if env-specific is not provided
+            // Fallback to generic property if ENVIRONMENT-specific is not provided
             url = properties.getProperty("fan.signup.url");
         }
         if (url == null) {
-            logger.error("Fan Signup URL not found for environment: {}", env);
-            throw new RuntimeException("Fan Signup URL not found for environment: " + env);
+            logger.error("Fan Signup URL not found for environment: {}", ENVIRONMENT);
+            throw new RuntimeException("Fan Signup URL not found for environment: " + ENVIRONMENT);
         }
         logger.info("Loaded Fan Signup URL: {}", url);
         return url;
@@ -123,7 +130,7 @@ public class ConfigReader {
     }
 
     public static String getEnvironment() {
-        return env;
+        return ENVIRONMENT;
     }
 
     public static Properties getProperties() {
@@ -165,5 +172,68 @@ public class ConfigReader {
      */
     public static int getVisibilityTimeout() {
         return Integer.parseInt(getProperty("timeout.visibility", "20000"));
+    }
+
+    /**
+     * Animation timeout for UI transitions (500ms)
+     */
+    public static int getAnimationTimeout() {
+        return Integer.parseInt(getProperty("timeout.animation", "500"));
+    }
+
+    /**
+     * UI settling timeout (1 second)
+     */
+    public static int getUiSettleTimeout() {
+        return Integer.parseInt(getProperty("timeout.ui.settle", "1000"));
+    }
+
+    /**
+     * Page load timeout (2 seconds)
+     */
+    public static int getPageLoadTimeout() {
+        return Integer.parseInt(getProperty("timeout.page.load", "2000"));
+    }
+
+    /**
+     * Polling interval for wait operations (100ms)
+     */
+    public static int getPollInterval() {
+        return Integer.parseInt(getProperty("timeout.poll.interval", "100"));
+    }
+
+    /**
+     * Maximum scroll attempts for finding elements
+     */
+    public static int getMaxScrollAttempts() {
+        return Integer.parseInt(getProperty("scroll.max.attempts", "15"));
+    }
+
+    /**
+     * Scroll step size in pixels
+     */
+    public static int getScrollStepSize() {
+        return Integer.parseInt(getProperty("scroll.step.size", "500"));
+    }
+
+    /**
+     * Wait between scroll attempts (300ms)
+     */
+    public static int getScrollWaitBetween() {
+        return Integer.parseInt(getProperty("scroll.wait.between", "300"));
+    }
+
+    /**
+     * Maximum retry attempts for element interactions
+     */
+    public static int getElementRetryMax() {
+        return Integer.parseInt(getProperty("element.retry.max", "3"));
+    }
+
+    /**
+     * Delay between element retry attempts (200ms)
+     */
+    public static int getElementRetryDelay() {
+        return Integer.parseInt(getProperty("element.retry.delay", "200"));
     }
 }
