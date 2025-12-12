@@ -1,4 +1,25 @@
-# Twizz Automation (Java + Playwright + TestNG)
+# Twizz Automation (Java 21 + Playwright + TestNG)
+
+## 🚀 Latest Updates
+- **Java 21 LTS**: Upgraded from Java 17 to Java 21 for enhanced performance and long-term support
+- **Enhanced Code Quality**: Comprehensive framework improvements with zero IDE warnings
+- **Optimized Configuration**: Configurable timeouts, robust exception handling, and clean static analysis
+
+## 📋 Prerequisites
+- **Java 21 LTS** (Eclipse Temurin recommended)
+- **Maven 3.6+**
+- **Git**
+
+## 🔧 Quick Setup
+```bash
+# Verify Java 21 installation
+java -version  # Should show: openjdk version "21.x.x"
+
+# Clone and build
+git clone <repository-url>
+cd twizz-automation
+mvn clean compile
+```
 ## Presentation Videos (Creator)
 - Page object: `pages/CreatorPresentationVideosPage`
 - Tests class: `tests/CreatorPresentationVideosTest`

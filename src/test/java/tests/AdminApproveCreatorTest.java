@@ -1,12 +1,16 @@
 package tests;
 
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import com.microsoft.playwright.Tracing;
+
 import pages.AdminCreatorApprovalPage;
 import pages.BaseTestClass;
-import org.testng.annotations.BeforeMethod;
-import com.microsoft.playwright.Tracing;
 import utils.BrowserFactory;
 import utils.ConfigReader;
 
@@ -61,7 +65,7 @@ public class AdminApproveCreatorTest extends BaseTestClass {
                         candidate = fileVal;
                     }
                 }
-            } catch (Exception ignored) {
+            } catch (IOException ignored) {
             }
         }
         // If still null, let the page resolve via config to keep behavior consistent
@@ -85,7 +89,7 @@ public class AdminApproveCreatorTest extends BaseTestClass {
             java.nio.file.Files.createDirectories(out.getParent());
             java.nio.file.Files.writeString(out, approvedUsername, java.nio.charset.StandardCharsets.UTF_8);
             log.info("Persisted approved username to {}", out);
-        } catch (Throwable ignored) {}
+        } catch (IOException ignored) {}
         log.info("Creator '{}' approved successfully via admin dashboard", resolvedUsername);
     }
 }

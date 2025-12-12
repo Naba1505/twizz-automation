@@ -28,7 +28,6 @@ public class FanSubscriptionPage extends BasePage {
     }
 
     @Step("Search and open creator profile")
-    @SuppressWarnings("unused") // Variables used for control flow but IDE doesn't recognize pattern
     public void searchAndOpenCreator(String username) {
         logger.info("[Fan][Subscribe] Searching creator: {}", username);
         // Ensure an input is focused using role SEARCHBOX with name 'Search'
@@ -188,7 +187,6 @@ public class FanSubscriptionPage extends BasePage {
     }
 
     @Step("Confirm payment and complete 3DS test flow")
-    @SuppressWarnings("unused") // Variables used for control flow but IDE doesn't recognize pattern
     public void confirmAndComplete3DS() {
         logger.info("[Fan][Subscribe] Confirming payment and completing 3DS test flow");
         Page appPage = page;

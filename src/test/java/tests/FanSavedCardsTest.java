@@ -1,11 +1,12 @@
 package tests;
 
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
-import io.qameta.allure.Story;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
+
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Story;
 import pages.BaseTestClass;
 import pages.FanLoginPage;
 import pages.FanSavedCardsPage;
@@ -79,7 +80,7 @@ public class FanSavedCardsTest extends BaseTestClass {
     }
 
     @Story("Delete an existing saved card in Settings > Saved Cards")
-    @Test(priority = 2, description = "Navigate to Saved Cards, delete the saved card, and verify it's removed", dependsOnMethods = "fanAddSavedCard")
+    @Test(priority = 2, description = "Navigate to Saved Cards, delete the saved card, and verify it's removed")
     public void fanDeleteSavedCard() {
         // Arrange
         String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
