@@ -1,6 +1,43 @@
 # Changelog
 
-## [Unreleased] - 2025-12-12
+## [Unreleased] - 2025-12-15
+
+### New Feature: Fan Live Events Module
+- **Fan Live Events Test Class** (`FanLiveTest.java`): Complete test coverage for fan joining creator live events
+  - Test 1: Creator creates instant live, Fan joins, comments, and closes
+  - Test 2: Creator schedules live event, Fan buys ticket, Creator cleans up
+  
+- **Fan Live Page Object** (`FanLivePage.java`): New page object for fan live interactions
+  - Navigation: Live icon click, Lives screen assertion, Live/Events tab switching
+  - Instant Live: Join live, payment flow, comment posting, close live
+  - Scheduled Live: Events tab navigation, ticket purchase, payment confirmation
+  
+- **Creator Live Page Enhancements** (`CreatorLivePage.java`): Added instant live and end live methods
+  - `createInstantLiveEveryone15Euro()` - Create instant live with Everyone access and 15€ price
+  - `endLiveStream()` - End live with confirmation dialog handling
+  - Field visibility assertions for Access, Price, Chat, When fields
+  
+- **Browser Factory Enhancement** (`BrowserFactory.java`):
+  - Added camera permission alongside microphone for live streaming
+  - New `createNewContext()` method for multi-user test scenarios (creator + fan isolation)
+
+### Technical Implementation
+- **Dual Browser Context Architecture**: Creator and Fan use separate isolated browser contexts to avoid session conflicts
+- **TestNG XML Runners**: Added `FanLiveTest` to both `testng.xml` and `testng-parallel.xml`
+
+### Files Added
+- `src/test/java/pages/FanLivePage.java` - Fan live events page object
+- `src/test/java/tests/FanLiveTest.java` - Fan live events test class
+
+### Files Modified
+- `src/test/java/pages/CreatorLivePage.java` - Added instant live and end live methods
+- `src/main/java/utils/BrowserFactory.java` - Added camera permission and createNewContext()
+- `testng.xml` - Added FanLiveTest
+- `testng-parallel.xml` - Added FanLiveTest
+
+---
+
+## [Previous] - 2025-12-12
 
 ### Major Upgrade
 - **Java 21 LTS Migration**: Complete upgrade from Java 17 to Java 21

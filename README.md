@@ -1,6 +1,7 @@
 # Twizz Automation (Java 21 + Playwright + TestNG)
 
 ## 🚀 Latest Updates
+- **Fan Live Events Module**: New test coverage for fan joining creator live events (instant and scheduled)
 - **Java 21 LTS**: Upgraded from Java 17 to Java 21 for enhanced performance and long-term support
 - **Enhanced Code Quality**: Comprehensive framework improvements with zero IDE warnings
 - **Optimized Configuration**: Configurable timeouts, robust exception handling, and clean static analysis
@@ -521,6 +522,28 @@ Key entries (with defaults):
 - Run example:
   ```bash
   mvn -Dtest=tests.FanDiscoverTest test
+  ```
+
+## Fan Live Events
+- Page object: `pages/FanLivePage`
+- Test class: `tests/FanLiveTest`
+- Scenarios:
+  1. **Creator creates instant live, Fan joins** (priority 1)
+     - Creator: Login → Navigate to Live → Create instant live (Everyone, 15€) → Start now
+     - Fan: Login (separate context) → Lives screen → Join live → Pay → Comment "Hi" → Close
+     - Creator: End live stream
+  2. **Creator schedules live, Fan buys ticket** (priority 2)
+     - Creator: Login → Navigate to Live → Schedule live event (Everyone, 15€, future date)
+     - Fan: Login (separate context) → Lives screen → Events tab → Buy ticket → Payment
+     - Creator: Delete scheduled live for cleanup
+- Technical notes:
+  - Uses dual browser context architecture (creator + fan isolation)
+  - Microphone and camera permissions granted via BrowserFactory
+- Run examples:
+  ```bash
+  mvn -Dtest=FanLiveTest test
+  mvn -Dtest=FanLiveTest#creatorCreatesInstantLiveFanJoins test
+  mvn -Dtest=FanLiveTest#creatorSchedulesLiveFanBuysTicket test
   ```
 
 ## Fan Subscription (3DS)

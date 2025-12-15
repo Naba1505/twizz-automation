@@ -45,6 +45,7 @@
             <class name="tests.FanDiscoverTest"/>
             <class name="tests.FanSavedCardsTest"/>
             <class name="tests.FanSubscriptionTest"/>
+            <class name="tests.FanLiveTest"/>
         </classes>
     </test>
 </suite>

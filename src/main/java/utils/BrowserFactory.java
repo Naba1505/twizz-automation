@@ -69,8 +69,8 @@ public class BrowserFactory {
                             Integer.parseInt(ConfigReader.getProperty("viewport.width", "1280")),
                             Integer.parseInt(ConfigReader.getProperty("viewport.height", "720"))
                     )
-                    // Grant microphone permission so Chrome does not show an OS-level allow popup
-                    .setPermissions(Arrays.asList("microphone"));
+                    // Grant microphone and camera permissions for live streaming
+                    .setPermissions(Arrays.asList("microphone", "camera"));
             ctx = browser.newContext(options);
             tlContext.set(ctx);
             logger.info("New browser context created for thread {} (incognito: {})", Thread.currentThread().getName(), ConfigReader.isIncognito());
@@ -105,6 +105,28 @@ public class BrowserFactory {
             tlPage.set(p);
         }
         return p;
+    }
+
+    /**
+     * Create a new isolated browser context with microphone and camera permissions.
+     * Useful for tests that need multiple user sessions (e.g., creator + fan).
+     */
+    public static BrowserContext createNewContext() {
+        Browser browser = tlBrowser.get();
+        if (browser == null) {
+            initialize();
+            browser = tlBrowser.get();
+        }
+        Browser.NewContextOptions options = new Browser.NewContextOptions()
+                .setIgnoreHTTPSErrors(true)
+                .setViewportSize(
+                        Integer.parseInt(ConfigReader.getProperty("viewport.width", "1280")),
+                        Integer.parseInt(ConfigReader.getProperty("viewport.height", "720"))
+                )
+                .setPermissions(Arrays.asList("microphone", "camera"));
+        BrowserContext newCtx = browser.newContext(options);
+        logger.info("Created new isolated browser context with microphone and camera permissions");
+        return newCtx;
     }
 
     public static void close() {

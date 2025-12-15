@@ -695,6 +695,105 @@ public class CreatorLivePage extends BasePage {
         logger.info("Live scheduled successfully");
     }
 
+    // ================= Instant Live Flow =================
+
+    @Step("Choose 'Start now' option for instant live")
+    public void chooseStartNow() {
+        page.locator("label").filter(new Locator.FilterOptions().setHasText("Start now")).click();
+        logger.info("Selected 'Start now' option for instant live");
+    }
+
+    @Step("Click Register button to create live event")
+    public void clickRegister() {
+        Locator registerBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(REGISTER_BTN));
+        waitVisible(registerBtn.first(), 15000);
+        clickWithRetry(registerBtn.first(), 2, 200);
+        logger.info("Clicked Register button");
+    }
+
+    @Step("Verify live started successfully")
+    public void verifyLiveStarted() {
+        Locator successText = page.getByText("Your live will be started");
+        waitVisible(successText.first(), 20000);
+        logger.info("Live started successfully - success message visible");
+    }
+
+    @Step("Ensure Access field is displayed")
+    public void assertAccessFieldVisible() {
+        Locator accessText = page.getByText("Access");
+        waitVisible(accessText.first(), 10000);
+        logger.info("Access field is displayed");
+    }
+
+    @Step("Ensure Price field is displayed")
+    public void assertPriceFieldVisible() {
+        Locator priceText = page.getByText("Price");
+        waitVisible(priceText.first(), 10000);
+        logger.info("Price field is displayed");
+    }
+
+    @Step("Ensure Chat field is displayed")
+    public void assertChatFieldVisible() {
+        Locator chatText = page.getByText("Chat");
+        waitVisible(chatText.first(), 10000);
+        logger.info("Chat field is displayed");
+    }
+
+    @Step("Ensure 'When ?' field is displayed")
+    public void assertWhenFieldVisible() {
+        Locator whenText = page.getByText("When ?");
+        waitVisible(whenText.first(), 10000);
+        logger.info("'When ?' field is displayed");
+    }
+
+    @Step("Create instant live event with Everyone access and 15€ price")
+    public void createInstantLiveEveryone15Euro() {
+        assertAccessFieldVisible();
+        setAccessEveryone();
+        assertPriceFieldVisible();
+        setPriceEuro(15);
+        assertChatFieldVisible();
+        enableChatEveryoneIfPresent();
+        assertWhenFieldVisible();
+        chooseStartNow();
+        clickRegister();
+        verifyLiveStarted();
+        logger.info("Instant live created successfully with Everyone access and 15€ price");
+    }
+
+    // ================= End Live Flow (Creator) =================
+
+    @Step("Click close button to end live (creator side)")
+    public void clickCloseLive() {
+        Locator closeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("close"));
+        waitVisible(closeIcon.first(), 10000);
+        clickWithRetry(closeIcon.first(), 2, 200);
+        logger.info("Clicked close button to end live");
+    }
+
+    @Step("Verify end live confirmation dialog")
+    public void assertEndLiveConfirmationVisible() {
+        Locator confirmText = page.getByText("Do you want to end the live ?");
+        waitVisible(confirmText.first(), 10000);
+        logger.info("End live confirmation dialog visible");
+    }
+
+    @Step("Confirm end live by clicking 'Yes, end the live'")
+    public void confirmEndLive() {
+        Locator yesEndBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, end the live"));
+        waitVisible(yesEndBtn.first(), 10000);
+        clickWithRetry(yesEndBtn.first(), 2, 200);
+        logger.info("Confirmed end live");
+    }
+
+    @Step("End live stream (creator side)")
+    public void endLiveStream() {
+        clickCloseLive();
+        assertEndLiveConfirmationVisible();
+        confirmEndLive();
+        logger.info("Live stream ended successfully");
+    }
+
     // Helpers
     private void handleConversionPromptIfPresent() {
         if (page.getByText(CONVERSION_TOOLS_TEXT).count() > 0) {
