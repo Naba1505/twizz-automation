@@ -2,6 +2,46 @@
 
 ## [Unreleased] - 2025-12-15
 
+### New Feature: Fan Help and Contact Module
+- **Fan Help and Contact Test Class** (`FanHelpAndContactTest.java`): Test for fan submitting help and contact form
+  - Fan login → Settings → Help and contact → Fill form → Submit → Assert success message
+  
+- **Fan Help and Contact Page Object** (`FanHelpAndContactPage.java`): Page object for fan help and contact
+  - Navigation: Settings icon click, Help and contact menu click
+  - Form: Subject/Description fields with timestamp, Send button, success toast assertion
+
+### New Feature: Fan Spotted Bug Module
+- **Fan Spotted Bug Test Class** (`FanSpottedBugTest.java`): Test for fan submitting bug report
+  - Fan login → Settings → I've spotted a bug → Fill form → Submit → Assert success message
+  
+- **Fan Spotted Bug Page Object** (`FanSpottedBugPage.java`): Page object for fan bug reporting
+  - Navigation: Settings icon click, Settings title assertion, Spotted bug menu click
+  - Form: Subject/Description fields with timestamp, Send button, success toast assertion
+
+### New Feature: Fan Email Notification Module
+- **Fan Email Notification Test Class** (`FanEmailNotificationTest.java`): Tests for email notification toggle settings
+  - Test 1: Disable all 5 toggles (Push media, Live reminder, Scheduling live, Direct live, Marketing)
+  - Test 2: Enable all 5 toggles
+  
+- **Fan Email Notification Page Object** (`FanEmailNotificationPage.java`): Page object for email notification settings
+  - Navigation: Settings → Email notification screen
+  - Toggle interactions: Force disable with confirmation, Force enable (simple click)
+  - Smart toggle handling based on confirmation dialog presence
+
+### Files Added
+- `src/test/java/pages/FanHelpAndContactPage.java` - Fan help and contact page object
+- `src/test/java/tests/FanHelpAndContactTest.java` - Fan help and contact test class
+- `src/test/java/pages/FanSpottedBugPage.java` - Fan spotted bug page object
+- `src/test/java/tests/FanSpottedBugTest.java` - Fan spotted bug test class
+- `src/test/java/pages/FanEmailNotificationPage.java` - Fan email notification page object
+- `src/test/java/tests/FanEmailNotificationTest.java` - Fan email notification test class
+
+### Files Modified
+- `testng.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest
+- `testng-parallel.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest
+
+---
+
 ### New Feature: Fan Live Events Module
 - **Fan Live Events Test Class** (`FanLiveTest.java`): Complete test coverage for fan joining creator live events
   - Test 1: Creator creates instant live, Fan joins, comments, and closes

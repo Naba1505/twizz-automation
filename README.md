@@ -524,6 +524,59 @@ Key entries (with defaults):
   mvn -Dtest=tests.FanDiscoverTest test
   ```
 
+## Fan Help and Contact
+- Page object: `pages/FanHelpAndContactPage`
+- Test class: `tests/FanHelpAndContactTest`
+- Flow:
+  - Fan login → Home screen → Click Settings icon
+  - Scroll to "Help and contact" → Click
+  - Assert on Help and Contact screen (title visible)
+  - Fill Subject field (with timestamp for reference)
+  - Fill Description field (with timestamp for reference)
+  - Click Send button
+  - Assert success message "Your message has been sent"
+- Run example:
+  ```bash
+  mvn -Dtest=FanHelpAndContactTest test
+  ```
+
+## Fan Spotted Bug
+- Page object: `pages/FanSpottedBugPage`
+- Test class: `tests/FanSpottedBugTest`
+- Flow:
+  - Fan login → Home screen → Click Settings icon
+  - Assert on Settings screen (title visible)
+  - Scroll to "I've spotted a bug" → Click
+  - Assert on screen (title visible)
+  - Fill Subject field (with timestamp for reference)
+  - Fill Description field (with timestamp for reference)
+  - Click Send button
+  - Assert success message "Your message has been sent"
+- Run example:
+  ```bash
+  mvn -Dtest=FanSpottedBugTest test
+  ```
+
+## Fan Email Notification
+- Page object: `pages/FanEmailNotificationPage`
+- Test class: `tests/FanEmailNotificationTest`
+- Tests:
+  1. **Disable all toggles** (priority 1)
+     - Fan login → Settings → Email notification
+     - Disable all 5 toggles with confirmation dialog:
+       - Push media from a creator
+       - Live reminder
+       - Scheduling a live
+       - Direct live
+       - Marketing
+  2. **Enable all toggles** (priority 2)
+     - Fan login → Settings → Email notification
+     - Enable all 5 toggles (simple click, no confirmation)
+- Run example:
+  ```bash
+  mvn -Dtest=FanEmailNotificationTest test
+  ```
+
 ## Fan Live Events
 - Page object: `pages/FanLivePage`
 - Test class: `tests/FanLiveTest`

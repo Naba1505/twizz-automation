@@ -46,6 +46,9 @@
             <class name="tests.FanSavedCardsTest"/>
             <class name="tests.FanSubscriptionTest"/>
             <class name="tests.FanLiveTest"/>
+            <class name="tests.FanHelpAndContactTest"/>
+            <class name="tests.FanSpottedBugTest"/>
+            <class name="tests.FanEmailNotificationTest"/>
         </classes>
     </test>
 </suite>
