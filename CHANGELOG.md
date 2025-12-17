@@ -70,6 +70,26 @@
   - Navigation: Settings → Disconnect button
   - Verification: Login text visible after logout
 
+### New Feature: Fan Messaging Module
+- **Fan Messaging Test Class** (`FanMessagingTest.java`): Complete 5-step messaging flow between fan and creator
+  - Step 1: Fan login → Messaging → Send message to creator (with timestamp)
+  - Step 2: Creator login → Accept message → Set price 15€ → Reply (with timestamp)
+  - Step 3: Fan reload → Accept paid message → Complete payment (Registered card)
+  - Step 4: Creator → To Deliver → Upload and send media image
+  - Step 5: Fan reload → Preview media → Close preview
+  
+- **Fan Messaging Page Object** (`FanMessagingPage.java`): Page object for fan messaging
+  - Navigation: Messaging icon, Your subscriptions tab, Creator conversation
+  - Message: Type and send message, verify message visible
+  - Payment: Accept media button, Secure payment, Registered card, Confirm, Everything is OK
+  - Media preview: Preview text click, Close button
+  
+- **Creator Messaging Page Enhancements** (`CreatorMessagingPage.java`): Added fan conversation methods
+  - `verifyGeneralTabSelected()` - Verify General tab is default
+  - `clickOnFanConversation()` - Click on fan in conversation list
+  - `acceptFanMessageAndReply()` - Accept, set price, type reply, send
+  - `sendMediaToFan()` - To Deliver tab, upload media, send
+
 ### Files Added
 - `src/test/java/pages/FanHelpAndContactPage.java` - Fan help and contact page object
 - `src/test/java/tests/FanHelpAndContactTest.java` - Fan help and contact test class
@@ -85,10 +105,13 @@
 - `src/test/java/tests/FanPersonalInfoTest.java` - Fan personal information test class
 - `src/test/java/pages/FanLogoutPage.java` - Fan logout page object
 - `src/test/java/tests/FanLogoutTest.java` - Fan logout test class
+- `src/test/java/pages/FanMessagingPage.java` - Fan messaging page object
+- `src/test/java/tests/FanMessagingTest.java` - Fan messaging test class
 
 ### Files Modified
-- `testng.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest, FanTermsAndPoliciesTest, FanLanguageTest, FanPersonalInfoTest, FanLogoutTest
-- `testng-parallel.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest, FanTermsAndPoliciesTest, FanLanguageTest, FanPersonalInfoTest, FanLogoutTest
+- `testng.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest, FanTermsAndPoliciesTest, FanLanguageTest, FanPersonalInfoTest, FanLogoutTest, FanMessagingTest
+- `testng-parallel.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest, FanTermsAndPoliciesTest, FanLanguageTest, FanPersonalInfoTest, FanLogoutTest, FanMessagingTest
+- `src/test/java/pages/CreatorMessagingPage.java` - Added fan conversation methods for messaging flow
 
 ---
 

@@ -631,6 +631,24 @@ Key entries (with defaults):
   mvn -Dtest=FanLogoutTest test
   ```
 
+## Fan Messaging
+- Page objects: `pages/FanMessagingPage`, `pages/CreatorMessagingPage`
+- Test class: `tests/FanMessagingTest`
+- Complete 5-step messaging flow between fan and creator:
+  1. **Fan sends message**: Login → Messaging → Click creator "Smith" → Send "Hi Creator [timestamp]"
+  2. **Creator accepts and replies**: Login → Messaging → General tab → Click fan "Paul Lewis" → Accept → Set price 15€ → Reply "Hi Fan [timestamp]"
+  3. **Fan accepts paid message**: Reload → Accept media → Secure payment → Registered card → Confirm → Everything is OK
+  4. **Creator sends media**: Profile → Messaging → To Deliver tab → Click fan → Plus icon → My Device → Upload image → Send
+  5. **Fan views media**: Reload → Click "Preview" → Close preview
+- Technical notes:
+  - Uses dual browser context (fan + creator isolation)
+  - Messages include timestamps for uniqueness
+  - Handles payment flow with registered card
+- Run example:
+  ```bash
+  mvn -Dtest=FanMessagingTest test
+  ```
+
 ## Fan Live Events
 - Page object: `pages/FanLivePage`
 - Test class: `tests/FanLiveTest`

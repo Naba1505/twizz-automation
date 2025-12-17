@@ -54,6 +54,7 @@
             <class name="tests.FanLanguageTest"/>
             <class name="tests.FanPersonalInfoTest"/>
             <class name="tests.FanLogoutTest"/>
+            <class name="tests.FanMessagingTest"/>
         </classes>
     </test>
 </suite>

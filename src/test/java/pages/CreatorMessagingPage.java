@@ -1753,4 +1753,181 @@ public class CreatorMessagingPage extends BasePage {
         waitVisible(messageInput(), (int)Math.max(DEFAULT_WAIT, timeoutMs));
     }
 
+    // ================= Fan Conversation Flow Methods =================
+
+    @Step("Verify General tab is selected by default")
+    public void verifyGeneralTabSelected() {
+        waitVisible(page.getByText("General"), DEFAULT_WAIT);
+        logger.info("[Messaging] 'General' tab visible (default)");
+    }
+
+    @Step("Click on fan conversation: {fanName}")
+    public void clickOnFanConversation(String fanName) {
+        logger.info("[Messaging] Looking for fan conversation: {}", fanName);
+        // Wait for conversation list to load
+        page.waitForTimeout(2000);
+        Locator fan = page.getByText(fanName).first();
+        waitVisible(fan, DEFAULT_WAIT);
+        fan.scrollIntoViewIfNeeded();
+        clickWithRetry(fan, 2, 200);
+        page.waitForTimeout(2000); // Wait for conversation to load
+        // Wait for conversation screen to be ready (message input visible)
+        waitVisible(page.getByPlaceholder("Your message"), DEFAULT_WAIT);
+        logger.info("[Messaging] Clicked on fan: {} - conversation screen loaded", fanName);
+    }
+
+    @Step("Verify message from fan is visible: {message}")
+    public void verifyMessageVisible(String message) {
+        logger.info("[Messaging] Looking for message: {}", message);
+        // Wait a bit for messages to load
+        page.waitForTimeout(2000);
+        Locator msg = page.getByText(message).first();
+        waitVisible(msg, DEFAULT_WAIT);
+        logger.info("[Messaging] Message visible: {}", message);
+    }
+
+    @Step("Click Accept button to accept fan message")
+    public void clickAcceptButton() {
+        Locator acceptBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
+        waitVisible(acceptBtn, DEFAULT_WAIT);
+        clickWithRetry(acceptBtn, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked Accept button");
+    }
+
+    @Step("Verify Amount field is displayed")
+    public void verifyAmountFieldDisplayed() {
+        Locator amount = page.getByText("Amount", new Page.GetByTextOptions().setExact(true));
+        waitVisible(amount, DEFAULT_WAIT);
+        logger.info("[Messaging] Amount field displayed");
+    }
+
+    @Step("Set price: {price}")
+    public void setPrice(String price) {
+        // Use label filter with regex pattern for price like "15€"
+        Locator priceOption = page.locator("label").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^" + price + "$")));
+        waitVisible(priceOption, DEFAULT_WAIT);
+        clickWithRetry(priceOption, 2, 200);
+        logger.info("[Messaging] Set price to: {}", price);
+    }
+
+    @Step("Type reply message: {message}")
+    public void typeReplyMessage(String message) {
+        // Use getByRole with name "Your message..." as per codegen
+        Locator input = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Your message..."));
+        waitVisible(input, DEFAULT_WAIT);
+        input.click();
+        input.fill(message);
+        logger.info("[Messaging] Typed reply: {}", message);
+    }
+
+    @Step("Click Send button")
+    public void clickSendButton() {
+        // Send button is inside a Dialog, use Dialog context
+        Locator sendBtn = page.getByRole(AriaRole.DIALOG).getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Send"));
+        waitVisible(sendBtn, DEFAULT_WAIT);
+        clickWithRetry(sendBtn, 2, 200);
+        page.waitForTimeout(2000); // Wait for message to send
+        logger.info("[Messaging] Clicked Send button");
+    }
+
+    @Step("Click To Deliver tab")
+    public void clickToDeliverTabForConversation() {
+        Locator toDeliver = page.getByText("To Deliver");
+        waitVisible(toDeliver, DEFAULT_WAIT);
+        clickWithRetry(toDeliver, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked 'To Deliver' tab");
+    }
+
+    @Step("Click plus icon to add media")
+    public void clickPlusIconForMedia() {
+        Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+        waitVisible(plus, DEFAULT_WAIT);
+        clickWithRetry(plus, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked plus icon to add media");
+    }
+
+    @Step("Verify Importation popup displayed")
+    public void verifyImportationPopup() {
+        Locator importation = page.getByText("Importation");
+        waitVisible(importation, DEFAULT_WAIT);
+        logger.info("[Messaging] Importation popup displayed");
+    }
+
+    @Step("Click My Device button")
+    public void clickMyDeviceButton() {
+        Locator myDevice = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
+        waitVisible(myDevice, DEFAULT_WAIT);
+        clickWithRetry(myDevice, 2, 200);
+        logger.info("[Messaging] Clicked My Device button");
+    }
+
+    @Step("Upload media file: {filePath}")
+    public void uploadMediaFile(java.nio.file.Path filePath) {
+        if (filePath == null || !java.nio.file.Files.exists(filePath)) {
+            throw new RuntimeException("Media file not found: " + filePath);
+        }
+        logger.info("[Messaging] Looking for file input to upload: {}", filePath.getFileName());
+        // Wait for file input to appear after clicking My Device
+        page.waitForTimeout(1000);
+        // Find the file input element
+        Locator fileInput = page.locator("input[type='file']").first();
+        fileInput.setInputFiles(filePath);
+        page.waitForTimeout(3000); // Wait for file to upload
+        logger.info("[Messaging] Uploaded media file: {}", filePath.getFileName());
+    }
+
+    @Step("Click Send button for media")
+    public void clickSendButtonForMedia() {
+        Locator sendBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send"));
+        waitVisible(sendBtn, DEFAULT_WAIT);
+        clickWithRetry(sendBtn, 2, 200);
+        page.waitForTimeout(2000);
+        logger.info("[Messaging] Clicked Send button for media");
+    }
+
+    @Step("Verify Delivered text displayed")
+    public void verifyDeliveredText() {
+        Locator delivered = page.getByText("Delivered").nth(1);
+        waitVisible(delivered, DEFAULT_WAIT);
+        logger.info("[Messaging] Delivered text displayed");
+    }
+
+    /**
+     * Accept fan message, set price, and reply.
+     */
+    @Step("Accept fan message and reply with price")
+    public void acceptFanMessageAndReply(String fanMessage, String price, String replyMessage) {
+        verifyMessageVisible(fanMessage);
+        clickAcceptButton();
+        verifyAmountFieldDisplayed();
+        setPrice(price);
+        typeReplyMessage(replyMessage);
+        clickSendButton();
+        // Wait for message to be sent - just wait for the dialog to close and message to appear
+        page.waitForTimeout(2000);
+        // Verify reply message is visible in conversation (use first() to get any occurrence)
+        Locator replyMsg = page.getByText(replyMessage).first();
+        waitVisible(replyMsg, DEFAULT_WAIT);
+        logger.info("[Messaging] Accepted fan message and replied with price {}", price);
+    }
+
+    /**
+     * Send media to fan in To Deliver conversation.
+     */
+    @Step("Send media to fan")
+    public void sendMediaToFan(String fanName, java.nio.file.Path mediaPath) {
+        clickToDeliverTabForConversation();
+        clickOnFanConversation(fanName);
+        clickPlusIconForMedia();
+        verifyImportationPopup();
+        clickMyDeviceButton();
+        uploadMediaFile(mediaPath);
+        clickSendButtonForMedia();
+        verifyDeliveredText();
+        logger.info("[Messaging] Media sent to fan: {}", fanName);
+    }
+
 }
