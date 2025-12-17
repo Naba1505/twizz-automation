@@ -49,6 +49,10 @@
             <class name="tests.FanHelpAndContactTest"/>
             <class name="tests.FanSpottedBugTest"/>
             <class name="tests.FanEmailNotificationTest"/>
+            <class name="tests.FanTermsAndPoliciesTest"/>
+            <class name="tests.FanLanguageTest"/>
+            <class name="tests.FanPersonalInfoTest"/>
+            <class name="tests.FanLogoutTest"/>
         </classes>
     </test>
 </suite>

@@ -28,6 +28,48 @@
   - Toggle interactions: Force disable with confirmation, Force enable (simple click)
   - Smart toggle handling based on confirmation dialog presence
 
+### New Feature: Fan Terms and Policies Module
+- **Fan Terms and Policies Test Class** (`FanTermsAndPoliciesTest.java`): Single test verifying all 3 policy pages
+  - Terms and Conditions of Sale: Navigate, scroll to end, scroll back, return
+  - Community Regulations: Navigate, scroll to end, scroll back, return
+  - Content Policy: Navigate, scroll to end, scroll back, return
+  
+- **Fan Terms and Policies Page Object** (`FanTermsAndPoliciesPage.java`): Page object for policy verification
+  - Navigation: Settings → Each policy screen
+  - Scroll verification: Scroll to end text, scroll back to title
+  - Back navigation: Arrow left click to return to Settings
+
+### New Feature: Fan Language Module
+- **Fan Language Test Class** (`FanLanguageTest.java`): Single test switching through all available languages
+  - English → French → Spanish → English cycle
+  - Verifies title changes according to selected language
+  
+- **Fan Language Page Object** (`FanLanguagePage.java`): Page object for language switching
+  - Navigation: Settings → Language screen
+  - Language selection: English, Français, Español with checkbox verification
+  - Title assertions in each language (Language/Langue/Idioma)
+
+### New Feature: Fan Personal Information Module
+- **Fan Personal Info Test Class** (`FanPersonalInfoTest.java`): Single test verifying and updating personal info
+  - Verifies all fields visible (Identity, User name, Date of birth, Account type)
+  - Verifies locked fields with lock icons
+  - Updates email and phone number
+  - Verifies success message after save
+  
+- **Fan Personal Info Page Object** (`FanPersonalInfoPage.java`): Page object for personal information
+  - Field verification: Identity, User name, Date of birth, Account type
+  - Lock icon verification for non-editable fields
+  - Email and phone number update methods
+  - Register button and success message verification
+
+### New Feature: Fan Logout Module
+- **Fan Logout Test Class** (`FanLogoutTest.java`): Single test for fan logout functionality
+  - Fan login → Settings → Click Disconnect → Verify Login page
+  
+- **Fan Logout Page Object** (`FanLogoutPage.java`): Page object for logout
+  - Navigation: Settings → Disconnect button
+  - Verification: Login text visible after logout
+
 ### Files Added
 - `src/test/java/pages/FanHelpAndContactPage.java` - Fan help and contact page object
 - `src/test/java/tests/FanHelpAndContactTest.java` - Fan help and contact test class
@@ -35,10 +77,18 @@
 - `src/test/java/tests/FanSpottedBugTest.java` - Fan spotted bug test class
 - `src/test/java/pages/FanEmailNotificationPage.java` - Fan email notification page object
 - `src/test/java/tests/FanEmailNotificationTest.java` - Fan email notification test class
+- `src/test/java/pages/FanTermsAndPoliciesPage.java` - Fan terms and policies page object
+- `src/test/java/tests/FanTermsAndPoliciesTest.java` - Fan terms and policies test class
+- `src/test/java/pages/FanLanguagePage.java` - Fan language page object
+- `src/test/java/tests/FanLanguageTest.java` - Fan language test class
+- `src/test/java/pages/FanPersonalInfoPage.java` - Fan personal information page object
+- `src/test/java/tests/FanPersonalInfoTest.java` - Fan personal information test class
+- `src/test/java/pages/FanLogoutPage.java` - Fan logout page object
+- `src/test/java/tests/FanLogoutTest.java` - Fan logout test class
 
 ### Files Modified
-- `testng.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest
-- `testng-parallel.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest
+- `testng.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest, FanTermsAndPoliciesTest, FanLanguageTest, FanPersonalInfoTest, FanLogoutTest
+- `testng-parallel.xml` - Added FanHelpAndContactTest, FanSpottedBugTest, FanEmailNotificationTest, FanTermsAndPoliciesTest, FanLanguageTest, FanPersonalInfoTest, FanLogoutTest
 
 ---
 

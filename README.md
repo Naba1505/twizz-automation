@@ -577,6 +577,60 @@ Key entries (with defaults):
   mvn -Dtest=FanEmailNotificationTest test
   ```
 
+## Fan Terms and Policies
+- Page object: `pages/FanTermsAndPoliciesPage`
+- Test class: `tests/FanTermsAndPoliciesTest`
+- Flow:
+  - Fan login → Home screen → Settings
+  - **Terms and Conditions of Sale:** Click → Scroll to end → Scroll back to top → Navigate back
+  - **Community Regulations:** Click → Scroll to end → Scroll back to top → Navigate back
+  - **Content Policy:** Click → Scroll to end → Scroll back to top → Navigate back
+  - Assert back on Settings screen
+- Run example:
+  ```bash
+  mvn -Dtest=FanTermsAndPoliciesTest test
+  ```
+
+## Fan Language
+- Page object: `pages/FanLanguagePage`
+- Test class: `tests/FanLanguageTest`
+- Flow:
+  - Fan login → Home screen → Settings
+  - **English → French:** Click "Language" → Select "Français" → Assert "Langue" title → Back
+  - **French → Spanish:** Click "Langue" → Select "Español" → Assert "Idioma" title → Back
+  - **Spanish → English:** Click "Idioma" → Select "English" → Assert "Language" title → Back
+  - Assert "Language" menu visible (back to English)
+- Run example:
+  ```bash
+  mvn -Dtest=FanLanguageTest test
+  ```
+
+## Fan Personal Information
+- Page object: `pages/FanPersonalInfoPage`
+- Test class: `tests/FanPersonalInfoTest`
+- Flow:
+  - Fan login → Home screen → Settings → Personal Information
+  - Verify fields visible: Identity (locked), User name (locked), Date of birth, Account type (Fan)
+  - Update email and phone number fields
+  - Click Register button
+  - Verify success message: "Updated Personal Information"
+- Run example:
+  ```bash
+  mvn -Dtest=FanPersonalInfoTest test
+  ```
+
+## Fan Logout
+- Page object: `pages/FanLogoutPage`
+- Test class: `tests/FanLogoutTest`
+- Flow:
+  - Fan login → Home screen → Settings
+  - Click "Disconnect" button
+  - Verify "Login" text visible (user on login page)
+- Run example:
+  ```bash
+  mvn -Dtest=FanLogoutTest test
+  ```
+
 ## Fan Live Events
 - Page object: `pages/FanLivePage`
 - Test class: `tests/FanLiveTest`
