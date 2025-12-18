@@ -1786,9 +1786,39 @@ public class CreatorMessagingPage extends BasePage {
         logger.info("[Messaging] Message visible: {}", message);
     }
 
+    @Step("Click Accept button for specific message: {message}")
+    public void clickAcceptButtonForMessage(String message) {
+        logger.info("[Messaging] Looking for Accept button near message: {}", message);
+        // Find the message container that contains the exact message text
+        // Then find the Accept button within that message's context
+        // The message and Accept button are in the same message bubble/container
+        Locator messageLocator = page.getByText(message).first();
+        waitVisible(messageLocator, DEFAULT_WAIT);
+        
+        // Scroll to the message to ensure it's in view
+        messageLocator.scrollIntoViewIfNeeded();
+        page.waitForTimeout(500);
+        
+        // Find the Accept button that follows this specific message
+        // Use locator chain: find message, go to parent container, find Accept button
+        Locator messageContainer = messageLocator.locator("xpath=ancestor::div[contains(@class, 'message') or contains(@class, 'bubble') or contains(@class, 'chat')]/..");
+        Locator acceptBtn = messageContainer.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Accept")).first();
+        
+        // If not found in container, fall back to finding first Accept button after the message
+        if (!acceptBtn.isVisible()) {
+            logger.info("[Messaging] Accept button not found in container, using first visible Accept button");
+            acceptBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept")).first();
+        }
+        
+        waitVisible(acceptBtn, DEFAULT_WAIT);
+        clickWithRetry(acceptBtn, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked Accept button for message: {}", message);
+    }
+
     @Step("Click Accept button to accept fan message")
     public void clickAcceptButton() {
-        Locator acceptBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
+        Locator acceptBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept")).first();
         waitVisible(acceptBtn, DEFAULT_WAIT);
         clickWithRetry(acceptBtn, 2, 200);
         page.waitForTimeout(1000);
@@ -1809,6 +1839,33 @@ public class CreatorMessagingPage extends BasePage {
         waitVisible(priceOption, DEFAULT_WAIT);
         clickWithRetry(priceOption, 2, 200);
         logger.info("[Messaging] Set price to: {}", price);
+    }
+
+    @Step("Set custom price: {amount}")
+    public void setCustomPrice(String amount) {
+        // Verify Personalized amount field is displayed
+        Locator personalizedAmount = page.getByText("Personalized amount");
+        waitVisible(personalizedAmount, DEFAULT_WAIT);
+        logger.info("[Messaging] Personalized amount field displayed");
+        
+        // Click and fill custom amount
+        Locator customAmountInput = page.locator("input[name=\"customAmount\"]");
+        waitVisible(customAmountInput, DEFAULT_WAIT);
+        customAmountInput.click();
+        customAmountInput.fill(amount);
+        logger.info("[Messaging] Set custom price to: {}", amount);
+    }
+
+    @Step("Verify Free is selected by default")
+    public void verifyFreeIsSelected() {
+        // Verify Amount field is displayed
+        Locator amount = page.getByText("Amount", new Page.GetByTextOptions().setExact(true));
+        waitVisible(amount, DEFAULT_WAIT);
+        
+        // Verify Free radio button is selected (first radio button)
+        Locator freeRadio = page.locator(".ant-radio-button").first();
+        waitVisible(freeRadio, DEFAULT_WAIT);
+        logger.info("[Messaging] Free option is selected by default");
     }
 
     @Step("Type reply message: {message}")
@@ -1869,23 +1926,50 @@ public class CreatorMessagingPage extends BasePage {
         if (filePath == null || !java.nio.file.Files.exists(filePath)) {
             throw new RuntimeException("Media file not found: " + filePath);
         }
-        logger.info("[Messaging] Looking for file input to upload: {}", filePath.getFileName());
-        // Wait for file input to appear after clicking My Device
-        page.waitForTimeout(1000);
-        // Find the file input element
+        logger.info("[Messaging] Uploading file directly via input: {}", filePath.getFileName());
+        // Use setInputFiles directly on hidden file input - no OS dialog needed
         Locator fileInput = page.locator("input[type='file']").first();
         fileInput.setInputFiles(filePath);
-        page.waitForTimeout(3000); // Wait for file to upload
-        logger.info("[Messaging] Uploaded media file: {}", filePath.getFileName());
+        logger.info("[Messaging] File selected: {}", filePath.getFileName());
+        // Wait for file to be attached and preview to appear
+        page.waitForTimeout(2000);
+        logger.info("[Messaging] Media file attached: {}", filePath.getFileName());
+    }
+
+    @Step("Wait for media upload/send to complete")
+    public void waitForMediaSendComplete() {
+        logger.info("[Messaging] Waiting for media upload/send to complete...");
+        
+        // Wait for any upload spinner/progress indicator to disappear
+        // Common patterns: .ant-spin, .loading, progress bar, etc.
+        Locator spinner = page.locator(".ant-spin, .ant-spin-spinning, [class*='loading'], [class*='progress']").first();
+        
+        // Wait for spinner to disappear (if it exists) - video uploads take longer
+        int maxWaitSeconds = 60; // Max wait for video upload after Send
+        int waited = 0;
+        while (spinner.isVisible() && waited < maxWaitSeconds) {
+            page.waitForTimeout(1000);
+            waited++;
+            if (waited % 5 == 0) {
+                logger.info("[Messaging] Upload/send in progress... {}s", waited);
+            }
+        }
+        
+        // Additional wait to ensure upload is fully processed
+        page.waitForTimeout(2000);
+        logger.info("[Messaging] Media upload/send completed after {}s", waited);
     }
 
     @Step("Click Send button for media")
     public void clickSendButtonForMedia() {
+        logger.info("[Messaging] Looking for Send button for media");
         Locator sendBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send"));
         waitVisible(sendBtn, DEFAULT_WAIT);
         clickWithRetry(sendBtn, 2, 200);
-        page.waitForTimeout(2000);
         logger.info("[Messaging] Clicked Send button for media");
+        
+        // Wait for upload/send to complete AFTER clicking Send
+        waitForMediaSendComplete();
     }
 
     @Step("Verify Delivered text displayed")
@@ -1900,8 +1984,8 @@ public class CreatorMessagingPage extends BasePage {
      */
     @Step("Accept fan message and reply with price")
     public void acceptFanMessageAndReply(String fanMessage, String price, String replyMessage) {
-        verifyMessageVisible(fanMessage);
-        clickAcceptButton();
+        // Find and click Accept for the specific message with timestamp
+        clickAcceptButtonForMessage(fanMessage);
         verifyAmountFieldDisplayed();
         setPrice(price);
         typeReplyMessage(replyMessage);
@@ -1915,19 +1999,201 @@ public class CreatorMessagingPage extends BasePage {
     }
 
     /**
+     * Accept fan message, set custom price, and reply.
+     */
+    @Step("Accept fan message and reply with custom price")
+    public void acceptFanMessageAndReplyWithCustomPrice(String fanMessage, String customAmount, String replyMessage) {
+        // Find and click Accept for the specific message with timestamp
+        clickAcceptButtonForMessage(fanMessage);
+        verifyAmountFieldDisplayed();
+        setCustomPrice(customAmount);
+        typeReplyMessage(replyMessage);
+        clickSendButton();
+        // Wait for message to be sent - just wait for the dialog to close and message to appear
+        page.waitForTimeout(2000);
+        // Verify reply message is visible in conversation (use first() to get any occurrence)
+        Locator replyMsg = page.getByText(replyMessage).first();
+        waitVisible(replyMsg, DEFAULT_WAIT);
+        logger.info("[Messaging] Accepted fan message and replied with custom price {}", customAmount);
+    }
+
+    /**
+     * Accept fan message with FREE price and reply.
+     */
+    @Step("Accept fan message and reply with free price")
+    public void acceptFanMessageAndReplyFree(String fanMessage, String replyMessage) {
+        // Find and click Accept for the specific message with timestamp
+        clickAcceptButtonForMessage(fanMessage);
+        // Verify Free is selected by default
+        verifyFreeIsSelected();
+        typeReplyMessage(replyMessage);
+        clickSendButton();
+        // Wait for message to be sent - just wait for the dialog to close and message to appear
+        page.waitForTimeout(2000);
+        // Verify reply message is visible in conversation (use first() to get any occurrence)
+        Locator replyMsg = page.getByText(replyMessage).first();
+        waitVisible(replyMsg, DEFAULT_WAIT);
+        logger.info("[Messaging] Accepted fan message and replied with FREE price");
+    }
+
+    /**
      * Send media to fan in To Deliver conversation.
      */
     @Step("Send media to fan")
     public void sendMediaToFan(String fanName, java.nio.file.Path mediaPath) {
         clickToDeliverTabForConversation();
         clickOnFanConversation(fanName);
-        clickPlusIconForMedia();
-        verifyImportationPopup();
-        clickMyDeviceButton();
+        // Upload file directly via hidden input - no need to click plus or My Device
+        // This prevents OS file dialog from opening
         uploadMediaFile(mediaPath);
         clickSendButtonForMedia();
         verifyDeliveredText();
         logger.info("[Messaging] Media sent to fan: {}", fanName);
+    }
+
+    // ================= Quick Files Upload Methods =================
+
+    @Step("Click Quick Files button")
+    public void clickQuickFilesButton() {
+        Locator quickFiles = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
+        waitVisible(quickFiles, DEFAULT_WAIT);
+        clickWithRetry(quickFiles, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked Quick Files button");
+    }
+
+    @Step("Click Selected Photos & videos tab")
+    public void clickPhotosVideosTab() {
+        // Tab is a div with class quick-file-switch containing "Photos & videos" text
+        Locator photosVideos = page.locator("div.quick-file-switch").filter(new Locator.FilterOptions().setHasText("Photos & videos")).first();
+        waitVisible(photosVideos, DEFAULT_WAIT);
+        clickWithRetry(photosVideos, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked Photos & videos tab");
+    }
+
+    @Step("Click Audios tab")
+    public void clickAudiosTab() {
+        // Tab is a div with class quick-file-switch containing "Audios" text
+        Locator audios = page.locator("div.quick-file-switch").filter(new Locator.FilterOptions().setHasText("Audios")).first();
+        waitVisible(audios, DEFAULT_WAIT);
+        clickWithRetry(audios, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked Audios tab");
+    }
+
+    @Step("Click on mix album")
+    public void clickMixAlbum() {
+        // Click on album row where title contains "mixalbum"
+        // Structure: div.qf-row > div.qf-row-middle > div.qf-row-title
+        Locator mixAlbum = page.locator("div.qf-row-title").filter(new Locator.FilterOptions().setHasText(Pattern.compile("mixalbum"))).first();
+        waitVisible(mixAlbum, DEFAULT_WAIT);
+        clickWithRetry(mixAlbum, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked on mix album");
+    }
+
+    @Step("Click on audio album")
+    public void clickAudioAlbum() {
+        // Click on album row where title contains "audioalbum"
+        // Structure: div.qf-row > div.qf-row-middle > div.qf-row-title
+        Locator audioAlbum = page.locator("div.qf-row-title").filter(new Locator.FilterOptions().setHasText(Pattern.compile("audioalbum"))).first();
+        waitVisible(audioAlbum, DEFAULT_WAIT);
+        clickWithRetry(audioAlbum, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked on audio album");
+    }
+
+    @Step("Verify inside album screen")
+    public void verifyInsideAlbumScreen() {
+        Locator heading = page.getByText("Select the media you want to");
+        waitVisible(heading, DEFAULT_WAIT);
+        logger.info("[Messaging] Inside album screen - heading visible");
+    }
+
+    @Step("Select image from album")
+    public void selectImageFromAlbum() {
+        Locator image = page.locator(".cover").first();
+        waitVisible(image, DEFAULT_WAIT);
+        clickWithRetry(image, 2, 200);
+        page.waitForTimeout(500);
+        logger.info("[Messaging] Selected image from album");
+    }
+
+    @Step("Select video from album")
+    public void selectVideoFromAlbum() {
+        Locator video = page.locator("div:nth-child(4) > .cover");
+        waitVisible(video, DEFAULT_WAIT);
+        clickWithRetry(video, 2, 200);
+        page.waitForTimeout(500);
+        logger.info("[Messaging] Selected video from album");
+    }
+
+    @Step("Select audio from album")
+    public void selectAudioFromAlbum() {
+        // Select audio file - name pattern "audio A5 11/25/2025"
+        Locator audio = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("^audio A5")));
+        waitVisible(audio, DEFAULT_WAIT);
+        clickWithRetry(audio, 2, 200);
+        page.waitForTimeout(500);
+        logger.info("[Messaging] Selected audio from album");
+    }
+
+    @Step("Click Select button")
+    public void clickSelectButton() {
+        Locator select = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select"));
+        waitVisible(select, DEFAULT_WAIT);
+        clickWithRetry(select, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked Select button");
+    }
+
+    @Step("Click Select and send button")
+    public void clickSelectAndSendButton() {
+        Locator selectAndSend = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select and send").setExact(true));
+        waitVisible(selectAndSend, DEFAULT_WAIT);
+        clickWithRetry(selectAndSend, 2, 200);
+        page.waitForTimeout(1000);
+        logger.info("[Messaging] Clicked Select and send button");
+    }
+
+    /**
+     * Send mixed media (image + video + audio) to fan via Quick Files.
+     */
+    @Step("Send mixed media to fan via Quick Files")
+    public void sendMixedMediaToFanViaQuickFiles(String fanName) {
+        clickToDeliverTabForConversation();
+        clickOnFanConversation(fanName);
+
+        // Step 1: Click plus and open Quick Files for Photos & Videos
+        clickPlusIconForMedia();
+        verifyImportationPopup();
+        clickQuickFilesButton();
+        clickPhotosVideosTab(); // Ensure Photos & videos is selected
+        clickMixAlbum();
+        verifyInsideAlbumScreen();
+
+        // Select image and video
+        selectImageFromAlbum();
+        selectVideoFromAlbum();
+        clickSelectButton();
+
+        // Step 2: Click plus again for Audio
+        clickPlusIconForMedia();
+        verifyImportationPopup();
+        clickQuickFilesButton();
+        clickAudiosTab();
+        clickAudioAlbum();
+        verifyInsideAlbumScreen();
+
+        // Select audio and send
+        selectAudioFromAlbum();
+        clickSelectAndSendButton();
+
+        // Final send
+        clickSendButtonForMedia();
+        verifyDeliveredText();
+        logger.info("[Messaging] Mixed media sent to fan: {}", fanName);
     }
 
 }
