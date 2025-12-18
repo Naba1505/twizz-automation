@@ -1675,12 +1675,32 @@ public class CreatorMessagingPage extends BasePage {
         if (file == null || !java.nio.file.Files.exists(file)) {
             throw new RuntimeException("Message media file not found: " + file);
         }
-        // Use setInputFiles directly on hidden file input to avoid OS dialog
-        // Prefer the Ant Upload input inside the Importation dialog
+        
+        // First try to find file input directly
         Locator inputs = page.locator(".ant-upload input[type='file']");
         if (inputs.count() == 0) {
             inputs = page.locator("input[type='file']");
         }
+        
+        // If no file input found, click "My Device" button to reveal it
+        if (inputs.count() == 0) {
+            logger.info("[Messaging] No file input found, clicking My Device button");
+            try {
+                Locator myDevice = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
+                if (myDevice.count() > 0 && safeIsVisible(myDevice.first())) {
+                    clickWithRetry(myDevice.first(), 1, 150);
+                    page.waitForTimeout(500);
+                    // Re-check for file input after clicking My Device
+                    inputs = page.locator(".ant-upload input[type='file']");
+                    if (inputs.count() == 0) {
+                        inputs = page.locator("input[type='file']");
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("[Messaging] Could not click My Device: {}", e.getMessage());
+            }
+        }
+        
         if (inputs.count() > 0) {
             logger.info("[Messaging] Using input[type=file] to upload: {}", file.getFileName());
             Locator target = inputs.nth(inputs.count() - 1);
