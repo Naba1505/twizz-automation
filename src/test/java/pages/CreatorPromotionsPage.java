@@ -33,9 +33,12 @@ public class CreatorPromotionsPage extends BasePage {
         return getByTextExact(PROMO_TITLE);
     }
 
-    // Promo code rows: titles like 'Automation...' (case-insensitive)
+    // Promo code rows: titles like 'AUTOMATIONPROMOCODE...'
+    // Use the specific class from DOM: span.ant-typography.creatorCodePromoName
     private Locator automationSpans() {
-        return page.locator("xpath=//span[starts-with(normalize-space(translate(text(),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')),'AUTOMATION')]");
+        return page.locator("span.creatorCodePromoName").filter(
+            new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^AUTOMATION", java.util.regex.Pattern.CASE_INSENSITIVE))
+        );
     }
 
     private Locator createPromoButton() {
@@ -85,6 +88,11 @@ public class CreatorPromotionsPage extends BasePage {
 
     private Locator yesDeleteButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
+    }
+
+    // Delete button inside promo details screen
+    private Locator deletePromoButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete"));
     }
 
     private Locator deleteSuccessToast() {
@@ -151,12 +159,21 @@ public class CreatorPromotionsPage extends BasePage {
                     break;
                 }
 
-                // Delete the first visible row
+                // Delete the first visible row - click to open promo details
                 Locator row = automationSpans().first();
                 waitVisible(row, DEFAULT_WAIT);
                 try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
                 log.info("Deleting an 'AUTOMATION' promo; remaining before delete: {}", beforeCount);
                 clickWithRetry(row, 1, 120);
+                page.waitForTimeout(500);
+
+                // Click Delete button inside promo details (if present)
+                try {
+                    if (deletePromoButton().isVisible()) {
+                        clickWithRetry(deletePromoButton(), 1, 120);
+                        page.waitForTimeout(300);
+                    }
+                } catch (Throwable ignored) {}
 
                 // Confirm delete
                 waitVisible(yesDeleteButton(), DEFAULT_WAIT);
@@ -230,6 +247,16 @@ public class CreatorPromotionsPage extends BasePage {
                     waitVisible(row, DEFAULT_WAIT);
                     try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
                     clickWithRetry(row, 1, 120);
+                    page.waitForTimeout(500);
+
+                    // Click Delete button inside promo details (if present)
+                    try {
+                        if (deletePromoButton().isVisible()) {
+                            clickWithRetry(deletePromoButton(), 1, 120);
+                            page.waitForTimeout(300);
+                        }
+                    } catch (Throwable ignored) {}
+
                     waitVisible(yesDeleteButton(), DEFAULT_WAIT);
                     clickWithRetry(yesDeleteButton(), 1, 120);
 
@@ -271,12 +298,19 @@ public class CreatorPromotionsPage extends BasePage {
         clickWithRetry(promoMenuItem(), 1, 150);
         // Verify Promotions page title exact
         waitVisible(promoTitleExact(), DEFAULT_WAIT);
-        // Ensure at least one promo row (automation) is visible if present
+        // Wait for page to fully load
+        page.waitForTimeout(1500);
+        // Wait for promo items to render
         try {
-            if (automationSpans().count() > 0) {
-                waitVisible(automationSpans().first(), DEFAULT_WAIT);
-            }
-        } catch (Throwable ignored) {}
+            page.waitForSelector("span.creatorCodePromoName", new Page.WaitForSelectorOptions().setTimeout(5000));
+            log.info("Promo code items found on screen");
+        } catch (Throwable t) {
+            log.info("No promo code items found on screen (may be empty)");
+        }
+        // Log count of automation promos
+        int count = 0;
+        try { count = automationSpans().count(); } catch (Throwable ignored) {}
+        log.info("Found {} AUTOMATION promo codes on screen", count);
     }
 
     @Step("Click 'Create a promo code' button")
