@@ -232,7 +232,7 @@ mvn clean compile
 End-to-end UI automation for Twizz with Creator and Fan flows. The framework emphasizes robust, resilient interactions and uses Allure only for reporting (with Playwright traces and screenshots).
 
 ## Tech Stack
-- Java 17
+- Java 21 LTS
 - Playwright for Java 1.54.0
 - TestNG 7.11.0
 - Allure TestNG 2.29.1
@@ -297,7 +297,7 @@ End-to-end UI automation for Twizz with Creator and Fan flows. The framework emp
 - `src/test/java/pages/`
   - `BasePage`: Common helpers.
   - `LandingPage`, `CreatorRegistrationPage`, `CreatorLoginPage`, `CreatorPublicationPage`, `CreatorCollectionPage`, `FanRegistrationPage`, `FanLoginPage`: Page Objects with robust waits and fallbacks.
-    44→  - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
+  - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
 - `src/test/java/tests/`
   - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `CreatorLiveTest`, `CreatorQuickFilesTest`, `CreatorMediaPushTest`, `CreatorUnlockLinksTest`, `CreatorDiscoverTest`, `CreatorRevenuesTest`, `CreatorQuickFilesDeleteTest`, `CreatorCollectionTest`, `CreatorCollectionDeleteTest`, `FanLoginTest`.
   - `testng.xml`: Suite config, listeners (`utils.AnnotationTransformer`); Allure via TestNG adapter dependency. Runs sequentially by default.
@@ -305,7 +305,7 @@ End-to-end UI automation for Twizz with Creator and Fan flows. The framework emp
   - New: `CreatorPromotionsTest` (promo code create + copy) and `CleanupDeletePromoCodesTest` (cleanup 'AUTOMATION' promos)
 
 ## Prerequisites
-- Java 17+
+- Java 21 LTS
 - Maven 3.9+
 - Playwright browsers: first run will download automatically when Playwright creates the context. If needed, run: `mvn -Dplaywright.cli.install=true test` once.
 - (Optional) Allure CLI to view the Allure HTML report locally.
@@ -634,19 +634,27 @@ Key entries (with defaults):
 ## Fan Messaging
 - Page objects: `pages/FanMessagingPage`, `pages/CreatorMessagingPage`
 - Test class: `tests/FanMessagingTest`
-- Complete 5-step messaging flow between fan and creator:
-  1. **Fan sends message**: Login → Messaging → Click creator "Smith" → Send "Hi Creator [timestamp]"
-  2. **Creator accepts and replies**: Login → Messaging → General tab → Click fan "Paul Lewis" → Accept → Set price 15€ → Reply "Hi Fan [timestamp]"
-  3. **Fan accepts paid message**: Reload → Accept media → Secure payment → Registered card → Confirm → Everything is OK
-  4. **Creator sends media**: Profile → Messaging → To Deliver tab → Click fan → Plus icon → My Device → Upload image → Send
-  5. **Fan views media**: Reload → Click "Preview" → Close preview
+- Scenarios (4 tests):
+  1. **Image + Fixed Price** (priority 1)
+     - Fan sends message → Creator accepts with fixed price (15€) → Fan pays → Creator sends image via My Device → Fan views preview
+  2. **Video + Custom Price** (priority 2)
+     - Fan sends message → Creator accepts with custom price (10) → Fan pays → Creator sends video via My Device → Fan verifies video play icon
+  3. **Audio + Free Price** (priority 3)
+     - Fan sends message → Creator accepts with FREE price (default) → Fan accepts (no payment) → Creator sends audio → Fan verifies audio element
+  4. **Mixed Media via Quick Files** (priority 4)
+     - Fan sends message → Creator accepts with fixed price → Fan pays → Creator sends mixed media (image + video + audio) via Quick Files album selection → Fan verifies all media (2 previews + audio element)
 - Technical notes:
   - Uses dual browser context (fan + creator isolation)
   - Messages include timestamps for uniqueness
   - Handles payment flow with registered card
-- Run example:
+  - Quick Files flow uses album selection from pre-created albums (mixalbum_*, audioalbum_*)
+- Run examples:
   ```bash
   mvn -Dtest=FanMessagingTest test
+  mvn -Dtest=FanMessagingTest#completeMessagingFlow test
+  mvn -Dtest=FanMessagingTest#completeMessagingFlowWithVideoAndCustomPrice test
+  mvn -Dtest=FanMessagingTest#completeMessagingFlowWithAudioAndFreePrice test
+  mvn -Dtest=FanMessagingTest#completeMessagingFlowWithMixedMedia test
   ```
 
 ## Fan Live Events
