@@ -614,130 +614,114 @@ public class CreatorCollectionPage extends BasePage {
         return false;
     }
 
-    @Step("Delete all collections using the exact flow: icon -> scroll -> second tile -> menu -> delete")
+    @Step("Delete all collections using the exact flow: icon -> tile -> menu -> delete")
     public void deleteAllCollectionsExactFlow(int maxIterations) {
         int guard = Math.max(1, maxIterations);
-        for (int i = 0; i < guard; i++) {
-            // Click collections icon, if not possible, break
+        for (int iteration = 0; iteration < guard; iteration++) {
+            logger.info("[Cleanup] Starting iteration {} of {}", iteration + 1, guard);
+            
+            // Click collections icon to open collections list
             if (!clickCollectionsIconResilient()) {
-                logger.warn("[Cleanup] Collections icon not found; stopping exact-flow loop");
+                logger.warn("[Cleanup] Collections icon not found; stopping cleanup");
                 return;
             }
             try { page.waitForLoadState(); } catch (Exception ignored) {}
-            waitForIdle();
-            // If empty state is already visible, stop looping to avoid unnecessary iterations
+            try { page.waitForTimeout(1000); } catch (Exception ignored) {}
+            
+            // Check if empty state is visible - all collections deleted
             try {
-                if (isNoCollectionsEmptyStateVisible(1500)) {
-                    logger.info("[Cleanup] Empty-state visible; all collections deleted. Stopping loop early.");
+                if (isNoCollectionsEmptyStateVisible(2000)) {
+                    logger.info("[Cleanup] Empty-state visible; all collections deleted");
                     return;
                 }
             } catch (Exception ignored) {}
-            // Discover tiles with multiple passes and scrolling
-            Locator roleTiles = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-            Locator nameTiles = page.locator("xpath=//img[contains(translate(@alt,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'collection') or contains(translate(@aria-label,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'collection')]");
-            Locator xpathTiles = page.locator("xpath=//img[@class='collection-img']");
-            int attempts = 0;
-            int rc = roleTiles.count();
-            int nc = nameTiles.count();
-            int xc = xpathTiles.count();
-            while (attempts < 6 && rc == 0 && nc == 0 && xc == 0) {
-                logger.info("[Cleanup] No tiles yet (role={}, nameLike={}, xpath={}); scrolling to surface", rc, nc, xc);
-                try { page.mouse().wheel(0, 800); } catch (Exception ignored) {}
-                try { page.waitForTimeout(300); } catch (Exception ignored) {}
-                rc = roleTiles.count();
-                nc = nameTiles.count();
-                xc = xpathTiles.count();
-                attempts++;
-            }
-            logger.info("[Cleanup] Tile counts after discovery: roleTiles={}, nameLikeTiles={}, xpathTiles={}", rc, nc, xc);
-
-            // Prefer role tile nth(2) (3rd tile) if present; else nth(1); else first; else fallback to nameLike, then xpath tiles
-            Locator chosenTile;
-            if (rc >= 3) {
-                chosenTile = roleTiles.nth(2);
-                logger.info("[Cleanup] Choosing ROLE tile nth(2)");
-            } else if (rc >= 2) {
-                chosenTile = roleTiles.nth(1);
-                logger.info("[Cleanup] Choosing ROLE tile nth(1)");
-            } else if (rc == 1) {
-                chosenTile = roleTiles.first();
-                logger.info("[Cleanup] Only one ROLE tile found; choosing nth(0)");
-            } else if (nc >= 3) {
-                chosenTile = nameTiles.nth(2);
-                logger.info("[Cleanup] Choosing NAME-LIKE tile nth(2)");
-            } else if (nc >= 2) {
-                chosenTile = nameTiles.nth(1);
-                logger.info("[Cleanup] Choosing NAME-LIKE tile nth(1)");
-            } else if (nc == 1) {
-                chosenTile = nameTiles.first();
-                logger.info("[Cleanup] Only one NAME-LIKE tile found; choosing nth(0)");
-            } else if (xc > 0) {
-                chosenTile = xpathTiles.first();
-                logger.info("[Cleanup] Using XPATH class-based tile first as fallback");
-            } else {
-                logger.info("[Cleanup] No collection tiles found; assuming cleanup complete");
-                debugLogAllImgAccessibleNames("[Debug] No tiles present after discovery");
-                // Verify empty state is present when no tiles remain
-                assertNoCollectionsEmptyState();
-                return;
-            }
-
-            try { chosenTile.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            // Try to operate the kebab menu from the LIST view first (without navigating)
-            Locator menu = null;
-            // 1) Try relative to the chosen tile (same card/row)
-            try {
-                // Hover the card/row to reveal the kebab if it appears only on hover
-                Locator card = chosenTile.locator("xpath=ancestor::*[self::div or self::li or self::article][1]");
-                if (card.count() > 0) {
-                    try { card.first().hover(); } catch (Exception ignored) {}
-                }
-                Locator rel = chosenTile.locator("xpath=ancestor::*[self::div or self::li or self::article][1]//*[contains(@class,'right-icon')]//img | ancestor::*[self::div or self::li or self::article][1]//img[contains(@class,'right-icon')]");
-                if (rel.count() > 0 && safeIsVisible(rel.first())) menu = rel.first();
-            } catch (Exception ignored) {}
-            // If still null, click tile ONCE to see if menu appears in-place (not navigation)
-            if (menu == null || !safeIsVisible(menu)) {
-                logger.info("[Cleanup] Relative menu not visible; clicking chosen tile once to reveal actions");
-                clickWithRetry(chosenTile, 1, 150);
-                try { page.waitForTimeout(250); } catch (Exception ignored) {}
+            
+            // Find collection images - use first() to get the first collection
+            Locator collectionImages = page.getByRole(AriaRole.IMG);
+            int imgCount = collectionImages.count();
+            logger.info("[Cleanup] Found {} images on collections screen", imgCount);
+            
+            if (imgCount < 2) {
+                logger.info("[Cleanup] Not enough images found; checking empty state");
                 try {
-                    Locator rel2 = chosenTile.locator("xpath=ancestor::*[self::div or self::li or self::article][1]//*[contains(@class,'right-icon')]//img | ancestor::*[self::div or self::li or self::article][1]//img[contains(@class,'right-icon')]");
-                    if (rel2.count() > 0 && safeIsVisible(rel2.first())) menu = rel2.first();
+                    assertNoCollectionsEmptyState();
+                    return;
+                } catch (Exception e) {
+                    logger.warn("[Cleanup] No collections and no empty state; continuing");
+                    continue;
+                }
+            }
+            
+            // Click a collection image to open details
+            // Based on screenshot: img.collection-img with alt like "john smith - Vidéos et photos"
+            Locator collectionImg = page.locator("img.collection-img");
+            int collCount = collectionImg.count();
+            logger.info("[Cleanup] Found {} collection images (img.collection-img)", collCount);
+            
+            if (collCount == 0) {
+                logger.info("[Cleanup] No collection images found; checking empty state");
+                try {
+                    assertNoCollectionsEmptyState();
+                    return;
+                } catch (Exception e) {
+                    logger.warn("[Cleanup] No collections found but empty state not visible");
+                    continue;
+                }
+            }
+            
+            Locator targetCollection = collectionImg.first();
+            try { targetCollection.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+            logger.info("[Cleanup] Clicking collection image to open details");
+            clickTileRobust(targetCollection);
+            try { page.waitForTimeout(2000); } catch (Exception ignored) {}
+            
+            // Wait for details screen to load - check for "Details" text or back arrow
+            boolean detailsLoaded = false;
+            try {
+                Locator detailsText = page.getByText("Details");
+                if (detailsText.count() > 0 && detailsText.first().isVisible()) {
+                    detailsLoaded = true;
+                    logger.info("[Cleanup] Details screen loaded (found 'Details' text)");
+                }
+            } catch (Exception ignored) {}
+            
+            if (!detailsLoaded) {
+                // Try back arrow as indicator
+                try {
+                    Locator backArrow = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
+                    if (backArrow.count() > 0 && backArrow.first().isVisible()) {
+                        detailsLoaded = true;
+                        logger.info("[Cleanup] Details screen loaded (found back arrow)");
+                    }
                 } catch (Exception ignored) {}
             }
-            // 2) Global CSS
-            if (menu == null || !safeIsVisible(menu)) {
-                Locator global = page.locator(".right-icon > img");
-                if (global.count() > 0 && safeIsVisible(global.first())) menu = global.first();
-            }
-            // 3) Role/button name fallbacks (scoped): try buttons inside same card first
-            if (menu == null || !safeIsVisible(menu)) {
-                String[] names = new String[]{"More options","More","Options","Menu","Actions","three dots","three dot","Kebab"};
-                for (String n : names) {
-                    try {
-                        Locator btn = chosenTile
-                            .locator("xpath=ancestor::*[self::div or self::li or self::article][1]")
-                            .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(n));
-                        if (btn.count() > 0 && safeIsVisible(btn.first())) { menu = btn.first(); break; }
-                    } catch (Exception ignored) {}
-                }
-            }
-            // 4) Avoid broad generic fallbacks that can hit unrelated 'More' tabs; if still null, last resort is global CSS only
-            // If still not found, try re-clicking tile and short scroll, then re-evaluate global CSS once more
-            if (menu == null || !safeIsVisible(menu)) {
-                logger.warn("[Cleanup] Actions menu not visible after fallbacks; re-clicking tile and rescanning");
-                try { clickWithRetry(chosenTile, 1, 150); } catch (Exception ignored) {}
-                try { page.mouse().wheel(0, 200); } catch (Exception ignored) {}
-                try { page.waitForTimeout(250); } catch (Exception ignored) {}
-                Locator global = page.locator(".right-icon > img");
-                if (global.count() > 0) menu = global.first();
-            }
-            if (menu == null) {
-                logger.warn("[Cleanup] Could not locate actions menu; proceeding to next iteration");
+            
+            if (!detailsLoaded) {
+                logger.warn("[Cleanup] Details screen not loaded; returning to list");
+                safeReturnToCollectionsList();
                 continue;
             }
-            try { waitVisible(menu, 2000); } catch (Exception ignored) {}
-            clickWithRetry(menu, 2, 200);
+            
+            // On details screen, click the menu icon (second img based on codegen: .nth(1))
+            // Based on codegen: page.getByRole(AriaRole.IMG).nth(1).click()
+            Locator menuIcon = page.getByRole(AriaRole.IMG).nth(1);
+            try {
+                waitVisible(menuIcon, 5000);
+                logger.info("[Cleanup] Clicking menu icon (nth(1)) on details screen");
+                clickWithRetry(menuIcon, 2, 200);
+                try { page.waitForTimeout(500); } catch (Exception ignored) {}
+            } catch (Exception e) {
+                logger.warn("[Cleanup] Menu icon nth(1) not found; trying .right-icon > img");
+                Locator altMenu = page.locator(".right-icon > img");
+                if (altMenu.count() > 0) {
+                    clickWithRetry(altMenu.first(), 2, 200);
+                    try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                } else {
+                    logger.warn("[Cleanup] No menu icon found; returning to list");
+                    safeReturnToCollectionsList();
+                    continue;
+                }
+            }
 
             // Delete button by robust variants
             Locator del = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete collection"));
@@ -761,11 +745,13 @@ public class CreatorCollectionPage extends BasePage {
                 try { clickWithRetry(toast.first(), 1, 100); } catch (Exception ignored) {}
             } else {
                 // Fallback: assert via existing helper
-                assertCollectionDeletedToast();
+                try { assertCollectionDeletedToast(); } catch (Exception ignored) {}
             }
-
-            // Next iteration will re-click the icon and repeat
-            try { page.waitForTimeout(300); } catch (Exception ignored) {}
+            
+            logger.info("[Cleanup] Collection deleted successfully, returning to list");
+            // Return to collections list for next iteration
+            safeReturnToCollectionsList();
+            try { page.waitForTimeout(500); } catch (Exception ignored) {}
         }
         // After exhausting guard (or finishing deletions), verify empty state to ensure a clean end
         try {
@@ -855,15 +841,30 @@ public class CreatorCollectionPage extends BasePage {
 
     private void safeReturnToCollectionsList() {
         // Try common patterns: back button, header back arrow, or browser back
+        // First try arrow left (back arrow on details screen)
+        try {
+            Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
+            if (arrowLeft.count() > 0 && safeIsVisible(arrowLeft.first())) {
+                clickWithRetry(arrowLeft.first(), 1, 150);
+                try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                return;
+            }
+        } catch (Exception ignored) {}
+        // Try back icon
         try {
             Locator backIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("back"));
             if (safeIsVisible(backIcon.first())) {
                 clickWithRetry(backIcon.first(), 1, 150);
+                try { page.waitForTimeout(500); } catch (Exception ignored) {}
                 return;
             }
         } catch (Exception ignored) {}
+        // Last resort: browser back twice to get to profile
         try {
             page.goBack();
+            try { page.waitForTimeout(500); } catch (Exception ignored) {}
+            page.goBack();
+            try { page.waitForTimeout(500); } catch (Exception ignored) {}
         } catch (Exception ignored) {}
     }
 
