@@ -72,35 +72,28 @@ public class FanBookmarksPage extends BasePage {
         // Wait for page to stabilize
         try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
         
-        // Get all bookmark icons (unbookmarked ones)
-        Locator bookmarkIcons = page.getByRole(AriaRole.IMG, 
-                new Page.GetByRoleOptions().setName("bookmark"));
-        
-        int availableCount = bookmarkIcons.count();
-        logger.info("Found {} unbookmarked bookmark icons", availableCount);
-        
-        // Click first 3 bookmark icons directly
         int bookmarked = 0;
         
-        if (availableCount >= 1) {
-            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("bookmark")).first().click();
-            bookmarked++;
-            logger.info("Bookmarked feed #1");
-            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
-        }
-        
-        if (availableCount >= 2 && count > 1) {
-            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("bookmark")).nth(1).click();
-            bookmarked++;
-            logger.info("Bookmarked feed #2");
-            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
-        }
-        
-        if (availableCount >= 3 && count > 2) {
-            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("bookmark")).nth(2).click();
-            bookmarked++;
-            logger.info("Bookmarked feed #3");
-            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        // Click first unbookmarked icon repeatedly (always click first() since list shifts)
+        for (int i = 0; i < count; i++) {
+            Locator bookmarkIcons = page.getByRole(AriaRole.IMG, 
+                    new Page.GetByRoleOptions().setName("bookmark"));
+            int availableCount = bookmarkIcons.count();
+            logger.info("Iteration {}: Found {} unbookmarked bookmark icons", i + 1, availableCount);
+            
+            if (availableCount > 0) {
+                try {
+                    bookmarkIcons.first().click();
+                    bookmarked++;
+                    logger.info("Bookmarked feed #{}", bookmarked);
+                    try { page.waitForTimeout(700); } catch (Throwable ignored) { }
+                } catch (Throwable e) {
+                    logger.warn("Failed to click bookmark icon: {}", e.getMessage());
+                }
+            } else {
+                logger.warn("No more unbookmarked icons available");
+                break;
+            }
         }
         
         // Verify bookmarkFill icons count
