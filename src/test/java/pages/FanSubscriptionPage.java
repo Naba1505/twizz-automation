@@ -112,14 +112,48 @@ public class FanSubscriptionPage extends BasePage {
         try { 
             waitVisible(page.getByText("Premium").first(), 20_000); 
             // Give the modal animation time to complete
-            page.waitForTimeout(1000);
+            page.waitForTimeout(2000);
         } catch (Throwable ignored) {}
         
-        // Click Continue to proceed to payment step
+        // Click Continue to proceed to payment step - try multiple strategies
         logger.info("[Fan][Subscribe] Clicking 'Continue' button");
         Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
-        waitVisible(continueBtn.first(), 15_000);
-        clickWithRetry(continueBtn.first(), 2, 300);
+        
+        // Wait for Continue button with extended timeout and retry
+        boolean continueClicked = false;
+        for (int attempt = 0; attempt < 3 && !continueClicked; attempt++) {
+            try {
+                // Wait for button to be visible
+                if (continueBtn.count() > 0 && safeIsVisible(continueBtn.first())) {
+                    continueBtn.first().scrollIntoViewIfNeeded();
+                    page.waitForTimeout(500);
+                    clickWithRetry(continueBtn.first(), 2, 300);
+                    continueClicked = true;
+                    logger.info("[Fan][Subscribe] Continue button clicked on attempt {}", attempt + 1);
+                } else {
+                    logger.info("[Fan][Subscribe] Continue button not visible, waiting... (attempt {})", attempt + 1);
+                    page.waitForTimeout(2000);
+                    continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+                }
+            } catch (Throwable e) {
+                logger.warn("[Fan][Subscribe] Continue click attempt {} failed: {}", attempt + 1, e.getMessage());
+                page.waitForTimeout(1000);
+            }
+        }
+        
+        // Fallback: try text-based Continue button
+        if (!continueClicked) {
+            logger.info("[Fan][Subscribe] Trying text-based Continue button");
+            Locator textContinue = page.getByText("Continue", new Page.GetByTextOptions().setExact(true));
+            if (textContinue.count() > 0 && safeIsVisible(textContinue.first())) {
+                clickWithRetry(textContinue.first(), 2, 300);
+                continueClicked = true;
+            }
+        }
+        
+        if (!continueClicked) {
+            throw new RuntimeException("Failed to click Continue button after multiple attempts");
+        }
         
         // Wait for the payment page title
         logger.info("[Fan][Subscribe] Waiting for payment page");

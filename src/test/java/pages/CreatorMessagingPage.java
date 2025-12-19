@@ -1781,6 +1781,56 @@ public class CreatorMessagingPage extends BasePage {
         logger.info("[Messaging] 'General' tab visible (default)");
     }
 
+    /**
+     * Helper method to try finding fan in the current tab.
+     * Tries exact match, first name, regex, and scrolling.
+     */
+    private boolean tryFindFanInCurrentTab(String fanName) {
+        Locator fan = null;
+        
+        // Strategy 1: Exact text match
+        fan = page.getByText(fanName).first();
+        if (fan.count() > 0 && safeIsVisible(fan)) {
+            logger.info("[Messaging] Found fan by exact text: {}", fanName);
+            return true;
+        }
+        
+        // Strategy 2: Try partial match (first name only)
+        String firstName = fanName.split(" ")[0];
+        fan = page.getByText(firstName).first();
+        if (fan.count() > 0 && safeIsVisible(fan)) {
+            logger.info("[Messaging] Found fan by first name: {}", firstName);
+            return true;
+        }
+        
+        // Strategy 3: Try regex pattern (case insensitive)
+        fan = page.getByText(java.util.regex.Pattern.compile(fanName, java.util.regex.Pattern.CASE_INSENSITIVE)).first();
+        if (fan.count() > 0 && safeIsVisible(fan)) {
+            logger.info("[Messaging] Found fan by regex: {}", fanName);
+            return true;
+        }
+        
+        // Strategy 4: Scroll down and retry
+        logger.info("[Messaging] Fan not visible, scrolling to find...");
+        for (int i = 0; i < 5; i++) {
+            page.mouse().wheel(0, 300);
+            page.waitForTimeout(500);
+            fan = page.getByText(fanName).first();
+            if (fan.count() > 0 && safeIsVisible(fan)) {
+                logger.info("[Messaging] Found fan after scrolling");
+                return true;
+            }
+            // Also try first name after scroll
+            fan = page.getByText(firstName).first();
+            if (fan.count() > 0 && safeIsVisible(fan)) {
+                logger.info("[Messaging] Found fan by first name after scrolling");
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     @Step("Click on fan conversation: {fanName}")
     public void clickOnFanConversation(String fanName) {
         logger.info("[Messaging] Looking for fan conversation: {}", fanName);
@@ -1790,44 +1840,33 @@ public class CreatorMessagingPage extends BasePage {
         Locator fan = null;
         boolean found = false;
         
-        // Try multiple strategies to find the fan
-        // Strategy 1: Exact text match
-        fan = page.getByText(fanName).first();
-        if (fan.count() > 0 && safeIsVisible(fan)) {
-            found = true;
-            logger.info("[Messaging] Found fan by exact text: {}", fanName);
-        }
-        
-        // Strategy 2: Try partial match (first name only)
-        if (!found) {
-            String firstName = fanName.split(" ")[0];
-            fan = page.getByText(firstName).first();
-            if (fan.count() > 0 && safeIsVisible(fan)) {
-                found = true;
-                logger.info("[Messaging] Found fan by first name: {}", firstName);
+        // First, try to find in current tab (General by default)
+        found = tryFindFanInCurrentTab(fanName);
+        if (found) {
+            fan = page.getByText(fanName).first();
+            if (fan.count() == 0 || !safeIsVisible(fan)) {
+                // Try first name
+                String firstName = fanName.split(" ")[0];
+                fan = page.getByText(firstName).first();
             }
         }
         
-        // Strategy 3: Try regex pattern (case insensitive)
+        // If not found in General tab, try "To Deliver" tab
         if (!found) {
-            fan = page.getByText(java.util.regex.Pattern.compile(fanName, java.util.regex.Pattern.CASE_INSENSITIVE)).first();
-            if (fan.count() > 0 && safeIsVisible(fan)) {
-                found = true;
-                logger.info("[Messaging] Found fan by regex: {}", fanName);
-            }
-        }
-        
-        // Strategy 4: Scroll down and retry
-        if (!found) {
-            logger.info("[Messaging] Fan not visible, scrolling to find...");
-            for (int i = 0; i < 5; i++) {
-                page.mouse().wheel(0, 300);
-                page.waitForTimeout(500);
-                fan = page.getByText(fanName).first();
-                if (fan.count() > 0 && safeIsVisible(fan)) {
-                    found = true;
-                    logger.info("[Messaging] Found fan after scrolling");
-                    break;
+            logger.info("[Messaging] Fan not found in General tab, checking 'To Deliver' tab");
+            Locator toDeliverTab = page.getByText("To Deliver");
+            if (toDeliverTab.count() > 0 && safeIsVisible(toDeliverTab.first())) {
+                clickWithRetry(toDeliverTab.first(), 2, 200);
+                page.waitForTimeout(2000); // Wait for tab content to load
+                logger.info("[Messaging] Switched to 'To Deliver' tab");
+                
+                found = tryFindFanInCurrentTab(fanName);
+                if (found) {
+                    fan = page.getByText(fanName).first();
+                    if (fan.count() == 0 || !safeIsVisible(fan)) {
+                        String firstName = fanName.split(" ")[0];
+                        fan = page.getByText(firstName).first();
+                    }
                 }
             }
         }
@@ -1877,9 +1916,51 @@ public class CreatorMessagingPage extends BasePage {
         
         fan.scrollIntoViewIfNeeded();
         clickWithRetry(fan, 2, 200);
-        page.waitForTimeout(2000); // Wait for conversation to load
-        // Wait for conversation screen to be ready (message input visible)
-        waitVisible(page.getByPlaceholder("Your message"), DEFAULT_WAIT);
+        page.waitForTimeout(3000); // Wait for conversation to load
+        
+        // Wait for conversation screen to be ready - try multiple indicators
+        boolean conversationLoaded = false;
+        
+        // Strategy 1: Message input placeholder
+        Locator messageInput = page.getByPlaceholder("Your message");
+        if (messageInput.count() > 0 && safeIsVisible(messageInput.first())) {
+            conversationLoaded = true;
+            logger.info("[Messaging] Conversation loaded - message input visible");
+        }
+        
+        // Strategy 2: Try alternative placeholder
+        if (!conversationLoaded) {
+            Locator altInput = page.locator("textarea, input[type='text']").first();
+            if (altInput.count() > 0 && safeIsVisible(altInput)) {
+                conversationLoaded = true;
+                logger.info("[Messaging] Conversation loaded - text input visible");
+            }
+        }
+        
+        // Strategy 3: Look for send button
+        if (!conversationLoaded) {
+            Locator sendBtn = page.getByText("Send", new Page.GetByTextOptions().setExact(true));
+            if (sendBtn.count() > 0 && safeIsVisible(sendBtn.first())) {
+                conversationLoaded = true;
+                logger.info("[Messaging] Conversation loaded - send button visible");
+            }
+        }
+        
+        // Strategy 4: Wait a bit more and check for any conversation content
+        if (!conversationLoaded) {
+            page.waitForTimeout(2000);
+            // Check if we're on a conversation screen by looking for message-related elements
+            Locator conversationArea = page.locator("[class*='message'], [class*='chat'], [class*='conversation']").first();
+            if (conversationArea.count() > 0) {
+                conversationLoaded = true;
+                logger.info("[Messaging] Conversation loaded - conversation area detected");
+            }
+        }
+        
+        if (!conversationLoaded) {
+            logger.warn("[Messaging] Could not verify conversation loaded, proceeding anyway");
+        }
+        
         logger.info("[Messaging] Clicked on fan: {} - conversation screen loaded", fanName);
     }
 
@@ -2014,6 +2095,19 @@ public class CreatorMessagingPage extends BasePage {
         // Send button is inside a Dialog, use Dialog context
         Locator sendBtn = page.getByRole(AriaRole.DIALOG).getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Send"));
         waitVisible(sendBtn, DEFAULT_WAIT);
+        
+        // Wait for button to be enabled (not disabled)
+        int maxWait = 15;
+        for (int i = 0; i < maxWait; i++) {
+            String disabled = sendBtn.getAttribute("disabled");
+            if (disabled == null) {
+                logger.info("[Messaging] Send button is enabled");
+                break;
+            }
+            logger.info("[Messaging] Send button still disabled, waiting... ({}s)", i + 1);
+            page.waitForTimeout(1000);
+        }
+        
         clickWithRetry(sendBtn, 2, 200);
         page.waitForTimeout(2000); // Wait for message to send
         logger.info("[Messaging] Clicked Send button");
@@ -2094,9 +2188,43 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Click Send button for media")
     public void clickSendButtonForMedia() {
         logger.info("[Messaging] Looking for Send button for media");
-        Locator sendBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send"));
-        waitVisible(sendBtn, DEFAULT_WAIT);
-        clickWithRetry(sendBtn, 2, 200);
+        
+        // Try multiple strategies to find the Send button
+        Locator sendBtn = null;
+        
+        // Strategy 1: By role with name "Send"
+        sendBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send"));
+        if (sendBtn.count() == 0 || !safeIsVisible(sendBtn.first())) {
+            // Strategy 2: By class sendMediaButton
+            sendBtn = page.locator(".sendMediaButton, button.sendMediaButton");
+        }
+        if (sendBtn.count() == 0 || !safeIsVisible(sendBtn.first())) {
+            // Strategy 3: By text "Send" exact match
+            sendBtn = page.getByText("Send", new Page.GetByTextOptions().setExact(true));
+        }
+        if (sendBtn.count() == 0 || !safeIsVisible(sendBtn.first())) {
+            // Strategy 4: Any button containing euro symbol (price button acts as send)
+            sendBtn = page.locator("button:has-text('€'), button:has-text('?')");
+        }
+        
+        // Wait for button to be visible
+        waitVisible(sendBtn.first(), DEFAULT_WAIT);
+        
+        // Wait for button to be enabled (not disabled) - media needs to upload first
+        int maxWait = 30; // Increased wait for media upload
+        for (int i = 0; i < maxWait; i++) {
+            String disabled = sendBtn.first().getAttribute("disabled");
+            if (disabled == null) {
+                logger.info("[Messaging] Send button for media is enabled");
+                break;
+            }
+            if (i % 5 == 0) {
+                logger.info("[Messaging] Send button for media still disabled, waiting for upload... ({}s)", i + 1);
+            }
+            page.waitForTimeout(1000);
+        }
+        
+        clickWithRetry(sendBtn.first(), 2, 200);
         logger.info("[Messaging] Clicked Send button for media");
         
         // Wait for upload/send to complete AFTER clicking Send
