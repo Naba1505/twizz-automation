@@ -41,7 +41,7 @@ public class FanMessagingTest extends BaseTestClass {
     // Fan credentials
     private String fanUsername;
     private String fanPassword;
-    private String fanDisplayName = "Paul Lewis";
+    private String fanDisplayName;
 
     // Creator credentials
     private String creatorUsername;
@@ -64,6 +64,7 @@ public class FanMessagingTest extends BaseTestClass {
     private void loadCredentials() {
         fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
         fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
+        fanDisplayName = ConfigReader.getProperty("fan.displayname", "Paul Lewis");
         creatorUsername = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
         creatorPassword = ConfigReader.getProperty("creator.password", "Twizz$123");
         
@@ -73,6 +74,7 @@ public class FanMessagingTest extends BaseTestClass {
         creatorReply = "Hi Fan " + timestamp;
         
         logger.info("[FanMessaging] Loaded credentials - Fan: {}, Creator: {}", fanUsername, creatorUsername);
+        logger.info("[FanMessaging] Fan display name: {}", fanDisplayName);
         logger.info("[FanMessaging] Messages - Fan: '{}', Creator: '{}'", fanMessage, creatorReply);
     }
 
