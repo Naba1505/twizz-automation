@@ -45,15 +45,57 @@ public class CreatorSubscriptionPriceTest extends BaseCreatorTest {
         // Ensure Quarterly section visible (same as previous test)
         monetization.assertQuarterlyOfferVisible();
 
-        // Wait for page to settle, then disable Quarterly like codegen
-        try { page.waitForTimeout(5_000); } catch (Throwable ignored) {}
+        // Wait for page to settle
+        try { page.waitForTimeout(2_000); } catch (Throwable ignored) {}
 
-        // Disable quarterly toggle (switch index 1) once
-        page.getByRole(AriaRole.SWITCH).nth(1).click();
+        // Get the quarterly toggle (switch index 1)
+        var quarterlySwitch = page.getByRole(AriaRole.SWITCH).nth(1);
+        
+        // Check if quarterly is currently enabled (aria-checked="true")
+        String ariaChecked = quarterlySwitch.getAttribute("aria-checked");
+        boolean isEnabled = "true".equals(ariaChecked);
+        
+        if (!isEnabled) {
+            // Quarterly is already disabled - enable it first, save, then disable
+            // Enable quarterly
+            quarterlySwitch.click();
+            try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+            
+            // Set a price (required when enabling)
+            monetization.setQuarterlyPrice("5");
+            
+            // Save changes
+            monetization.clickContinue();
+            monetization.waitForMonetizationUpdatedToast();
+            
+            // Navigate back to profile first using browser back or back arrow
+            try { page.waitForTimeout(1_000); } catch (Throwable ignored) {}
+            try {
+                var backArrow = page.getByRole(AriaRole.IMG, new com.microsoft.playwright.Page.GetByRoleOptions().setName("arrow left"));
+                if (backArrow.count() > 0 && backArrow.first().isVisible()) {
+                    backArrow.first().click();
+                    try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+                }
+            } catch (Throwable ignored) {}
+            // Go back again to profile
+            try { page.goBack(); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(1_000); } catch (Throwable ignored) {}
+            
+            // Re-open subscription price screen
+            monetization.openSubscriptionPriceFromProfile();
+            monetization.assertQuarterlyOfferVisible();
+            try { page.waitForTimeout(1_000); } catch (Throwable ignored) {}
+            
+            // Re-get the switch reference
+            quarterlySwitch = page.getByRole(AriaRole.SWITCH).nth(1);
+        }
+        
+        // Now disable quarterly toggle
+        quarterlySwitch.click();
+        try { page.waitForTimeout(500); } catch (Throwable ignored) {}
 
-        // Click Continue to save
-        page.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON,
-                new com.microsoft.playwright.Page.GetByRoleOptions().setName("Continue")).click();
+        // Click Continue to save using page object method (has wait logic)
+        monetization.clickContinue();
 
         // Expect success toast
         monetization.waitForMonetizationUpdatedToast();
