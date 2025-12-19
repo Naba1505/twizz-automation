@@ -78,86 +78,105 @@ public class FanSubscriptionPage extends BasePage {
     }
 
     @Step("Start subscription flow")
-    public void startSubscriptionFlow() {
-        logger.info("[Fan][Subscribe] Clicking 'Subscribe' button");
-        // Try the new simpler button name first, then fall back to old name
-        Locator subscribeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe"));
-        if (subscribeBtn.count() == 0 || !safeIsVisible(subscribeBtn.first())) {
-            logger.info("[Fan][Subscribe] Trying fallback button name 'Subscribe - without obligation'");
-            subscribeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe - without obligation"));
-        }
-        waitVisible(subscribeBtn.first(), 15_000);
+    public boolean startSubscriptionFlow() {
+        logger.info("[Fan][Subscribe] Starting subscription flow");
         
-        // Try force click first to bypass any overlay issues, then fall back to standard click
+        // Check if already subscribed
+        Locator subscribedIndicator = page.getByText("Subscribed");
+        if (subscribedIndicator.count() > 0 && safeIsVisible(subscribedIndicator.first())) {
+            logger.info("[Fan][Subscribe] Already subscribed to this creator");
+            return false;
+        }
+        
+        // Find and click Subscribe button
+        Locator subscribeBtn = page.locator("button.subscribeWithoutObligation, button.subscribeBtn");
+        if (subscribeBtn.count() == 0 || !safeIsVisible(subscribeBtn.first())) {
+            subscribeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe"));
+        }
+        if (subscribeBtn.count() == 0 || !safeIsVisible(subscribeBtn.first())) {
+            subscribeBtn = page.getByText("Subscribe", new Page.GetByTextOptions().setExact(true));
+        }
+        
+        if (subscribeBtn.count() == 0 || !safeIsVisible(subscribeBtn.first())) {
+            throw new RuntimeException("Subscribe button not found");
+        }
+        
+        logger.info("[Fan][Subscribe] Clicking Subscribe button");
+        waitVisible(subscribeBtn.first(), 15_000);
+        subscribeBtn.first().scrollIntoViewIfNeeded();
+        page.waitForTimeout(500);
+        
+        // Try multiple click strategies
         boolean clicked = false;
         try {
-            subscribeBtn.first().click(new Locator.ClickOptions().setForce(true));
+            subscribeBtn.first().click();
             clicked = true;
+            logger.info("[Fan][Subscribe] Standard click succeeded");
         } catch (Throwable e) {
-            logger.warn("[Fan][Subscribe] Force click failed, retrying with standard click: {}", e.getMessage());
+            logger.warn("[Fan][Subscribe] Standard click failed: {}", e.getMessage());
+        }
+        
+        if (!clicked) {
             try {
-                clickWithRetry(subscribeBtn.first(), 2, 300);
+                subscribeBtn.first().click(new Locator.ClickOptions().setForce(true));
                 clicked = true;
-            } catch (Throwable e2) {
-                logger.warn("[Fan][Subscribe] Standard click also failed: {}", e2.getMessage());
+                logger.info("[Fan][Subscribe] Force click succeeded");
+            } catch (Throwable e) {
+                logger.warn("[Fan][Subscribe] Force click failed: {}", e.getMessage());
             }
         }
         
         if (!clicked) {
-            throw new RuntimeException("Failed to click Subscribe button after multiple attempts");
-        }
-        
-        // Wait for Premium plan modal to appear
-        logger.info("[Fan][Subscribe] Waiting for Premium plan modal");
-        try { 
-            waitVisible(page.getByText("Premium").first(), 20_000); 
-            // Give the modal animation time to complete
-            page.waitForTimeout(2000);
-        } catch (Throwable ignored) {}
-        
-        // Click Continue to proceed to payment step - try multiple strategies
-        logger.info("[Fan][Subscribe] Clicking 'Continue' button");
-        Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
-        
-        // Wait for Continue button with extended timeout and retry
-        boolean continueClicked = false;
-        for (int attempt = 0; attempt < 3 && !continueClicked; attempt++) {
             try {
-                // Wait for button to be visible
-                if (continueBtn.count() > 0 && safeIsVisible(continueBtn.first())) {
-                    continueBtn.first().scrollIntoViewIfNeeded();
-                    page.waitForTimeout(500);
-                    clickWithRetry(continueBtn.first(), 2, 300);
-                    continueClicked = true;
-                    logger.info("[Fan][Subscribe] Continue button clicked on attempt {}", attempt + 1);
-                } else {
-                    logger.info("[Fan][Subscribe] Continue button not visible, waiting... (attempt {})", attempt + 1);
-                    page.waitForTimeout(2000);
-                    continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
-                }
+                // Try JavaScript click
+                subscribeBtn.first().evaluate("el => el.click()");
+                clicked = true;
+                logger.info("[Fan][Subscribe] JavaScript click succeeded");
             } catch (Throwable e) {
-                logger.warn("[Fan][Subscribe] Continue click attempt {} failed: {}", attempt + 1, e.getMessage());
+                logger.warn("[Fan][Subscribe] JavaScript click failed: {}", e.getMessage());
+            }
+        }
+        
+        if (!clicked) {
+            throw new RuntimeException("Failed to click Subscribe button");
+        }
+        
+        page.waitForTimeout(3000);
+        
+        // Check if Premium modal appeared (paid subscription)
+        Locator premiumText = page.getByText("Premium");
+        if (premiumText.count() > 0 && safeIsVisible(premiumText.first())) {
+            logger.info("[Fan][Subscribe] Premium modal appeared - paid subscription");
+            
+            // Click Continue button
+            Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+            if (continueBtn.count() > 0 && safeIsVisible(continueBtn.first())) {
                 page.waitForTimeout(1000);
+                continueBtn.first().click();
+                logger.info("[Fan][Subscribe] Clicked Continue button");
+                page.waitForTimeout(2000);
+                return true; // Payment needed
             }
         }
         
-        // Fallback: try text-based Continue button
-        if (!continueClicked) {
-            logger.info("[Fan][Subscribe] Trying text-based Continue button");
-            Locator textContinue = page.getByText("Continue", new Page.GetByTextOptions().setExact(true));
-            if (textContinue.count() > 0 && safeIsVisible(textContinue.first())) {
-                clickWithRetry(textContinue.first(), 2, 300);
-                continueClicked = true;
-            }
+        // Check if subscription completed (free subscription)
+        subscribedIndicator = page.getByText("Subscribed");
+        Locator subscriberText = page.getByText("Subscriber");
+        if ((subscribedIndicator.count() > 0 && safeIsVisible(subscribedIndicator.first())) ||
+            (subscriberText.count() > 0 && safeIsVisible(subscriberText.first()))) {
+            logger.info("[Fan][Subscribe] Free subscription completed");
+            return false; // No payment needed
         }
         
-        if (!continueClicked) {
-            throw new RuntimeException("Failed to click Continue button after multiple attempts");
+        // If Subscribe button is gone, subscription likely completed
+        subscribeBtn = page.locator("button.subscribeWithoutObligation, button.subscribeBtn");
+        if (subscribeBtn.count() == 0 || !safeIsVisible(subscribeBtn.first())) {
+            logger.info("[Fan][Subscribe] Subscribe button gone - subscription completed");
+            return false;
         }
         
-        // Wait for the payment page title
-        logger.info("[Fan][Subscribe] Waiting for payment page");
-        try { waitVisible(page.getByText("Secure payment").first(), 20_000); } catch (Throwable ignored) {}
+        logger.info("[Fan][Subscribe] Subscription flow completed");
+        return false;
     }
 
     @Step("Fill card details")

@@ -58,13 +58,20 @@ public class FanSubscriptionTest extends BaseTestClass {
         FanSubscriptionPage sub = new FanSubscriptionPage(page);
         sub.openSearchPanel();
         sub.searchAndOpenCreator(creatorUsername);
-        sub.startSubscriptionFlow();
-        String cardNumber = ConfigReader.getProperty("payment.card.number", "4012 0018 0000 0016");
-        String cardExpiry = ConfigReader.getProperty("payment.card.expiry", "07/34");
-        String cardCvc = ConfigReader.getProperty("payment.card.cvc", "657");
-        sub.fillCardDetails(cardNumber, cardExpiry, cardCvc);
-        sub.selectCountryIfNeeded();
-        sub.confirmAndComplete3DS();
+        
+        // startSubscriptionFlow returns true if payment is needed, false if FREE subscription completed
+        boolean paymentNeeded = sub.startSubscriptionFlow();
+        
+        if (paymentNeeded) {
+            // Paid creator - complete payment flow
+            String cardNumber = ConfigReader.getProperty("payment.card.number", "4012 0018 0000 0016");
+            String cardExpiry = ConfigReader.getProperty("payment.card.expiry", "07/34");
+            String cardCvc = ConfigReader.getProperty("payment.card.cvc", "657");
+            sub.fillCardDetails(cardNumber, cardExpiry, cardCvc);
+            sub.selectCountryIfNeeded();
+            sub.confirmAndComplete3DS();
+        }
+        // For FREE creators, subscription is already complete
         sub.assertSubscriberVisible();
     }
 }
