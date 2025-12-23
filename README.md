@@ -1,10 +1,11 @@
 # Twizz Automation (Java 21 + Playwright + TestNG)
 
 ## 🚀 Latest Updates
-- **Fan Live Events Module**: New test coverage for fan joining creator live events (instant and scheduled)
+- **Project Structure Refactoring**: Reorganized into modular folders (creator/fan/admin/common/business)
+- **Twizz Business App Integration**: New test coverage for Business application landing page
+- **Fan Live Events Module**: Test coverage for fan joining creator live events (instant and scheduled)
 - **Java 21 LTS**: Upgraded from Java 17 to Java 21 for enhanced performance and long-term support
 - **Enhanced Code Quality**: Comprehensive framework improvements with zero IDE warnings
-- **Optimized Configuration**: Configurable timeouts, robust exception handling, and clean static analysis
 
 ## 📋 Prerequisites
 - **Java 21 LTS** (Eclipse Temurin recommended)
@@ -291,18 +292,49 @@ End-to-end UI automation for Twizz with Creator and Fan flows. The framework emp
      ```
 
 ## Project Structure
-- `src/main/java/utils/`
-  - `ConfigReader`: Loads `config.properties` and exposes typed getters.
-  - `RetryAnalyzer`, `AnnotationTransformer`: Centralized retry with logging and optional delay.
-- `src/test/java/pages/`
-  - `BasePage`: Common helpers.
-  - `LandingPage`, `CreatorRegistrationPage`, `CreatorLoginPage`, `CreatorPublicationPage`, `CreatorCollectionPage`, `FanRegistrationPage`, `FanLoginPage`: Page Objects with robust waits and fallbacks.
-  - `BaseTestClass`: Setup/teardown, screenshots, Allure/trace attachments.
-- `src/test/java/tests/`
-  - `LandingPageTest`, `CreatorRegistrationTest`, `FanRegistrationTest`, `CreatorLoginTest`, `CreatorPublicationTest`, `CreatorLiveTest`, `CreatorQuickFilesTest`, `CreatorMediaPushTest`, `CreatorUnlockLinksTest`, `CreatorDiscoverTest`, `CreatorRevenuesTest`, `CreatorQuickFilesDeleteTest`, `CreatorCollectionTest`, `CreatorCollectionDeleteTest`, `FanLoginTest`.
-  - `testng.xml`: Suite config, listeners (`utils.AnnotationTransformer`); Allure via TestNG adapter dependency. Runs sequentially by default.
-  - To run in parallel, use `testng-parallel.xml` or the Maven profile: `mvn -P parallel test`.
-  - New: `CreatorPromotionsTest` (promo code create + copy) and `CleanupDeletePromoCodesTest` (cleanup 'AUTOMATION' promos)
+```
+src/
+├── main/java/utils/
+│   ├── ConfigReader.java      # Loads config.properties, typed getters
+│   ├── BrowserFactory.java    # Playwright browser management
+│   ├── WaitUtils.java         # Wait utilities
+│   ├── RetryAnalyzer.java     # Centralized retry with logging
+│   └── AnnotationTransformer.java
+│
+└── test/java/
+    ├── pages/
+    │   ├── common/            # Shared page objects
+    │   │   ├── BasePage.java
+    │   │   ├── BaseTestClass.java
+    │   │   └── LandingPage.java
+    │   ├── creator/           # Creator app page objects
+    │   │   ├── CreatorLoginPage.java
+    │   │   ├── CreatorRegistrationPage.java
+    │   │   ├── CreatorPublicationPage.java
+    │   │   └── ... (30+ page objects)
+    │   ├── fan/               # Fan app page objects
+    │   │   ├── FanLoginPage.java
+    │   │   ├── FanHomePage.java
+    │   │   └── ... (15+ page objects)
+    │   ├── admin/             # Admin page objects
+    │   │   └── AdminCreatorApprovalPage.java
+    │   └── business/          # Business app page objects
+    │       ├── BusinessLandingPage.java
+    │       └── BusinessBaseTestClass.java
+    │
+    └── tests/
+        ├── common/            # Common tests (LandingPageTest)
+        ├── creator/           # Creator tests (30+ test classes)
+        ├── fan/               # Fan tests (15+ test classes)
+        ├── admin/             # Admin tests (AdminApproveCreatorTest)
+        └── business/          # Business tests (BusinessLandingPageTest)
+```
+
+### TestNG XML Runners
+- `testng.xml` - Sequential execution of all tests (Creator → Admin → Fan)
+- `testng-parallel.xml` - Parallel execution (thread-count=4)
+- `business-testng.xml` - Business tests only (sequential)
+- `business-testng-parallel.xml` - Business tests only (parallel)
 
 ## Prerequisites
 - Java 21 LTS
@@ -657,9 +689,27 @@ Key entries (with defaults):
   mvn -Dtest=FanMessagingTest#completeMessagingFlowWithMixedMedia test
   ```
 
+## Twizz Business App
+- Page object: `pages/business/BusinessLandingPage`
+- Base class: `pages/business/BusinessBaseTestClass`
+- Test class: `tests/business/BusinessLandingPageTest`
+- URL: `https://devbusiness.twizz.app/` (dev), `https://business.twizz.app/` (prod)
+- Coverage:
+  - Verify Twizz Business logo displayed
+  - Verify "Designed for managers" heading on landing page
+  - Navigate to Contact Us → verify "We are in different places" heading
+  - Navigate to Login → verify "Connection" heading
+  - Navigate to Register → verify "Inscription" heading
+  - Switch between Employee and Manager registration tabs
+- Run examples:
+  ```bash
+  mvn -Dtest=tests.business.BusinessLandingPageTest test
+  mvn -B "-Dsurefire.suiteXmlFiles=business-testng.xml" test
+  ```
+
 ## Fan Live Events
-- Page object: `pages/FanLivePage`
-- Test class: `tests/FanLiveTest`
+- Page object: `pages/fan/FanLivePage`
+- Test class: `tests/fan/FanLiveTest`
 - Scenarios:
   1. **Creator creates instant live, Fan joins** (priority 1)
      - Creator: Login → Navigate to Live → Create instant live (Everyone, 15€) → Start now

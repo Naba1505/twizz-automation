@@ -1,6 +1,70 @@
 # Changelog
 
-## [Unreleased] - 2025-12-15
+## [Unreleased] - 2025-12-23
+
+### Major Refactoring: Project Structure Reorganization
+- **Modular Folder Structure**: Reorganized all page objects and test classes into logical modules:
+  - `pages/creator/` - All Creator-related page objects
+  - `pages/fan/` - All Fan-related page objects
+  - `pages/admin/` - Admin page objects (AdminCreatorApprovalPage)
+  - `pages/common/` - Shared page objects (BasePage, BaseTestClass, LandingPage)
+  - `pages/business/` - New Business application page objects
+  - `tests/creator/`, `tests/fan/`, `tests/admin/`, `tests/common/`, `tests/business/` - Corresponding test classes
+
+### New Feature: Twizz Business App Integration
+- **Business Landing Page Test** (`BusinessLandingPageTest.java`): Initial test coverage for Twizz Business App
+  - Verify Twizz Business logo displayed
+  - Verify "Designed for managers" heading
+  - Navigate to Contact Us page and verify heading
+  - Navigate to Login page and verify "Connection" heading
+  - Navigate to Register page and verify "Inscription" heading
+  - Switch between Employee and Manager registration tabs
+  
+- **Business Landing Page Object** (`BusinessLandingPage.java`): Page object for Business landing page
+  - Navigation methods for Contact Us, Login, Register
+  - Page verification methods for each screen
+  - Manager/Employee tab switching
+  
+- **Business Base Test Class** (`BusinessBaseTestClass.java`): Base class for Business tests
+  - Separate setup/teardown for Business application
+  - Screenshot and trace capture on failure
+
+- **Configuration Updates** (`config.properties`, `ConfigReader.java`):
+  - Added Business URLs for dev/stage/prod environments
+  - Added getter methods for Business landing, login, and register URLs
+
+### New TestNG XML Runners
+- **business-testng.xml**: Sequential execution of Business tests
+- **business-testng-parallel.xml**: Parallel execution of Business tests (thread-count=4)
+- Updated `testng.xml` and `testng-parallel.xml` with new package paths and organized test groups
+
+### Bug Fix: FanBookmarksTest Flaky Test
+- **Fixed** `fanCanBookmarkMultipleFeeds` intermittent failures
+  - Changed locator from role-based `getByRole(AriaRole.IMG, name="bookmark")` to exact CSS selector `img[alt='bookmark']`
+  - Added `scrollIntoViewIfNeeded()` before clicking bookmark icons
+  - Added verification after each click to confirm bookmark state changed
+  - Added retry logic with scrolling in `verifyAllBookmarksHighlighted()`
+
+### Files Added
+- `src/test/java/pages/business/BusinessLandingPage.java`
+- `src/test/java/pages/business/BusinessBaseTestClass.java`
+- `src/test/java/tests/business/BusinessLandingPageTest.java`
+- `business-testng.xml`
+- `business-testng-parallel.xml`
+
+### Files Modified
+- All page objects moved to `pages/{creator,fan,admin,common,business}/` with updated package declarations
+- All test classes moved to `tests/{creator,fan,admin,common,business}/` with updated package declarations
+- `testng.xml` - Updated with new package paths, organized into Common/Creator/Admin/Fan test groups
+- `testng-parallel.xml` - Updated with new package paths
+- `src/main/resources/config.properties` - Added Business URLs
+- `src/main/java/utils/ConfigReader.java` - Added Business URL getters
+- `src/main/java/utils/WaitUtils.java` - Moved from test to main for proper accessibility
+- `src/test/java/pages/fan/FanBookmarksPage.java` - Fixed flaky bookmark test
+
+---
+
+## [Previous] - 2025-12-15
 
 ### New Feature: Fan Help and Contact Module
 - **Fan Help and Contact Test Class** (`FanHelpAndContactTest.java`): Test for fan submitting help and contact form
