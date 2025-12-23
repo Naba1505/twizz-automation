@@ -1,0 +1,13 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Twizz Business Automation Suite (Parallel)" parallel="classes" thread-count="4" verbose="1" preserve-order="true">
+    <listeners>
+        <listener class-name="utils.AnnotationTransformer"/>
+    </listeners>
+
+    <!-- Business Tests -->
+    <test name="Business Tests (Parallel)">
+        <classes>
+            <class name="tests.business.BusinessLandingPageTest"/>
+        </classes>
+    </test>
+</suite>

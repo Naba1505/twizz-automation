@@ -236,4 +236,48 @@ public class ConfigReader {
     public static int getElementRetryDelay() {
         return Integer.parseInt(getProperty("element.retry.delay", "200"));
     }
+
+    // ===== Twizz Business App URLs =====
+
+    /**
+     * Returns the environment-specific Business landing page URL
+     */
+    public static String getBusinessLandingPageUrl() {
+        String key = ENVIRONMENT + ".business.landingPageUrl";
+        String url = properties.getProperty(key);
+        if (url == null) {
+            logger.error("Business Landing URL not found for environment: {}", ENVIRONMENT);
+            throw new RuntimeException("Business Landing URL not found for environment: " + ENVIRONMENT);
+        }
+        logger.info("Loaded Business Landing URL: {}", url);
+        return url;
+    }
+
+    /**
+     * Returns the environment-specific Business login URL
+     */
+    public static String getBusinessLoginUrl() {
+        String key = ENVIRONMENT + ".business.loginUrl";
+        String url = properties.getProperty(key);
+        if (url == null) {
+            String base = getBusinessLandingPageUrl();
+            url = base + "/auth/signIn";
+        }
+        logger.info("Loaded Business Login URL: {}", url);
+        return url;
+    }
+
+    /**
+     * Returns the environment-specific Business register URL
+     */
+    public static String getBusinessRegisterUrl() {
+        String key = ENVIRONMENT + ".business.registerUrl";
+        String url = properties.getProperty(key);
+        if (url == null) {
+            String base = getBusinessLandingPageUrl();
+            url = base + "/auth/signUp";
+        }
+        logger.info("Loaded Business Register URL: {}", url);
+        return url;
+    }
 }

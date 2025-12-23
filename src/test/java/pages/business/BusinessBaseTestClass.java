@@ -1,0 +1,97 @@
+package pages.business;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+
+import org.testng.ITestResult;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
+
+import io.qameta.allure.Allure;
+import utils.BrowserFactory;
+import utils.ConfigReader;
+
+/**
+ * Base Test Class for Twizz Business App tests
+ * Provides setup/teardown for Business app testing
+ */
+public class BusinessBaseTestClass {
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
+    protected Page page;
+    protected BusinessLandingPage businessLandingPage;
+
+    @BeforeMethod
+    public void setUp() {
+        BrowserFactory.initialize();
+        page = BrowserFactory.getPage();
+        page.setDefaultNavigationTimeout(ConfigReader.getNavigationTimeout());
+        page.setDefaultTimeout(ConfigReader.getDefaultTimeout());
+
+        String landingPageUrl = ConfigReader.getBusinessLandingPageUrl();
+        try {
+            page.navigate(landingPageUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+            page.waitForLoadState(LoadState.LOAD);
+        } catch (Exception first) {
+            try {
+                page.navigate(landingPageUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+                page.waitForLoadState(LoadState.LOAD);
+            } catch (Exception second) {
+                throw first;
+            }
+        }
+        businessLandingPage = new BusinessLandingPage(page);
+        businessLandingPage.waitForPageToLoad();
+    }
+
+    @AfterMethod
+    public void tearDown(ITestResult result) {
+        if (ITestResult.FAILURE == result.getStatus()) {
+            try {
+                String screenshotDir = ConfigReader.getProperty("screenshot.dir", "screenshots");
+                Files.createDirectories(Paths.get(screenshotDir));
+                String timestamp = dateFormat.format(System.currentTimeMillis());
+                String screenshotPath = screenshotDir + "/Business_" + result.getName() + "_" + timestamp + ".png";
+                byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
+                Allure.addAttachment("Failure Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
+            } catch (IOException | RuntimeException e) {
+                // swallow attachment errors
+            }
+            try {
+                String html = page.content();
+                Allure.addAttachment("Page HTML", "text/html", new ByteArrayInputStream(html.getBytes()), ".html");
+            } catch (RuntimeException ignored) {}
+            try {
+                boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));
+                if (traceEnabled) {
+                    String traceDir = ConfigReader.getProperty("trace.dir", "traces");
+                    Files.createDirectories(Paths.get(traceDir));
+                    String timestamp = dateFormat.format(System.currentTimeMillis());
+                    Path tracePath = Paths.get(traceDir, "Business_" + result.getName() + "_" + timestamp + ".zip");
+                    page.context().tracing().stop(new Tracing.StopOptions().setPath(tracePath));
+                    Allure.addAttachment("Playwright Trace", "application/zip", Files.newInputStream(tracePath), ".zip");
+                }
+            } catch (IOException | RuntimeException e) { }
+        } else if (ITestResult.SUCCESS == result.getStatus() && Boolean.parseBoolean(ConfigReader.getProperty("screenshot.on.success", "false"))) {
+            try {
+                String screenshotDir = ConfigReader.getProperty("screenshot.dir", "screenshots");
+                Files.createDirectories(Paths.get(screenshotDir));
+                String timestamp = dateFormat.format(System.currentTimeMillis());
+                String screenshotPath = screenshotDir + "/Business_" + result.getName() + "_SUCCESS_" + timestamp + ".png";
+                byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
+                Allure.addAttachment("Success Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
+            } catch (IOException | RuntimeException e) {
+                // swallow attachment errors
+            }
+        }
+        BrowserFactory.close();
+    }
+}

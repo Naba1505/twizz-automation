@@ -4,56 +4,75 @@
         <listener class-name="utils.AnnotationTransformer"/>
     </listeners>
 
-    <test name="Functional Tests">
+    <!-- Common Tests -->
+    <test name="Common Tests">
         <classes>
-            <class name="tests.LandingPageTest"/>
-            <class name="tests.CreatorRegistrationTest"/>
-            <class name="tests.CreatorLoginTest"/>
-            <class name="tests.CreatorPublicationTest"/>
-            <class name="tests.CreatorLiveTest"/>
-            <class name="tests.CreatorQuickFilesTest"/>
-            <class name="tests.CreatorCollectionTest"/>
-            <class name="tests.CreatorMediaPushTest"/>
-            <class name="tests.CreatorUnlockLinksTest"/>
-            <class name="tests.CreatorDiscoverTest"/>
-            <class name="tests.CreatorMessagingTest"/>
-            <class name="tests.CreatorRevenuesTest"/>
-            <class name="tests.CreatorProfileTest"/>
-            <class name="tests.CreatorFormationTest"/>
-            <class name="tests.CreatorSubscriptionPriceTest"/>
-            <class name="tests.CreatorPromotionsTest"/>
-            <class name="tests.CreatorPushHistoryTest"/>
-            <class name="tests.CreatorUnlockHistoryTest"/>
-            <class name="tests.CreatorHelpAndContactTest"/>
-            <class name="tests.CreatorLegalPagesTest"/>
-            <class name="tests.CreatorLanguageTest"/>
-            <class name="tests.CreatorCollectionsHistoryTest"/>
-            <class name="tests.CreatorPaymentMethodTest"/>
-            <class name="tests.CreatorAutomaticMessageTest"/>
-            <class name="tests.CreatorScriptsTest"/>
-            <class name="tests.CreatorScriptsCleanupTest"/>
-            <class name="tests.CleanupDeletePromoCodesTest"/>
-            <class name="tests.CreatorQuickFilesDeleteTest"/>
-            <class name="tests.CreatorCollectionDeleteTest"/>
-            <class name="tests.CreatorLogoutTest"/>
-            <class name="tests.AdminApproveCreatorTest"/>
-            <class name="tests.FanRegistrationTest"/>
-            <class name="tests.FanLoginTest"/>
-            <class name="tests.FanHomeScreenTest"/>
-            <class name="tests.FanBookmarksTest"/>
-            <class name="tests.FanMyCreatorsTest"/>
-            <class name="tests.FanDiscoverTest"/>
-            <class name="tests.FanSavedCardsTest"/>
-            <class name="tests.FanSubscriptionTest"/>
-            <class name="tests.FanLiveTest"/>
-            <class name="tests.FanHelpAndContactTest"/>
-            <class name="tests.FanSpottedBugTest"/>
-            <class name="tests.FanEmailNotificationTest"/>
-            <class name="tests.FanTermsAndPoliciesTest"/>
-            <class name="tests.FanLanguageTest"/>
-            <class name="tests.FanPersonalInfoTest"/>
-            <class name="tests.FanLogoutTest"/>
-            <class name="tests.FanMessagingTest"/>
+            <class name="tests.common.LandingPageTest"/>
+        </classes>
+    </test>
+
+    <!-- Creator Tests -->
+    <test name="Creator Tests">
+        <classes>
+            <class name="tests.creator.CreatorRegistrationTest"/>
+            <class name="tests.creator.CreatorLoginTest"/>
+            <class name="tests.creator.CreatorPublicationTest"/>
+            <class name="tests.creator.CreatorLiveTest"/>
+            <class name="tests.creator.CreatorQuickFilesTest"/>
+            <class name="tests.creator.CreatorCollectionTest"/>
+            <class name="tests.creator.CreatorMediaPushTest"/>
+            <class name="tests.creator.CreatorUnlockLinksTest"/>
+            <class name="tests.creator.CreatorDiscoverTest"/>
+            <class name="tests.creator.CreatorMessagingTest"/>
+            <class name="tests.creator.CreatorRevenuesTest"/>
+            <class name="tests.creator.CreatorProfileTest"/>
+            <class name="tests.creator.CreatorFormationTest"/>
+            <class name="tests.creator.CreatorSubscriptionPriceTest"/>
+            <class name="tests.creator.CreatorPromotionsTest"/>
+            <class name="tests.creator.CreatorPushHistoryTest"/>
+            <class name="tests.creator.CreatorUnlockHistoryTest"/>
+            <class name="tests.creator.CreatorHelpAndContactTest"/>
+            <class name="tests.creator.CreatorLegalPagesTest"/>
+            <class name="tests.creator.CreatorLanguageTest"/>
+            <class name="tests.creator.CreatorCollectionsHistoryTest"/>
+            <class name="tests.creator.CreatorPaymentMethodTest"/>
+            <class name="tests.creator.CreatorAutomaticMessageTest"/>
+            <class name="tests.creator.CreatorScriptsTest"/>
+            <class name="tests.creator.CreatorScriptsCleanupTest"/>
+            <class name="tests.creator.CleanupDeletePromoCodesTest"/>
+            <class name="tests.creator.CreatorQuickFilesDeleteTest"/>
+            <class name="tests.creator.CreatorCollectionDeleteTest"/>
+            <class name="tests.creator.CreatorLogoutTest"/>
+        </classes>
+    </test>
+
+    <!-- Admin Tests -->
+    <test name="Admin Tests">
+        <classes>
+            <class name="tests.admin.AdminApproveCreatorTest"/>
+        </classes>
+    </test>
+
+    <!-- Fan Tests -->
+    <test name="Fan Tests">
+        <classes>
+            <class name="tests.fan.FanRegistrationTest"/>
+            <class name="tests.fan.FanLoginTest"/>
+            <class name="tests.fan.FanHomeScreenTest"/>
+            <class name="tests.fan.FanBookmarksTest"/>
+            <class name="tests.fan.FanMyCreatorsTest"/>
+            <class name="tests.fan.FanDiscoverTest"/>
+            <class name="tests.fan.FanSavedCardsTest"/>
+            <class name="tests.fan.FanSubscriptionTest"/>
+            <class name="tests.fan.FanLiveTest"/>
+            <class name="tests.fan.FanHelpAndContactTest"/>
+            <class name="tests.fan.FanSpottedBugTest"/>
+            <class name="tests.fan.FanEmailNotificationTest"/>
+            <class name="tests.fan.FanTermsAndPoliciesTest"/>
+            <class name="tests.fan.FanLanguageTest"/>
+            <class name="tests.fan.FanPersonalInfoTest"/>
+            <class name="tests.fan.FanMessagingTest"/>
+            <class name="tests.fan.FanLogoutTest"/>
         </classes>
     </test>
 </suite>
