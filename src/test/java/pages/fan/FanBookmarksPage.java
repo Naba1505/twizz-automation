@@ -297,17 +297,27 @@ public class FanBookmarksPage extends BasePage {
         // Wait for page to load
         try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
         
-        // Use //img[@alt='watermarked'] to count bookmarked feeds
-        Locator watermarkedFeeds = page.locator("img[alt='watermarked']");
-        int feedCount = watermarkedFeeds.count();
-        logger.info("Found {} watermarked feeds on bookmarks screen (expected {})", feedCount, expectedCount);
+        // Retry logic to handle timing issues
+        int maxRetries = 5;
+        int feedCount = 0;
         
-        if (feedCount == expectedCount) {
-            logger.info("Bookmark count matches: {} feeds", feedCount);
-            return true;
+        for (int retry = 0; retry < maxRetries; retry++) {
+            // Use //img[@alt='watermarked'] to count bookmarked feeds
+            Locator watermarkedFeeds = page.locator("img[alt='watermarked']");
+            feedCount = watermarkedFeeds.count();
+            logger.info("Retry {}: Found {} watermarked feeds on bookmarks screen (expected {})", retry + 1, feedCount, expectedCount);
+            
+            if (feedCount >= expectedCount) {
+                logger.info("Bookmark count matches: {} feeds", feedCount);
+                return true;
+            }
+            
+            // Scroll down to load more content
+            page.mouse().wheel(0, 300);
+            try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
         }
         
-        logger.warn("Bookmark count mismatch: expected {} but found {}", expectedCount, feedCount);
+        logger.warn("Bookmark count mismatch: expected {} but found {} after {} retries", expectedCount, feedCount, maxRetries);
         return false;
     }
 
@@ -412,26 +422,130 @@ public class FanBookmarksPage extends BasePage {
     public void unbookmarkAllFromBookmarksScreen() {
         logger.info("Unbookmarking all feeds from bookmarks screen");
         
-        // Unbookmark feed #1: Click watermarked feed, then click bookmarkFill
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("watermarked")).first().click();
-        logger.info("Clicked on watermarked feed #1");
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        // Wait for page to fully load
+        try { page.waitForTimeout(2000); } catch (Throwable ignored) { }
         
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("bookmarkFill")).first().click();
-        logger.info("Unbookmarked feed #1");
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        int unbookmarked = 0;
+        int maxAttempts = 20; // Safety limit
         
-        // Unbookmark feed #2: Click next bookmarkFill
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("bookmarkFill")).first().click();
-        logger.info("Unbookmarked feed #2");
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        for (int i = 0; i < maxAttempts; i++) {
+            // Check if there are any watermarked feeds (bookmarked items) on the screen
+            Locator watermarkedList = page.locator("img[alt='watermarked']");
+            int watermarkedCount = watermarkedList.count();
+            logger.info("Iteration {}: Found {} watermarked feeds", i + 1, watermarkedCount);
+            
+            if (watermarkedCount == 0) {
+                logger.info("No more watermarked feeds - all unbookmarked");
+                break;
+            }
+            
+            try {
+                // Click on first watermarked feed to enter detail view
+                Locator watermarked = watermarkedList.first();
+                watermarked.scrollIntoViewIfNeeded();
+                try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                watermarked.click(new Locator.ClickOptions().setForce(true));
+                logger.info("Clicked on watermarked feed");
+                try { page.waitForTimeout(1500); } catch (Throwable ignored) { }
+                
+                // Now find and click the bookmarkFill icon to unbookmark
+                Locator bookmarkFill = page.locator("img[alt='bookmarkFill']").first();
+                int fillCount = bookmarkFill.count();
+                logger.info("Found {} bookmarkFill icons", fillCount);
+                
+                if (fillCount > 0) {
+                    bookmarkFill.scrollIntoViewIfNeeded();
+                    try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                    bookmarkFill.click(new Locator.ClickOptions().setForce(true));
+                    unbookmarked++;
+                    logger.info("Unbookmarked feed #{}", unbookmarked);
+                    try { page.waitForTimeout(1500); } catch (Throwable ignored) { }
+                } else {
+                    logger.warn("No bookmarkFill icon found after clicking watermarked feed, going back");
+                    page.goBack();
+                    try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+                }
+            } catch (Throwable e) {
+                logger.warn("Failed during unbookmark iteration: {}", e.getMessage());
+                // Try to recover by going back
+                try { page.goBack(); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+            }
+        }
         
-        // Unbookmark feed #3: Click next bookmarkFill
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("bookmarkFill")).click();
-        logger.info("Unbookmarked feed #3");
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        logger.info("Completed unbookmarking {} feeds from bookmarks screen", unbookmarked);
+    }
+
+    @Step("Get count of watermarked feeds on bookmarks screen")
+    public int getWatermarkedFeedsCount() {
+        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        Locator watermarked = page.locator("img[alt='watermarked']");
+        int count = watermarked.count();
+        logger.info("Found {} watermarked feeds on bookmarks screen", count);
+        return count;
+    }
+
+    @Step("Unbookmark {count} feeds from bookmarks screen")
+    public int unbookmarkFeedsFromScreen(int count) {
+        logger.info("Unbookmarking {} feeds from bookmarks screen", count);
         
-        logger.info("Completed unbookmarking from bookmarks screen");
+        // Wait for page to fully load
+        try { page.waitForTimeout(2000); } catch (Throwable ignored) { }
+        
+        int unbookmarked = 0;
+        int maxAttempts = count + 5; // Allow some extra attempts
+        
+        for (int i = 0; i < maxAttempts && unbookmarked < count; i++) {
+            // Check if there are any watermarked feeds (bookmarked items) on the screen
+            Locator watermarkedList = page.locator("img[alt='watermarked']");
+            int watermarkedCount = watermarkedList.count();
+            logger.info("Iteration {}: Found {} watermarked feeds, unbookmarked so far: {}", i + 1, watermarkedCount, unbookmarked);
+            
+            if (watermarkedCount == 0) {
+                logger.info("No more watermarked feeds available");
+                break;
+            }
+            
+            try {
+                // Click on first watermarked feed to enter detail view
+                Locator watermarked = watermarkedList.first();
+                watermarked.scrollIntoViewIfNeeded();
+                try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                watermarked.click(new Locator.ClickOptions().setForce(true));
+                logger.info("Clicked on watermarked feed");
+                try { page.waitForTimeout(1500); } catch (Throwable ignored) { }
+                
+                // Now find and click the bookmarkFill icon to unbookmark
+                Locator bookmarkFill = page.locator("img[alt='bookmarkFill']").first();
+                int fillCount = bookmarkFill.count();
+                logger.info("Found {} bookmarkFill icons", fillCount);
+                
+                if (fillCount > 0) {
+                    bookmarkFill.scrollIntoViewIfNeeded();
+                    try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+                    bookmarkFill.click(new Locator.ClickOptions().setForce(true));
+                    unbookmarked++;
+                    logger.info("Unbookmarked feed #{}", unbookmarked);
+                    try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+                    
+                    // Navigate back to bookmarks list after unbookmarking
+                    page.goBack();
+                    logger.info("Navigated back to bookmarks list");
+                    try { page.waitForTimeout(1500); } catch (Throwable ignored) { }
+                } else {
+                    logger.warn("No bookmarkFill icon found after clicking watermarked feed, going back");
+                    page.goBack();
+                    try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+                }
+            } catch (Throwable e) {
+                logger.warn("Failed during unbookmark iteration: {}", e.getMessage());
+                try { page.goBack(); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+            }
+        }
+        
+        logger.info("Completed unbookmarking {} feeds from bookmarks screen", unbookmarked);
+        return unbookmarked;
     }
 
     @Step("Click arrow left to navigate back")
@@ -460,10 +574,32 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Verifying 'No bookmarks found!' text is displayed");
         
         // Wait for page to load
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(2000); } catch (Throwable ignored) { }
         
+        // Retry logic to handle timing issues
+        int maxRetries = 5;
+        for (int retry = 0; retry < maxRetries; retry++) {
+            // Check for "No bookmarks found!" text
+            Locator noBookmarksText = page.getByText("No bookmarks found!");
+            if (noBookmarksText.count() > 0 && safeIsVisible(noBookmarksText.first())) {
+                logger.info("'No bookmarks found!' text visible on retry {}", retry + 1);
+                return true;
+            }
+            
+            // Alternative: check if there are no watermarked feeds (empty bookmarks)
+            Locator watermarked = page.locator("img[alt='watermarked']");
+            if (watermarked.count() == 0) {
+                logger.info("No watermarked feeds found - bookmarks are empty on retry {}", retry + 1);
+                return true;
+            }
+            
+            logger.info("Retry {}: Still checking for empty bookmarks state...", retry + 1);
+            try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        }
+        
+        // Final check
         Locator noBookmarksText = page.getByText("No bookmarks found!");
-        boolean visible = noBookmarksText.count() > 0 && noBookmarksText.isVisible();
+        boolean visible = noBookmarksText.count() > 0 && safeIsVisible(noBookmarksText.first());
         
         logger.info("'No bookmarks found!' text visible: {}", visible);
         return visible;

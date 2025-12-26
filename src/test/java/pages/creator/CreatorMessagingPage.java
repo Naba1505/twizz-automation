@@ -2126,7 +2126,13 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Click plus icon to add media")
     public void clickPlusIconForMedia() {
-        Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+        // Use specific locator for the conversation footer plus icon to avoid strict mode violation
+        // The plus icon in conversation footer has class addCircleGreen and is not disabled
+        Locator plus = page.locator(".addCircleGreen:not(.disabled) > img[alt='plus']").first();
+        if (plus.count() == 0 || !safeIsVisible(plus)) {
+            // Fallback: use role-based locator with first()
+            plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus")).first();
+        }
         waitVisible(plus, DEFAULT_WAIT);
         clickWithRetry(plus, 2, 200);
         page.waitForTimeout(1000);
@@ -2153,9 +2159,30 @@ public class CreatorMessagingPage extends BasePage {
         if (filePath == null || !java.nio.file.Files.exists(filePath)) {
             throw new RuntimeException("Media file not found: " + filePath);
         }
-        logger.info("[Messaging] Uploading file directly via input: {}", filePath.getFileName());
-        // Use setInputFiles directly on hidden file input - no OS dialog needed
+        logger.info("[Messaging] Uploading file via input: {}", filePath.getFileName());
+        
+        // First, click plus icon and My Device to ensure file input is available
+        clickPlusIconForMedia();
+        verifyImportationPopup();
+        clickMyDeviceButton();
+        
+        // Wait for file input to be available with retry
         Locator fileInput = page.locator("input[type='file']").first();
+        int maxRetries = 10;
+        for (int i = 0; i < maxRetries; i++) {
+            if (fileInput.count() > 0) {
+                logger.info("[Messaging] File input found after {} attempts", i + 1);
+                break;
+            }
+            logger.info("[Messaging] Waiting for file input... attempt {}", i + 1);
+            page.waitForTimeout(1000);
+        }
+        
+        if (fileInput.count() == 0) {
+            throw new RuntimeException("File input not found after " + maxRetries + " attempts");
+        }
+        
+        // Use setInputFiles directly on hidden file input - no OS dialog needed
         fileInput.setInputFiles(filePath);
         logger.info("[Messaging] File selected: {}", filePath.getFileName());
         // Wait for file to be attached and preview to appear
@@ -2325,8 +2352,7 @@ public class CreatorMessagingPage extends BasePage {
     public void sendMediaToFan(String fanName, java.nio.file.Path mediaPath) {
         clickToDeliverTabForConversation();
         clickOnFanConversation(fanName);
-        // Upload file directly via hidden input - no need to click plus or My Device
-        // This prevents OS file dialog from opening
+        // uploadMediaFile handles clicking plus icon, My Device, and file selection
         uploadMediaFile(mediaPath);
         clickSendButtonForMedia();
         verifyDeliveredText();
