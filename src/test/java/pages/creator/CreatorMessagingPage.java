@@ -2008,19 +2008,48 @@ public class CreatorMessagingPage extends BasePage {
             logger.info("[Messaging] Found message: {}", message);
         }
         
-        // Find Accept button - try multiple strategies
-        Locator acceptBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept")).first();
+        // Strategy 1: Find Accept button in the same message container as the message text
+        // Look for Accept button that's a sibling or nearby the message
+        Locator acceptBtn = null;
         
-        // Check if Accept button is visible
-        if (acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
-            // Try text-based locator
-            acceptBtn = page.getByText("Accept").first();
+        // Try to find Accept button within the message's parent container
+        if (messageFound) {
+            // Look for Accept button near the message - check parent containers
+            Locator messageParent = messageLocator.locator("xpath=ancestor::div[contains(@class, 'message') or contains(@class, 'bubble') or contains(@class, 'chat')]");
+            if (messageParent.count() > 0) {
+                Locator nearbyAccept = messageParent.first().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Accept"));
+                if (nearbyAccept.count() > 0 && safeIsVisible(nearbyAccept.first())) {
+                    acceptBtn = nearbyAccept.first();
+                    logger.info("[Messaging] Found Accept button in message container");
+                }
+            }
+        }
+        
+        // Strategy 2: Find the LAST Accept button (most recent message)
+        if (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
+            Locator allAcceptBtns = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
+            int acceptCount = allAcceptBtns.count();
+            logger.info("[Messaging] Found {} Accept buttons on page", acceptCount);
+            
+            if (acceptCount > 0) {
+                // Click the LAST Accept button (most recent message at bottom)
+                acceptBtn = allAcceptBtns.last();
+                logger.info("[Messaging] Using last Accept button (most recent)");
+            }
+        }
+        
+        // Strategy 3: Try text-based locator as fallback
+        if (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
+            Locator allAcceptText = page.getByText("Accept");
+            if (allAcceptText.count() > 0) {
+                acceptBtn = allAcceptText.last();
+                logger.info("[Messaging] Using last Accept text element");
+            }
         }
         
         // If still not found, the message might already be accepted or we're in wrong conversation
-        if (acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
+        if (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
             logger.warn("[Messaging] No Accept button found - message may already be accepted or wrong conversation");
-            // Take screenshot for debugging
             throw new RuntimeException("No Accept button found. Message found: " + messageFound + ", Message: " + message);
         }
         

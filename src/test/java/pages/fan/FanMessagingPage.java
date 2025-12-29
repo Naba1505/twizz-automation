@@ -70,24 +70,28 @@ public class FanMessagingPage extends BasePage {
     }
 
     // Accept media button (for paid messages from creator)
+    // Uses LAST button to get the most recent message's Accept button
     private Locator acceptMediaButton() {
-        // Try multiple strategies to find Accept button
+        // Try multiple strategies to find Accept button - use LAST to get most recent
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
-        if (btn.count() > 0 && safeIsVisible(btn.first())) {
-            return btn.first();
+        int count = btn.count();
+        logger.info("[Fan][Messaging] Found {} Accept buttons on page", count);
+        
+        if (count > 0 && safeIsVisible(btn.last())) {
+            return btn.last(); // Most recent message at bottom
         }
         // Try text-based locator
         btn = page.getByText("Accept", new Page.GetByTextOptions().setExact(true));
-        if (btn.count() > 0 && safeIsVisible(btn.first())) {
-            return btn.first();
+        if (btn.count() > 0 && safeIsVisible(btn.last())) {
+            return btn.last();
         }
         // Try CSS class as fallback
         btn = page.locator(".accept-media-button");
-        if (btn.count() > 0 && safeIsVisible(btn.first())) {
-            return btn.first();
+        if (btn.count() > 0 && safeIsVisible(btn.last())) {
+            return btn.last();
         }
-        // Return first Accept button found
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept")).first();
+        // Return last Accept button found (most recent)
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept")).last();
     }
 
     // Close preview button
