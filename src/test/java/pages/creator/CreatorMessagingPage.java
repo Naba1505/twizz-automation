@@ -2,6 +2,7 @@ package pages.creator;
 
 import pages.common.BasePage;
 
+import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -1684,27 +1685,8 @@ public class CreatorMessagingPage extends BasePage {
             inputs = page.locator("input[type='file']");
         }
         
-        // If no file input found, click "My Device" button to reveal it
-        if (inputs.count() == 0) {
-            logger.info("[Messaging] No file input found, clicking My Device button");
-            try {
-                Locator myDevice = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
-                if (myDevice.count() > 0 && safeIsVisible(myDevice.first())) {
-                    clickWithRetry(myDevice.first(), 1, 150);
-                    page.waitForTimeout(500);
-                    // Re-check for file input after clicking My Device
-                    inputs = page.locator(".ant-upload input[type='file']");
-                    if (inputs.count() == 0) {
-                        inputs = page.locator("input[type='file']");
-                    }
-                }
-            } catch (Exception e) {
-                logger.warn("[Messaging] Could not click My Device: {}", e.getMessage());
-            }
-        }
-        
         if (inputs.count() > 0) {
-            logger.info("[Messaging] Using input[type=file] to upload: {}", file.getFileName());
+            logger.info("[Messaging] Using existing input[type=file] to upload: {}", file.getFileName());
             Locator target = inputs.nth(inputs.count() - 1);
             target.setInputFiles(file);
             // After setting files, dismiss the Importation bottom sheet if Cancel is visible
@@ -1716,7 +1698,31 @@ public class CreatorMessagingPage extends BasePage {
             } catch (Exception ignored) {}
             return;
         }
-        // Fallback: if no file input found, throw error
+        
+        // No file input found - use FileChooser to intercept OS dialog
+        logger.info("[Messaging] No file input found, using FileChooser with My Device button");
+        try {
+            Locator myDevice = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
+            if (myDevice.count() > 0 && safeIsVisible(myDevice.first())) {
+                FileChooser chooser = page.waitForFileChooser(() -> {
+                    myDevice.first().click();
+                });
+                chooser.setFiles(file);
+                logger.info("[Messaging] File uploaded via FileChooser: {}", file.getFileName());
+                // Dismiss the Importation modal
+                try {
+                    Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                    if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
+                        page.waitForTimeout(500);
+                        clickWithRetry(cancel.first(), 1, 150);
+                    }
+                } catch (Exception ignored) {}
+                return;
+            }
+        } catch (Exception e) {
+            logger.warn("[Messaging] FileChooser failed: {}", e.getMessage());
+        }
+        
         throw new RuntimeException("No file input found for media upload in Importation dialog");
     }
 
@@ -2190,33 +2196,48 @@ public class CreatorMessagingPage extends BasePage {
         }
         logger.info("[Messaging] Uploading file via input: {}", filePath.getFileName());
         
-        // First, click plus icon and My Device to ensure file input is available
+        // Click plus icon to open Importation popup
         clickPlusIconForMedia();
         verifyImportationPopup();
-        clickMyDeviceButton();
         
-        // Wait for file input to be available with retry
-        Locator fileInput = page.locator("input[type='file']").first();
-        int maxRetries = 10;
-        for (int i = 0; i < maxRetries; i++) {
-            if (fileInput.count() > 0) {
-                logger.info("[Messaging] File input found after {} attempts", i + 1);
-                break;
+        // First try to find file input directly
+        Locator fileInput = page.locator("input[type='file']");
+        if (fileInput.count() > 0) {
+            logger.info("[Messaging] Using existing input[type=file] to upload: {}", filePath.getFileName());
+            fileInput.first().setInputFiles(filePath);
+            logger.info("[Messaging] File selected: {}", filePath.getFileName());
+            page.waitForTimeout(2000);
+            logger.info("[Messaging] Media file attached: {}", filePath.getFileName());
+            return;
+        }
+        
+        // No file input found - use FileChooser to intercept OS dialog
+        logger.info("[Messaging] No file input found, using FileChooser with My Device button");
+        try {
+            Locator myDevice = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
+            if (myDevice.count() > 0 && safeIsVisible(myDevice.first())) {
+                FileChooser chooser = page.waitForFileChooser(() -> {
+                    myDevice.first().click();
+                });
+                chooser.setFiles(filePath);
+                logger.info("[Messaging] File uploaded via FileChooser: {}", filePath.getFileName());
+                // Dismiss the Importation modal
+                try {
+                    Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                    if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
+                        page.waitForTimeout(500);
+                        clickWithRetry(cancel.first(), 1, 150);
+                    }
+                } catch (Exception ignored) {}
+                page.waitForTimeout(2000);
+                logger.info("[Messaging] Media file attached: {}", filePath.getFileName());
+                return;
             }
-            logger.info("[Messaging] Waiting for file input... attempt {}", i + 1);
-            page.waitForTimeout(1000);
+        } catch (Exception e) {
+            logger.warn("[Messaging] FileChooser failed: {}", e.getMessage());
         }
         
-        if (fileInput.count() == 0) {
-            throw new RuntimeException("File input not found after " + maxRetries + " attempts");
-        }
-        
-        // Use setInputFiles directly on hidden file input - no OS dialog needed
-        fileInput.setInputFiles(filePath);
-        logger.info("[Messaging] File selected: {}", filePath.getFileName());
-        // Wait for file to be attached and preview to appear
-        page.waitForTimeout(2000);
-        logger.info("[Messaging] Media file attached: {}", filePath.getFileName());
+        throw new RuntimeException("Could not upload media file: " + filePath);
     }
 
     @Step("Wait for media upload/send to complete")
@@ -2246,6 +2267,24 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Click Send button for media")
     public void clickSendButtonForMedia() {
         logger.info("[Messaging] Looking for Send button for media");
+        
+        // First, dismiss the Importation modal if it's still visible
+        Locator importationTitle = page.getByText("Importation");
+        if (importationTitle.count() > 0 && safeIsVisible(importationTitle.first())) {
+            logger.info("[Messaging] Importation modal still visible, dismissing...");
+            try {
+                Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                if (cancelBtn.count() > 0 && safeIsVisible(cancelBtn.first())) {
+                    cancelBtn.first().click();
+                    logger.info("[Messaging] Clicked Cancel to dismiss Importation modal");
+                    page.waitForTimeout(1000);
+                } else {
+                    page.keyboard().press("Escape");
+                    logger.info("[Messaging] Pressed Escape to dismiss Importation modal");
+                    page.waitForTimeout(1000);
+                }
+            } catch (Exception ignored) {}
+        }
         
         // Try multiple strategies to find the Send button
         Locator sendBtn = null;
