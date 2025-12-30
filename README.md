@@ -1,6 +1,8 @@
 # Twizz Automation (Java 21 + Playwright + TestNG)
 
 ## 🚀 Latest Updates
+- **Business Landing Page Tests**: Complete test coverage for Business app landing page (navigation, footer links, language switching)
+- **Media Upload OS Dialog Fix**: Eliminated OS file dialog interruptions during automated media uploads using FileChooser
 - **Project Structure Refactoring**: Reorganized into modular folders (creator/fan/admin/common/business)
 - **Twizz Business App Integration**: New test coverage for Business application landing page
 - **Fan Live Events Module**: Test coverage for fan joining creator live events (instant and scheduled)
@@ -22,6 +24,25 @@ git clone <repository-url>
 cd twizz-automation
 mvn clean compile
 ```
+
+## 🏢 Business Application Tests
+
+### Business Landing Page
+- Page object: `pages/business/BusinessLandingPage`
+- Tests class: `tests/business/BusinessLandingPageTest`
+- Scenarios:
+  1. **Landing Page Navigation**: Verify logo, heading, Contact Us, Login, and Register navigation
+  2. **Footer Links Navigation**: Test all footer links (Contact Us, Legal notices, Content Policy, Confidentiality, General Conditions, Blog)
+  3. **Language Switching**: Switch between English, French (Français), and Spanish (Español)
+- Run examples:
+  ```bash
+  mvn -Dtest=BusinessLandingPageTest#testBusinessLandingPage test
+  mvn -Dtest=BusinessLandingPageTest#testBusinessLandingPageFooterLinks test
+  mvn -Dtest=BusinessLandingPageTest#testBusinessLandingPageLanguageSwitch test
+  # Run all Business tests
+  mvn -Dtest=BusinessLandingPageTest test
+  ```
+
 ## Presentation Videos (Creator)
 - Page object: `pages/CreatorPresentationVideosPage`
 - Tests class: `tests/CreatorPresentationVideosTest`
