@@ -2,6 +2,25 @@
 
 ## [Unreleased] - 2025-12-31
 
+### New Feature: Business Manager Login
+- **BusinessManagerLoginTest**: Complete manager login flow
+  - Navigate to sign-in page and verify login page heading
+  - Fill credentials from config.properties (username, password)
+  - Click Login button and wait for navigation
+  - Verify manager dashboard URL contains '/manager'
+  - Verify welcome message 'Hello {displayname}' is visible
+
+- **BusinessManagerLoginPage**: Page object with login methods
+  - Form filling methods for username and password
+  - URL validation for manager dashboard navigation
+  - Welcome message verification with dynamic display name
+  - Complete login flow method for reusability
+
+- **Config Properties**: Added manager credentials
+  - `business.manager.username=TwizzManager@proton.me`
+  - `business.manager.password=Twizz$123`
+  - `business.manager.displayname=David`
+
 ### New Feature: Business Employee Sign Up
 - **BusinessEmployeeSignUpTest**: Complete employee registration flow
   - 2-page registration process (Basic Info, Password/Phone)
@@ -26,7 +45,7 @@
 
 - **TestNG XML Organization**: Separated Business tests into distinct test groups
   - Business Common Tests (landing page)
-  - Business Manager Tests (manager sign up)
+  - Business Manager Tests (manager sign up, manager login)
   - Business Employee Tests (employee sign up)
 
 - **BusinessManagerSignUpTest**: Complete manager registration flow

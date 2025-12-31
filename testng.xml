@@ -53,6 +53,14 @@
         </classes>
     </test>
 
+    <!-- Business Manager Tests -->
+    <test name="Business Manager Tests">
+        <classes>
+            <class name="tests.business.manager.BusinessManagerSignUpTest"/>
+            <class name="tests.business.manager.BusinessManagerLoginTest"/>
+        </classes>
+    </test>
+
     <!-- Fan Tests -->
     <test name="Fan Tests">
         <classes>

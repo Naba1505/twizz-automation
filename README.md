@@ -62,6 +62,24 @@ mvn clean compile
   mvn -Dtest=tests.business.manager.BusinessManagerSignUpTest#managerCanSignUp test
   ```
 
+### Business Manager Login
+- Page object: `pages/business/manager/BusinessManagerLoginPage`
+- Tests class: `tests/business/manager/BusinessManagerLoginTest`
+- Flow:
+  - Navigate to sign-in page
+  - Fill username and password (from config.properties)
+  - Click Login button
+  - Verify navigation to manager dashboard
+  - Verify welcome message with manager's display name
+- Features:
+  - Credentials loaded from config.properties
+  - URL validation for manager dashboard
+  - Welcome message verification
+- Run example:
+  ```bash
+  mvn -Dtest=tests.business.manager.BusinessManagerLoginTest#managerCanLogin test
+  ```
+
 ### Business Employee Sign Up
 - Page object: `pages/business/employee/BusinessEmployeeSignUpPage`
 - Tests class: `tests/business/employee/BusinessEmployeeSignUpTest`

@@ -18,6 +18,7 @@ import com.microsoft.playwright.options.WaitUntilState;
 
 import io.qameta.allure.Allure;
 import pages.business.employee.BusinessEmployeeSignUpPage;
+import pages.business.manager.BusinessManagerLoginPage;
 import pages.business.manager.BusinessManagerSignUpPage;
 import utils.BrowserFactory;
 import utils.ConfigReader;
@@ -31,6 +32,7 @@ public class BusinessBaseTestClass {
     protected Page page;
     protected BusinessLandingPage businessLandingPage;
     protected BusinessManagerSignUpPage businessManagerSignUpPage;
+    protected BusinessManagerLoginPage businessManagerLoginPage;
     protected BusinessEmployeeSignUpPage businessEmployeeSignUpPage;
 
     @BeforeMethod
@@ -54,6 +56,7 @@ public class BusinessBaseTestClass {
         }
         businessLandingPage = new BusinessLandingPage(page);
         businessManagerSignUpPage = new BusinessManagerSignUpPage(page);
+        businessManagerLoginPage = new BusinessManagerLoginPage(page);
         businessEmployeeSignUpPage = new BusinessEmployeeSignUpPage(page);
         businessLandingPage.waitForPageToLoad();
     }
