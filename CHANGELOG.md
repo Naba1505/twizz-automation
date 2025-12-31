@@ -2,6 +2,25 @@
 
 ## [Unreleased] - 2025-12-31
 
+### New Feature: Business Employee Login
+- **BusinessEmployeeLoginTest**: Complete employee login flow
+  - Navigate to sign-in page and verify login page heading
+  - Fill credentials from config.properties (username, password)
+  - Click Login button and wait for navigation
+  - Verify employee dashboard URL contains '/employee'
+  - Verify welcome message 'Hello {displayname}' is visible
+
+- **BusinessEmployeeLoginPage**: Page object with login methods
+  - Form filling methods for username and password
+  - URL validation for employee dashboard navigation
+  - Welcome message verification with dynamic display name
+  - Complete login flow method for reusability
+
+- **Config Properties**: Added employee credentials
+  - `business.employee.username=TwizzEmployee@proton.me`
+  - `business.employee.password=Twizz$123`
+  - `business.employee.displayname=Scarlett`
+
 ### New Feature: Business Manager Login
 - **BusinessManagerLoginTest**: Complete manager login flow
   - Navigate to sign-in page and verify login page heading
@@ -46,7 +65,8 @@
 - **TestNG XML Organization**: Separated Business tests into distinct test groups
   - Business Common Tests (landing page)
   - Business Manager Tests (manager sign up, manager login)
-  - Business Employee Tests (employee sign up)
+  - Business Employee Tests (employee sign up, employee login)
+  - Removed Business tests from main testng.xml (use business-testng.xml instead)
 
 - **BusinessManagerSignUpTest**: Complete manager registration flow
   - 4-page registration process (Basic Info, Agency Details, Status, Identity Verification)

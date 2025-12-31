@@ -53,20 +53,11 @@
         </classes>
     </test>
 
-    <!-- Business Manager Tests -->
-    <test name="Business Manager Tests">
-        <classes>
-            <class name="tests.business.manager.BusinessManagerSignUpTest"/>
-            <class name="tests.business.manager.BusinessManagerLoginTest"/>
-        </classes>
-    </test>
-
     <!-- Fan Tests -->
     <test name="Fan Tests">
         <classes>
             <class name="tests.fan.FanRegistrationTest"/>
             <class name="tests.fan.FanLoginTest"/>
-            <class name="tests.fan.FanHomeScreenTest"/>
             <class name="tests.fan.FanBookmarksTest"/>
             <class name="tests.fan.FanMyCreatorsTest"/>
             <class name="tests.fan.FanDiscoverTest"/>

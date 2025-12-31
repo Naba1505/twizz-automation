@@ -97,6 +97,24 @@ mvn clean compile
   mvn -Dtest=tests.business.employee.BusinessEmployeeSignUpTest#employeeCanSignUp test
   ```
 
+### Business Employee Login
+- Page object: `pages/business/employee/BusinessEmployeeLoginPage`
+- Tests class: `tests/business/employee/BusinessEmployeeLoginTest`
+- Flow:
+  - Navigate to sign-in page
+  - Fill username and password (from config.properties)
+  - Click Login button
+  - Verify navigation to employee dashboard
+  - Verify welcome message with employee's display name
+- Features:
+  - Credentials loaded from config.properties
+  - URL validation for employee dashboard
+  - Welcome message verification
+- Run example:
+  ```bash
+  mvn -Dtest=tests.business.employee.BusinessEmployeeLoginTest#employeeCanLogin test
+  ```
+
 ## Presentation Videos (Creator)
 - Page object: `pages/CreatorPresentationVideosPage`
 - Tests class: `tests/CreatorPresentationVideosTest`
