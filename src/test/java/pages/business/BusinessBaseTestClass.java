@@ -17,6 +17,7 @@ import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitUntilState;
 
 import io.qameta.allure.Allure;
+import pages.business.manager.BusinessManagerSignUpPage;
 import utils.BrowserFactory;
 import utils.ConfigReader;
 
@@ -28,6 +29,7 @@ public class BusinessBaseTestClass {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
     protected Page page;
     protected BusinessLandingPage businessLandingPage;
+    protected BusinessManagerSignUpPage businessManagerSignUpPage;
 
     @BeforeMethod
     public void setUp() {
@@ -49,6 +51,7 @@ public class BusinessBaseTestClass {
             }
         }
         businessLandingPage = new BusinessLandingPage(page);
+        businessManagerSignUpPage = new BusinessManagerSignUpPage(page);
         businessLandingPage.waitForPageToLoad();
     }
 

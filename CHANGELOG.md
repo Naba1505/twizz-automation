@@ -1,6 +1,28 @@
 # Changelog
 
-## [Unreleased] - 2025-12-30
+## [Unreleased] - 2025-12-31
+
+### New Feature: Business Manager Sign Up
+- **Folder Structure**: Organized Business tests into manager/employee subfolders
+  - `pages/business/manager/` - Manager-specific page objects
+  - `tests/business/manager/` - Manager-specific test classes
+  - `pages/business/employee/` - Employee-specific page objects (ready for future tests)
+  - `tests/business/employee/` - Employee-specific test classes (ready for future tests)
+
+- **BusinessManagerSignUpTest**: Complete manager registration flow
+  - 4-page registration process (Basic Info, Agency Details, Status, Identity Verification)
+  - Unique username/email generation with timestamp
+  - FileChooser integration for profile image upload
+  - Direct file input for identity document uploads
+  - Success message verification and navigation back to sign-in
+
+- **BusinessManagerSignUpPage**: Page object with 20+ methods
+  - Form filling methods for all registration fields
+  - File upload methods with FileChooser fallback
+  - Page navigation and verification methods
+  - Timestamp-based unique data generation
+
+### Previous - 2025-12-30
 
 ### New Feature: Business Landing Page Complete Test Coverage
 - **BusinessLandingPageTest**: Three comprehensive test scenarios

@@ -8,6 +8,7 @@
     <test name="Business Tests (Parallel)">
         <classes>
             <class name="tests.business.BusinessLandingPageTest"/>
+            <class name="tests.business.manager.BusinessManagerSignUpTest"/>
         </classes>
     </test>
 </suite>

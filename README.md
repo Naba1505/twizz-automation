@@ -39,8 +39,27 @@ mvn clean compile
   mvn -Dtest=BusinessLandingPageTest#testBusinessLandingPage test
   mvn -Dtest=BusinessLandingPageTest#testBusinessLandingPageFooterLinks test
   mvn -Dtest=BusinessLandingPageTest#testBusinessLandingPageLanguageSwitch test
-  # Run all Business tests
+  # Run all Business Landing Page tests
   mvn -Dtest=BusinessLandingPageTest test
+  ```
+
+### Business Manager Sign Up
+- Page object: `pages/business/manager/BusinessManagerSignUpPage`
+- Tests class: `tests/business/manager/BusinessManagerSignUpTest`
+- Flow:
+  - **Page 1**: Basic Information (name, username, email, birth date)
+  - **Page 2**: Password, agency name, profile image, phone, gender
+  - **Page 3**: Status selection (private individual)
+  - **Page 4**: Identity verification (ID document + selfie)
+  - **Success**: Registration confirmation and return to sign-in page
+- Features:
+  - Unique username/email generation with timestamp
+  - FileChooser for profile image upload
+  - Direct file input for identity documents
+  - Complete 4-page registration flow
+- Run example:
+  ```bash
+  mvn -Dtest=BusinessManagerSignUpTest#managerCanSignUp test
   ```
 
 ## Presentation Videos (Creator)
