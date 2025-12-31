@@ -1,4 +1,4 @@
-package pages.business;
+package pages.business.common;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,6 +17,7 @@ import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitUntilState;
 
 import io.qameta.allure.Allure;
+import pages.business.employee.BusinessEmployeeSignUpPage;
 import pages.business.manager.BusinessManagerSignUpPage;
 import utils.BrowserFactory;
 import utils.ConfigReader;
@@ -30,6 +31,7 @@ public class BusinessBaseTestClass {
     protected Page page;
     protected BusinessLandingPage businessLandingPage;
     protected BusinessManagerSignUpPage businessManagerSignUpPage;
+    protected BusinessEmployeeSignUpPage businessEmployeeSignUpPage;
 
     @BeforeMethod
     public void setUp() {
@@ -52,6 +54,7 @@ public class BusinessBaseTestClass {
         }
         businessLandingPage = new BusinessLandingPage(page);
         businessManagerSignUpPage = new BusinessManagerSignUpPage(page);
+        businessEmployeeSignUpPage = new BusinessEmployeeSignUpPage(page);
         businessLandingPage.waitForPageToLoad();
     }
 

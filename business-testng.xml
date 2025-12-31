@@ -4,11 +4,24 @@
         <listener class-name="utils.AnnotationTransformer"/>
     </listeners>
 
-    <!-- Business Tests -->
-    <test name="Business Tests">
+    <!-- Business Common Tests -->
+    <test name="Business Common Tests">
         <classes>
-            <class name="tests.business.BusinessLandingPageTest"/>
+            <class name="tests.business.common.BusinessLandingPageTest"/>
+        </classes>
+    </test>
+
+    <!-- Business Manager Tests -->
+    <test name="Business Manager Tests">
+        <classes>
             <class name="tests.business.manager.BusinessManagerSignUpTest"/>
+        </classes>
+    </test>
+
+    <!-- Business Employee Tests -->
+    <test name="Business Employee Tests">
+        <classes>
+            <class name="tests.business.employee.BusinessEmployeeSignUpTest"/>
         </classes>
     </test>
 </suite>

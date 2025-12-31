@@ -2,12 +2,32 @@
 
 ## [Unreleased] - 2025-12-31
 
+### New Feature: Business Employee Sign Up
+- **BusinessEmployeeSignUpTest**: Complete employee registration flow
+  - 2-page registration process (Basic Info, Password/Phone)
+  - Employee tab selected by default verification
+  - Unique username/email generation with timestamp
+  - Direct navigation to employee dashboard after registration
+  - Agency avatar visibility verification on dashboard
+
+- **BusinessEmployeeSignUpPage**: Page object with 15+ methods
+  - Form filling methods for employee registration fields
+  - URL validation for employee dashboard navigation
+  - Simpler flow compared to Manager (no agency details or documents)
+
 ### New Feature: Business Manager Sign Up
-- **Folder Structure**: Organized Business tests into manager/employee subfolders
+- **Folder Structure**: Organized Business tests into common/manager/employee subfolders
+  - `pages/business/common/` - Shared page objects (BusinessLandingPage, BusinessBaseTestClass)
+  - `tests/business/common/` - Common test classes (BusinessLandingPageTest)
   - `pages/business/manager/` - Manager-specific page objects
   - `tests/business/manager/` - Manager-specific test classes
-  - `pages/business/employee/` - Employee-specific page objects (ready for future tests)
-  - `tests/business/employee/` - Employee-specific test classes (ready for future tests)
+  - `pages/business/employee/` - Employee-specific page objects
+  - `tests/business/employee/` - Employee-specific test classes
+
+- **TestNG XML Organization**: Separated Business tests into distinct test groups
+  - Business Common Tests (landing page)
+  - Business Manager Tests (manager sign up)
+  - Business Employee Tests (employee sign up)
 
 - **BusinessManagerSignUpTest**: Complete manager registration flow
   - 4-page registration process (Basic Info, Agency Details, Status, Identity Verification)

@@ -59,7 +59,24 @@ mvn clean compile
   - Complete 4-page registration flow
 - Run example:
   ```bash
-  mvn -Dtest=BusinessManagerSignUpTest#managerCanSignUp test
+  mvn -Dtest=tests.business.manager.BusinessManagerSignUpTest#managerCanSignUp test
+  ```
+
+### Business Employee Sign Up
+- Page object: `pages/business/employee/BusinessEmployeeSignUpPage`
+- Tests class: `tests/business/employee/BusinessEmployeeSignUpTest`
+- Flow:
+  - **Page 1**: Basic Information (name, username, email, birth date)
+  - **Page 2**: Password, phone, gender
+  - **Success**: Direct navigation to employee dashboard
+- Features:
+  - Verifies Employee tab is selected by default
+  - Unique username/email generation with timestamp
+  - Simpler 2-page registration flow (no agency/documents required)
+  - Validates employee dashboard URL and agency avatar visibility
+- Run example:
+  ```bash
+  mvn -Dtest=tests.business.employee.BusinessEmployeeSignUpTest#employeeCanSignUp test
   ```
 
 ## Presentation Videos (Creator)

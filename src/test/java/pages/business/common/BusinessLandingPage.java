@@ -1,4 +1,4 @@
-package pages.business;
+package pages.business.common;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
