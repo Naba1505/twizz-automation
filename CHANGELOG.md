@@ -1,6 +1,31 @@
 # Changelog
 
-## [Unreleased] - 2025-12-31
+## [Unreleased] - 2026-01-01
+
+### New Feature: Business Manager Add Creator (Invite)
+- **BusinessManagerAddCreatorTest**: Two test scenarios for invite creator flow
+  - **Test 1 - Invite Creator** (priority 1):
+    * Login as Manager and navigate to dashboard
+    * Click on Agency icon and verify agency screen
+    * Click Add button to open invite creator dialog
+    * Search for creator by username
+    * Select creator checkbox
+    * Send invitation and verify success message
+    * Click 'I understand' button if present
+  - **Test 2 - Duplicate Invitation** (priority 2):
+    * Login as Manager and navigate to Agency
+    * Attempt to invite same creator again
+    * Verify 'there is an invitation already sent' message appears
+    * No 'I understand' button in duplicate scenario
+
+- **BusinessManagerAddCreatorPage**: Page object with agency management methods
+  - Agency icon navigation
+  - Add creator button interaction
+  - Creator search functionality
+  - Checkbox selection for creator
+  - Invitation sending with success verification
+  - Duplicate invitation message detection
+  - Optional 'I understand' button handling
 
 ### New Feature: Business Employee Login
 - **BusinessEmployeeLoginTest**: Complete employee login flow
@@ -64,7 +89,7 @@
 
 - **TestNG XML Organization**: Separated Business tests into distinct test groups
   - Business Common Tests (landing page)
-  - Business Manager Tests (manager sign up, manager login)
+  - Business Manager Tests (manager sign up, manager login, add creator)
   - Business Employee Tests (employee sign up, employee login)
   - Removed Business tests from main testng.xml (use business-testng.xml instead)
 

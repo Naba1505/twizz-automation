@@ -80,6 +80,37 @@ mvn clean compile
   mvn -Dtest=tests.business.manager.BusinessManagerLoginTest#managerCanLogin test
   ```
 
+### Business Manager Add Creator (Invite)
+- Page object: `pages/business/manager/BusinessManagerAddCreatorPage`
+- Tests class: `tests/business/manager/BusinessManagerAddCreatorTest`
+- **Test 1: Invite Creator** (priority 1)
+  - Login as Manager
+  - Click on Agency icon
+  - Verify 'Your agency' and 'Your creators' messages
+  - Click Add button to invite creator
+  - Search for creator by username
+  - Select creator checkbox
+  - Send invitation
+  - Verify invitation sent message
+  - Click 'I understand' button (if present)
+- **Test 2: Duplicate Invitation** (priority 2)
+  - Login as Manager
+  - Navigate to Agency screen
+  - Attempt to invite same creator again
+  - Verify 'there is an invitation already sent' message appears
+- Features:
+  - Complete agency management flow
+  - Creator search and selection
+  - Invitation success verification
+  - Duplicate invitation detection
+  - Flexible success message handling
+- Run examples:
+  ```bash
+  mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerCanInviteCreator test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerSeesDuplicateInvitationMessage test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest test
+  ```
+
 ### Business Employee Sign Up
 - Page object: `pages/business/employee/BusinessEmployeeSignUpPage`
 - Tests class: `tests/business/employee/BusinessEmployeeSignUpTest`
