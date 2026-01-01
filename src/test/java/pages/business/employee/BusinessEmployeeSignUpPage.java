@@ -88,15 +88,29 @@ public class BusinessEmployeeSignUpPage {
         logger.info("[Business Employee] Filled email: {}", email);
     }
 
-    @Step("Select birth date: {day}")
-    public void selectBirthDate(String day) {
+    @Step("Select birth date")
+    public void selectBirthDate() {
         Locator birthDateField = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Birth date"));
         birthDateField.click();
         page.waitForTimeout(500);
         
-        Locator dayOption = page.getByText(day, new Page.GetByTextOptions().setExact(true));
-        dayOption.click();
-        logger.info("[Business Employee] Selected birth date: {}", day);
+        // Select year 1995
+        page.getByText("2008").click();
+        page.waitForTimeout(300);
+        page.getByText("1995").click();
+        page.waitForTimeout(300);
+        
+        // Select month May
+        page.getByText("January").click();
+        page.waitForTimeout(300);
+        page.getByText("May").click();
+        page.waitForTimeout(300);
+        
+        // Select day 1
+        page.getByText("1", new Page.GetByTextOptions().setExact(true)).click();
+        page.waitForTimeout(300);
+        
+        logger.info("[Business Employee] Selected birth date: 1995-05-01");
     }
 
     @Step("Confirm birth date")

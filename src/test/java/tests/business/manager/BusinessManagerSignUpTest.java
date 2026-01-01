@@ -42,7 +42,7 @@ public class BusinessManagerSignUpTest extends BusinessBaseTestClass {
         String email = businessManagerSignUpPage.generateUniqueEmail(username);
         businessManagerSignUpPage.fillEmail(email);
         
-        businessManagerSignUpPage.selectBirthDate("31");
+        businessManagerSignUpPage.selectBirthDate();
         businessManagerSignUpPage.confirmBirthDate();
         businessManagerSignUpPage.clickContinuePageOne();
         

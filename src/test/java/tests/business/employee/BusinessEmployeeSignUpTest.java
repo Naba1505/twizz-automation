@@ -45,7 +45,7 @@ public class BusinessEmployeeSignUpTest extends BusinessBaseTestClass {
         String email = businessEmployeeSignUpPage.generateUniqueEmail(username);
         businessEmployeeSignUpPage.fillEmail(email);
         
-        businessEmployeeSignUpPage.selectBirthDate("31");
+        businessEmployeeSignUpPage.selectBirthDate();
         businessEmployeeSignUpPage.confirmBirthDate();
         businessEmployeeSignUpPage.clickContinuePageOne();
         
