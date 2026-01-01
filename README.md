@@ -81,7 +81,9 @@ mvn clean compile
   ```
 
 ### Business Manager Add Creator (Invite)
-- Page object: `pages/business/manager/BusinessManagerAddCreatorPage`
+- Page objects: 
+  - `pages/business/manager/BusinessManagerAddCreatorPage`
+  - `pages/creator/CreatorManagerPage`
 - Tests class: `tests/business/manager/BusinessManagerAddCreatorTest`
 - **Test 1: Invite Creator** (priority 1)
   - Login as Manager
@@ -98,16 +100,25 @@ mvn clean compile
   - Navigate to Agency screen
   - Attempt to invite same creator again
   - Verify 'there is an invitation already sent' message appears
+- **Test 3: Creator Reject Invitation** (priority 3)
+  - Login as Creator
+  - Navigate to Settings → Manager
+  - Verify invitation is visible
+  - Click Refuse button
+  - Confirm rejection with 'I refuse'
+  - Verify 'Invitation rejected' message
 - Features:
   - Complete agency management flow
   - Creator search and selection
   - Invitation success verification
   - Duplicate invitation detection
+  - Creator rejection flow
   - Flexible success message handling
 - Run examples:
   ```bash
   mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerCanInviteCreator test
   mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerSeesDuplicateInvitationMessage test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#creatorCanRejectInvitation test
   mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest test
   ```
 

@@ -3,7 +3,7 @@
 ## [Unreleased] - 2026-01-01
 
 ### New Feature: Business Manager Add Creator (Invite)
-- **BusinessManagerAddCreatorTest**: Two test scenarios for invite creator flow
+- **BusinessManagerAddCreatorTest**: Three test scenarios for complete invite/reject flow
   - **Test 1 - Invite Creator** (priority 1):
     * Login as Manager and navigate to dashboard
     * Click on Agency icon and verify agency screen
@@ -17,6 +17,14 @@
     * Attempt to invite same creator again
     * Verify 'there is an invitation already sent' message appears
     * No 'I understand' button in duplicate scenario
+  - **Test 3 - Creator Reject Invitation** (priority 3):
+    * Login as Creator and navigate to profile
+    * Click on settings icon
+    * Navigate to Manager menu
+    * Verify invitation is visible
+    * Click Refuse button
+    * Confirm rejection with 'I refuse' button
+    * Verify 'Invitation rejected' success message
 
 - **BusinessManagerAddCreatorPage**: Page object with agency management methods
   - Agency icon navigation
@@ -26,6 +34,14 @@
   - Invitation sending with success verification
   - Duplicate invitation message detection
   - Optional 'I understand' button handling
+
+- **CreatorManagerPage**: Page object for creator manager settings
+  - Settings icon navigation
+  - Manager menu item interaction
+  - Invitation visibility verification
+  - Refuse button interaction
+  - Confirmation dialog handling
+  - Rejection success message verification
 
 ### New Feature: Business Employee Login
 - **BusinessEmployeeLoginTest**: Complete employee login flow

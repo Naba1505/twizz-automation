@@ -22,6 +22,8 @@ import pages.business.employee.BusinessEmployeeSignUpPage;
 import pages.business.manager.BusinessManagerAddCreatorPage;
 import pages.business.manager.BusinessManagerLoginPage;
 import pages.business.manager.BusinessManagerSignUpPage;
+import pages.creator.CreatorLoginPage;
+import pages.creator.CreatorManagerPage;
 import utils.BrowserFactory;
 import utils.ConfigReader;
 
@@ -38,6 +40,8 @@ public class BusinessBaseTestClass {
     protected BusinessManagerAddCreatorPage businessManagerAddCreatorPage;
     protected BusinessEmployeeSignUpPage businessEmployeeSignUpPage;
     protected BusinessEmployeeLoginPage businessEmployeeLoginPage;
+    protected CreatorLoginPage creatorLoginPage;
+    protected CreatorManagerPage creatorManagerPage;
 
     @BeforeMethod
     public void setUp() {
@@ -64,6 +68,8 @@ public class BusinessBaseTestClass {
         businessManagerAddCreatorPage = new BusinessManagerAddCreatorPage(page);
         businessEmployeeSignUpPage = new BusinessEmployeeSignUpPage(page);
         businessEmployeeLoginPage = new BusinessEmployeeLoginPage(page);
+        creatorLoginPage = new CreatorLoginPage(page);
+        creatorManagerPage = new CreatorManagerPage(page);
         businessLandingPage.waitForPageToLoad();
     }
 

@@ -133,4 +133,61 @@ public class BusinessManagerAddCreatorTest extends BusinessBaseTestClass {
         logger.info("[Manager Add Creator] Test completed successfully");
         logger.info("[Manager Add Creator] Verified duplicate invitation for creator: {}", creatorUsername);
     }
+
+    @Test(priority = 3, description = "Creator can reject manager's invitation")
+    public void creatorCanRejectInvitation() {
+        logger.info("[Creator Reject Invitation] Starting test: Creator reject invitation flow");
+        
+        // Get creator credentials from config
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+        
+        logger.info("[Creator Reject Invitation] Using creator username: {}", username);
+        
+        // Navigate to creator login page
+        creatorLoginPage.navigate();
+        
+        // Login as Creator
+        creatorLoginPage.login(username, password);
+        
+        // Verify on creator profile by checking URL
+        String currentUrl = page.url();
+        Assert.assertTrue(currentUrl.contains("/creator"), 
+            "Not on creator profile. Current URL: " + currentUrl);
+        logger.info("[Creator Reject Invitation] Successfully logged in as Creator");
+        
+        // Click on settings icon
+        creatorManagerPage.clickSettingsIcon();
+        
+        // Click on Manager menu item
+        creatorManagerPage.clickManagerMenuItem();
+        
+        // Verify Manager heading
+        Assert.assertTrue(creatorManagerPage.isManagerHeadingVisible(), 
+            "'Manager' heading is not visible");
+        logger.info("[Creator Reject Invitation] On Manager screen");
+        
+        // Verify Invitation text
+        Assert.assertTrue(creatorManagerPage.isInvitationTextVisible(), 
+            "'Invitation' text is not visible");
+        logger.info("[Creator Reject Invitation] Invitation is visible");
+        
+        // Click Refuse button
+        creatorManagerPage.clickRefuseButton();
+        
+        // Verify confirmation dialog
+        Assert.assertTrue(creatorManagerPage.isConfirmationDialogVisible(), 
+            "Confirmation dialog is not visible");
+        logger.info("[Creator Reject Invitation] Confirmation dialog displayed");
+        
+        // Click I refuse button
+        creatorManagerPage.clickIRefuseButton();
+        
+        // Verify invitation rejected message
+        Assert.assertTrue(creatorManagerPage.isInvitationRejectedMessageVisible(), 
+            "'Invitation rejected' message is not visible");
+        logger.info("[Creator Reject Invitation] Invitation rejected successfully");
+        
+        logger.info("[Creator Reject Invitation] Test completed successfully");
+    }
 }
