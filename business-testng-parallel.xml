@@ -17,6 +17,7 @@
             <class name="tests.business.manager.BusinessManagerSignUpTest"/>
             <class name="tests.business.manager.BusinessManagerLoginTest"/>
             <class name="tests.business.manager.BusinessManagerAddCreatorTest"/>
+            <class name="tests.business.manager.BusinessManagerAddEmployeeTest"/>
         </classes>
     </test>
 

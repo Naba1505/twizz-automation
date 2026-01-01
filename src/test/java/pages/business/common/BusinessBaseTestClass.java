@@ -19,7 +19,9 @@ import com.microsoft.playwright.options.WaitUntilState;
 import io.qameta.allure.Allure;
 import pages.business.employee.BusinessEmployeeLoginPage;
 import pages.business.employee.BusinessEmployeeSignUpPage;
+import pages.business.employee.EmployeeSettingsPage;
 import pages.business.manager.BusinessManagerAddCreatorPage;
+import pages.business.manager.BusinessManagerAddEmployeePage;
 import pages.business.manager.BusinessManagerLoginPage;
 import pages.business.manager.BusinessManagerSignUpPage;
 import pages.creator.CreatorLoginPage;
@@ -38,8 +40,10 @@ public class BusinessBaseTestClass {
     protected BusinessManagerSignUpPage businessManagerSignUpPage;
     protected BusinessManagerLoginPage businessManagerLoginPage;
     protected BusinessManagerAddCreatorPage businessManagerAddCreatorPage;
+    protected BusinessManagerAddEmployeePage businessManagerAddEmployeePage;
     protected BusinessEmployeeSignUpPage businessEmployeeSignUpPage;
     protected BusinessEmployeeLoginPage businessEmployeeLoginPage;
+    protected EmployeeSettingsPage employeeSettingsPage;
     protected CreatorLoginPage creatorLoginPage;
     protected CreatorManagerPage creatorManagerPage;
 
@@ -66,8 +70,10 @@ public class BusinessBaseTestClass {
         businessManagerSignUpPage = new BusinessManagerSignUpPage(page);
         businessManagerLoginPage = new BusinessManagerLoginPage(page);
         businessManagerAddCreatorPage = new BusinessManagerAddCreatorPage(page);
+        businessManagerAddEmployeePage = new BusinessManagerAddEmployeePage(page);
         businessEmployeeSignUpPage = new BusinessEmployeeSignUpPage(page);
         businessEmployeeLoginPage = new BusinessEmployeeLoginPage(page);
+        employeeSettingsPage = new EmployeeSettingsPage(page);
         creatorLoginPage = new CreatorLoginPage(page);
         creatorManagerPage = new CreatorManagerPage(page);
         businessLandingPage.waitForPageToLoad();

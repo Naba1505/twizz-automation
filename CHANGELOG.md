@@ -2,6 +2,49 @@
 
 ## [Unreleased] - 2026-01-01
 
+### New Feature: Business Manager Add Employee (Invite)
+- **BusinessManagerAddEmployeeTest**: Three test scenarios for complete invite/reject flow
+  - **Test 1 - Invite Employee** (priority 1):
+    * Login as Manager and navigate to dashboard
+    * Click on Agency icon and verify agency screen
+    * Verify 'Your employees' section is visible
+    * Click Add button to open invite employee dialog
+    * Search for employee by username
+    * Select employee checkbox
+    * Send invitation and verify success message
+    * Click 'I understand' button if present
+  - **Test 2 - Duplicate Invitation** (priority 2):
+    * Login as Manager and navigate to Agency
+    * Attempt to invite same employee again
+    * Verify 'there is an invitation already sent' message appears
+    * No 'I understand' button in duplicate scenario
+  - **Test 3 - Employee Reject Invitation** (priority 3):
+    * Set viewport to mobile size (375x667) for proper UI display
+    * Login as Employee and navigate to dashboard
+    * Click on Settings button
+    * Navigate to View invitations
+    * Verify invitation is visible
+    * Click Decline button
+    * Confirm rejection with 'Finish' button
+    * Verify 'Rejected' success message
+
+- **BusinessManagerAddEmployeePage**: Page object with agency employee management methods
+  - Agency icon navigation
+  - Add employee button interaction
+  - Employee search functionality
+  - Checkbox selection for employee
+  - Invitation sending with success verification
+  - Duplicate invitation message detection
+  - Optional 'I understand' button handling
+
+- **EmployeeSettingsPage**: Page object for employee settings and invitation management
+  - Settings button navigation
+  - Manage relationships verification
+  - View invitations interaction
+  - Decline button interaction
+  - Confirmation dialog handling
+  - Rejection success message verification
+
 ### New Feature: Business Manager Add Creator (Invite)
 - **BusinessManagerAddCreatorTest**: Three test scenarios for complete invite/reject flow
   - **Test 1 - Invite Creator** (priority 1):
