@@ -190,4 +190,225 @@ public class BusinessManagerAddCreatorTest extends BusinessBaseTestClass {
         
         logger.info("[Creator Reject Invitation] Test completed successfully");
     }
+
+    @Test(priority = 4, description = "Manager can invite creator from settings screen")
+    public void managerCanInviteCreatorFromSettings() {
+        logger.info("[Manager Invite from Settings] Starting test: Invite creator from settings screen");
+        
+        // Get credentials from config
+        String username = ConfigReader.getProperty("business.manager.username", "TwizzManager@proton.me");
+        String password = ConfigReader.getProperty("business.manager.password", "Twizz$123");
+        String creatorUsername = ConfigReader.getProperty("creator.handle", "@john_smith").replace("@", "");
+        
+        logger.info("[Manager Invite from Settings] Using manager username: {}", username);
+        logger.info("[Manager Invite from Settings] Inviting creator: {}", creatorUsername);
+        
+        // Login as Manager and land on dashboard
+        businessManagerLoginPage.login(username, password);
+        
+        // Verify on manager dashboard
+        Assert.assertTrue(businessManagerLoginPage.isOnManagerDashboard(), 
+            "Not on manager dashboard");
+        logger.info("[Manager Invite from Settings] Successfully logged in as Manager");
+        
+        // Click on Settings icon
+        businessManagerSettingsPage.clickSettingsIcon();
+        logger.info("[Manager Invite from Settings] Clicked on Settings icon");
+        
+        // Click on Creator Go button
+        businessManagerSettingsPage.clickCreatorGoButton();
+        
+        // Verify 'Your creators' text is visible
+        Assert.assertTrue(businessManagerSettingsPage.isYourCreatorsTextVisible(), 
+            "'Your creators' text is not visible");
+        logger.info("[Manager Invite from Settings] On invite/add creator screen");
+        
+        // Click on 'Invite a creator' text
+        businessManagerSettingsPage.clickInviteCreatorText();
+        
+        // Verify 'Invite a creator' heading
+        Assert.assertTrue(businessManagerSettingsPage.isInviteCreatorHeadingVisible(), 
+            "'Invite a creator' heading is not visible");
+        logger.info("[Manager Invite from Settings] On Invite Creator page");
+        
+        // Verify username instruction text
+        Assert.assertTrue(businessManagerSettingsPage.isUsernameInstructionVisible(), 
+            "Username instruction text is not visible");
+        
+        // Search for creator
+        businessManagerSettingsPage.searchCreatorByUsername(creatorUsername);
+        
+        // Select creator checkbox
+        businessManagerSettingsPage.selectCreatorCheckbox();
+        
+        // Send invitation
+        businessManagerSettingsPage.clickSendInvitationButton();
+        
+        // Verify invitation sent message
+        Assert.assertTrue(businessManagerSettingsPage.isInvitationSentMessageVisible(), 
+            "'Invitation sent' message is not visible");
+        logger.info("[Manager Invite from Settings] Invitation sent successfully");
+        
+        // Click I understand button
+        businessManagerSettingsPage.clickIUnderstandButton();
+        
+        logger.info("[Manager Invite from Settings] Test completed successfully");
+        logger.info("[Manager Invite from Settings] Invited creator: {}", creatorUsername);
+    }
+
+    @Test(priority = 5, description = "Manager sees duplicate invitation message when inviting same creator from settings")
+    public void managerSeesDuplicateInvitationFromSettings() {
+        logger.info("[Manager Duplicate from Settings] Starting test: Duplicate invitation from settings screen");
+        
+        // Get credentials from config
+        String username = ConfigReader.getProperty("business.manager.username", "TwizzManager@proton.me");
+        String password = ConfigReader.getProperty("business.manager.password", "Twizz$123");
+        String creatorUsername = ConfigReader.getProperty("creator.handle", "@john_smith").replace("@", "");
+        
+        logger.info("[Manager Duplicate from Settings] Using manager username: {}", username);
+        logger.info("[Manager Duplicate from Settings] Attempting to invite same creator: {}", creatorUsername);
+        
+        // Login as Manager and land on dashboard
+        businessManagerLoginPage.login(username, password);
+        
+        // Verify on manager dashboard
+        Assert.assertTrue(businessManagerLoginPage.isOnManagerDashboard(), 
+            "Not on manager dashboard");
+        logger.info("[Manager Duplicate from Settings] Successfully logged in as Manager");
+        
+        // Click on Settings icon
+        businessManagerSettingsPage.clickSettingsIcon();
+        
+        // Click on Creator Go button
+        businessManagerSettingsPage.clickCreatorGoButton();
+        
+        // Verify 'Your creators' text is visible
+        Assert.assertTrue(businessManagerSettingsPage.isYourCreatorsTextVisible(), 
+            "'Your creators' text is not visible");
+        logger.info("[Manager Duplicate from Settings] On invite/add creator screen");
+        
+        // Click on 'Invite a creator' text
+        businessManagerSettingsPage.clickInviteCreatorText();
+        
+        // Verify 'Invite a creator' heading
+        Assert.assertTrue(businessManagerSettingsPage.isInviteCreatorHeadingVisible(), 
+            "'Invite a creator' heading is not visible");
+        logger.info("[Manager Duplicate from Settings] On Invite Creator page");
+        
+        // Search for creator
+        businessManagerSettingsPage.searchCreatorByUsername(creatorUsername);
+        
+        // Select creator checkbox
+        businessManagerSettingsPage.selectCreatorCheckbox();
+        
+        // Send invitation
+        businessManagerSettingsPage.clickSendInvitationButton();
+        
+        // Verify duplicate invitation message
+        Assert.assertTrue(businessManagerSettingsPage.isDuplicateInvitationMessageVisible(), 
+            "'there is an invitation' message is not visible");
+        logger.info("[Manager Duplicate from Settings] Duplicate invitation message displayed successfully");
+        
+        logger.info("[Manager Duplicate from Settings] Test completed successfully");
+        logger.info("[Manager Duplicate from Settings] Verified duplicate invitation for creator: {}", creatorUsername);
+    }
+
+    @Test(priority = 6, description = "Creator can accept manager's invitation")
+    public void creatorCanAcceptInvitation() {
+        logger.info("[Creator Accept Invitation] Starting test: Creator accept invitation flow");
+        
+        // Get creator credentials from config
+        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
+        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+        
+        logger.info("[Creator Accept Invitation] Using creator username: {}", username);
+        
+        // Navigate to creator login page
+        creatorLoginPage.navigate();
+        
+        // Login as Creator
+        creatorLoginPage.login(username, password);
+        
+        // Verify on creator profile by checking URL
+        String currentUrl = page.url();
+        Assert.assertTrue(currentUrl.contains("/creator"), 
+            "Not on creator profile. Current URL: " + currentUrl);
+        logger.info("[Creator Accept Invitation] Successfully logged in as Creator");
+        
+        // Click on settings icon
+        creatorManagerPage.clickSettingsIcon();
+        
+        // Click on Manager menu item
+        creatorManagerPage.clickManagerMenuItem();
+        
+        // Verify Manager heading
+        Assert.assertTrue(creatorManagerPage.isManagerHeadingVisible(), 
+            "'Manager' heading is not visible");
+        logger.info("[Creator Accept Invitation] On Manager screen");
+        
+        // Verify Invitation text
+        Assert.assertTrue(creatorManagerPage.isInvitationTextVisible(), 
+            "'Invitation' text is not visible");
+        logger.info("[Creator Accept Invitation] Invitation is visible");
+        
+        // Click Accept button
+        creatorManagerPage.clickAcceptButton();
+        
+        // Verify confirmation dialog
+        Assert.assertTrue(creatorManagerPage.isConfirmationDialogVisible(), 
+            "Confirmation dialog is not visible");
+        logger.info("[Creator Accept Invitation] Confirmation dialog displayed");
+        
+        // Click I accept button
+        creatorManagerPage.clickIAcceptButton();
+        
+        // Verify invitation accepted message
+        Assert.assertTrue(creatorManagerPage.isInvitationAcceptedMessageVisible(), 
+            "'Invitation accepted' message is not visible");
+        logger.info("[Creator Accept Invitation] Invitation accepted successfully");
+        
+        logger.info("[Creator Accept Invitation] Test completed successfully");
+    }
+
+    @Test(priority = 7, description = "Manager can view added creator in agency screen")
+    public void managerCanViewAddedCreator() {
+        logger.info("[Manager View Creator] Starting test: View added creator in agency screen");
+        
+        // Get credentials from config
+        String username = ConfigReader.getProperty("business.manager.username", "TwizzManager@proton.me");
+        String password = ConfigReader.getProperty("business.manager.password", "Twizz$123");
+        
+        logger.info("[Manager View Creator] Using manager username: {}", username);
+        
+        // Login as Manager and land on dashboard
+        businessManagerLoginPage.login(username, password);
+        
+        // Verify on manager dashboard
+        Assert.assertTrue(businessManagerLoginPage.isOnManagerDashboard(), 
+            "Not on manager dashboard");
+        logger.info("[Manager View Creator] Successfully logged in as Manager");
+        
+        // Click on Agency icon
+        businessManagerAddCreatorPage.clickAgencyIcon();
+        
+        // Verify 'Your agency' title
+        Assert.assertTrue(businessManagerAddCreatorPage.isYourAgencyTitleVisible(), 
+            "'Your agency' title is not visible");
+        logger.info("[Manager View Creator] On Agency screen");
+        
+        // Verify 'Your creators' message
+        Assert.assertTrue(businessManagerAddCreatorPage.isYourCreatorsMessageVisible(), 
+            "'Your creators' message is not visible");
+        logger.info("[Manager View Creator] 'Your creators' section is visible");
+        
+        // Click on creator card
+        businessManagerAddCreatorPage.clickCreatorCard();
+        
+        // Verify 'Twizz identity Card' heading
+        Assert.assertTrue(businessManagerAddCreatorPage.isTwizzIdentityCardHeadingVisible(), 
+            "'Twizz identity Card' heading is not visible");
+        logger.info("[Manager View Creator] Creator details displayed - creator is added and visible");
+        
+        logger.info("[Manager View Creator] Test completed successfully");
+    }
 }

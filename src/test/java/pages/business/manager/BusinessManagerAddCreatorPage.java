@@ -164,6 +164,23 @@ public class BusinessManagerAddCreatorPage {
         logger.info("[Manager Add Creator] Clicked 'I understand' button");
     }
 
+    @Step("Click on creator card to view details")
+    public void clickCreatorCard() {
+        Locator creatorCard = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^Smith · @john_smithNo employees at present\\.$"))).nth(1);
+        creatorCard.click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Manager Add Creator] Clicked on creator card");
+    }
+
+    @Step("Verify 'Twizz identity Card' heading is visible")
+    public boolean isTwizzIdentityCardHeadingVisible() {
+        Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Twizz identity Card"));
+        boolean isVisible = heading.isVisible();
+        logger.info("[Manager Add Creator] 'Twizz identity Card' heading visibility: {}", isVisible);
+        return isVisible;
+    }
+
     @Step("Complete add creator flow")
     public void addCreator(String creatorUsername) {
         clickAgencyIcon();

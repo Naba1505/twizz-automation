@@ -94,6 +94,37 @@ public class CreatorManagerPage {
         return isVisible;
     }
 
+    @Step("Click Accept button")
+    public void clickAcceptButton() {
+        Locator acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
+        acceptButton.click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Creator Manager] Clicked Accept button");
+    }
+
+    @Step("Click 'I accept' button to confirm")
+    public void clickIAcceptButton() {
+        Locator iAcceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I accept"));
+        iAcceptButton.click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Creator Manager] Clicked 'I accept' button");
+    }
+
+    @Step("Verify 'Invitation accepted' message is visible")
+    public boolean isInvitationAcceptedMessageVisible() {
+        Locator acceptedMessage = page.getByText("Invitation accepted");
+        try {
+            acceptedMessage.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+        } catch (Exception e) {
+            logger.warn("[Creator Manager] Invitation accepted message did not appear within timeout");
+        }
+        boolean isVisible = acceptedMessage.isVisible();
+        logger.info("[Creator Manager] 'Invitation accepted' message visibility: {}", isVisible);
+        return isVisible;
+    }
+
     @Step("Complete reject invitation flow")
     public void rejectInvitation() {
         clickSettingsIcon();
@@ -101,5 +132,14 @@ public class CreatorManagerPage {
         clickRefuseButton();
         clickIRefuseButton();
         logger.info("[Creator Manager] Completed reject invitation flow");
+    }
+
+    @Step("Complete accept invitation flow")
+    public void acceptInvitation() {
+        clickSettingsIcon();
+        clickManagerMenuItem();
+        clickAcceptButton();
+        clickIAcceptButton();
+        logger.info("[Creator Manager] Completed accept invitation flow");
     }
 }
