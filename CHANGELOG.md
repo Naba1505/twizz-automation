@@ -45,9 +45,9 @@
   - Confirmation dialog handling
   - Rejection success message verification
 
-### New Feature: Business Manager Add Creator (Invite)
-- **BusinessManagerAddCreatorTest**: Three test scenarios for complete invite/reject flow
-  - **Test 1 - Invite Creator** (priority 1):
+### New Feature: Business Manager Add Creator (Invite) - Extended
+- **BusinessManagerAddCreatorTest**: Seven test scenarios for complete invite/accept/reject/view flow
+  - **Test 1 - Invite Creator from Agency** (priority 1):
     * Login as Manager and navigate to dashboard
     * Click on Agency icon and verify agency screen
     * Click Add button to open invite creator dialog
@@ -68,6 +68,35 @@
     * Click Refuse button
     * Confirm rejection with 'I refuse' button
     * Verify 'Invitation rejected' success message
+  - **Test 4 - Invite Creator from Settings** (priority 4):
+    * Login as Manager and navigate to dashboard
+    * Click on Settings icon
+    * Click on 'Creator Go' button
+    * Verify 'Your creators' text is visible
+    * Click 'Invite a creator' text
+    * Search for creator by username
+    * Select creator checkbox
+    * Send invitation and verify success message
+    * Click 'I understand' button
+  - **Test 5 - Duplicate Invitation from Settings** (priority 5):
+    * Login as Manager and navigate to Settings
+    * Navigate to Creator Go → Invite a creator
+    * Attempt to invite same creator again
+    * Verify 'there is an invitation' message appears
+  - **Test 6 - Creator Accept Invitation** (priority 6):
+    * Login as Creator and navigate to profile
+    * Click on settings icon
+    * Navigate to Manager menu
+    * Verify invitation is visible
+    * Click Accept button
+    * Confirm acceptance with 'I accept' button
+    * Verify 'Invitation accepted' success message
+  - **Test 7 - View Added Creator** (priority 7):
+    * Login as Manager and navigate to dashboard
+    * Click on Agency icon
+    * Verify 'Your creators' section is visible
+    * Click on creator card
+    * Verify 'Twizz identity Card' heading (confirms creator is added)
 
 - **BusinessManagerAddCreatorPage**: Page object with agency management methods
   - Agency icon navigation
@@ -77,14 +106,51 @@
   - Invitation sending with success verification
   - Duplicate invitation message detection
   - Optional 'I understand' button handling
+  - Creator card click for viewing details
+  - Twizz identity card verification
+
+- **BusinessManagerSettingsPage**: Page object for settings screen creator invitation
+  - Settings icon navigation
+  - Creator Go button interaction
+  - Your creators text verification
+  - Invite a creator text click
+  - Creator search functionality
+  - Checkbox selection
+  - Send invitation button
+  - Success and duplicate message verification
+  - I understand button handling
 
 - **CreatorManagerPage**: Page object for creator manager settings
   - Settings icon navigation
   - Manager menu item interaction
   - Invitation visibility verification
-  - Refuse button interaction
+  - Refuse button interaction (for rejection)
+  - Accept button interaction (for acceptance)
   - Confirmation dialog handling
-  - Rejection success message verification
+  - Rejection and acceptance success message verification
+
+### New Feature: Business Manager Delete Creator (Cleanup)
+- **BusinessManagerDeleteCreatorTest**: Cleanup test to remove test data
+  - **Test 1 - Delete Creator** (priority 1):
+    * Login as Manager and navigate to dashboard
+    * Click on Agency icon
+    * Verify 'Your creators' text is visible
+    * Click on creator card to view details
+    * Verify 'Twizz identity Card' heading
+    * Click 'Delete the creator' text
+    * Verify delete confirmation dialog
+    * Click 'Validate' button to confirm deletion
+    * Verify 'Creator deleted successfully' message
+
+- **BusinessManagerDeleteCreatorPage**: Page object for delete creator flow
+  - Agency icon navigation
+  - Your creators text verification
+  - Creator card click
+  - Twizz identity card verification
+  - Delete the creator text click
+  - Delete confirmation dialog verification
+  - Validate button interaction
+  - Success message verification
 
 ### New Feature: Business Employee Login
 - **BusinessEmployeeLoginTest**: Complete employee login flow

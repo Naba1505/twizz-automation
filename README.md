@@ -127,9 +127,10 @@ mvn clean compile
 ### Business Manager Add Creator (Invite)
 - Page objects: 
   - `pages/business/manager/BusinessManagerAddCreatorPage`
+  - `pages/business/manager/BusinessManagerSettingsPage`
   - `pages/creator/CreatorManagerPage`
 - Tests class: `tests/business/manager/BusinessManagerAddCreatorTest`
-- **Test 1: Invite Creator** (priority 1)
+- **Test 1: Invite Creator from Agency** (priority 1)
   - Login as Manager
   - Click on Agency icon
   - Verify 'Your agency' and 'Your creators' messages
@@ -139,7 +140,7 @@ mvn clean compile
   - Send invitation
   - Verify invitation sent message
   - Click 'I understand' button (if present)
-- **Test 2: Duplicate Invitation** (priority 2)
+- **Test 2: Duplicate Invitation from Agency** (priority 2)
   - Login as Manager
   - Navigate to Agency screen
   - Attempt to invite same creator again
@@ -151,19 +152,76 @@ mvn clean compile
   - Click Refuse button
   - Confirm rejection with 'I refuse'
   - Verify 'Invitation rejected' message
+- **Test 4: Invite Creator from Settings** (priority 4)
+  - Login as Manager
+  - Click on Settings icon
+  - Click on 'Creator Go' button
+  - Verify 'Your creators' text
+  - Click 'Invite a creator'
+  - Search for creator by username
+  - Select creator checkbox
+  - Send invitation
+  - Verify invitation sent message
+  - Click 'I understand' button
+- **Test 5: Duplicate Invitation from Settings** (priority 5)
+  - Login as Manager
+  - Navigate to Settings → Creator Go → Invite a creator
+  - Attempt to invite same creator again
+  - Verify 'there is an invitation' message appears
+- **Test 6: Creator Accept Invitation** (priority 6)
+  - Login as Creator
+  - Navigate to Settings → Manager
+  - Verify invitation is visible
+  - Click Accept button
+  - Confirm acceptance with 'I accept'
+  - Verify 'Invitation accepted' message
+- **Test 7: View Added Creator** (priority 7)
+  - Login as Manager
+  - Navigate to Agency screen
+  - Verify 'Your creators' section
+  - Click on creator card
+  - Verify 'Twizz identity Card' heading (confirms creator is added)
 - Features:
   - Complete agency management flow
+  - Creator invitation from Agency and Settings screens
   - Creator search and selection
   - Invitation success verification
   - Duplicate invitation detection
-  - Creator rejection flow
+  - Creator rejection and acceptance flows
+  - View added creator details
   - Flexible success message handling
 - Run examples:
   ```bash
   mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerCanInviteCreator test
   mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerSeesDuplicateInvitationMessage test
   mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#creatorCanRejectInvitation test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerCanInviteCreatorFromSettings test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerSeesDuplicateInvitationFromSettings test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#creatorCanAcceptInvitation test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest#managerCanViewAddedCreator test
   mvn -Dtest=tests.business.manager.BusinessManagerAddCreatorTest test
+  ```
+
+### Business Manager Delete Creator (Cleanup)
+- Page object: `pages/business/manager/BusinessManagerDeleteCreatorPage`
+- Tests class: `tests/business.manager.BusinessManagerDeleteCreatorTest`
+- **Test 1: Delete Creator** (priority 1)
+  - Login as Manager
+  - Navigate to Agency screen
+  - Click on creator card
+  - Verify creator details screen
+  - Click 'Delete the creator'
+  - Verify delete confirmation dialog
+  - Click 'Validate' to confirm deletion
+  - Verify 'Creator deleted successfully' message
+- Features:
+  - Cleanup test to remove test data
+  - Delete creator from agency
+  - Confirmation dialog handling
+  - Success message verification
+- Run example:
+  ```bash
+  mvn -Dtest=tests.business.manager.BusinessManagerDeleteCreatorTest#managerCanDeleteCreator test
   ```
 
 ### Business Employee Sign Up

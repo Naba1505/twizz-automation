@@ -28,4 +28,11 @@
             <class name="tests.business.employee.BusinessEmployeeLoginTest"/>
         </classes>
     </test>
+
+    <!-- Business Cleanup Tests -->
+    <test name="Business Cleanup Tests">
+        <classes>
+            <class name="tests.business.manager.BusinessManagerDeleteCreatorTest"/>
+        </classes>
+    </test>
 </suite>
