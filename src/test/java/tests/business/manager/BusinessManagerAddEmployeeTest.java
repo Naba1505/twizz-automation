@@ -202,4 +202,224 @@ public class BusinessManagerAddEmployeeTest extends BusinessBaseTestClass {
         
         logger.info("[Employee Reject Invitation] Test completed successfully");
     }
+
+    @Test(priority = 4, description = "Manager can invite employee from settings screen")
+    public void managerCanInviteEmployeeFromSettings() {
+        logger.info("[Manager Invite from Settings] Starting test: Invite employee from settings screen");
+        
+        // Get manager credentials from config
+        String username = ConfigReader.getProperty("business.manager.username", "TwizzManager@proton.me");
+        String password = ConfigReader.getProperty("business.manager.password", "Twizz$123");
+        String employeeSearchName = ConfigReader.getProperty("business.employee.searchname", "scarlett");
+        
+        logger.info("[Manager Invite from Settings] Using manager username: {}", username);
+        logger.info("[Manager Invite from Settings] Inviting employee: {}", employeeSearchName);
+        
+        // Login as Manager
+        businessManagerLoginPage.login(username, password);
+        
+        // Verify on manager dashboard
+        Assert.assertTrue(businessManagerLoginPage.isOnManagerDashboard(), 
+            "Not on manager dashboard");
+        logger.info("[Manager Invite from Settings] Successfully logged in as Manager");
+        
+        // Click on Settings icon
+        businessManagerSettingsPage.clickSettingsIcon();
+        logger.info("[Manager Invite from Settings] Clicked on Settings icon");
+        
+        // Click on 'Employee Go' button
+        businessManagerSettingsPage.clickEmployeeGoButton();
+        
+        // Verify 'Your employees' text
+        Assert.assertTrue(businessManagerSettingsPage.isYourEmployeesTextVisible(), 
+            "'Your employees' text is not visible");
+        logger.info("[Manager Invite from Settings] On invite/add employee screen");
+        
+        // Click 'Invite a employee' text
+        businessManagerSettingsPage.clickInviteEmployeeText();
+        
+        // Verify 'Invite an employee' heading
+        Assert.assertTrue(businessManagerSettingsPage.isInviteEmployeeHeadingVisible(), 
+            "'Invite an employee' heading is not visible");
+        logger.info("[Manager Invite from Settings] On Invite Employee page");
+        
+        // Search for employee by username
+        businessManagerSettingsPage.searchEmployeeByUsername(employeeSearchName);
+        
+        // Select employee checkbox
+        businessManagerSettingsPage.selectEmployeeCheckbox();
+        
+        // Click Send invitation button
+        businessManagerSettingsPage.clickSendInvitationButton();
+        
+        // Verify invitation sent message
+        Assert.assertTrue(businessManagerSettingsPage.isInvitationSentMessageVisible(), 
+            "'Invitation sent' message is not visible");
+        logger.info("[Manager Invite from Settings] Invitation sent successfully");
+        
+        // Click I understand button
+        businessManagerSettingsPage.clickIUnderstandButton();
+        
+        logger.info("[Manager Invite from Settings] Test completed successfully");
+        logger.info("[Manager Invite from Settings] Invited employee: {}", employeeSearchName);
+    }
+
+    @Test(priority = 5, description = "Manager sees duplicate invitation message from settings screen")
+    public void managerSeesDuplicateInvitationFromSettings() {
+        logger.info("[Manager Duplicate from Settings] Starting test: Duplicate invitation from settings screen");
+        
+        // Get manager credentials from config
+        String username = ConfigReader.getProperty("business.manager.username", "TwizzManager@proton.me");
+        String password = ConfigReader.getProperty("business.manager.password", "Twizz$123");
+        String employeeSearchName = ConfigReader.getProperty("business.employee.searchname", "scarlett");
+        
+        logger.info("[Manager Duplicate from Settings] Using manager username: {}", username);
+        logger.info("[Manager Duplicate from Settings] Attempting to invite same employee: {}", employeeSearchName);
+        
+        // Login as Manager
+        businessManagerLoginPage.login(username, password);
+        
+        // Verify on manager dashboard
+        Assert.assertTrue(businessManagerLoginPage.isOnManagerDashboard(), 
+            "Not on manager dashboard");
+        logger.info("[Manager Duplicate from Settings] Successfully logged in as Manager");
+        
+        // Click on Settings icon
+        businessManagerSettingsPage.clickSettingsIcon();
+        
+        // Click on 'Employee Go' button
+        businessManagerSettingsPage.clickEmployeeGoButton();
+        
+        // Verify 'Your employees' text
+        Assert.assertTrue(businessManagerSettingsPage.isYourEmployeesTextVisible(), 
+            "'Your employees' text is not visible");
+        logger.info("[Manager Duplicate from Settings] On invite/add employee screen");
+        
+        // Click 'Invite a employee' text
+        businessManagerSettingsPage.clickInviteEmployeeText();
+        
+        // Verify 'Invite an employee' heading
+        Assert.assertTrue(businessManagerSettingsPage.isInviteEmployeeHeadingVisible(), 
+            "'Invite an employee' heading is not visible");
+        logger.info("[Manager Duplicate from Settings] On Invite Employee page");
+        
+        // Search for employee by username
+        businessManagerSettingsPage.searchEmployeeByUsername(employeeSearchName);
+        
+        // Select employee checkbox
+        businessManagerSettingsPage.selectEmployeeCheckbox();
+        
+        // Click Send invitation button
+        businessManagerSettingsPage.clickSendInvitationButton();
+        
+        // Verify duplicate invitation message
+        Assert.assertTrue(businessManagerSettingsPage.isDuplicateInvitationMessageVisible(), 
+            "'there is an invitation' message is not visible");
+        logger.info("[Manager Duplicate from Settings] Duplicate invitation message displayed successfully");
+        
+        logger.info("[Manager Duplicate from Settings] Test completed successfully");
+        logger.info("[Manager Duplicate from Settings] Verified duplicate invitation for employee: {}", employeeSearchName);
+    }
+
+    @Test(priority = 6, description = "Employee can accept manager's invitation")
+    public void employeeCanAcceptInvitation() {
+        logger.info("[Employee Accept Invitation] Starting test: Employee accept invitation flow");
+        
+        // Get employee credentials from config
+        String username = ConfigReader.getProperty("business.employee.username", "TwizzEmployee@proton.me");
+        String password = ConfigReader.getProperty("business.employee.password", "Twizz$123");
+        
+        logger.info("[Employee Accept Invitation] Using employee username: {}", username);
+        
+        // Set viewport to smaller size for mobile view (to show invitation option)
+        page.setViewportSize(375, 667);
+        logger.info("[Employee Accept Invitation] Set viewport to mobile size: 375x667");
+        
+        // Login as Employee
+        businessEmployeeLoginPage.navigateToSignIn();
+        businessEmployeeLoginPage.fillUsername(username);
+        businessEmployeeLoginPage.fillPassword(password);
+        businessEmployeeLoginPage.clickLogin();
+        
+        // Verify on employee dashboard
+        Assert.assertTrue(businessEmployeeLoginPage.isOnEmployeeDashboard(), 
+            "Not on employee dashboard");
+        logger.info("[Employee Accept Invitation] Successfully logged in as Employee");
+        
+        // Click on Settings button
+        employeeSettingsPage.clickSettingsButton();
+        
+        // Verify Manage relationships heading
+        Assert.assertTrue(employeeSettingsPage.isManageRelationshipsHeadingVisible(), 
+            "'Manage your relationships' heading is not visible");
+        logger.info("[Employee Accept Invitation] On Settings screen");
+        
+        // Click View invitations button
+        employeeSettingsPage.clickViewInvitationsButton();
+        
+        // Verify Invitation manager heading
+        Assert.assertTrue(employeeSettingsPage.isInvitationManagerHeadingVisible(), 
+            "'Invitation manageur' heading is not visible");
+        logger.info("[Employee Accept Invitation] On Invitation screen");
+        
+        // Click Accept button
+        employeeSettingsPage.clickAcceptButton();
+        
+        // Verify confirmation dialog
+        Assert.assertTrue(employeeSettingsPage.isConfirmationDialogVisible(), 
+            "Confirmation dialog is not visible");
+        logger.info("[Employee Accept Invitation] Confirmation dialog displayed");
+        
+        // Click Finish button
+        employeeSettingsPage.clickFinishButton();
+        
+        // Verify invitation accepted message
+        Assert.assertTrue(employeeSettingsPage.isInvitationAcceptedMessageVisible(), 
+            "'Invitation accepted' message is not visible");
+        logger.info("[Employee Accept Invitation] Invitation accepted successfully");
+        
+        logger.info("[Employee Accept Invitation] Test completed successfully");
+    }
+
+    @Test(priority = 7, description = "Manager can view added employee in agency screen")
+    public void managerCanViewAddedEmployee() {
+        logger.info("[Manager View Employee] Starting test: View added employee in agency screen");
+        
+        // Get manager credentials from config
+        String username = ConfigReader.getProperty("business.manager.username", "TwizzManager@proton.me");
+        String password = ConfigReader.getProperty("business.manager.password", "Twizz$123");
+        
+        logger.info("[Manager View Employee] Using manager username: {}", username);
+        
+        // Login as Manager
+        businessManagerLoginPage.login(username, password);
+        
+        // Verify on manager dashboard
+        Assert.assertTrue(businessManagerLoginPage.isOnManagerDashboard(), 
+            "Not on manager dashboard");
+        logger.info("[Manager View Employee] Successfully logged in as Manager");
+        
+        // Click on Agency icon
+        businessManagerAddEmployeePage.clickAgencyIcon();
+        
+        // Verify 'Your agency' title
+        Assert.assertTrue(businessManagerAddEmployeePage.isYourAgencyTitleVisible(), 
+            "'Your agency' title is not visible");
+        logger.info("[Manager View Employee] On Agency screen");
+        
+        // Verify 'Your employees' section
+        Assert.assertTrue(businessManagerAddEmployeePage.isYourEmployeesMessageVisible(), 
+            "'Your employees' section is not visible");
+        logger.info("[Manager View Employee] 'Your employees' section is visible");
+        
+        // Click on employee card
+        businessManagerAddEmployeePage.clickEmployeeCard();
+        
+        // Verify 'Twizz identity Card' heading
+        Assert.assertTrue(businessManagerAddEmployeePage.isTwizzIdentityCardHeadingVisible(), 
+            "'Twizz identity Card' heading is not visible");
+        logger.info("[Manager View Employee] Employee details displayed - employee is added successfully");
+        
+        logger.info("[Manager View Employee] Test completed successfully");
+    }
 }

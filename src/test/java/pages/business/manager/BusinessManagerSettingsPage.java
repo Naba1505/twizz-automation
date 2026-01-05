@@ -132,6 +132,57 @@ public class BusinessManagerSettingsPage {
         logger.info("[Manager Settings] Clicked 'I understand' button");
     }
 
+    @Step("Click on 'Employee Go' button")
+    public void clickEmployeeGoButton() {
+        Locator employeeGoButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Employee Go"));
+        employeeGoButton.click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Manager Settings] Clicked on 'Employee Go' button");
+    }
+
+    @Step("Verify 'Your employees' text is visible")
+    public boolean isYourEmployeesTextVisible() {
+        Locator yourEmployeesText = page.getByText("Your employees");
+        boolean isVisible = yourEmployeesText.isVisible();
+        logger.info("[Manager Settings] 'Your employees' text visibility: {}", isVisible);
+        return isVisible;
+    }
+
+    @Step("Click on 'Invite a employee' text")
+    public void clickInviteEmployeeText() {
+        Locator inviteEmployeeText = page.getByText("Invite a employee");
+        inviteEmployeeText.click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Manager Settings] Clicked on 'Invite a employee' text");
+    }
+
+    @Step("Verify 'Invite an employee' heading is visible")
+    public boolean isInviteEmployeeHeadingVisible() {
+        Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Invite an employee"));
+        boolean isVisible = heading.isVisible();
+        logger.info("[Manager Settings] 'Invite an employee' heading visibility: {}", isVisible);
+        return isVisible;
+    }
+
+    @Step("Search for employee by username: {username}")
+    public void searchEmployeeByUsername(String username) {
+        Locator usernameField = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Username"));
+        usernameField.click();
+        usernameField.fill(username);
+        page.waitForTimeout(1500);
+        logger.info("[Manager Settings] Searched for employee: {}", username);
+    }
+
+    @Step("Select employee by clicking checkbox")
+    public void selectEmployeeCheckbox() {
+        Locator checkbox = page.locator(".checkbox");
+        checkbox.click();
+        page.waitForTimeout(500);
+        logger.info("[Manager Settings] Selected employee checkbox");
+    }
+
     @Step("Complete invite creator from settings flow")
     public void inviteCreatorFromSettings(String creatorUsername) {
         clickSettingsIcon();
@@ -142,5 +193,17 @@ public class BusinessManagerSettingsPage {
         clickSendInvitationButton();
         clickIUnderstandButton();
         logger.info("[Manager Settings] Completed invite creator from settings flow for: {}", creatorUsername);
+    }
+
+    @Step("Complete invite employee from settings flow")
+    public void inviteEmployeeFromSettings(String employeeUsername) {
+        clickSettingsIcon();
+        clickEmployeeGoButton();
+        clickInviteEmployeeText();
+        searchEmployeeByUsername(employeeUsername);
+        selectEmployeeCheckbox();
+        clickSendInvitationButton();
+        clickIUnderstandButton();
+        logger.info("[Manager Settings] Completed invite employee from settings flow for: {}", employeeUsername);
     }
 }

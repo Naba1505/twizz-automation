@@ -83,9 +83,10 @@ mvn clean compile
 ### Business Manager Add Employee (Invite)
 - Page objects:
   - `pages/business/manager/BusinessManagerAddEmployeePage`
+  - `pages/business/manager/BusinessManagerSettingsPage`
   - `pages/business/employee/EmployeeSettingsPage`
 - Tests class: `tests/business/manager/BusinessManagerAddEmployeeTest`
-- **Test 1: Invite Employee** (priority 1)
+- **Test 1: Invite Employee from Agency** (priority 1)
   - Login as Manager
   - Click on Agency icon
   - Verify 'Your agency' and 'Your employees' messages
@@ -95,7 +96,7 @@ mvn clean compile
   - Send invitation
   - Verify invitation sent message
   - Click 'I understand' button (if present)
-- **Test 2: Duplicate Invitation** (priority 2)
+- **Test 2: Duplicate Invitation from Agency** (priority 2)
   - Login as Manager
   - Navigate to Agency screen
   - Attempt to invite same employee again
@@ -108,12 +109,44 @@ mvn clean compile
   - Click Decline button
   - Confirm rejection with 'Finish'
   - Verify 'Rejected' message
+- **Test 4: Invite Employee from Settings** (priority 4)
+  - Login as Manager
+  - Click on Settings icon
+  - Click on 'Employee Go' button
+  - Verify 'Your employees' text
+  - Click 'Invite a employee'
+  - Search for employee by username
+  - Select employee checkbox
+  - Send invitation
+  - Verify invitation sent message
+  - Click 'I understand' button
+- **Test 5: Duplicate Invitation from Settings** (priority 5)
+  - Login as Manager
+  - Navigate to Settings → Employee Go → Invite a employee
+  - Attempt to invite same employee again
+  - Verify 'there is an invitation' message appears
+- **Test 6: Employee Accept Invitation** (priority 6)
+  - Set viewport to mobile size (375x667)
+  - Login as Employee
+  - Navigate to Settings → View invitations
+  - Verify invitation is visible
+  - Click Accept button
+  - Confirm acceptance with 'Finish'
+  - Verify 'Invitation accepted' message
+- **Test 7: View Added Employee** (priority 7)
+  - Login as Manager
+  - Navigate to Agency screen
+  - Verify 'Your employees' section
+  - Click on employee card
+  - Verify 'Twizz identity Card' heading (confirms employee is added)
 - Features:
   - Complete agency management flow
+  - Employee invitation from Agency and Settings screens
   - Employee search and selection
   - Invitation success verification
   - Duplicate invitation detection
-  - Employee rejection flow
+  - Employee rejection and acceptance flows
+  - View added employee details
   - Mobile viewport support
   - Flexible success message handling
 - Run examples:
@@ -121,6 +154,10 @@ mvn clean compile
   mvn -Dtest=tests.business.manager.BusinessManagerAddEmployeeTest#managerCanInviteEmployee test
   mvn -Dtest=tests.business.manager.BusinessManagerAddEmployeeTest#managerSeesDuplicateInvitationMessage test
   mvn -Dtest=tests.business.manager.BusinessManagerAddEmployeeTest#employeeCanRejectInvitation test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddEmployeeTest#managerCanInviteEmployeeFromSettings test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddEmployeeTest#managerSeesDuplicateInvitationFromSettings test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddEmployeeTest#employeeCanAcceptInvitation test
+  mvn -Dtest=tests.business.manager.BusinessManagerAddEmployeeTest#managerCanViewAddedEmployee test
   mvn -Dtest=tests.business.manager.BusinessManagerAddEmployeeTest test
   ```
 
@@ -222,6 +259,28 @@ mvn clean compile
 - Run example:
   ```bash
   mvn -Dtest=tests.business.manager.BusinessManagerDeleteCreatorTest#managerCanDeleteCreator test
+  ```
+
+### Business Manager Delete Employee (Cleanup)
+- Page object: `pages/business/manager/BusinessManagerDeleteEmployeePage`
+- Tests class: `tests/business.manager.BusinessManagerDeleteEmployeeTest`
+- **Test 1: Delete Employee** (priority 1)
+  - Login as Manager
+  - Navigate to Agency screen
+  - Click on employee card
+  - Verify employee details screen
+  - Click 'Delete this account'
+  - Verify delete confirmation dialog
+  - Click 'Validate' to confirm deletion
+  - Verify 'Employee deleted successfully' message
+- Features:
+  - Cleanup test to remove test data
+  - Delete employee from agency
+  - Confirmation dialog handling
+  - Success message verification
+- Run example:
+  ```bash
+  mvn -Dtest=tests.business.manager.BusinessManagerDeleteEmployeeTest#managerCanDeleteEmployee test
   ```
 
 ### Business Employee Sign Up

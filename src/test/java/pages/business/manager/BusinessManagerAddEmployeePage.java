@@ -31,7 +31,7 @@ public class BusinessManagerAddEmployeePage {
 
     @Step("Verify 'Your agency' title is visible")
     public boolean isYourAgencyTitleVisible() {
-        Locator title = page.getByText("Your agency");
+        Locator title = page.getByText("Your agency", new Page.GetByTextOptions().setExact(true));
         boolean isVisible = title.isVisible();
         logger.info("[Manager Add Employee] 'Your agency' title visibility: {}", isVisible);
         return isVisible;
@@ -154,6 +154,23 @@ public class BusinessManagerAddEmployeePage {
         } catch (Exception e) {
             logger.info("[Manager Add Employee] Error checking/clicking 'I understand' button: {}", e.getMessage());
         }
+    }
+
+    @Step("Click on employee card to view details")
+    public void clickEmployeeCard() {
+        Locator employeeCard = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("employee"));
+        employeeCard.click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Manager Add Employee] Clicked on employee card");
+    }
+
+    @Step("Verify 'Twizz identity Card' heading is visible")
+    public boolean isTwizzIdentityCardHeadingVisible() {
+        Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Twizz identity Card"));
+        boolean isVisible = heading.isVisible();
+        logger.info("[Manager Add Employee] 'Twizz identity Card' heading visibility: {}", isVisible);
+        return isVisible;
     }
 
     @Step("Complete add employee flow for username: {employeeUsername}")

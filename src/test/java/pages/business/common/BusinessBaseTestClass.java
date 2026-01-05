@@ -23,6 +23,7 @@ import pages.business.employee.EmployeeSettingsPage;
 import pages.business.manager.BusinessManagerAddCreatorPage;
 import pages.business.manager.BusinessManagerAddEmployeePage;
 import pages.business.manager.BusinessManagerDeleteCreatorPage;
+import pages.business.manager.BusinessManagerDeleteEmployeePage;
 import pages.business.manager.BusinessManagerLoginPage;
 import pages.business.manager.BusinessManagerSettingsPage;
 import pages.business.manager.BusinessManagerSignUpPage;
@@ -44,6 +45,7 @@ public class BusinessBaseTestClass {
     protected BusinessManagerAddCreatorPage businessManagerAddCreatorPage;
     protected BusinessManagerAddEmployeePage businessManagerAddEmployeePage;
     protected BusinessManagerDeleteCreatorPage businessManagerDeleteCreatorPage;
+    protected BusinessManagerDeleteEmployeePage businessManagerDeleteEmployeePage;
     protected BusinessManagerSettingsPage businessManagerSettingsPage;
     protected BusinessEmployeeSignUpPage businessEmployeeSignUpPage;
     protected BusinessEmployeeLoginPage businessEmployeeLoginPage;
@@ -76,6 +78,7 @@ public class BusinessBaseTestClass {
         businessManagerAddCreatorPage = new BusinessManagerAddCreatorPage(page);
         businessManagerAddEmployeePage = new BusinessManagerAddEmployeePage(page);
         businessManagerDeleteCreatorPage = new BusinessManagerDeleteCreatorPage(page);
+        businessManagerDeleteEmployeePage = new BusinessManagerDeleteEmployeePage(page);
         businessManagerSettingsPage = new BusinessManagerSettingsPage(page);
         businessEmployeeSignUpPage = new BusinessEmployeeSignUpPage(page);
         businessEmployeeLoginPage = new BusinessEmployeeLoginPage(page);

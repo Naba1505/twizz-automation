@@ -2,9 +2,9 @@
 
 ## [Unreleased] - 2026-01-01
 
-### New Feature: Business Manager Add Employee (Invite)
-- **BusinessManagerAddEmployeeTest**: Three test scenarios for complete invite/reject flow
-  - **Test 1 - Invite Employee** (priority 1):
+### New Feature: Business Manager Add Employee (Invite) - Extended
+- **BusinessManagerAddEmployeeTest**: Seven test scenarios for complete invite/accept/reject/view flow
+  - **Test 1 - Invite Employee from Agency** (priority 1):
     * Login as Manager and navigate to dashboard
     * Click on Agency icon and verify agency screen
     * Verify 'Your employees' section is visible
@@ -13,7 +13,7 @@
     * Select employee checkbox
     * Send invitation and verify success message
     * Click 'I understand' button if present
-  - **Test 2 - Duplicate Invitation** (priority 2):
+  - **Test 2 - Duplicate Invitation from Agency** (priority 2):
     * Login as Manager and navigate to Agency
     * Attempt to invite same employee again
     * Verify 'there is an invitation already sent' message appears
@@ -27,6 +27,36 @@
     * Click Decline button
     * Confirm rejection with 'Finish' button
     * Verify 'Rejected' success message
+  - **Test 4 - Invite Employee from Settings** (priority 4):
+    * Login as Manager and navigate to dashboard
+    * Click on Settings icon
+    * Click on 'Employee Go' button
+    * Verify 'Your employees' text is visible
+    * Click 'Invite a employee' text
+    * Search for employee by username
+    * Select employee checkbox
+    * Send invitation and verify success message
+    * Click 'I understand' button
+  - **Test 5 - Duplicate Invitation from Settings** (priority 5):
+    * Login as Manager and navigate to Settings
+    * Navigate to Employee Go → Invite a employee
+    * Attempt to invite same employee again
+    * Verify 'there is an invitation' message appears
+  - **Test 6 - Employee Accept Invitation** (priority 6):
+    * Set viewport to mobile size (375x667)
+    * Login as Employee and navigate to dashboard
+    * Click on Settings button
+    * Navigate to View invitations
+    * Verify invitation is visible
+    * Click Accept button
+    * Confirm acceptance with 'Finish' button
+    * Verify 'Invitation accepted' success message
+  - **Test 7 - View Added Employee** (priority 7):
+    * Login as Manager and navigate to dashboard
+    * Click on Agency icon
+    * Verify 'Your employees' section is visible
+    * Click on employee card
+    * Verify 'Twizz identity Card' heading (confirms employee is added)
 
 - **BusinessManagerAddEmployeePage**: Page object with agency employee management methods
   - Agency icon navigation
@@ -36,14 +66,51 @@
   - Invitation sending with success verification
   - Duplicate invitation message detection
   - Optional 'I understand' button handling
+  - Employee card click for viewing details
+  - Twizz identity card verification
+
+- **BusinessManagerSettingsPage**: Page object for settings screen employee invitation
+  - Settings icon navigation
+  - Employee Go button interaction
+  - Your employees text verification
+  - Invite a employee text click
+  - Employee search functionality
+  - Checkbox selection
+  - Send invitation button
+  - Success and duplicate message verification
+  - I understand button handling
 
 - **EmployeeSettingsPage**: Page object for employee settings and invitation management
   - Settings button navigation
   - Manage relationships verification
   - View invitations interaction
-  - Decline button interaction
+  - Decline button interaction (for rejection)
+  - Accept button interaction (for acceptance)
   - Confirmation dialog handling
-  - Rejection success message verification
+  - Rejection and acceptance success message verification
+
+### New Feature: Business Manager Delete Employee (Cleanup)
+- **BusinessManagerDeleteEmployeeTest**: Cleanup test to remove test data
+  - **Test 1 - Delete Employee** (priority 1):
+    * Login as Manager and navigate to dashboard
+    * Click on Agency icon
+    * Verify 'Your employees' text is visible
+    * Click on employee card to view details
+    * Verify 'Twizz identity Card' heading
+    * Click 'Delete this account' text
+    * Verify delete confirmation dialog
+    * Click 'Validate' button to confirm deletion
+    * Verify 'Employee deleted successfully' message
+
+- **BusinessManagerDeleteEmployeePage**: Page object for delete employee flow
+  - Agency icon navigation
+  - Your employees text verification
+  - Employee card click
+  - Twizz identity card verification
+  - Delete this account text click
+  - Delete confirmation dialog verification
+  - Validate button interaction
+  - Success message verification
 
 ### New Feature: Business Manager Add Creator (Invite) - Extended
 - **BusinessManagerAddCreatorTest**: Seven test scenarios for complete invite/accept/reject/view flow

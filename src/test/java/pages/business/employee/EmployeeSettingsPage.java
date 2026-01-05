@@ -80,6 +80,15 @@ public class EmployeeSettingsPage {
         logger.info("[Employee Settings] Clicked 'Finish' button");
     }
 
+    @Step("Click Accept button")
+    public void clickAcceptButton() {
+        Locator acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
+        acceptButton.click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Employee Settings] Clicked Accept button");
+    }
+
     @Step("Verify 'Rejected' message is visible")
     public boolean isRejectedMessageVisible() {
         Locator rejectedMessage = page.getByText("Rejected");
@@ -93,6 +102,19 @@ public class EmployeeSettingsPage {
         return isVisible;
     }
 
+    @Step("Verify 'Invitation accepted' message is visible")
+    public boolean isInvitationAcceptedMessageVisible() {
+        Locator acceptedMessage = page.getByText("Invitation accepted");
+        try {
+            acceptedMessage.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+        } catch (Exception e) {
+            logger.warn("[Employee Settings] Invitation accepted message did not appear within timeout");
+        }
+        boolean isVisible = acceptedMessage.isVisible();
+        logger.info("[Employee Settings] 'Invitation accepted' message visibility: {}", isVisible);
+        return isVisible;
+    }
+
     @Step("Complete reject invitation flow")
     public void rejectInvitation() {
         clickSettingsButton();
@@ -100,5 +122,14 @@ public class EmployeeSettingsPage {
         clickDeclineButton();
         clickFinishButton();
         logger.info("[Employee Settings] Completed reject invitation flow");
+    }
+
+    @Step("Complete accept invitation flow")
+    public void acceptInvitation() {
+        clickSettingsButton();
+        clickViewInvitationsButton();
+        clickAcceptButton();
+        clickFinishButton();
+        logger.info("[Employee Settings] Completed accept invitation flow");
     }
 }

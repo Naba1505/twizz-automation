@@ -33,6 +33,7 @@
     <test name="Business Cleanup Tests">
         <classes>
             <class name="tests.business.manager.BusinessManagerDeleteCreatorTest"/>
+            <class name="tests.business.manager.BusinessManagerDeleteEmployeeTest"/>
         </classes>
     </test>
 </suite>
