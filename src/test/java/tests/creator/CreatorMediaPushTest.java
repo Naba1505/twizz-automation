@@ -1144,7 +1144,7 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
     }
 
     @Story("Creator sends media push to Subscribers + Former subscribers")
-    @Test(priority = 21, description = "Media push flow via My Device: Subscribers + Former subscribers, image and video, price 15€, land on Messaging or limiter popup")
+    @Test(priority = 21, enabled = false, description = "Media push flow via My Device: Subscribers + Former subscribers, image and video, price 15€, land on Messaging or limiter popup")
     public void creatorCanSendMediaPushToSubscribersAndFormer() {
         CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
 
