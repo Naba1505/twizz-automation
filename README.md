@@ -80,6 +80,28 @@ mvn clean compile
   mvn -Dtest=tests.business.manager.BusinessManagerLoginTest#managerCanLogin test
   ```
 
+### Business Manager Language Settings
+- Page object: `pages/business/manager/BusinessManagerLanguagePage`
+- Tests class: `tests/business/manager/BusinessManagerLanguageTest`
+- Flow:
+  - Login as Manager
+  - Click on Settings icon
+  - Click on 'Language Go' button
+  - Verify 'Language' heading visible (English)
+  - Verify English is selected by default
+  - Switch to French → Verify 'Langue' heading
+  - Switch to Spanish → Verify 'Idioma' heading
+  - Switch back to English → Verify 'Language' heading
+- Features:
+  - Language switching through Settings screen
+  - Verification of language headings in each language
+  - Default language selection check
+  - Complete language cycle: English → French → Spanish → English
+- Run example:
+  ```bash
+  mvn -Dtest=tests.business.manager.BusinessManagerLanguageTest#managerCanSwitchLanguages test
+  ```
+
 ### Business Manager Add Employee (Invite)
 - Page objects:
   - `pages/business/manager/BusinessManagerAddEmployeePage`

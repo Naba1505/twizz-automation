@@ -1,5 +1,41 @@
 # Changelog
 
+## [Unreleased] - 2026-01-07
+
+### New Feature: Business Manager Language Settings
+- **BusinessManagerLanguageTest**: Test for language switching in manager settings
+  - **Test: Manager Can Switch Languages** (priority 1):
+    * Login as Manager and navigate to dashboard
+    * Verify Settings icon is visible
+    * Click on Settings icon
+    * Click on 'Language Go' button to open language screen
+    * Verify 'Language' heading is visible (English)
+    * Verify English is selected by default
+    * Switch to French language
+    * Verify 'Langue' heading is visible (French)
+    * Switch to Spanish language
+    * Verify 'Idioma' heading is visible (Spanish)
+    * Switch back to English language
+    * Verify 'Language' heading is visible (English)
+- **BusinessManagerLanguagePage**: Page object for language switching
+  - `clickSettingsIcon()` - Navigate to settings screen
+  - `clickLanguageGoButton()` - Open language selection screen
+  - `isLanguageHeadingVisible()` - Verify English heading
+  - `isLangueHeadingVisible()` - Verify French heading
+  - `isIdiomaHeadingVisible()` - Verify Spanish heading
+  - `isEnglishSelectedByDefault()` - Check default language selection
+  - `switchToFrench()` - Switch to French language
+  - `switchToSpanish()` - Switch to Spanish language
+  - `switchToEnglish()` - Switch back to English language
+- **Test Results**: 1 test, 0 failures, 0 errors, 0 skipped (27.65s)
+- **Files Added**:
+  - `src/test/java/pages/business/manager/BusinessManagerLanguagePage.java`
+  - `src/test/java/tests/business/manager/BusinessManagerLanguageTest.java`
+- **Files Updated**:
+  - `src/test/java/pages/business/common/BusinessBaseTestClass.java`
+  - `business-testng.xml`
+  - `business-testng-parallel.xml`
+
 ## [Unreleased] - 2026-01-01
 
 ### New Feature: Business Manager Add Employee (Invite) - Extended
