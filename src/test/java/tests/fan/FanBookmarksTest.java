@@ -70,7 +70,7 @@ public class FanBookmarksTest extends BaseTestClass {
     }
 
     @Test(priority = 3, 
-          description = "Fan can unbookmark feeds from saved screen",
+          description = "Fan can unbookmark all feeds and verify 'No bookmarks found!' message",
           dependsOnMethods = "fanCanViewBookmarkedFeeds")
     public void fanCanUnbookmarkFeeds() {
         // Arrange: credentials
@@ -98,21 +98,60 @@ public class FanBookmarksTest extends BaseTestClass {
             throw new org.testng.SkipException("No bookmarks found to unbookmark. Skipping test.");
         }
         
-        // Unbookmark feeds from bookmarks screen (at least FEEDS_TO_BOOKMARK or all available)
-        int toUnbookmark = Math.min(FEEDS_TO_BOOKMARK, initialCount);
-        int unbookmarked = bookmarks.unbookmarkFeedsFromScreen(toUnbookmark);
+        // Unbookmark all visible feeds (scroll down to find more)
+        int unbookmarked = 0;
+        int maxAttempts = 10; // Safety limit
+        
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            // Get current count of watermarked feeds
+            int currentCount = bookmarks.getWatermarkedFeedsCount();
+            
+            if (currentCount == 0) {
+                // No more bookmarks visible, break
+                break;
+            }
+            
+            // Unbookmark one feed
+            int result = bookmarks.unbookmarkFeedsFromScreen(1);
+            if (result > 0) {
+                unbookmarked++;
+            }
+            
+            // Navigate back to settings page
+            bookmarks.clickArrowLeft();
+            
+            // Hard refresh (stays on settings page)
+            bookmarks.hardRefreshBrowser();
+            
+            // Click Bookmarks tile directly (already on settings page)
+            bookmarks.clickBookmarksTile();
+        }
         
         // Verify we unbookmarked at least 1 feed
         Assert.assertTrue(unbookmarked >= 1, 
                 "Expected to unbookmark at least 1 feed but only unbookmarked " + unbookmarked);
         
-        // Navigate back and verify count decreased
-        bookmarks.clickArrowLeft();
-        bookmarks.hardRefreshBrowser();
-        bookmarks.clickBookmarksTile();
+        // Navigate back and forth to bookmarks screen until "No bookmarks found!" message appears
+        boolean noBookmarksMessageVisible = false;
+        int maxRetries = 5;
         
-        int finalCount = bookmarks.getWatermarkedFeedsCount();
-        Assert.assertTrue(finalCount < initialCount, 
-                "Expected bookmark count to decrease. Initial: " + initialCount + ", Final: " + finalCount);
+        for (int retry = 0; retry < maxRetries; retry++) {
+            // Check if "No bookmarks found!" message is visible
+            noBookmarksMessageVisible = bookmarks.verifyNoBookmarksFoundText();
+            
+            if (noBookmarksMessageVisible) {
+                break;
+            }
+            
+            // Navigate back to settings and refresh
+            bookmarks.clickArrowLeft();
+            bookmarks.hardRefreshBrowser();
+            
+            // Click Bookmarks tile again
+            bookmarks.clickBookmarksTile();
+        }
+        
+        Assert.assertTrue(noBookmarksMessageVisible, 
+                "Expected 'No bookmarks found!' message to be visible after unbookmarking all feeds");
     }
 }
