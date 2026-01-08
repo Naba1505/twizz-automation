@@ -1519,20 +1519,6 @@ public class CreatorMessagingPage extends BasePage {
         return page.locator(".ant-spin");
     }
 
-    private Locator quickAnswerIcon() {
-        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("quick answer"));
-    }
-
-    
-
-    private Locator savedResponsesTitle() {
-        return page.getByText("Saved responses");
-    }
-
-    private Locator savedResponseIcon() {
-        // Click the saved response item by icon
-        return page.locator(".ant-col > img");
-    }
 
     @Step("Open Messaging from profile and verify landing on Messaging screen")
     public void openMessagingFromProfile() {
@@ -1580,54 +1566,6 @@ public class CreatorMessagingPage extends BasePage {
         logger.info("[Messaging] Message sent");
     }
 
-    @Step("Open Quick Answers panel")
-    public void openQuickAnswers() {
-        logger.info("[Messaging] Opening Quick Answers panel");
-        waitVisible(quickAnswerIcon(), DEFAULT_WAIT);
-        clickWithRetry(quickAnswerIcon(), 1, 200);
-    }
-
-    @Step("Assert Saved responses panel is visible")
-    public void assertSavedResponsesVisible() {
-        logger.info("[Messaging] Asserting 'Saved responses' panel is visible");
-        waitVisible(savedResponsesTitle(), DEFAULT_WAIT);
-    }
-
-    @Step("Select saved response by text contains: {text}")
-    public void selectSavedResponseByText(String text) {
-        logger.info("[Messaging] Selecting saved response by text contains: '{}'", text);
-        Locator item = page.getByText(text);
-        waitVisible(item, DEFAULT_WAIT);
-        clickWithRetry(item, 1, 200);
-    }
-
-    @Step("Click saved response icon (first)")
-    public void clickSavedResponseIcon() {
-        logger.info("[Messaging] Clicking saved response icon (first)");
-        Locator icon = savedResponseIcon().first();
-        try {
-            // Try a short, targeted wait for the icon; if not visible, fallback gracefully
-            waitVisible(icon, 5000);
-            clickWithRetry(icon, 1, 200);
-            return;
-        } catch (Exception ignored) {
-            // Fallback: click on a common saved response label
-            logger.warn("[Messaging] Saved response icon not visible; falling back to text-based selection");
-        }
-        try {
-            Locator welcome = page.getByText("Welcome");
-            waitVisible(welcome, 5000);
-            clickWithRetry(welcome, 1, 200);
-            return;
-        } catch (Exception ignored) {
-            // As a last resort, click any visible saved response container
-            logger.warn("[Messaging] Fallback to any saved response container");
-        }
-        Locator anyItem = page.locator(".ant-col").first();
-        waitVisible(anyItem, DEFAULT_WAIT);
-        clickWithRetry(anyItem, 1, 200);
-    }
-
     @Step("Click Send")
     public void clickSend() {
         logger.info("[Messaging] Clicking Send button");
@@ -1637,16 +1575,6 @@ public class CreatorMessagingPage extends BasePage {
         try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(btn, 1, 200);
         page.waitForTimeout(300);
-    }
-
-    @Step("Append to message input: {extra}")
-    public void appendToMessage(String extra) {
-        logger.info("[Messaging] Appending text to message input: '{}'", extra);
-        waitVisible(messageInput(), DEFAULT_WAIT);
-        Locator input = messageInput();
-        input.click();
-        // Append to any prefilled content (e.g., selected quick answer)
-        input.pressSequentially(extra);
     }
 
     // ================= Media Send (Scenario 3) =================

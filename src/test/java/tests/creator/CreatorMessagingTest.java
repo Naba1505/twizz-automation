@@ -32,33 +32,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         // Rely on absence of exceptions and visible conversation input as success criteria for now.
     }
 
-    @Test(priority = 2, description = "Creator sends a Saved response (Quick answer) with appended timestamp", enabled = false)
-    public void creatorCanSendQuickAnswerWithTimestamp() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
-
-        // Messaging flow
-        CreatorMessagingPage msg = new CreatorMessagingPage(page);
-        msg.openMessagingFromProfile();
-        msg.openFirstFanConversation();
-        // Open Quick Answers and pick saved response
-        msg.openQuickAnswers();
-        msg.assertSavedResponsesVisible();
-        msg.clickSavedResponseIcon();
-        // Append timestamp to differentiate message
-        msg.appendToMessage(" - " + ts);
-        // Send
-        msg.clickSend();
-    }
-
-    @Test(priority = 3, description = "Creator sends an image media message from Messaging using Importation -> My Device")
+    @Test(priority = 2, description = "Creator sends an image media message from Messaging using Importation -> My Device")
     public void creatorCanSendImageMediaMessage() {
         // Arrange: credentials and media path
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -83,7 +57,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.assertAcceptedBadgeVisible(60_000);
     }
 
-    @Test(priority = 4, description = "Creator sends a video media message from Messaging using Importation -> My Device")
+    @Test(priority = 3, description = "Creator sends a video media message from Messaging using Importation -> My Device")
     public void creatorCanSendVideoMediaMessage() {
         // Arrange: credentials and video path (choose one from repo)
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -109,7 +83,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.assertAcceptedBadgeVisible();
     }
 
-    @Test(priority = 5, description = "Creator sends media message from Messaging using Importation -> Quick Files (albums)")
+    @Test(priority = 4, description = "Creator sends media message from Messaging using Importation -> Quick Files (albums)")
     public void creatorCanSendMediaFromQuickFilesInMessaging() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -138,7 +112,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.assertConversationInputVisible(30_000);
     }
 
-    @Test(priority = 6, description = "Creator sends a Private media message (image + video) via My Device")
+    @Test(priority = 5, description = "Creator sends a Private media message (image + video) via My Device")
     public void creatorCanSendPrivateMediaMessage() {
         // Arrange: credentials and media paths
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -190,7 +164,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         catch (Throwable ignored) { msg.assertConversationInputVisible(60_000); }
     }
 
-    @Test(priority = 7, description = "Creator sends a Private media message with promotion (10€, validity Unlimited)")
+    @Test(priority = 6, description = "Creator sends a Private media message with promotion (10€, validity Unlimited)")
     public void creatorCanSendPrivateMediaWithPromotion() {
         // Arrange: credentials and media paths
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -238,7 +212,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.assertConversationInputVisible(60_000);
     }
 
-    @Test(priority = 8, description = "Creator sends a Private media message with promotion (5% discount, validity 7 days)")
+    @Test(priority = 7, description = "Creator sends a Private media message with promotion (5% discount, validity 7 days)")
     public void creatorCanSendPrivateMediaWithPromotionPercent() {
         // Arrange: credentials and media paths
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -285,7 +259,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.assertConversationInputVisible(60_000);
     }
 
-    @Test(priority = 9, description = "Creator sends a Private media message for Free (image + video) via My Device")
+    @Test(priority = 8, description = "Creator sends a Private media message for Free (image + video) via My Device")
     public void creatorCanSendPrivateMediaFree() {
         // Arrange: credentials and media paths
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -334,7 +308,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.assertConversationInputVisible(60_000);
     }
 
-    @Test(priority = 10, description = "Creator sends a Free Private media message with unblurred media")
+    @Test(priority = 9, description = "Creator sends a Free Private media message with unblurred media")
     public void creatorCanSendPrivateMediaFreeUnblurred() {
         // Arrange: credentials and media paths
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -376,7 +350,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.assertConversationInputVisible(60_000);
     }
 
-    @Test(priority = 11, description = "Creator sends a Private media message using Quick Files (multi-select)")
+    @Test(priority = 10, description = "Creator sends a Private media message using Quick Files (multi-select)")
     public void creatorCanSendPrivateMediaViaQuickFiles() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -422,7 +396,7 @@ public class CreatorMessagingTest extends BaseTestClass {
     }
 
 
-    @Test(priority = 12, description = "Creator opens Private Gallery from messaging, scrolls, previews an item, and closes preview")
+    @Test(priority = 11, description = "Creator opens Private Gallery from messaging, scrolls, previews an item, and closes preview")
     public void creatorCanViewPrivateGallery() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
@@ -453,7 +427,7 @@ public class CreatorMessagingTest extends BaseTestClass {
         msg.closePrivateGalleryPreview();
     }
 
-    @Test(priority = 13, description = "Creator navigates Messaging dashboard tabs, uses filter and search")
+    @Test(priority = 12, description = "Creator navigates Messaging dashboard tabs, uses filter and search")
     public void creatorCanUseMessagingTabsFilterAndSearch() {
         // Arrange: credentials
         String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
