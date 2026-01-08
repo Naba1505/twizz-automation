@@ -527,35 +527,62 @@ public class CreatorSettingsPage extends BasePage {
         return null;
     }
 
-    // Always upload sequentially within a specific tab/section using input[type=file] directly; returns true if all succeeded
+    // Upload all files in a batch within a specific tab/section using input[type=file] directly; returns true if all succeeded
     private boolean uploadSequentialViaPlus(String tabName, List<Path> files) {
         if (files == null || files.isEmpty()) return true;
         clickTabIfPresent(tabName);
-        for (int i = 0; i < files.size(); i++) {
-            Path f = files.get(i);
-            try {
-                log.info("[PLUS] Sequential ({}/{}) : {} in tab '{}'", i + 1, files.size(), f.getFileName(), tabName);
+        
+        try {
+            log.info("[PLUS] Batch upload {} file(s) in tab '{}'", files.size(), tabName);
 
-                // Prefer Ant Upload inputs within the media area to avoid clicking buttons that trigger native dialogs
-                Locator inputs = page.locator(".ant-upload input[type='file']");
-                if (inputs.count() == 0) {
-                    inputs = page.locator("input[type='file']");
-                }
-                if (inputs.count() == 0) {
-                    log.warn("[PLUS] No file input found for '{}' in tab '{}'", f.getFileName(), tabName);
-                    return false;
-                }
-
-                // Use the last input as many UIs append new upload controls at the end
-                Locator targetInput = inputs.nth(inputs.count() - 1);
-                targetInput.setInputFiles(new Path[]{f});
-                try { page.waitForTimeout(SHORT_PAUSE_MS); } catch (Exception ignored) {}
-            } catch (RuntimeException ex) {
-                log.warn("[PLUS] Sequential failed for {} in tab '{}': {}", f.getFileName(), tabName, ex.getMessage());
+            // Prefer Ant Upload inputs within the media area to avoid clicking buttons that trigger native dialogs
+            Locator inputs = page.locator(".ant-upload input[type='file']");
+            if (inputs.count() == 0) {
+                inputs = page.locator("input[type='file']");
+            }
+            if (inputs.count() == 0) {
+                log.warn("[PLUS] No file input found in tab '{}'", tabName);
                 return false;
             }
+
+            // Use the last input as many UIs append new upload controls at the end
+            Locator targetInput = inputs.nth(inputs.count() - 1);
+            
+            // Check if input supports multiple files
+            String multipleAttr = null;
+            try { multipleAttr = targetInput.getAttribute("multiple"); } catch (RuntimeException ignored) {}
+            boolean supportsMultiple = multipleAttr != null;
+            
+            // Get queue count before upload
+            int beforeCount = getQueuedMediaItems().count();
+            log.info("[PLUS] Queued items before upload: {}", beforeCount);
+            
+            if (supportsMultiple || files.size() == 1) {
+                // Upload all files at once
+                log.info("[PLUS] Uploading {} file(s) in batch (multiple={})", files.size(), supportsMultiple);
+                targetInput.setInputFiles(files.toArray(new Path[0]));
+                logSelectedFilesCount(targetInput, files.size());
+                // Wait for all files to be queued
+                waitForQueuedItemsIncrement(beforeCount, files.size(), LONG_WAIT);
+            } else {
+                // Fallback: upload one by one if multiple not supported
+                log.info("[PLUS] Input doesn't support multiple files, uploading sequentially");
+                for (int i = 0; i < files.size(); i++) {
+                    Path f = files.get(i);
+                    log.info("[PLUS] Sequential ({}/{}) : {}", i + 1, files.size(), f.getFileName());
+                    int before = getQueuedMediaItems().count();
+                    targetInput.setInputFiles(new Path[]{f});
+                    waitForQueuedItemsIncrement(before, 1, DEFAULT_WAIT);
+                }
+            }
+            
+            int afterCount = getQueuedMediaItems().count();
+            log.info("[PLUS] Queued items after upload: {} (delta: {})", afterCount, afterCount - beforeCount);
+            return true;
+        } catch (RuntimeException ex) {
+            log.warn("[PLUS] Batch upload failed in tab '{}': {}", tabName, ex.getMessage());
+            return false;
         }
-        return true;
     }
 
     private boolean clickTabIfPresent(String tabName) {
