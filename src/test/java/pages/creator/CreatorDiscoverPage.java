@@ -52,60 +52,48 @@ public class CreatorDiscoverPage extends BasePage {
     public int scrollDownEnsureFeeds() {
         Locator feeds = page.locator("xpath=" + FEED_XPATH);
         int total = Math.max(0, feeds.count());
-        // Cap the number of feeds we iterate over to keep the test fast
-        int limit = Math.min(total, 8);
         int seen = 0;
-        for (int i = 0; i < limit; i++) {
+        for (int i = 0; i < total; i++) {
             Locator feed = feeds.nth(i);
             try {
                 feed.scrollIntoViewIfNeeded();
-                // Shorter per-feed wait is enough once Discover has loaded
-                waitVisible(feed, 3000);
-                try { page.waitForTimeout(80); } catch (Exception ignored) {}
+                waitVisible(feed, 10000);
+                page.waitForTimeout(150);
                 seen++;
             } catch (Exception e) {
                 logger.warn("Feed {} not confirmed visible: {}", i, e.toString());
             }
         }
-        // Do an extra wheel scroll to trigger lazy loading if any
         try { page.mouse().wheel(0, 1200); } catch (Exception ignored) {}
         return seen;
     }
 
     @Step("Unmute every visible feed by clicking its mute button while scrolling down")
     public int unmuteAllFeedsWhileScrolling() {
+        Locator muteButtons = page.locator("xpath=" + MUTE_BTN_XPATH);
         Locator feeds = page.locator("xpath=" + FEED_XPATH);
-        int totalFeeds = feeds.count();
-        if (totalFeeds == 0) {
-            logger.warn("No feeds found on Discover when attempting to unmute");
-            return 0;
-        }
-
         int toggled = 0;
-        // Only attempt to unmute the first visible feed to keep the test fast
-        Locator feed = feeds.nth(0);
-        try {
-            feed.scrollIntoViewIfNeeded();
-            waitVisible(feed, 1500);
-
-            Locator feedMuteBtn = feed.locator("xpath=" + MUTE_BTN_XPATH);
-            if (feedMuteBtn.count() > 0) {
-                Locator btn = feedMuteBtn.first();
-                try { btn.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                try {
-                    // Use a short, forced click to avoid long Playwright retries
-                    btn.click(new Locator.ClickOptions().setTimeout(2000).setForce(true));
-                    toggled++;
-                } catch (Exception e) {
-                    logger.warn("Mute button click failed for first feed: {}", e.toString());
+        int totalFeeds = feeds.count();
+        for (int i = 0; i < totalFeeds; i++) {
+            Locator feed = feeds.nth(i);
+            try {
+                feed.scrollIntoViewIfNeeded();
+                waitVisible(feed, 10000);
+                int btnCount = muteButtons.count();
+                for (int b = 0; b < btnCount; b++) {
+                    Locator btn = muteButtons.nth(b);
+                    if (safeIsVisible(btn)) {
+                        try { btn.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                        clickWithRetry(btn, 1, 120);
+                        toggled++;
+                        break;
+                    }
                 }
+                page.waitForTimeout(150);
+            } catch (Exception e) {
+                logger.warn("Unable to unmute feed {}: {}", i, e.toString());
             }
-            // Wait a few seconds as per requirement, then return
-            try { page.waitForTimeout(5000); } catch (Exception ignored) {}
-        } catch (Exception e) {
-            logger.warn("Unable to unmute first feed: {}", e.toString());
         }
-
         return toggled;
     }
 
