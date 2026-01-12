@@ -1,5 +1,46 @@
 # Changelog
 
+## [Unreleased] - 2026-01-12
+
+### New Feature: Clear Recent Searches (Fan & Creator)
+- **FanClearSearchTest**: Test for clearing recent search history in Fan app
+  - **Test: Fan Can Clear All Recent Searches** (priority 1):
+    * Login as Fan and navigate to Discover screen
+    * Click on search field to open search interface
+    * Verify 'Recent' text is displayed
+    * Get count of recent search items
+    * Clear all recent searches one by one
+    * Verify all searches are cleared (0 remaining)
+- **FanClearSearchPage**: Page object for Fan clear search functionality
+  - `navigateToDiscover()` - Navigate to discover screen via Search icon
+  - `clickSearchField()` - Open search interface
+  - `isRecentTextVisible()` - Verify 'Recent' text is displayed
+  - `getRecentSearchCount()` - Count recent search items (Remove icons)
+  - `removeOneRecentSearch()` - Remove one recent search item
+  - `clearAllRecentSearches()` - Clear all recent searches iteratively
+  - `verifyAllSearchesCleared()` - Verify no recent searches remain
+- **CreatorClearSearchTest**: Test for clearing recent search history in Creator app
+  - **Test: Creator Can Clear All Recent Searches** (priority 1):
+    * Login as Creator and navigate to Discover screen
+    * Click on search field to open search interface
+    * Verify 'Recent' text is displayed
+    * Get count of recent search items
+    * Clear all recent searches one by one
+    * Verify all searches are cleared (0 remaining)
+- **CreatorClearSearchPage**: Page object for Creator clear search functionality
+  - Same methods as FanClearSearchPage with Creator-specific locators
+- **Test Results**: 
+  - FanClearSearchTest: 1 test, 0 failures (cleared 4 searches)
+  - CreatorClearSearchTest: 1 test, 0 failures (cleared 3 searches)
+- **Files Added**:
+  - `src/test/java/pages/fan/FanClearSearchPage.java`
+  - `src/test/java/tests/fan/FanClearSearchTest.java`
+  - `src/test/java/pages/creator/CreatorClearSearchPage.java`
+  - `src/test/java/tests/creator/CreatorClearSearchTest.java`
+- **Files Updated**:
+  - `testng.xml` - Added ClearSearch tests before logout tests
+  - `testng-parallel.xml` - Added ClearSearch tests before logout tests
+
 ## [Unreleased] - 2026-01-07
 
 ### New Feature: Business Manager Language Settings

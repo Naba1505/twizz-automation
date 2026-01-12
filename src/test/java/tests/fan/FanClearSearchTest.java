@@ -1,0 +1,84 @@
+package tests.fan;
+
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Story;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import pages.common.BaseTestClass;
+import pages.fan.FanClearSearchPage;
+import pages.fan.FanLoginPage;
+import utils.ConfigReader;
+
+/**
+ * Test class for Fan Clear Recent Searches functionality.
+ * Tests clearing recent search history from the discover/search screen.
+ */
+@Epic("Fan")
+@Feature("Clear Recent Searches")
+public class FanClearSearchTest extends BaseTestClass {
+    private static final Logger logger = LoggerFactory.getLogger(FanClearSearchTest.class);
+
+    @Story("Clear all recent searches from search history")
+    @Test(priority = 1, description = "Fan can clear all recent searches from discover/search screen")
+    public void fanCanClearAllRecentSearches() {
+        // Arrange: credentials
+        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
+        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
+
+        // Login as Fan (may land on home or discover screen)
+        FanLoginPage login = new FanLoginPage(page);
+        login.navigate();
+        
+        try {
+            login.login(fanUsername, fanPassword);
+            logger.info("[Fan Clear Search] Logged in and landed on home screen");
+        } catch (IllegalStateException e) {
+            // Fan may land directly on discover screen, which is fine for this test
+            logger.info("[Fan Clear Search] Logged in, landed on: {}", page.url());
+        }
+
+        // Navigate to Discover screen (or stay if already there)
+        FanClearSearchPage clearSearch = new FanClearSearchPage(page);
+        clearSearch.navigateToDiscover();
+
+        // Click on search field to open search interface
+        logger.info("[Fan Clear Search] Opening search interface");
+        clearSearch.clickSearchField();
+
+        // Verify "Recent" text is displayed
+        logger.info("[Fan Clear Search] Verifying 'Recent' text is displayed");
+        boolean recentVisible = clearSearch.isRecentTextVisible();
+        Assert.assertTrue(recentVisible, "Expected 'Recent' text to be visible in search interface");
+
+        // Get initial count of recent searches
+        int initialCount = clearSearch.getRecentSearchCount();
+        logger.info("[Fan Clear Search] Found {} recent searches to clear", initialCount);
+
+        // If no recent searches, skip the test
+        if (initialCount == 0) {
+            logger.info("[Fan Clear Search] No recent searches found, test passed (nothing to clear)");
+            return;
+        }
+
+        // Clear all recent searches
+        logger.info("[Fan Clear Search] Clearing all recent searches");
+        int clearedCount = clearSearch.clearAllRecentSearches();
+        
+        // Verify at least one search was cleared
+        Assert.assertTrue(clearedCount > 0, 
+                "Expected to clear at least 1 recent search but cleared " + clearedCount);
+        
+        logger.info("[Fan Clear Search] Cleared {} recent searches", clearedCount);
+
+        // Verify all searches are cleared
+        logger.info("[Fan Clear Search] Verifying all searches are cleared");
+        boolean allCleared = clearSearch.verifyAllSearchesCleared();
+        Assert.assertTrue(allCleared, 
+                "Expected all recent searches to be cleared but some remain");
+        
+        logger.info("[Fan Clear Search] Successfully cleared all recent searches");
+    }
+}

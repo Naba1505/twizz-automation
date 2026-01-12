@@ -43,6 +43,7 @@
             <class name="tests.creator.CleanupDeletePromoCodesTest"/>
             <class name="tests.creator.CreatorQuickFilesDeleteTest"/>
             <class name="tests.creator.CreatorCollectionDeleteTest"/>
+            <class name="tests.creator.CreatorClearSearchTest"/>
             <class name="tests.creator.CreatorLogoutTest"/>
         </classes>
     </test>
@@ -73,6 +74,7 @@
             <class name="tests.fan.FanLanguageTest"/>
             <class name="tests.fan.FanPersonalInfoTest"/>
             <class name="tests.fan.FanMessagingTest"/>
+            <class name="tests.fan.FanClearSearchTest"/>
             <class name="tests.fan.FanLogoutTest"/>
         </classes>
     </test>

@@ -408,6 +408,25 @@ mvn clean compile
   mvn -Dtest=CreatorPaymentMethodTest#creatorCanSwitchDepositDurations test
   ```
 
+## Clear Recent Searches (Creator)
+- Page object: `pages/creator/CreatorClearSearchPage`
+- Test class: `tests/creator/CreatorClearSearchTest`
+- Flow:
+  - Creator login → Discover screen
+  - Click on search field to open search interface
+  - Verify 'Recent' text is displayed
+  - Get count of recent search items
+  - Clear all recent searches one by one (click Remove icon)
+  - Verify all searches are cleared (0 remaining)
+- Features:
+  - Navigation to Discover screen via Search icon
+  - Iterative removal of recent searches
+  - Verification of cleared state
+- Run example:
+  ```bash
+  mvn -Dtest=CreatorClearSearchTest test
+  ```
+
 ## Logout (Creator)
 - Page object: `src/test/java/pages/CreatorLogoutPage.java`
 - Tests class: `src/test/java/tests/CreatorLogoutTest.java`
@@ -967,6 +986,25 @@ Key entries (with defaults):
 - Run example:
   ```bash
   mvn -Dtest=FanPersonalInfoTest test
+  ```
+
+## Fan Clear Recent Searches
+- Page object: `pages/fan/FanClearSearchPage`
+- Test class: `tests/fan/FanClearSearchTest`
+- Flow:
+  - Fan login → Discover screen
+  - Click on search field to open search interface
+  - Verify 'Recent' text is displayed
+  - Get count of recent search items
+  - Clear all recent searches one by one (click Remove icon)
+  - Verify all searches are cleared (0 remaining)
+- Features:
+  - Automatic navigation to Discover screen
+  - Iterative removal of recent searches
+  - Verification of cleared state
+- Run example:
+  ```bash
+  mvn -Dtest=FanClearSearchTest test
   ```
 
 ## Fan Logout
