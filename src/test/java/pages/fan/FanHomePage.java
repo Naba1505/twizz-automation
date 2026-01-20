@@ -13,9 +13,21 @@ public class FanHomePage extends BasePage {
 
     public FanHomePage(Page page) { super(page); }
 
-    @Step("Ensure fan is on Home screen URL")
+    @Step("Ensure fan is on Home screen (Home icon visible)")
     public void assertOnHomeUrl() {
-        page.waitForURL("**/fan/home");
+        // Fan may land on /fan/home or /common/discover, so use Home icon visibility as success indicator
+        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
+        homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(20000).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+        logger.info("[Fan] On home screen - Home icon visible (URL: {})", page.url());
+    }
+
+    @Step("Click Home icon to navigate to home feed screen")
+    public void clickHomeIcon() {
+        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
+        homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(10000).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+        homeIcon.first().click();
+        logger.info("[Fan] Clicked Home icon to navigate to home feed screen");
+        page.waitForLoadState();
     }
 
     @Step("Ensure popcorn logo displayed beside fan username")
