@@ -53,8 +53,28 @@ public class FanLoginPage extends BasePage {
         fillByPlaceholder(usernamePlaceholder, username);
         fillByPlaceholder(passwordPlaceholder, password);
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).click();
-        // Do not rely on NETWORKIDLE; wait for destination URL instead
-        waitForFanHomeUrl(20_000);
+        // Wait for Home icon to be visible - this confirms successful login
+        // Fan may land on /fan/home or /common/discover, so use Home icon as success indicator
+        waitForHomeIconVisible(20_000);
+    }
+
+    public boolean isHomeIconVisible(long timeoutMs) {
+        try {
+            Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
+            homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(timeoutMs).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+            boolean visible = homeIcon.first().isVisible();
+            logger.info("[Fan] Login successful - Home icon visible: {} (URL: {})", visible, page.url());
+            return visible;
+        } catch (Exception e) {
+            logger.warn("[Fan] Home icon not visible within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
+            return false;
+        }
+    }
+
+    public void waitForHomeIconVisible(long timeoutMs) {
+        if (!isHomeIconVisible(timeoutMs)) {
+            throw new IllegalStateException("Fan login failed - Home icon not visible. Actual URL: " + page.url());
+        }
     }
 
     public boolean isOnFanHomeUrl(long timeoutMs) {
@@ -75,4 +95,3 @@ public class FanLoginPage extends BasePage {
         }
     }
 }
-

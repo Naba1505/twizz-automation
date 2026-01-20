@@ -18,8 +18,8 @@ public class FanLoginTest extends BaseTestClass {
         Assert.assertTrue(pageObj.isLoginHeaderVisible(), "Login header not visible on fan login screen");
         Assert.assertTrue(pageObj.isLoginFormVisible(), "Login form is not visible on fan login screen");
         pageObj.login(username, password);
-        // Wait for redirect to fan home via page object helper and assert URL
-        pageObj.waitForFanHomeUrl(15_000);
-        Assert.assertTrue(pageObj.isOnFanHomeUrl(1_000), "Fan did not land on /fan/home. Actual: " + page.url());
+        // Login method already asserts Home icon visibility
+        // Verify Home icon is visible as success indicator (fan may land on /fan/home or /common/discover)
+        Assert.assertTrue(pageObj.isHomeIconVisible(5_000), "Fan login failed - Home icon not visible. Actual URL: " + page.url());
     }
 }

@@ -2,8 +2,6 @@ package pages.fan;
 
 import pages.common.BasePage;
 
-import java.util.regex.Pattern;
-
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -64,14 +62,15 @@ public class FanRegistrationPage extends BasePage {
     }
 
     public boolean isHomeVisibleForUser(String username) {
-        // URL-based verification for reliability
+        // Use Home icon visibility as success indicator (fan may land on /fan/home or /common/discover)
         try {
-            page.waitForURL(Pattern.compile(".*/fan/home.*"), new Page.WaitForURLOptions().setTimeout(20000));
-            boolean onHome = page.url().contains("/fan/home");
-            logger.info("Fan '{}' landed on URL: {} (onHome={})", username, page.url(), onHome);
-            return onHome;
+            Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
+            homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(20000).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+            boolean visible = homeIcon.first().isVisible();
+            logger.info("Fan '{}' registration successful - Home icon visible: {} (URL: {})", username, visible, page.url());
+            return visible;
         } catch (Exception e) {
-            logger.warn("Fan '{}' did not reach /fan/home within timeout: {} (actual URL: {})", username, e.getMessage(), page.url());
+            logger.warn("Fan '{}' Home icon not visible within timeout: {} (actual URL: {})", username, e.getMessage(), page.url());
             return false;
         }
     }
@@ -84,11 +83,10 @@ public class FanRegistrationPage extends BasePage {
         }
         fillFanRegistrationForm(firstName, lastName, username, email, password);
         submitFanRegistration();
-        // Wait for fan home URL instead of LIVE marker
+        // Wait for Home icon to be visible as success indicator
         if (!isHomeVisibleForUser(username)) {
-            throw new IllegalStateException("Fan did not land on /fan/home after registration. Actual URL: " + page.url());
+            throw new IllegalStateException("Fan registration failed - Home icon not visible. Actual URL: " + page.url());
         }
         logger.info("Fan registration flow completed successfully for username: {}", username);
     }
 }
-

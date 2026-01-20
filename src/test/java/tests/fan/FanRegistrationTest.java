@@ -1,13 +1,13 @@
 package tests.fan;
 
-import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.options.AriaRole;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.common.BaseTestClass;
 import pages.fan.FanRegistrationPage;
 import utils.ConfigReader;
 import utils.DataGenerator;
-import java.util.regex.Pattern;
 
 public class FanRegistrationTest extends BaseTestClass {
 
@@ -23,8 +23,9 @@ public class FanRegistrationTest extends BaseTestClass {
 
         fanPage.completeFanRegistrationFlow(firstName, lastName, username, email, password);
 
-        // Assert we land on fan home URL instead of relying on LIVE or header text
-        page.waitForURL(Pattern.compile(".*/fan/home.*"), new Page.WaitForURLOptions().setTimeout(15000));
-        Assert.assertTrue(page.url().contains("/fan/home"), "Fan did not land on /fan/home after registration. Actual: " + page.url());
+        // Assert Home icon is visible as success indicator (fan may land on /fan/home or /common/discover)
+        Locator homeIcon = page.getByRole(AriaRole.IMG, new com.microsoft.playwright.Page.GetByRoleOptions().setName("Home icon"));
+        homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(20000).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+        Assert.assertTrue(homeIcon.first().isVisible(), "Fan did not land on home after registration - Home icon not visible. Actual URL: " + page.url());
     }
 }
