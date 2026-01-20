@@ -28,9 +28,10 @@ public class FanBookmarksTest extends BaseTestClass {
         login.navigate();
         login.login(fanUsername, fanPassword);
 
-        // Verify on home screen
+        // Verify on home screen and click Home icon to navigate to feed screen
         FanHomePage home = new FanHomePage(page);
         home.assertOnHomeUrl();
+        home.clickHomeIcon();
 
         // Bookmark multiple feeds using img.slideItemBookmark
         FanBookmarksPage bookmarks = new FanBookmarksPage(page);
