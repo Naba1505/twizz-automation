@@ -76,6 +76,18 @@ public class FanMyCreatorsPage extends BasePage {
 
     // ===== Creator Details Methods =====
 
+    @Step("Check if any creators are listed")
+    public boolean hasCreatorsListed() {
+        logger.info("Checking if any creators are listed");
+        try { page.waitForTimeout(2000); } catch (Throwable ignored) { }
+        
+        Locator arrowRight = page.getByRole(AriaRole.IMG, 
+                new Page.GetByRoleOptions().setName("arrow right"));
+        int count = arrowRight.count();
+        logger.info("Found {} creator arrow(s) on My Creators screen", count);
+        return count > 0;
+    }
+
     @Step("Click on first creator to view details")
     public void clickFirstCreatorArrow() {
         logger.info("Clicking on first creator arrow to view details");
@@ -135,45 +147,77 @@ public class FanMyCreatorsPage extends BasePage {
         }
     }
 
-    @Step("Scroll to end of creators list")
-    public void scrollToEndOfList() {
-        logger.info("Scrolling to end of creators list");
-        smartScroll(1, "end of creators list");
-        waitForUiToSettle();
-        logger.info("Scrolled to end of creators list");
-    }
-
-    @Step("Click on last creator to view details")
-    public void clickLastCreatorArrow() {
-        logger.info("Clicking on last creator arrow to view details");
+    @Step("Scroll to last creator avatar in the list")
+    public void scrollToLastCreatorAvatar() {
+        logger.info("Scrolling to last creator avatar in the list");
         
-        Locator arrowRight = page.getByRole(AriaRole.IMG, 
-                new Page.GetByRoleOptions().setName("arrow right")).first();
-        waitVisible(arrowRight, DEFAULT_WAIT);
-        arrowRight.click();
+        // Scroll down until we can't find any more creator avatars
+        int maxScrollAttempts = ConfigReader.getMaxScrollAttempts();
+        int scrollStep = ConfigReader.getScrollStepSize();
+        int waitBetween = ConfigReader.getScrollWaitBetween();
         
-        waitForUiToSettle();
-        logger.info("Clicked on last creator arrow");
-    }
-
-    @Step("Scroll to top of creators list")
-    public void scrollToTop() {
-        logger.info("Scrolling to top of creators list");
-        
-        // Scroll up multiple times
-        for (int i = 0; i < 15; i++) {
-            page.mouse().wheel(0, -500);
-            try { page.waitForTimeout(200); } catch (Throwable ignored) { }
+        int lastVisibleIndex = 0;
+        for (int i = 0; i < maxScrollAttempts; i++) {
+            // Check for creator avatars with increasing index
+            for (int idx = lastVisibleIndex + 1; idx <= 50; idx++) {
+                Locator avatar = page.locator("div:nth-child(" + idx + ") > .fanSubscriptionPageAvatarImg");
+                if (avatar.count() > 0 && safeIsVisible(avatar.first())) {
+                    lastVisibleIndex = idx;
+                }
+            }
+            
+            // Scroll down
+            page.mouse().wheel(0, scrollStep);
+            try { page.waitForTimeout(waitBetween); } catch (Throwable ignored) { }
+            
+            // Check if we've reached the bottom (no new avatars appearing)
+            int newLastIndex = lastVisibleIndex;
+            for (int idx = lastVisibleIndex + 1; idx <= 50; idx++) {
+                Locator avatar = page.locator("div:nth-child(" + idx + ") > .fanSubscriptionPageAvatarImg");
+                if (avatar.count() > 0 && safeIsVisible(avatar.first())) {
+                    newLastIndex = idx;
+                }
+            }
+            if (newLastIndex == lastVisibleIndex && i > 3) {
+                logger.info("Reached end of list at creator index {} after {} scroll(s)", lastVisibleIndex, i);
+                break;
+            }
+            lastVisibleIndex = newLastIndex;
         }
         
-        // Verify title is visible
-        Locator myCreatorsTitle = page.getByText("My creators");
-        try {
-            waitVisible(myCreatorsTitle.first(), DEFAULT_WAIT);
-            logger.info("Scrolled to top - My creators title visible");
-        } catch (Throwable e) {
-            logger.warn("Could not verify My creators title after scrolling to top");
+        waitForUiToSettle();
+        logger.info("Scrolled to last creator avatar (index: {})", lastVisibleIndex);
+    }
+
+    @Step("Scroll to first creator avatar in the list")
+    public void scrollToFirstCreatorAvatar() {
+        logger.info("Scrolling back to first creator avatar");
+        
+        int maxScrollAttempts = ConfigReader.getMaxScrollAttempts();
+        int scrollStep = ConfigReader.getScrollStepSize();
+        int waitBetween = ConfigReader.getScrollWaitBetween();
+        
+        // First, scroll all the way to the top
+        for (int i = 0; i < maxScrollAttempts; i++) {
+            page.mouse().wheel(0, -scrollStep);
+            try { page.waitForTimeout(waitBetween); } catch (Throwable ignored) { }
+            logger.info("Scroll up attempt {}", i + 1);
         }
+        
+        // Verify first creator avatar (div:nth-child(1) or div:nth-child(2)) is visible
+        Locator firstCreatorAvatar = page.locator("div:nth-child(2) > .fanSubscriptionPageAvatarImg");
+        if (firstCreatorAvatar.count() > 0 && safeIsVisible(firstCreatorAvatar.first())) {
+            logger.info("First creator avatar is now visible");
+        } else {
+            // Try alternative locator
+            firstCreatorAvatar = page.locator(".fanSubscriptionPageAvatarImg").first();
+            if (firstCreatorAvatar.count() > 0 && safeIsVisible(firstCreatorAvatar)) {
+                logger.info("First creator avatar (alternative locator) is now visible");
+            }
+        }
+        
+        waitForUiToSettle();
+        logger.info("Scrolled back to first creator avatar");
     }
 
     @Step("Click arrow left to navigate back")

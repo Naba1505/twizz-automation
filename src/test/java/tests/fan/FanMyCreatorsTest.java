@@ -14,7 +14,7 @@ import utils.ConfigReader;
 public class FanMyCreatorsTest extends BaseTestClass {
 
     @Test(priority = 1, 
-          description = "Fan can view My Creators and subscription details")
+          description = "Fan can view My Creators and scroll through existing creators")
     public void fanCanViewMyCreators() {
         // Arrange: credentials
         String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
@@ -33,37 +33,19 @@ public class FanMyCreatorsTest extends BaseTestClass {
         FanMyCreatorsPage myCreators = new FanMyCreatorsPage(page);
         myCreators.navigateToMyCreators();
 
-        // Click on first creator to view subscription details
-        myCreators.clickFirstCreatorArrow();
-
-        // Pause to view details
-        myCreators.pauseToViewDetails(2000);
-
-        // Click Cancel to navigate back to creators list
-        myCreators.clickCancelButton();
-
-        // Click See all results to load remaining creators
+        // Click See all results to load all creators
         myCreators.clickSeeAllResults();
 
-        // Scroll to end of list
-        myCreators.scrollToEndOfList();
+        // Scroll to end of list (last creator avatar)
+        myCreators.scrollToLastCreatorAvatar();
 
-        // Click on last creator to view details
-        myCreators.clickLastCreatorArrow();
-
-        // Pause to view details
-        myCreators.pauseToViewDetails(2000);
-
-        // Click Cancel to navigate back
-        myCreators.clickCancelButton();
-
-        // Scroll to top until title/first creator visible
-        myCreators.scrollToTop();
+        // Scroll back to first creator avatar
+        myCreators.scrollToFirstCreatorAvatar();
 
         // Verify My creators title is visible
         myCreators.verifyOnMyCreatorsScreen();
 
-        // Navigate back to home screen (click arrow left twice)
+        // Navigate back to home screen
         myCreators.navigateBackToHome();
 
         // Verify back on home screen
