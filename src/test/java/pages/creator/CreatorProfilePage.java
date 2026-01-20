@@ -210,68 +210,9 @@ public class CreatorProfilePage extends BasePage {
     public void waitForAvatarRemovedToast() {
         Locator toast = page.getByText("Avatar image removed successfully");
         waitVisible(toast.first(), 15_000);
+        // Click to dismiss if clickable
         try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable ignored) {}
     }
-
-    // ===== Update profile settings (post grid -> Collection, chat -> Free chat) =====
-    @Step("Select 'Collection' in profile (post grid)")
-    public void selectCollectionMenu() {
-        // Primary: within edit-profile-switch container
-        Locator x = page.locator("//div[@class='edit-profile-switch ']//span[contains(text(),'Collection')]");
-        if (x.count() > 0) {
-            waitVisible(x.first(), DEFAULT_WAIT);
-            try { x.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-            clickWithRetry(x.first(), 1, 120);
-            return;
-        }
-        // Fallback: role button
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Collection"));
-        waitVisible(btn.first(), DEFAULT_WAIT);
-        clickWithRetry(btn.first(), 1, 120);
-    }
-
-    @Step("Select 'Free chat' in profile (subscriber chat)")
-    public void selectFreeChatMenu() {
-        Locator x = page.locator("//div[@class='edit-profile-switch ']//span[contains(text(),'Free chat')]");
-        if (x.count() > 0) {
-            waitVisible(x.first(), DEFAULT_WAIT);
-            try { x.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-            clickWithRetry(x.first(), 1, 120);
-            return;
-        }
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Free chat"));
-        waitVisible(btn.first(), DEFAULT_WAIT);
-        clickWithRetry(btn.first(), 1, 120);
-    }
-
-    @Step("Select 'Post grid' in profile (post grid)")
-    public void selectPostGridMenu() {
-        Locator x = page.locator("//div[@class='edit-profile-switch ']//span[contains(text(),'Post grid')]");
-        if (x.count() > 0) {
-            waitVisible(x.first(), DEFAULT_WAIT);
-            try { x.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-            clickWithRetry(x.first(), 1, 120);
-            return;
-        }
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Post grid"));
-        waitVisible(btn.first(), DEFAULT_WAIT);
-        clickWithRetry(btn.first(), 1, 120);
-    }
-
-    @Step("Select 'Subscriber chat' in profile (subscriber chat)")
-    public void selectSubscriberChatMenu() {
-        Locator x = page.locator("//div[@class='edit-profile-switch ']//span[contains(text(),'Subscriber chat')]");
-        if (x.count() > 0) {
-            waitVisible(x.first(), DEFAULT_WAIT);
-            try { x.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-            clickWithRetry(x.first(), 1, 120);
-            return;
-        }
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber chat"));
-        waitVisible(btn.first(), DEFAULT_WAIT);
-        clickWithRetry(btn.first(), 1, 120);
-    }
-
     @Step("Click 'Register' to save profile changes")
     public void clickRegisterUpdate() {
         // Prefer explicit XPath text match per spec
