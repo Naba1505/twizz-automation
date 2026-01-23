@@ -166,7 +166,7 @@ public class BusinessManagerAddCreatorPage {
 
     @Step("Click on creator card to view details")
     public void clickCreatorCard() {
-        Locator creatorCard = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^smith · @john_smithNo employees at present\\.$"))).nth(1);
+        Locator creatorCard = page.getByText("Smith · @john_smith");
         creatorCard.click();
         page.waitForLoadState(LoadState.NETWORKIDLE);
         page.waitForTimeout(2000);
