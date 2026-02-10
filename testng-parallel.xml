@@ -39,11 +39,8 @@
             <class name="tests.creator.CreatorPaymentMethodTest"/>
             <class name="tests.creator.CreatorAutomaticMessageTest"/>
             <class name="tests.creator.CreatorScriptsTest"/>
-            <class name="tests.creator.CreatorScriptsCleanupTest"/>
-            <class name="tests.creator.CleanupDeletePromoCodesTest"/>
-            <class name="tests.creator.CreatorQuickFilesDeleteTest"/>
-            <class name="tests.creator.CreatorCollectionDeleteTest"/>
             <class name="tests.creator.CreatorClearSearchTest"/>
+            <class name="tests.creator.CreatorEnableFreeSubscriptionTest"/>
             <class name="tests.creator.CreatorLogoutTest"/>
         </classes>
     </test>
@@ -75,7 +72,19 @@
             <class name="tests.fan.FanPersonalInfoTest"/>
             <class name="tests.fan.FanMessagingTest"/>
             <class name="tests.fan.FanClearSearchTest"/>
+            <class name="tests.fan.FanFreeSubscriptionTest"/>
             <class name="tests.fan.FanLogoutTest"/>
+        </classes>
+    </test>
+
+    <!-- Cleanup Tests -->
+    <test name="Cleanup Tests (Parallel)">
+        <classes>
+            <class name="tests.creator.CreatorScriptsCleanupTest"/>
+            <class name="tests.creator.CleanupDeletePromoCodesTest"/>
+            <class name="tests.creator.CreatorQuickFilesDeleteTest"/>
+            <class name="tests.creator.CreatorCollectionDeleteTest"/>
+            <class name="tests.creator.CreatorDisableFreeSubscriptionTest"/>
         </classes>
     </test>
 </suite>

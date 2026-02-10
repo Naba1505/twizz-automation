@@ -1,5 +1,61 @@
 # Changelog
 
+## [Unreleased] - 2026-02-10
+
+### New Feature: Free Subscription Module (Creator Enable/Disable + Fan Subscription Tests)
+- **CreatorEnableFreeSubscriptionTest** (renamed from `CreatorFreeSubscriptionTest`):
+  - **Test: Enable Free Subscription and Featured Collection toggles** (priority 1):
+    * Login as Creator → Profile → Settings → Profile settings
+    * Enable "Free subscription" toggle (with aria-checked verification)
+    * Enable "Featured collection" toggle
+    * Click Register → Assert "Updated Personal Information" toast
+- **CreatorDisableFreeSubscriptionTest** (new cleanup test):
+  - **Test: Disable Free Subscription and Featured Collection toggles** (priority 1):
+    * Login as Creator → Profile → Settings → Profile settings
+    * Disable "Free subscription" toggle (with retry logic)
+    * Disable "Featured collection" toggle
+    * Click Register → Assert "Updated Personal Information" toast
+- **FanFreeSubscriptionTest**: Three fan subscription test scenarios
+  - **Test 1: Free subscription by buying a collection** (priority 1):
+    * Register new fan → Search "john_smith" → Skip intro screens
+    * Click Subscribe → "Buy a collection" → Select collection → "Pay to see"
+    * Complete payment (card + 3DS verification)
+    * Assert collection buy success → Navigate back → Assert "Subscriber" button
+  - **Test 2: Free subscription via private media request** (priority 2):
+    * Register new fan → Search "john_smith" → Subscribe → "Request private media"
+    * Send "Hi" message to creator
+    * **Dual browser context**: Open creator session → Accept request → Set amount $5 → Send "subscribe me" → Assert "Pending"
+    * Close creator context → Fan accepts price → Complete payment
+    * Verify subscription: Twizz messages → Settings → My creators → Assert "Smith" displayed
+  - **Test 3: Direct free subscription via Continue** (priority 3):
+    * Register new fan → Search "john_smith" → Subscribe → Click "Continue" directly
+    * Complete payment (card + 3DS verification)
+    * Assert "Subscriber" button visible
+- **CreatorFreeSubscriptionPage**: Page object with enable/disable toggle methods
+  - `enableFreeSubscriptionToggle()` / `disableFreeSubscriptionToggle()`
+  - `enableFeaturedCollectionToggle()` / `disableFeaturedCollectionToggle()`
+  - Toggle state verification via `aria-checked` attribute
+- **FanFreeSubscriptionPage**: Page object for fan collection-based subscription
+  - Search, intro screen skip, subscribe, buy collection, payment, 3DS verification
+  - `dismissOverlay()` helper for fan-profile-overlay blocking clicks
+  - `clickContinue()` for direct free subscription flow
+- **FanPrivateMediaSubscriptionPage**: Page object for fan private media subscription
+  - Request private media, send message, accept price, payment, verify subscription
+- **CreatorPrivateMediaPage**: Page object for creator-side private media actions
+  - Accept fan request, set custom amount, send reply, verify pending status
+- **Test Results**: All 5 tests passing (enable + 3 fan flows + disable)
+- **Files Added**:
+  - `src/test/java/pages/creator/CreatorFreeSubscriptionPage.java`
+  - `src/test/java/pages/creator/CreatorPrivateMediaPage.java`
+  - `src/test/java/pages/fan/FanFreeSubscriptionPage.java`
+  - `src/test/java/pages/fan/FanPrivateMediaSubscriptionPage.java`
+  - `src/test/java/tests/creator/CreatorEnableFreeSubscriptionTest.java`
+  - `src/test/java/tests/creator/CreatorDisableFreeSubscriptionTest.java`
+  - `src/test/java/tests/fan/FanFreeSubscriptionTest.java`
+- **Files Updated**:
+  - `testng.xml` - Added enable/disable tests, reorganized Cleanup Tests section
+  - `testng-parallel.xml` - Mirrored testng.xml changes
+
 ## [Unreleased] - 2026-01-12
 
 ### New Feature: Clear Recent Searches (Fan & Creator)

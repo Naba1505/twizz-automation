@@ -1,6 +1,7 @@
 # Twizz Automation (Java 21 + Playwright + TestNG)
 
 ## 🚀 Latest Updates
+- **Free Subscription Module**: Complete enable/disable toggle tests + 3 fan subscription flows (collection buy, private media request with dual browser context, direct continue)
 - **Business Landing Page Tests**: Complete test coverage for Business app landing page (navigation, footer links, language switching)
 - **Media Upload OS Dialog Fix**: Eliminated OS file dialog interruptions during automated media uploads using FileChooser
 - **Project Structure Refactoring**: Reorganized into modular folders (creator/fan/admin/common/business)
@@ -517,6 +518,30 @@ mvn clean compile
   mvn -Dtest=CreatorScriptsTest test
   ```
 
+## Free Subscription (Creator + Fan)
+- **Creator Enable**: `tests/creator/CreatorEnableFreeSubscriptionTest`
+- **Creator Disable**: `tests/creator/CreatorDisableFreeSubscriptionTest`
+- **Fan Tests**: `tests/fan/FanFreeSubscriptionTest`
+- Page objects:
+  - `pages/creator/CreatorFreeSubscriptionPage` - Toggle enable/disable with aria-checked verification
+  - `pages/fan/FanFreeSubscriptionPage` - Collection buy flow, payment, 3DS
+  - `pages/fan/FanPrivateMediaSubscriptionPage` - Private media request flow (fan side)
+  - `pages/creator/CreatorPrivateMediaPage` - Creator-side messaging and pricing
+- Scenarios:
+  1. **Enable toggles** (Creator): Login → Profile settings → Enable "Free subscription" + "Featured collection" → Register
+  2. **Free sub by buying collection** (Fan, priority 1): Register fan → Search john_smith → Subscribe → Buy collection → Payment → Assert Subscriber
+  3. **Free sub via private media** (Fan, priority 2): Register fan → Subscribe → Request private media → Send message → Creator accepts (dual browser context) → Fan pays → Verify in My creators
+  4. **Direct free sub via Continue** (Fan, priority 3): Register fan → Subscribe → Click Continue → Payment → Assert Subscriber
+  5. **Disable toggles** (Creator): Login → Profile settings → Disable both toggles → Register
+- Suite order: Enable runs in Creator Tests, Fan tests run in Fan Tests, Disable runs in Cleanup Tests
+- Run examples:
+  ```bash
+  mvn -Dtest=CreatorEnableFreeSubscriptionTest test
+  mvn -Dtest=FanFreeSubscriptionTest test
+  mvn -Dtest=FanFreeSubscriptionTest#fanCanSubscribeViaPrivateMediaRequest test
+  mvn -Dtest=CreatorDisableFreeSubscriptionTest test
+  ```
+
 ## Fan Bookmarks
 - Page object: `src/test/java/pages/FanBookmarksPage.java`
 - Tests class: `src/test/java/tests/FanBookmarksTest.java`
@@ -668,7 +693,7 @@ src/
 ```
 
 ### TestNG XML Runners
-- `testng.xml` - Sequential execution of all tests (Creator → Admin → Fan)
+- `testng.xml` - Sequential execution of all tests (Creator → Admin → Fan → Cleanup)
 - `testng-parallel.xml` - Parallel execution (thread-count=4)
 - `business-testng.xml` - Business tests only (sequential)
 - `business-testng-parallel.xml` - Business tests only (parallel)
