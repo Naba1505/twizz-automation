@@ -24,11 +24,14 @@ public final class TestAssets {
     public static final String AUTO_MESSAGE_IMAGE = "AutoMessageImage.png";
     public static final String SCRIPT_IMAGE_A = "ScriptImageA.png";
     public static final String SCRIPT_IMAGE_B = "ScriptImageB.png";
+    public static final String HOME_IMAGE = "Home.jpg";
+    public static final String LANDSCAPE_IMAGE = "landscape.jpg";
 
     // ===== Video Assets =====
     public static final String SCRIPT_VIDEO_A = "ScriptVideoA.mp4";
     public static final String SCRIPT_VIDEO_B = "ScriptVideoB.mp4";
     public static final String HIDE_AND_SEEK = "HideAndSeek.mp4";
+    public static final String TOAST_VIDEO = "Toast.mp4";
 
     // ===== Audio Assets =====
     public static final String SCRIPT_AUDIO_A = "ScriptAudioA.mp3";
