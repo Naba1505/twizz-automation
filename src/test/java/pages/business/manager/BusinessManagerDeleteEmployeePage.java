@@ -1,23 +1,21 @@
 package pages.business.manager;
 
+import pages.common.BasePage;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page Object for Business Manager Delete Employee
  * Flow: Manager Dashboard → Agency → Employee Details → Delete Employee
  */
-public class BusinessManagerDeleteEmployeePage {
-    private static final Logger logger = LoggerFactory.getLogger(BusinessManagerDeleteEmployeePage.class);
-    private final Page page;
+public class BusinessManagerDeleteEmployeePage extends BasePage {
 
     public BusinessManagerDeleteEmployeePage(Page page) {
-        this.page = page;
+        super(page);
     }
 
     @Step("Click on Agency icon")

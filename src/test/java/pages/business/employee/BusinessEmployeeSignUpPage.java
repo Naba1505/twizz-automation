@@ -1,12 +1,12 @@
 package pages.business.employee;
 
+import pages.common.BasePage;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
 
 import java.time.LocalDateTime;
@@ -16,12 +16,10 @@ import java.time.format.DateTimeFormatter;
  * Page Object for Twizz Business Employee Sign Up
  * URL: https://devbusiness.twizz.app/auth/sign-up
  */
-public class BusinessEmployeeSignUpPage {
-    private static final Logger logger = LoggerFactory.getLogger(BusinessEmployeeSignUpPage.class);
-    private final Page page;
+public class BusinessEmployeeSignUpPage extends BasePage {
 
     public BusinessEmployeeSignUpPage(Page page) {
-        this.page = page;
+        super(page);
     }
 
     @Step("Navigate to Business Sign In page")

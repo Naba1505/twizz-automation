@@ -160,7 +160,7 @@ public class CreatorCollectionPage extends BasePage {
         // Strategy 1: dedicated collections icon (preferred)
         try {
             Locator collectionsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collections icon"));
-            waitVisible(collectionsIcon.first(), ConfigReader.getLongTimeout());
+            waitVisible(collectionsIcon.first(), ConfigReader.getMediumTimeout());
             clickWithRetry(collectionsIcon.first(), 2, 200);
             try { page.waitForLoadState(); } catch (Exception ignored) {}
             waitForIdle();

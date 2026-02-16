@@ -137,6 +137,15 @@ public class ConfigReader {
         return properties;
     }
 
+    /**
+     * Returns the environment-aware base URL (e.g. https://stg.twizz.app) with no trailing slash.
+     * Use this to build dynamic URLs: ConfigReader.getBaseUrl() + "/creator/profile"
+     */
+    public static String getBaseUrl() {
+        String url = getLandingPageUrl();
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    }
+
     // ===== Centralized Timeout Constants =====
 
     /**
@@ -151,6 +160,13 @@ public class ConfigReader {
      */
     public static int getShortTimeout() {
         return Integer.parseInt(getProperty("timeout.short", "10000"));
+    }
+
+    /**
+     * Medium timeout for moderate waits like toasts, confirmations (30 seconds)
+     */
+    public static int getMediumTimeout() {
+        return Integer.parseInt(getProperty("timeout.medium", "30000"));
     }
 
     /**

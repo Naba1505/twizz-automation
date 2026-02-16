@@ -17,7 +17,7 @@ public class CreatorMonetizationPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorMonetizationPage.class);
 
     // URLs
-    private static final String MONETIZATION_URL = "https://stg.twizz.app/creator/monetization";
+    private static final String MONETIZATION_URL = ConfigReader.getBaseUrl() + "/creator/monetization";
 
     // Common UI texts
     private static final String SETTINGS_ICON_NAME = "settings"; // role=img name
@@ -268,7 +268,7 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Wait for monetization updated toast")
     public void waitForMonetizationUpdatedToast() {
-        waitVisible(monetizationUpdatedPopup(), ConfigReader.getLongTimeout());
+        waitVisible(monetizationUpdatedPopup(), ConfigReader.getMediumTimeout());
         try { clickWithRetry(monetizationUpdatedPopup(), 0, 0); } catch (Throwable ignored) {}
     }
 }

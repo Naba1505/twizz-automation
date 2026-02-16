@@ -1,12 +1,12 @@
 package pages.business.manager;
 
+import pages.common.BasePage;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
 
 import java.nio.file.Path;
@@ -18,9 +18,7 @@ import java.time.format.DateTimeFormatter;
  * Page Object for Twizz Business Manager Sign Up
  * URL: https://devbusiness.twizz.app/auth/sign-up
  */
-public class BusinessManagerSignUpPage {
-    private static final Logger logger = LoggerFactory.getLogger(BusinessManagerSignUpPage.class);
-    private final Page page;
+public class BusinessManagerSignUpPage extends BasePage {
     
     // Test data paths
     private static final String MANAGER_PROFILE_IMAGE = "src/test/resources/Images/ManagerC.jpg";
@@ -28,7 +26,7 @@ public class BusinessManagerSignUpPage {
     private static final String MANAGER_SELFIE_DOC = "src/test/resources/Images/ManagerB.jpg";
 
     public BusinessManagerSignUpPage(Page page) {
-        this.page = page;
+        super(page);
     }
 
     @Step("Navigate to Business Sign In page")

@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class CreatorSettingsPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorSettingsPage.class);
-    private static final int LONG_WAIT = 30_000; // for heavy pages/uploads
+    private static final int LONG_WAIT = ConfigReader.getMediumTimeout(); // for heavy pages/uploads
     // Small timing constants to avoid magic numbers
     private static final int SHORT_PAUSE_MS = 300;   // brief settle between actions
     private static final int SEQUENTIAL_PAUSE_MS = 500; // settle after each file in sequential flows
@@ -63,9 +64,9 @@ public class CreatorSettingsPage extends BasePage {
     private static final String AUDIO_SUCCESS_TEXT = "Audio uploaded successfully";
 
     // URLs to assert against
-    private static final String SETTINGS_URL = "https://stg.twizz.app/common/setting";
-    private static final String QUICK_LINK_URL = "https://stg.twizz.app/creator/quickLink";
-    private static final String CREATE_NEW_ALBUM_URL = "https://stg.twizz.app/creator/createNewAlbum";
+    private static final String SETTINGS_URL = ConfigReader.getBaseUrl() + "/common/setting";
+    private static final String QUICK_LINK_URL = ConfigReader.getBaseUrl() + "/creator/quickLink";
+    private static final String CREATE_NEW_ALBUM_URL = ConfigReader.getBaseUrl() + "/creator/createNewAlbum";
 
     @Step("Open Settings from profile")
     public void openSettingsFromProfile() {

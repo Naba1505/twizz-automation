@@ -1,23 +1,21 @@
 package pages.business.manager;
 
+import pages.common.BasePage;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page Object for Business Manager Add Employee (Invite)
  * Flow: Manager Dashboard → Agency → Add Employee → Send Invitation
  */
-public class BusinessManagerAddEmployeePage {
-    private static final Logger logger = LoggerFactory.getLogger(BusinessManagerAddEmployeePage.class);
-    private final Page page;
+public class BusinessManagerAddEmployeePage extends BasePage {
 
     public BusinessManagerAddEmployeePage(Page page) {
-        this.page = page;
+        super(page);
     }
 
     @Step("Click on Agency icon")

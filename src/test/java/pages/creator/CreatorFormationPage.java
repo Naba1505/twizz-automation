@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -41,7 +42,7 @@ public class CreatorFormationPage extends BasePage {
         if (!clicked) {
             logger.warn("Settings icon not found; navigating directly to Settings URL");
             // Fallback: direct navigate to settings
-            navigateAndWait("https://stg.twizz.app/common/setting");
+            navigateAndWait(ConfigReader.getBaseUrl() + "/common/setting");
         }
         assertOnSettingsUrl();
     }

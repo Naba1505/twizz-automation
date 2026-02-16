@@ -1,24 +1,22 @@
 package pages.business.manager;
 
+import pages.common.BasePage;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
 
 /**
  * Page Object for Twizz Business Manager Login
  * URL: https://devbusiness.twizz.app/auth/sign-in
  */
-public class BusinessManagerLoginPage {
-    private static final Logger logger = LoggerFactory.getLogger(BusinessManagerLoginPage.class);
-    private final Page page;
+public class BusinessManagerLoginPage extends BasePage {
 
     public BusinessManagerLoginPage(Page page) {
-        this.page = page;
+        super(page);
     }
 
     @Step("Navigate to Business Sign In page")

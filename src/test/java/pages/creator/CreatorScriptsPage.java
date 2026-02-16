@@ -894,7 +894,7 @@ public class CreatorScriptsPage extends BasePage {
         // Match any success toast that mentions script creation (case-insensitive)
         Locator success = page.getByText(Pattern.compile("script.*created", Pattern.CASE_INSENSITIVE));
         try {
-            waitVisible(success.first(), ConfigReader.getLongTimeout());
+            waitVisible(success.first(), ConfigReader.getMediumTimeout());
             // Short settle then attempt to dismiss if clickable
             try { page.waitForTimeout(800); } catch (Throwable ignored) { }
             try { clickWithRetry(success.first(), 0, 0); } catch (Throwable ignored) { }

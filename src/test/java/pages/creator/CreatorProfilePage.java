@@ -51,7 +51,7 @@ public class CreatorProfilePage extends BasePage {
     @Step("Navigate to Creator Profile via URL")
     public void navigateToProfile() {
         // Navigate directly to stage profile URL per spec
-        navigateAndWait("https://stg.twizz.app/creator/profile");
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
     }
 
     @Step("Assert URL contains /creator/profile")

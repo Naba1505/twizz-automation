@@ -25,8 +25,8 @@ public class AdminApproveCreatorTest extends BaseTestClass {
         // Custom setup: same as BaseTestClass but WITHOUT navigating to Twizz landing page
         BrowserFactory.initialize();
         page = BrowserFactory.getPage();
-        page.setDefaultNavigationTimeout(180000);
-        page.setDefaultTimeout(180000);
+        page.setDefaultNavigationTimeout(ConfigReader.getLongTimeout());
+        page.setDefaultTimeout(ConfigReader.getLongTimeout());
 
         try {
             boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));

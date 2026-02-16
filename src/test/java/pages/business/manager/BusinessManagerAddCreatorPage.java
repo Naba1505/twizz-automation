@@ -1,23 +1,21 @@
 package pages.business.manager;
 
+import pages.common.BasePage;
+
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page Object for Twizz Business Manager Add Creator (Invite)
  * Flow: Manager Dashboard → Agency → Add Creator → Send Invitation
  */
-public class BusinessManagerAddCreatorPage {
-    private static final Logger logger = LoggerFactory.getLogger(BusinessManagerAddCreatorPage.class);
-    private final Page page;
+public class BusinessManagerAddCreatorPage extends BasePage {
 
     public BusinessManagerAddCreatorPage(Page page) {
-        this.page = page;
+        super(page);
     }
 
     @Step("Click on Agency icon")

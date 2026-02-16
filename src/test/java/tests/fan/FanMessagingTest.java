@@ -168,7 +168,7 @@ public class FanMessagingTest extends BaseTestClass {
             logger.info("[FanMessaging] Step 4: Creator sends media to fan");
 
             // Navigate creator to home/profile first, then to messaging
-            creatorPage.navigate("https://stg.twizz.app/creator/profile");
+            creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
             creatorPage.waitForTimeout(3000);
             logger.info("[FanMessaging] Creator navigated to profile");
 
@@ -302,7 +302,7 @@ public class FanMessagingTest extends BaseTestClass {
             logger.info("[FanMessaging] Step 4: Creator sends VIDEO to fan");
 
             // Navigate creator to home/profile first, then to messaging
-            creatorPage.navigate("https://stg.twizz.app/creator/profile");
+            creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
             creatorPage.waitForTimeout(3000);
             logger.info("[FanMessaging] Creator navigated to profile");
 
@@ -425,7 +425,7 @@ public class FanMessagingTest extends BaseTestClass {
             logger.info("[FanMessaging] Step 4: Creator sends AUDIO to fan");
 
             // Navigate creator back to messaging
-            creatorPage.navigate("https://stg.twizz.app/creator/profile");
+            creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
             creatorPage.waitForTimeout(3000);
             logger.info("[FanMessaging] Creator navigated to profile");
 
@@ -551,7 +551,7 @@ public class FanMessagingTest extends BaseTestClass {
             logger.info("[FanMessaging] Step 4: Creator sends MIXED MEDIA (image + video + audio) via Quick Files");
 
             // Navigate creator back to messaging
-            creatorPage.navigate("https://stg.twizz.app/creator/profile");
+            creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
             creatorPage.waitForTimeout(3000);
             logger.info("[FanMessaging] Creator navigated to profile");
 

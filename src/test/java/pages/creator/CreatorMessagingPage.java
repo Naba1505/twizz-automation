@@ -61,7 +61,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Navigate directly to Creator Profile via URL")
     public void navigateToCreatorProfileViaUrl() {
         // Using stage URL as provided in steps; could be parameterized if needed
-        navigateAndWait("https://stg.twizz.app/creator/profile");
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
     }
 
     @Step("Open Messaging from creator dashboard (header icon)")
@@ -574,7 +574,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Click 'Propose the private media'")
     public void clickProposePrivateMedia() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Propose the private media"));
-        waitVisible(btn.first(), ConfigReader.getLongTimeout());
+        waitVisible(btn.first(), ConfigReader.getMediumTimeout());
         clickWithRetry(btn.first(), 1, 200);
     }
 
@@ -1425,7 +1425,7 @@ public class CreatorMessagingPage extends BasePage {
 
         // Finally, wait for the conversation input as the success signal
         try {
-            waitVisible(messageInput(), ConfigReader.getLongTimeout());
+            waitVisible(messageInput(), ConfigReader.getMediumTimeout());
         } catch (Throwable e) {
             logger.warn("[Messaging] Conversation input not visible after confirm: {}", e.getMessage());
         }

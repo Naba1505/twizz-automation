@@ -127,8 +127,8 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         // ===== STEP 4: Open creator session in a separate browser context =====
         BrowserContext creatorContext = BrowserFactory.createNewContext();
         Page creatorPage = creatorContext.newPage();
-        creatorPage.setDefaultNavigationTimeout(60000);
-        creatorPage.setDefaultTimeout(60000);
+        creatorPage.setDefaultNavigationTimeout(ConfigReader.getNavigationTimeout());
+        creatorPage.setDefaultTimeout(ConfigReader.getDefaultTimeout());
 
         try {
             // Navigate to login and log in as creator

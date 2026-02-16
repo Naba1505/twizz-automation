@@ -32,8 +32,8 @@ public class BaseTestClass {
         BrowserFactory.initialize();
         page = BrowserFactory.getPage();
         // Increase default timeouts for slow networks and heavy pages
-        page.setDefaultNavigationTimeout(60000);
-        page.setDefaultTimeout(60000);
+        page.setDefaultNavigationTimeout(ConfigReader.getNavigationTimeout());
+        page.setDefaultTimeout(ConfigReader.getDefaultTimeout());
 
         // Tracing is started in BrowserFactory.initialize() - no need to start again here
 
