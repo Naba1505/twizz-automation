@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,7 +51,7 @@ public class CreatorLivePage extends BasePage {
     @Step("Open plus menu")
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plusImg, 15000);
+        waitVisible(plusImg, ConfigReader.getVisibilityTimeout());
         clickWithRetry(plusImg, 2, 300);
         handleConversionPromptIfPresent();
         logger.info("Opened plus menu");
@@ -76,7 +77,7 @@ public class CreatorLivePage extends BasePage {
     @Step("Ensure Live screen visible")
     public void ensureLiveScreen() {
         Locator live = page.getByText(LIVE_TEXT);
-        waitVisible(live, 20000);
+        waitVisible(live, ConfigReader.getVisibilityTimeout());
         logger.info("Live screen visible");
     }
 
@@ -139,7 +140,7 @@ public class CreatorLivePage extends BasePage {
     public boolean isLiveLogoVisibleOnProfile() {
         Locator logo = page.locator(".ant-col > img");
         try {
-            waitVisible(logo.first(), 15000);
+            waitVisible(logo.first(), ConfigReader.getVisibilityTimeout());
             logger.info("Live logo visible on profile");
             return true;
         } catch (Exception e) {
@@ -163,7 +164,7 @@ public class CreatorLivePage extends BasePage {
         Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN));
         if (editBtn.count() > 0) {
             try {
-                waitVisible(editBtn.first(), 10000);
+                waitVisible(editBtn.first(), ConfigReader.getShortTimeout());
                 clickWithRetry(editBtn.first(), 2, 200);
                 logger.info("Clicked Edit via BUTTON locator");
                 return;
@@ -220,14 +221,14 @@ public class CreatorLivePage extends BasePage {
     @Step("Ensure Scheduled Live screen visible")
     public void ensureScheduledLiveScreen() {
         Locator txt = page.getByText(SCHEDULED_LIVE_TEXT);
-        waitVisible(txt.first(), 15000);
+        waitVisible(txt.first(), ConfigReader.getVisibilityTimeout());
         logger.info("Scheduled Live screen visible");
     }
 
     @Step("Click Delete event")
     public void clickDeleteEvent() {
         Locator del = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(DELETE_EVENT_BTN));
-        waitVisible(del.first(), 10000);
+        waitVisible(del.first(), ConfigReader.getShortTimeout());
         clickWithRetry(del.first(), 2, 200);
         logger.info("Clicked Delete event");
     }
@@ -236,7 +237,7 @@ public class CreatorLivePage extends BasePage {
     public void confirmDeleteYes() {
         // Ensure confirm text appears
         Locator confirmTxt = page.getByText(DELETE_CONFIRM_TEXT);
-        waitVisible(confirmTxt.first(), 10000);
+        waitVisible(confirmTxt.first(), ConfigReader.getShortTimeout());
         // Click Yes delete
         Locator yes = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(YES_DELETE_BTN));
         clickWithRetry(yes.first(), 2, 200);
@@ -246,7 +247,7 @@ public class CreatorLivePage extends BasePage {
     @Step("Verify delete success toast")
     public void verifyDeleteSuccessToast() {
         Locator toast = page.getByText(DELETE_SUCCESS_TOAST);
-        waitVisible(toast.first(), 15000);
+        waitVisible(toast.first(), ConfigReader.getVisibilityTimeout());
         logger.info("Delete success toast visible");
     }
 
@@ -689,10 +690,10 @@ public class CreatorLivePage extends BasePage {
         reg.scrollIntoViewIfNeeded();
         clickWithRetry(reg.first(), 3, 250);
         // Wait for success
-        waitVisible(page.getByText(SUCCESS_TOAST), 20000);
+        waitVisible(page.getByText(SUCCESS_TOAST), ConfigReader.getVisibilityTimeout());
         Locator firstImg = page.locator(".ant-col > img").first();
         if (firstImg.count() > 0) {
-            waitVisible(firstImg, 10000);
+            waitVisible(firstImg, ConfigReader.getShortTimeout());
         }
         logger.info("Live scheduled successfully");
     }
@@ -708,7 +709,7 @@ public class CreatorLivePage extends BasePage {
     @Step("Click Register button to create live event")
     public void clickRegister() {
         Locator registerBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(REGISTER_BTN));
-        waitVisible(registerBtn.first(), 15000);
+        waitVisible(registerBtn.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(registerBtn.first(), 2, 200);
         logger.info("Clicked Register button");
     }
@@ -716,35 +717,35 @@ public class CreatorLivePage extends BasePage {
     @Step("Verify live started successfully")
     public void verifyLiveStarted() {
         Locator successText = page.getByText("Your live will be started");
-        waitVisible(successText.first(), 20000);
+        waitVisible(successText.first(), ConfigReader.getVisibilityTimeout());
         logger.info("Live started successfully - success message visible");
     }
 
     @Step("Ensure Access field is displayed")
     public void assertAccessFieldVisible() {
         Locator accessText = page.getByText("Access");
-        waitVisible(accessText.first(), 10000);
+        waitVisible(accessText.first(), ConfigReader.getShortTimeout());
         logger.info("Access field is displayed");
     }
 
     @Step("Ensure Price field is displayed")
     public void assertPriceFieldVisible() {
         Locator priceText = page.getByText("Price");
-        waitVisible(priceText.first(), 10000);
+        waitVisible(priceText.first(), ConfigReader.getShortTimeout());
         logger.info("Price field is displayed");
     }
 
     @Step("Ensure Chat field is displayed")
     public void assertChatFieldVisible() {
         Locator chatText = page.getByText("Chat");
-        waitVisible(chatText.first(), 10000);
+        waitVisible(chatText.first(), ConfigReader.getShortTimeout());
         logger.info("Chat field is displayed");
     }
 
     @Step("Ensure 'When ?' field is displayed")
     public void assertWhenFieldVisible() {
         Locator whenText = page.getByText("When ?");
-        waitVisible(whenText.first(), 10000);
+        waitVisible(whenText.first(), ConfigReader.getShortTimeout());
         logger.info("'When ?' field is displayed");
     }
 
@@ -768,7 +769,7 @@ public class CreatorLivePage extends BasePage {
     @Step("Click close button to end live (creator side)")
     public void clickCloseLive() {
         Locator closeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("close"));
-        waitVisible(closeIcon.first(), 10000);
+        waitVisible(closeIcon.first(), ConfigReader.getShortTimeout());
         clickWithRetry(closeIcon.first(), 2, 200);
         logger.info("Clicked close button to end live");
     }
@@ -776,14 +777,14 @@ public class CreatorLivePage extends BasePage {
     @Step("Verify end live confirmation dialog")
     public void assertEndLiveConfirmationVisible() {
         Locator confirmText = page.getByText("Do you want to end the live ?");
-        waitVisible(confirmText.first(), 10000);
+        waitVisible(confirmText.first(), ConfigReader.getShortTimeout());
         logger.info("End live confirmation dialog visible");
     }
 
     @Step("Confirm end live by clicking 'Yes, end the live'")
     public void confirmEndLive() {
         Locator yesEndBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, end the live"));
-        waitVisible(yesEndBtn.first(), 10000);
+        waitVisible(yesEndBtn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(yesEndBtn.first(), 2, 200);
         logger.info("Confirmed end live");
     }
@@ -813,7 +814,7 @@ public class CreatorLivePage extends BasePage {
     private void clickLiveExactWithRetry() {
         Locator liveExact = page.getByText(LIVE_TEXT, new Page.GetByTextOptions().setExact(true));
         // Wait briefly for it to be attached/visible, then click with retry
-        waitVisible(liveExact.first(), 10000);
+        waitVisible(liveExact.first(), ConfigReader.getShortTimeout());
         try { liveExact.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
         clickWithRetry(liveExact.first(), 3, 250);
     }

@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.util.Arrays;
 
@@ -22,10 +23,10 @@ public class FanSubscriptionPage extends BasePage {
         logger.info("[Fan][Subscribe] Opening search panel");
         // According to flow: click search icon, then click 'Search' label to focus
         Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), 15_000);
+        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(searchIcon.first(), 1, 150);
         Locator searchLabel = page.getByText("Search");
-        waitVisible(searchLabel.first(), 10_000);
+        waitVisible(searchLabel.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(searchLabel.first(), 1, 120);
     }
 
@@ -38,11 +39,11 @@ public class FanSubscriptionPage extends BasePage {
             openSearchPanel();
             input = page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search"));
         }
-        waitVisible(input.first(), 15_000);
+        waitVisible(input.first(), ConfigReader.getVisibilityTimeout());
         input.first().fill(username);
         // Click on the matching text result
         Locator result = page.getByText(username);
-        waitVisible(result.first(), 15_000);
+        waitVisible(result.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(result.first(), 1, 150);
 
         // Wait for creator profile to load: either subscribe button appears or URL indicates profile
@@ -104,7 +105,7 @@ public class FanSubscriptionPage extends BasePage {
         }
         
         logger.info("[Fan][Subscribe] Clicking Subscribe button");
-        waitVisible(subscribeBtn.first(), 15_000);
+        waitVisible(subscribeBtn.first(), ConfigReader.getVisibilityTimeout());
         subscribeBtn.first().scrollIntoViewIfNeeded();
         page.waitForTimeout(500);
         
@@ -187,7 +188,7 @@ public class FanSubscriptionPage extends BasePage {
         // Some payment fields can be inside iframes; try direct first.
         try {
             Locator number = page.getByPlaceholder("1234 1234 1234");
-            waitVisible(number.first(), 15_000);
+            waitVisible(number.first(), ConfigReader.getVisibilityTimeout());
             number.first().click();
             number.first().fill(cardNumber);
         } catch (Throwable e) {
@@ -379,7 +380,7 @@ public class FanSubscriptionPage extends BasePage {
                     } catch (Throwable ignored) {}
                 }
                 // Wait for confirmation text
-                try { if (!threeDSPage.isClosed()) threeDSPage.waitForSelector("text=Payment confirmed!", new Page.WaitForSelectorOptions().setTimeout(15_000)); } catch (Throwable ignored) {}
+                try { if (!threeDSPage.isClosed()) threeDSPage.waitForSelector("text=Payment confirmed!", new Page.WaitForSelectorOptions().setTimeout(ConfigReader.getVisibilityTimeout())); } catch (Throwable ignored) {}
                 // Some flows show an extra confirmation button
                 try {
                     if (!threeDSPage.isClosed()) {
@@ -410,7 +411,7 @@ public class FanSubscriptionPage extends BasePage {
                         Locator xpathSubmit = threeDSFrame.locator("xpath=//div//input[@value='Submit']");
                         if (xpathSubmit.count() > 0) { clickWithRetry(xpathSubmit.first(), 1, 150); }
                     } catch (Throwable ignored) {}
-                    try { threeDSFrame.waitForSelector("text=Payment confirmed!", new com.microsoft.playwright.Frame.WaitForSelectorOptions().setTimeout(15_000)); } catch (Throwable ignored) {}
+                    try { threeDSFrame.waitForSelector("text=Payment confirmed!", new com.microsoft.playwright.Frame.WaitForSelectorOptions().setTimeout(ConfigReader.getVisibilityTimeout())); } catch (Throwable ignored) {}
                     // Extra confirmation path
                     try {
                         Locator okBtn = threeDSFrame.getByRole(AriaRole.BUTTON, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("Everything is OK"));

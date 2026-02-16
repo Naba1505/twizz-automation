@@ -331,7 +331,7 @@ public class CreatorRegistrationPage {
     public boolean isSecondPageVisible() {
         try {
             Locator header = page.getByText(secondPageHeader, new Page.GetByTextOptions().setExact(true));
-            header.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(15000));
+            header.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getVisibilityTimeout()));
             boolean isVisible = header.isVisible();
             logger.info("Second page visibility: {}", isVisible);
             return isVisible;
@@ -380,7 +380,7 @@ public class CreatorRegistrationPage {
     public boolean isThirdPageVisible() {
         try {
             Locator header = page.getByText(thirdPageHeader, new Page.GetByTextOptions().setExact(true));
-            header.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(15000));
+            header.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getVisibilityTimeout()));
             boolean isVisible = header.isVisible();
             logger.info("Third page visibility: {}", isVisible);
             return isVisible;
@@ -436,7 +436,7 @@ public class CreatorRegistrationPage {
     public boolean isFourthPageVisible() {
         try {
             Locator header = page.getByText(fourthPageHeader, new Page.GetByTextOptions().setExact(true));
-            header.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(15000));
+            header.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getVisibilityTimeout()));
             boolean isVisible = header.isVisible();
             logger.info("Fourth page visibility: {}", isVisible);
             return isVisible;
@@ -475,7 +475,7 @@ public class CreatorRegistrationPage {
     public void fillFourthPageForm() {
         try {
             Locator option = page.getByText(privateIndividualOption, new Page.GetByTextOptions().setExact(true));
-            option.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(10000));
+            option.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getShortTimeout()));
             option.click();
             logger.info("Selected status: {}", privateIndividualOption);
         } catch (Exception e) {
@@ -501,7 +501,7 @@ public class CreatorRegistrationPage {
     public boolean isFifthPageVisible() {
         try {
             Locator header = page.getByText(fifthPageHeader, new Page.GetByTextOptions().setExact(true));
-            header.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(15000));
+            header.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getVisibilityTimeout()));
             boolean isVisible = header.isVisible();
             logger.info("Fifth page visibility: {}", isVisible);
             return isVisible;
@@ -575,7 +575,7 @@ public class CreatorRegistrationPage {
     public boolean isFinalConfirmationVisible() {
         try {
             Locator thankYou = page.getByText(finalConfirmationText, new Page.GetByTextOptions().setExact(true));
-            thankYou.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(20000));
+            thankYou.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getVisibilityTimeout()));
             boolean visible = thankYou.isVisible();
             logger.info("Final confirmation visibility: {}", visible);
             return visible;

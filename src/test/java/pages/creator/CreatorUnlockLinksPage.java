@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     @Step("Open plus menu on creator screen")
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plusImg.first(), 15000);
+        waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && safeIsVisible(svg.first())) {
             clickWithRetry(svg.first(), 2, 200);
@@ -41,7 +42,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     public void ensureOptionsPopup() {
         // Proactively dismiss blocking dialog if present
         clickIUnderstandIfPresent();
-        waitVisible(page.getByText(WHAT_DO_YOU_WANT).first(), 15000);
+        waitVisible(page.getByText(WHAT_DO_YOU_WANT).first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Dismiss 'I understand' dialog if present")
@@ -77,13 +78,13 @@ public class CreatorUnlockLinksPage extends BasePage {
     @Step("Choose Unlock from options")
     public void chooseUnlock() {
         Locator u = page.getByText(UNLOCK);
-        waitVisible(u.first(), 10000);
+        waitVisible(u.first(), ConfigReader.getShortTimeout());
         clickWithRetry(u.first(), 2, 200);
     }
 
     @Step("Ensure Unlock screen visible")
     public void ensureUnlockScreen() {
-        waitVisible(page.getByText(UNLOCK).first(), 15000);
+        waitVisible(page.getByText(UNLOCK).first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Click PLUS to add media")
@@ -91,20 +92,20 @@ public class CreatorUnlockLinksPage extends BasePage {
         // Primary path: match codegen, click the IMG icon whose accessible name is "add"
         Locator addIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("add"));
         if (addIcon.count() > 0) {
-            waitVisible(addIcon.first(), 10000);
+            waitVisible(addIcon.first(), ConfigReader.getShortTimeout());
             clickWithRetry(addIcon.first(), 2, 200);
             return;
         }
 
         // Fallback: older UI where the icon is named "plus"
         Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plus.first(), 10000);
+        waitVisible(plus.first(), ConfigReader.getShortTimeout());
         clickWithRetry(plus.first(), 2, 200);
     }
 
     @Step("Ensure Importation dialog visible")
     public void ensureImportation() {
-        waitVisible(page.getByText(IMPORTATION).first(), 10000);
+        waitVisible(page.getByText(IMPORTATION).first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Choose 'My Device' in Importation")
@@ -148,14 +149,14 @@ public class CreatorUnlockLinksPage extends BasePage {
     @Step("Open price field (0.00 €)")
     public void openPriceField() {
         Locator zeroPrice = page.getByText("0.00 €");
-        waitVisible(zeroPrice.first(), 10000);
+        waitVisible(zeroPrice.first(), ConfigReader.getShortTimeout());
         clickWithRetry(zeroPrice.first(), 1, 150);
     }
 
     @Step("Fill price euros: {amount}€")
     public void fillPriceEuro(int amount) {
         Locator spin = page.getByRole(AriaRole.SPINBUTTON);
-        waitVisible(spin.first(), 10000);
+        waitVisible(spin.first(), ConfigReader.getShortTimeout());
         spin.first().fill(String.valueOf(amount));
         // Blur to trigger recalculations
         try { page.keyboard().press("Tab"); } catch (Exception ignored) {}
@@ -191,19 +192,19 @@ public class CreatorUnlockLinksPage extends BasePage {
     @Step("Click 'Generate link'")
     public void clickGenerateLink() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Generate link"));
-        waitVisible(btn.first(), 10000);
+        waitVisible(btn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(btn.first(), 2, 200);
     }
 
     @Step("Ensure 'Give your unlock a name' screen visible")
     public void ensureGiveYourUnlockName() {
-        waitVisible(page.getByText("Give your unlock a name").first(), 15000);
+        waitVisible(page.getByText("Give your unlock a name").first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Fill unlock name: {name}")
     public void fillUnlockName(String name) {
         Locator ph = page.getByPlaceholder("My name");
-        waitVisible(ph.first(), 10000);
+        waitVisible(ph.first(), ConfigReader.getShortTimeout());
         ph.first().click();
         ph.first().fill(name == null ? "" : name);
     }
@@ -211,7 +212,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     @Step("Click Create")
     public void clickCreate() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create"));
-        waitVisible(btn.first(), 10000);
+        waitVisible(btn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(btn.first(), 2, 200);
     }
 
@@ -261,19 +262,19 @@ public class CreatorUnlockLinksPage extends BasePage {
     @Step("Close final modal using cross icon")
     public void closeWithCross() {
         Locator cross = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("cross"));
-        waitVisible(cross.first(), 10000);
+        waitVisible(cross.first(), ConfigReader.getShortTimeout());
         clickWithRetry(cross.first(), 1, 150);
     }
 
     @Step("Ensure 'Important' popup visible")
     public void ensureImportantPopup() {
-        waitVisible(page.getByText("Important").first(), 10000);
+        waitVisible(page.getByText("Important").first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click 'C'est compris'")
     public void clickCEstCompris() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("C'est compris"));
-        waitVisible(btn.first(), 10000);
+        waitVisible(btn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(btn.first(), 2, 200);
     }
 }

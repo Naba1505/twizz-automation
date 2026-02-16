@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -49,7 +50,7 @@ public class CreatorCollectionsHistoryPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Collections History)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(settingsIcon(), 1, 150);
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
@@ -59,22 +60,22 @@ public class CreatorCollectionsHistoryPage extends BasePage {
 
     @Step("Open 'History of collections' screen")
     public void openHistoryOfCollections() {
-        waitVisible(historyOfCollectionsMenu(), DEFAULT_WAIT);
+        waitVisible(historyOfCollectionsMenu(), ConfigReader.getVisibilityTimeout());
         try { historyOfCollectionsMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(historyOfCollectionsMenu(), 1, 150);
-        waitVisible(collectionsTitle(), DEFAULT_WAIT);
+        waitVisible(collectionsTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Open first collection entry")
     public void openFirstCollection() {
-        waitVisible(firstCollectionIcon(), DEFAULT_WAIT);
+        waitVisible(firstCollectionIcon(), ConfigReader.getVisibilityTimeout());
         try { firstCollectionIcon().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(firstCollectionIcon(), 1, 150);
     }
 
     @Step("Assert Details screen is visible and wait briefly")
     public void assertDetailsVisibleAndWait() {
-        waitVisible(detailsTitle(), 30_000);
+        waitVisible(detailsTitle(), ConfigReader.getVisibilityTimeout());
         try { page.waitForTimeout(500); } catch (Throwable ignored) {}
     }
 

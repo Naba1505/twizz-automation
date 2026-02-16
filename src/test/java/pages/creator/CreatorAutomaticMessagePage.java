@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -360,7 +361,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
         try { page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(5000)); } catch (Throwable ignored) {}
         // Finally, wait for the Modify button to be visible again
         try {
-            waitVisible(modifyButtonVisibleAgain(), 15_000);
+            waitVisible(modifyButtonVisibleAgain(), ConfigReader.getVisibilityTimeout());
         } catch (Throwable firstWait) {
             // If not visible yet, try dismissing overlays/backdrops and re-wait
             try {
@@ -399,7 +400,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
         } catch (Throwable ignored) {}
         try { page.waitForTimeout(300); } catch (Throwable ignored) {}
         // Ensure Modify still visible
-        waitVisible(modifyButtonVisibleAgain(), 10_000);
+        waitVisible(modifyButtonVisibleAgain(), ConfigReader.getShortTimeout());
     }
 
     @Step("Assert first toggle is enabled")

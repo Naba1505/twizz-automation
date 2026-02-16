@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.util.regex.Pattern;
 
@@ -91,7 +92,7 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Assert Search icon is visible on dashboard")
     public void assertSearchIconVisible() {
-        waitVisible(searchIcon(), 15_000);
+        waitVisible(searchIcon(), ConfigReader.getVisibilityTimeout());
         logger.info("[FanFreeSub] Search icon is visible on dashboard");
     }
 
@@ -105,7 +106,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     @Step("Search for creator: {creatorUsername}")
     public void searchCreator(String creatorUsername) {
         Locator search = searchBox();
-        waitVisible(search, 10_000);
+        waitVisible(search, ConfigReader.getShortTimeout());
         search.fill(creatorUsername);
         page.waitForTimeout(1500);
         logger.info("[FanFreeSub] Filled search with: {}", creatorUsername);
@@ -114,7 +115,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     @Step("Click on creator search result: {creatorUsername}")
     public void clickCreatorResult(String creatorUsername) {
         Locator result = page.getByText(creatorUsername);
-        waitVisible(result.first(), 10_000);
+        waitVisible(result.first(), ConfigReader.getShortTimeout());
         clickWithRetry(result.first(), 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanFreeSub] Clicked on creator result: {}", creatorUsername);
@@ -148,7 +149,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     @Step("Assert Subscribe button visible and click")
     public void clickSubscribe() {
         Locator btn = subscribeButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         dismissOverlay();
         clickWithRetry(btn, 2, 300);
@@ -158,7 +159,7 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Assert 'Subscription is free when' text is visible")
     public void assertFreeSubscriptionTextVisible() {
-        waitVisible(freeSubscriptionText(), 10_000);
+        waitVisible(freeSubscriptionText(), ConfigReader.getShortTimeout());
         logger.info("[FanFreeSub] 'Subscription is free when' text is visible");
     }
 
@@ -166,7 +167,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     public void clickContinue() {
         dismissOverlay();
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanFreeSub] Clicked 'Continue' button");
@@ -176,7 +177,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     public void clickBuyCollection() {
         dismissOverlay();
         Locator btn = buyCollectionButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanFreeSub] Clicked 'Buy a collection' button");
@@ -186,7 +187,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     public void clickCollectionItem() {
         dismissOverlay();
         Locator collection = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Smithphoto hot"));
-        waitVisible(collection, 10_000);
+        waitVisible(collection, ConfigReader.getShortTimeout());
         clickWithRetry(collection, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanFreeSub] Clicked on collection item");
@@ -196,7 +197,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     public void clickPayToSee() {
         dismissOverlay();
         Locator btn = payToSeeButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanFreeSub] Clicked 'Pay to see' button");
@@ -204,14 +205,14 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Assert 'Secure payment' screen is visible")
     public void assertSecurePaymentVisible() {
-        waitVisible(securePaymentText(), 15_000);
+        waitVisible(securePaymentText(), ConfigReader.getVisibilityTimeout());
         logger.info("[FanFreeSub] 'Secure payment' screen is visible");
     }
 
     @Step("Fill card number: {cardNumber}")
     public void fillCardNumber(String cardNumber) {
         Locator field = cardNumberField();
-        waitVisible(field, 10_000);
+        waitVisible(field, ConfigReader.getShortTimeout());
         field.click();
         field.fill(cardNumber);
         logger.info("[FanFreeSub] Filled card number");
@@ -227,7 +228,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     @Step("Fill expiry: {expiry}")
     public void fillExpiry(String expiry) {
         Locator field = expiryField();
-        waitVisible(field, 10_000);
+        waitVisible(field, ConfigReader.getShortTimeout());
         field.click();
         field.fill(expiry);
         logger.info("[FanFreeSub] Filled expiry");
@@ -236,7 +237,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     @Step("Fill CVC: {cvc}")
     public void fillCvc(String cvc) {
         Locator field = cvcField();
-        waitVisible(field, 10_000);
+        waitVisible(field, ConfigReader.getShortTimeout());
         field.click();
         field.fill(cvc);
         logger.info("[FanFreeSub] Filled CVC");
@@ -254,7 +255,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     @Step("Click Confirm button")
     public void clickConfirm() {
         Locator btn = confirmButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanFreeSub] Clicked Confirm button");
@@ -317,7 +318,7 @@ public class FanFreeSubscriptionPage extends BasePage {
             try {
                 if (!threeDSPage.isClosed()) {
                     Locator okBtn = threeDSPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Everything is OK"));
-                    okBtn.waitFor(new Locator.WaitForOptions().setTimeout(15_000));
+                    okBtn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
                     if (okBtn.count() > 0 && safeIsVisible(okBtn.first())) {
                         clickWithRetry(okBtn.first(), 1, 150);
                         logger.info("[FanFreeSub] Clicked 'Everything is OK' on 3DS page");
@@ -360,7 +361,7 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Assert 'Collection' text visible (collection buy success)")
     public void assertCollectionBuySuccess() {
-        waitVisible(collectionText(), 15_000);
+        waitVisible(collectionText(), ConfigReader.getVisibilityTimeout());
         logger.info("[FanFreeSub] 'Collection' text visible - collection buy success");
     }
 
@@ -368,7 +369,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     public void clickBack() {
         dismissOverlay();
         Locator back = backIcon();
-        waitVisible(back, 10_000);
+        waitVisible(back, ConfigReader.getShortTimeout());
         clickWithRetry(back, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanFreeSub] Clicked back icon");

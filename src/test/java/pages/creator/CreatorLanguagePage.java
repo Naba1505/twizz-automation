@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -84,21 +85,21 @@ public class CreatorLanguagePage extends BasePage {
     public void switchToFrenchAndVerify() {
         waitVisible(optionFrancais(), DEFAULT_WAIT);
         clickWithRetry(optionFrancais(), 1, 150);
-        waitVisible(languageTitleFrench(), 20_000);
+        waitVisible(languageTitleFrench(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Switch to Español and verify")
     public void switchToSpanishAndVerify() {
         waitVisible(optionEspanol(), DEFAULT_WAIT);
         clickWithRetry(optionEspanol(), 1, 150);
-        waitVisible(languageTitleSpanish(), 20_000);
+        waitVisible(languageTitleSpanish(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Switch to English and verify")
     public void switchToEnglishAndVerify() {
         waitVisible(optionEnglish(), DEFAULT_WAIT);
         clickWithRetry(optionEnglish(), 1, 150);
-        waitVisible(languageTitleEnglish(), 20_000);
+        waitVisible(languageTitleEnglish(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Navigate back to profile (two back arrows)")

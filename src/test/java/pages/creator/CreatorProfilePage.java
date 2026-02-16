@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -182,7 +183,7 @@ public class CreatorProfilePage extends BasePage {
     @Step("Wait for avatar updated success toast")
     public void waitForAvatarUpdatedToast() {
         Locator toast = page.getByText("Avatar image updated successfully");
-        waitVisible(toast.first(), 15_000);
+        waitVisible(toast.first(), ConfigReader.getVisibilityTimeout());
         // Click to dismiss if clickable
         try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable ignored) {}
     }
@@ -209,7 +210,7 @@ public class CreatorProfilePage extends BasePage {
     @Step("Wait for avatar removed success toast")
     public void waitForAvatarRemovedToast() {
         Locator toast = page.getByText("Avatar image removed successfully");
-        waitVisible(toast.first(), 15_000);
+        waitVisible(toast.first(), ConfigReader.getVisibilityTimeout());
         // Click to dismiss if clickable
         try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable ignored) {}
     }
@@ -234,7 +235,7 @@ public class CreatorProfilePage extends BasePage {
     @Step("Wait for 'Updated Personal Information Successfully.' toast")
     public void waitForProfileUpdatedToast() {
         Locator toast = page.getByText("Updated Personal Information Successfully.");
-        waitVisible(toast.first(), 15_000);
+        waitVisible(toast.first(), ConfigReader.getVisibilityTimeout());
         // Allow a brief pause even when toast is visible, then dismiss
         try { page.waitForTimeout(600); } catch (Throwable ignored) {}
         try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable ignored) {}

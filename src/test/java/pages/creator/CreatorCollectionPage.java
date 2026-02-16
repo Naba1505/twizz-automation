@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +36,7 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Open plus menu on creator dashboard")
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plusImg.first(), 15000);
+        waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
         // Some builds require clicking the nested svg
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && svg.first().isVisible()) {
@@ -159,7 +160,7 @@ public class CreatorCollectionPage extends BasePage {
         // Strategy 1: dedicated collections icon (preferred)
         try {
             Locator collectionsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collections icon"));
-            waitVisible(collectionsIcon.first(), 30000);
+            waitVisible(collectionsIcon.first(), ConfigReader.getLongTimeout());
             clickWithRetry(collectionsIcon.first(), 2, 200);
             try { page.waitForLoadState(); } catch (Exception ignored) {}
             waitForIdle();
@@ -180,7 +181,7 @@ public class CreatorCollectionPage extends BasePage {
         // Strategy 2: click by visible text 'Collection' (exact)
         try {
             Locator txt = page.getByText(COLLECTION, new Page.GetByTextOptions().setExact(true));
-            waitVisible(txt.first(), 15000);
+            waitVisible(txt.first(), ConfigReader.getVisibilityTimeout());
             clickWithRetry(txt.first(), 2, 200);
             waitForIdle();
             Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
@@ -272,7 +273,7 @@ public class CreatorCollectionPage extends BasePage {
         }
         // Prefer clicking the second tile if present (nth(1)), to avoid a potential 'create new' tile at index 0
         Locator candidate = count > 1 ? collections.nth(1) : collections.first();
-        waitVisible(candidate, 10000);
+        waitVisible(candidate, ConfigReader.getShortTimeout());
         try { candidate.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
         clickWithRetry(candidate, 2, 200);
         // brief wait for navigation/content transition
@@ -285,7 +286,7 @@ public class CreatorCollectionPage extends BasePage {
         // Primary marker: 'Details' text
         try {
             Locator details = page.getByText("Details");
-            waitVisible(details.first(), 10000);
+            waitVisible(details.first(), ConfigReader.getShortTimeout());
             return;
         } catch (RuntimeException primary) {
             logger.warn("Details text not visible yet; trying alternate markers");
@@ -293,22 +294,22 @@ public class CreatorCollectionPage extends BasePage {
         // Alternate marker 1: back arrow present on details
         try {
             Locator backArrow = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
-            waitVisible(backArrow.first(), 10000);
+            waitVisible(backArrow.first(), ConfigReader.getShortTimeout());
             return;
         } catch (RuntimeException ignored) {}
         // Alternate marker 2: actions menu icon present on details header
         Locator menuIcon = page.locator(".right-icon > img");
-        waitVisible(menuIcon.first(), 10000);
+        waitVisible(menuIcon.first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open actions menu (three dots) on collection details")
     public void openActionsMenu() {
         Locator menuIcon = page.locator(".right-icon > img");
-        waitVisible(menuIcon.first(), 10000);
+        waitVisible(menuIcon.first(), ConfigReader.getShortTimeout());
         clickWithRetry(menuIcon.first(), 2, 200);
         // Ensure popup
         Locator popupTitle = page.getByText("What do you want to do?");
-        waitVisible(popupTitle.first(), 10000);
+        waitVisible(popupTitle.first(), ConfigReader.getShortTimeout());
     }
 
     // Quick, non-throwing checks to speed up iteration
@@ -340,14 +341,14 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Choose Delete collection option")
     public void chooseDeleteCollection() {
         Locator deleteBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete collection"));
-        waitVisible(deleteBtn.first(), 10000);
+        waitVisible(deleteBtn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(deleteBtn.first(), 2, 200);
     }
 
     @Step("Confirm deletion in confirmation dialog")
     public void confirmDeletion() {
         Locator confirmText = page.getByText("Are you sure you want to delete the collection? All linked data will be lost");
-        waitVisible(confirmText.first(), 10000);
+        waitVisible(confirmText.first(), ConfigReader.getShortTimeout());
         Locator yesDelete = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
         clickWithRetry(yesDelete.first(), 2, 200);
     }
@@ -397,7 +398,7 @@ public class CreatorCollectionPage extends BasePage {
     public void openFirstCollectionViaFilesIcon() {
         openCollectionsList();
         Locator files = filesIconOnCollections();
-        waitVisible(files.first(), 15000);
+        waitVisible(files.first(), ConfigReader.getVisibilityTimeout());
         try { files.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
         clickWithRetry(files.first(), 2, 200);
         ensureDetailsScreen();
@@ -436,7 +437,7 @@ public class CreatorCollectionPage extends BasePage {
             }
             // Navigate to details
             try {
-                waitVisible(files.first(), 10000);
+                waitVisible(files.first(), ConfigReader.getShortTimeout());
                 try { files.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
                 clickWithRetry(files.first(), 2, 200);
             } catch (Exception e) {
@@ -580,7 +581,7 @@ public class CreatorCollectionPage extends BasePage {
         try {
             Locator icon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collections icon"));
             if (icon.count() > 0) {
-                waitVisible(icon.first(), 10000);
+                waitVisible(icon.first(), ConfigReader.getShortTimeout());
                 try { icon.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
                 clickWithRetry(icon.first(), 2, 200);
                 return true;
@@ -733,11 +734,11 @@ public class CreatorCollectionPage extends BasePage {
             if (!(del.count() > 0)) {
                 del = page.locator("xpath=(//button[contains(translate(.,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'delete')])[1]");
             }
-            waitVisible(del.first(), 10000);
+            waitVisible(del.first(), ConfigReader.getShortTimeout());
             clickWithRetry(del.first(), 2, 200);
 
             Locator yes = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
-            waitVisible(yes.first(), 10000);
+            waitVisible(yes.first(), ConfigReader.getShortTimeout());
             clickWithRetry(yes.first(), 2, 200);
 
             // Wait for success toast, then click/dismiss (per user code-gen)
@@ -767,7 +768,7 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Verify 'No collection at the moment' empty state is visible")
     public void assertNoCollectionsEmptyState() {
         Locator empty = page.getByText("No collection at the moment");
-        waitVisible(empty.first(), 10000);
+        waitVisible(empty.first(), ConfigReader.getShortTimeout());
     }
 
     // Fast, non-throwing check to determine if the empty-state is visible
@@ -928,7 +929,7 @@ public class CreatorCollectionPage extends BasePage {
         // Apply overlay dismissal before clicking
         clickIUnderstandIfPresent();
         Locator collection = page.getByText(COLLECTION, new Page.GetByTextOptions().setExact(true));
-        waitVisible(collection.first(), 10000);
+        waitVisible(collection.first(), ConfigReader.getShortTimeout());
         clickWithRetry(collection.first(), 2, 200);
         ensureCollectionScreen();
     }
@@ -936,7 +937,7 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Ensure Collection screen visible")
     public void ensureCollectionScreen() {
         Locator title = page.getByText(COLLECTION, new Page.GetByTextOptions().setExact(true));
-        waitVisible(title.first(), 10000);
+        waitVisible(title.first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Fill collection title with unique timestamp for prefix: {prefix}")
@@ -950,7 +951,7 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Click Create collection")
     public void clickCreate() {
         Locator create = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BTN));
-        waitVisible(create.first(), 15000);
+        waitVisible(create.first(), ConfigReader.getVisibilityTimeout());
         // Wait up to 90s for button to become enabled (form validations etc.)
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < 90000) {
@@ -988,12 +989,12 @@ public class CreatorCollectionPage extends BasePage {
         // Preferred: codegen locator IMG[name='add'] used for Add Media
         Locator addImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("add"));
         if (addImg.count() > 0) {
-            waitVisible(addImg.first(), 10000);
+            waitVisible(addImg.first(), ConfigReader.getShortTimeout());
             clickWithRetry(addImg.first(), 2, 200);
         } else {
             // Fallback: legacy plus icon behavior
             Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-            waitVisible(plus.first(), 10000);
+            waitVisible(plus.first(), ConfigReader.getShortTimeout());
             Locator svg = plus.locator("svg");
             if (svg.count() > 0 && svg.first().isVisible()) {
                 clickWithRetry(svg.first(), 2, 200);
@@ -1002,14 +1003,14 @@ public class CreatorCollectionPage extends BasePage {
             }
         }
         // Ensure Importation is displayed
-        waitVisible(page.getByText(IMPORTATION).first(), 10000);
+        waitVisible(page.getByText(IMPORTATION).first(), ConfigReader.getShortTimeout());
     }
 
     // Quick Files helpers
     @Step("Choose 'Quick Files' in Importation dialog")
     public void chooseQuickFiles() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
-        waitVisible(btn.first(), 10000);
+        waitVisible(btn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(btn.first(), 2, 200);
     }
 
@@ -1018,7 +1019,7 @@ public class CreatorCollectionPage extends BasePage {
         // Wait for list/grid to load inside Quick Files modal
         try {
             Locator listAny = page.locator(".ant-list, [role=row], .ant-list-item, .album, .list-item");
-            waitVisible(listAny.first(), 10000);
+            waitVisible(listAny.first(), ConfigReader.getShortTimeout());
         } catch (Exception ignored) {}
 
         // Proactively scroll down in the Quick Files modal to surface albums near the bottom
@@ -1164,7 +1165,7 @@ public class CreatorCollectionPage extends BasePage {
             for (int i = 0; i < iconCount && picked < need; i++) {
                 Locator icon = selectIcons.nth(i);
                 try {
-                    waitVisible(icon, 10000);
+                    waitVisible(icon, ConfigReader.getShortTimeout());
                     try { icon.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
                     clickWithRetry(icon, 1, 120);
                     try { page.waitForTimeout(150); } catch (Exception ignored) {}
@@ -1182,7 +1183,7 @@ public class CreatorCollectionPage extends BasePage {
         if (thumbs.count() == 0) {
             throw new RuntimeException("No media thumbnails found in Quick Files album");
         }
-        waitVisible(thumbs.first(), 10000);
+        waitVisible(thumbs.first(), ConfigReader.getShortTimeout());
         int total = thumbs.count();
         int picked = 0;
         for (int i = 0; i < total && picked < need; i++) {
@@ -1200,7 +1201,7 @@ public class CreatorCollectionPage extends BasePage {
     public void clickSelectInQuickFiles() {
         Locator selectCountBtn = page.locator("text=/^Select \\([0-9]+\\)/");
         if (selectCountBtn.count() > 0) {
-            waitVisible(selectCountBtn.first(), 10000);
+            waitVisible(selectCountBtn.first(), ConfigReader.getShortTimeout());
             clickWithRetry(selectCountBtn.first(), 1, 150);
             return;
         }
@@ -1227,7 +1228,7 @@ public class CreatorCollectionPage extends BasePage {
         // Instead, just ensure the Importation/Add media section is visible; the
         // underlying input[type='file'] will be driven directly by uploadMediaFromDevice.
         Locator importTitle = page.getByText(IMPORTATION);
-        waitVisible(importTitle.first(), 10000);
+        waitVisible(importTitle.first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Upload media from device: {file}")
@@ -1266,7 +1267,7 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Ensure Add media screen displayed and default toggles validated")
     public void ensureAddMediaScreenAndDefaults() {
-        waitVisible(page.getByText(ADD_MEDIA_TITLE).first(), 10000);
+        waitVisible(page.getByText(ADD_MEDIA_TITLE).first(), ConfigReader.getShortTimeout());
         // Ensure blurred media toggle (switch) is present and enabled by default
         Locator switchFirst = page.getByRole(AriaRole.SWITCH).first();
         waitVisible(switchFirst, 5000);
@@ -1284,7 +1285,7 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Click Next in Add media")
     public void clickNext() {
         Locator next = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
-        waitVisible(next.first(), 10000);
+        waitVisible(next.first(), ConfigReader.getShortTimeout());
         clickWithRetry(next.first(), 2, 200);
     }
     
@@ -1317,7 +1318,7 @@ public class CreatorCollectionPage extends BasePage {
     public void setCustomPriceEuro(int euro) {
         // Open custom price control
         Locator zero = page.getByText("0.00 €");
-        waitVisible(zero.first(), 10000);
+        waitVisible(zero.first(), ConfigReader.getShortTimeout());
         clickWithRetry(zero.first(), 1, 150);
         // Fill spinner with the desired value
         Locator spin = page.getByRole(AriaRole.SPINBUTTON);
@@ -1330,7 +1331,7 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Validate collection (submit)")
     public void validateCollection() {
         Locator validate = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(VALIDATE_COLLECTION_BTN));
-        waitVisible(validate.first(), 15000);
+        waitVisible(validate.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(validate.first(), 2, 250);
     }
 
@@ -1409,7 +1410,7 @@ public class CreatorCollectionPage extends BasePage {
         // Finally, assert success toast with a SHORT window after banner disappearance.
         // We intentionally cap the wait to avoid long stalls when success toast is suppressed by the app.
         long remaining = Math.max(1, deadline - System.currentTimeMillis());
-        long capped = Math.min(remaining, 10_000); // cap at 10s
+        long capped = Math.min(remaining, ConfigReader.getShortTimeout()); // cap at short timeout
         try {
             waitVisible(success.first(), capped);
             try { clickWithRetry(success.first(), 1, 150); } catch (Exception ignored) {}

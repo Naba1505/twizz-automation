@@ -32,7 +32,7 @@ public class CreatorPublicationPage extends BasePage {
 
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plusImg, 15000);
+        waitVisible(plusImg, ConfigReader.getVisibilityTimeout());
         clickWithRetry(plusImg, 2, 300);
         handleConversionPromptIfPresent();
         logger.info("Opened plus menu");
@@ -68,7 +68,7 @@ public class CreatorPublicationPage extends BasePage {
 
     public void ensurePublicationsScreen() {
         Locator pubs = page.getByText(PUBLICATIONS_TEXT);
-        waitVisible(pubs, 20000);
+        waitVisible(pubs, ConfigReader.getVisibilityTimeout());
         logger.info("Publications screen visible");
     }
 
@@ -85,7 +85,7 @@ public class CreatorPublicationPage extends BasePage {
         }
         // Otherwise, click plus button and use FileChooser
         Locator plusButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plusButton, 15000);
+        waitVisible(plusButton, ConfigReader.getVisibilityTimeout());
         FileChooser chooser = page.waitForFileChooser(() -> plusButton.click());
         chooser.setFiles(mediaPath);
         logger.info("Uploaded media via FileChooser: {}", mediaPath);
@@ -93,14 +93,14 @@ public class CreatorPublicationPage extends BasePage {
 
     public void openCaptionEditor() {
         Locator openCaption = page.getByText(CAPTION_PLACEHOLDER);
-        waitVisible(openCaption, 15000);
+        waitVisible(openCaption, ConfigReader.getVisibilityTimeout());
         clickWithRetry(openCaption, 2, 200);
         logger.info("Opened caption editor");
     }
 
     public void ensureCaptionPopupVisible() {
         Locator captionTitle = page.getByText(CAPTION_TITLE_TEXT, new Page.GetByTextOptions().setExact(true));
-        waitVisible(captionTitle, 20000);
+        waitVisible(captionTitle, ConfigReader.getVisibilityTimeout());
         logger.info("Caption popup is visible");
     }
 
@@ -111,14 +111,14 @@ public class CreatorPublicationPage extends BasePage {
 
     public void clickCaptionOk() {
         Locator ok = page.getByText(CAPTION_OK_TEXT, new Page.GetByTextOptions().setExact(true));
-        waitVisible(ok, 10000);
+        waitVisible(ok, ConfigReader.getShortTimeout());
         clickWithRetry(ok, 2, 200);
         logger.info("Clicked CaptionOK");
     }
 
     public void ensureBlurSwitchEnabled() {
         Locator sw = page.getByRole(AriaRole.SWITCH);
-        waitVisible(sw, 10000);
+        waitVisible(sw, ConfigReader.getShortTimeout());
         String ariaChecked = sw.getAttribute("aria-checked");
         if (!"true".equalsIgnoreCase(ariaChecked)) {
             logger.warn("Blur switch not enabled by default. Enabling now.");
@@ -130,14 +130,14 @@ public class CreatorPublicationPage extends BasePage {
 
     private boolean getBlurSwitchState() {
         Locator sw = page.getByRole(AriaRole.SWITCH);
-        waitVisible(sw, 10000);
+        waitVisible(sw, ConfigReader.getShortTimeout());
         String ariaChecked = sw.getAttribute("aria-checked");
         return "true".equalsIgnoreCase(ariaChecked);
     }
 
     public void setBlurEnabled(boolean enabled) {
         Locator sw = page.getByRole(AriaRole.SWITCH);
-        waitVisible(sw, 10000);
+        waitVisible(sw, ConfigReader.getShortTimeout());
         boolean current = getBlurSwitchState();
         if (current != enabled) {
             logger.info("Toggling blur switch to {}", enabled);
@@ -155,7 +155,7 @@ public class CreatorPublicationPage extends BasePage {
         } catch (Exception ignored) {
         }
         // Use a shorter enable wait with retries
-        waitForPublishEnabled(publishBtn, 20000);
+        waitForPublishEnabled(publishBtn, ConfigReader.getVisibilityTimeout());
         clickWithRetry(publishBtn, 2, 200);
         // Do not wait for page load state here; SPA may not trigger it. Success toast wait happens later.
         logger.info("Clicked Publish");
@@ -320,7 +320,7 @@ public class CreatorPublicationPage extends BasePage {
 // Verify Publications screen by presence of 'Publications' text
 public void verifyPublicationsScreen() {
     Locator publicationsTitle = page.getByText(PUBLICATIONS_TEXT);
-    waitVisible(publicationsTitle, 20000);
+    waitVisible(publicationsTitle, ConfigReader.getVisibilityTimeout());
     logger.info("Publications screen visible");
 }
 
@@ -369,7 +369,7 @@ public void deleteOnePublication() {
     if (fanPost.count() > 0 && fanPost.isVisible()) {
       clickWithRetry(fanPost, 2, 200);
       logger.info("Opened first fan profile post");
-      waitVisible(actionBtn, 10000);
+      waitVisible(actionBtn, ConfigReader.getShortTimeout());
       clickWithRetry(actionBtn, 2, 200);
       confirmDeletionPopup();
       return;
@@ -380,9 +380,9 @@ public void deleteOnePublication() {
 
 private void confirmDeletionPopup() {
     Locator confirmText = page.getByText("Do you really want to delete a publication?");
-    waitVisible(confirmText, 10000);
+    waitVisible(confirmText, ConfigReader.getShortTimeout());
     Locator yesDelete = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
-    waitVisible(yesDelete, 10000);
+    waitVisible(yesDelete, ConfigReader.getShortTimeout());
     clickWithRetry(yesDelete, 2, 200);
     logger.info("Confirmed publication deletion");
     try { page.waitForTimeout(600); } catch (Exception ignored) {}

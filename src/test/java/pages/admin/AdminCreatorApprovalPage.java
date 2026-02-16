@@ -143,8 +143,8 @@ public class AdminCreatorApprovalPage extends BasePage {
             try { page.waitForTimeout(1000); } catch (Exception ignored) {}
         }
         // Final attempt to ensure elements
-        try { waitVisible(logo.first(), 10_000); } catch (Throwable ignored) {}
-        try { waitVisible(creatorsMenu, 10_000); } catch (Throwable ignored) {}
+        try { waitVisible(logo.first(), ConfigReader.getVisibilityTimeout()); } catch (Throwable ignored) {}
+        try { waitVisible(creatorsMenu, ConfigReader.getVisibilityTimeout()); } catch (Throwable ignored) {}
     }
 
     public void waitForCreatorsShellVisible() {
@@ -169,24 +169,24 @@ public class AdminCreatorApprovalPage extends BasePage {
     public void waitForDashboardReady() {
         log.info("Waiting for admin dashboard to be ready (Creators menu visible)");
         Locator creatorsMenu = page.locator("span").filter(new Locator.FilterOptions().setHasText("Creators")).first();
-        waitVisible(creatorsMenu, 30_000);
+        waitVisible(creatorsMenu, ConfigReader.getVisibilityTimeout());
         waitForIdle();
     }
 
     public void waitForLogo() {
         log.info("Waiting for admin logo to be visible");
         Locator logo = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("logo"));
-        waitVisible(logo.first(), 60_000);
+        waitVisible(logo.first(), ConfigReader.getVisibilityTimeout());
         waitForHeavyLoadToSettle();
     }
 
     public void openCreatorsAll() {
         log.info("Navigating to Creators > All creators");
         Locator creatorsMenu = page.locator("span").filter(new Locator.FilterOptions().setHasText("Creators")).first();
-        waitVisible(creatorsMenu, 60_000);
+        waitVisible(creatorsMenu, ConfigReader.getVisibilityTimeout());
         clickWithRetry(creatorsMenu, 2, 400);
         Locator allCreators = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("All creators"));
-        waitVisible(allCreators.first(), 30_000);
+        waitVisible(allCreators.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(allCreators.first(), 2, 300);
         waitForHeavyLoadToSettle();
         waitForIdle();
@@ -256,7 +256,7 @@ public class AdminCreatorApprovalPage extends BasePage {
         if (search.count() == 0) {
             throw new RuntimeException("Search textbox with placeholder 'Enter keyword' not found (page or iframes). Check UI changes or adjust locator.");
         }
-        waitVisible(search, 60_000);
+        waitVisible(search, ConfigReader.getVisibilityTimeout());
         try { search.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         // Wait until enabled
         int guard = 0;
@@ -308,10 +308,10 @@ public class AdminCreatorApprovalPage extends BasePage {
     public void openActionEdit() {
         log.info("Opening Action menu (global) and clicking Edit/Update");
         Locator action = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Action down"));
-        waitVisible(action.first(), 10_000);
+        waitVisible(action.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(action.first(), 2, 300);
         Locator edit = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("edit Update"));
-        waitVisible(edit.first(), 10_000);
+        waitVisible(edit.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(edit.first(), 2, 300);
     }
 
@@ -322,11 +322,11 @@ public class AdminCreatorApprovalPage extends BasePage {
         // Try table row first
         Locator row = page.locator("tr").filter(new Locator.FilterOptions().setHasText(username)).first();
         try {
-            waitVisible(row, 45_000);
+            waitVisible(row, ConfigReader.getVisibilityTimeout());
         } catch (RuntimeException e) {
             // Fallback to role-based row
             row = page.getByRole(AriaRole.ROW, new Page.GetByRoleOptions().setName(username)).first();
-            waitVisible(row, 45_000);
+            waitVisible(row, ConfigReader.getVisibilityTimeout());
         }
         waitForIdle();
     }
@@ -337,19 +337,19 @@ public class AdminCreatorApprovalPage extends BasePage {
         if (row.count() == 0 || !safeIsVisible(row)) {
             row = page.getByRole(AriaRole.ROW, new Page.GetByRoleOptions().setName(username)).first();
         }
-        waitVisible(row, 15_000);
+        waitVisible(row, ConfigReader.getVisibilityTimeout());
         Locator actionBtn = row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Action down"));
         if (actionBtn.count() == 0) {
             actionBtn = row.locator("button").filter(new Locator.FilterOptions().setHasText("Action"));
         }
-        waitVisible(actionBtn.first(), 10_000);
+        waitVisible(actionBtn.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(actionBtn.first(), 2, 400);
 
         Locator editLink = row.getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName("edit Update"));
         if (editLink.count() == 0) {
             editLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("edit Update"));
         }
-        waitVisible(editLink.first(), 10_000);
+        waitVisible(editLink.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(editLink.first(), 2, 400);
     }
 
@@ -357,10 +357,10 @@ public class AdminCreatorApprovalPage extends BasePage {
         log.info("Toggling Verified Email and Verified Account, and setting status Registered");
         Locator emailSwitch = page.getByRole(AriaRole.SWITCH, new Page.GetByRoleOptions().setName("Verified Email?"));
         Locator accountSwitch = page.getByRole(AriaRole.SWITCH, new Page.GetByRoleOptions().setName("Verified Account?"));
-        waitVisible(emailSwitch.first(), 30_000);
+        waitVisible(emailSwitch.first(), ConfigReader.getVisibilityTimeout());
         try { emailSwitch.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(emailSwitch.first(), 2, 200);
-        waitVisible(accountSwitch.first(), 30_000);
+        waitVisible(accountSwitch.first(), ConfigReader.getVisibilityTimeout());
         try { accountSwitch.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(accountSwitch.first(), 2, 200);
         // Open the status dropdown by clicking the current value (e.g., "Pending")
@@ -369,18 +369,18 @@ public class AdminCreatorApprovalPage extends BasePage {
             // Fallback to any visible element with text Pending
             statusCurrent = page.getByText("Pending").first();
         }
-        waitVisible(statusCurrent, 30_000);
+        waitVisible(statusCurrent, ConfigReader.getVisibilityTimeout());
         clickWithRetry(statusCurrent, 2, 200);
 
         // Wait for dropdown panel and click the Registered option within the open dropdown
         Locator dropdown = page.locator("//div[contains(@class,'ant-select-dropdown') and contains(@class,'ant-select-dropdown-placement-bottom')]");
-        try { waitVisible(dropdown.first(), 10_000); } catch (Throwable ignored) {}
+        try { waitVisible(dropdown.first(), ConfigReader.getVisibilityTimeout()); } catch (Throwable ignored) {}
         Locator registeredOption = page.locator("//div[contains(@class,'ant-select-dropdown')]//div[contains(@class,'ant-select-item')][.//div[normalize-space(text())='Registered' or contains(normalize-space(.), 'Registered')]]").first();
         if (registeredOption.count() == 0) {
             // Fallback by role if available
             registeredOption = page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName("Registered")).first();
         }
-        waitVisible(registeredOption, 30_000);
+        waitVisible(registeredOption, ConfigReader.getVisibilityTimeout());
         clickWithRetry(registeredOption, 2, 200);
         waitForHeavyLoadToSettle();
     }
@@ -391,10 +391,10 @@ public class AdminCreatorApprovalPage extends BasePage {
         // Prefer any toast/popup containing the success message without relying on fixed index
         Locator successAny = page.locator("//*[contains(normalize-space(text()), 'Updated successfully')] ");
         try {
-            waitVisible(successAny.first(), 60_000);
+            waitVisible(successAny.first(), ConfigReader.getDefaultTimeout());
         } catch (RuntimeException e) {
             Locator successFallback = page.getByText("Updated successfully");
-            waitVisible(successFallback.first(), 60_000);
+            waitVisible(successFallback.first(), ConfigReader.getDefaultTimeout());
         }
     }
 }

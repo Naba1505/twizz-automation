@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -101,7 +102,7 @@ public class CreatorUnlockHistoryPage extends BasePage {
 
     @Step("Assert Details screen is visible")
     public void assertDetailsVisible() {
-        waitVisible(detailsTitle(), 30_000);
+        waitVisible(detailsTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Navigate back via arrow left")

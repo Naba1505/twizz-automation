@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -369,7 +370,7 @@ public class CreatorPromotionsPage extends BasePage {
 
     @Step("Assert promo created toasts visible")
     public void assertPromoCreatedToasts() {
-        waitVisible(promoCreatedToast(), 15_000);
+        waitVisible(promoCreatedToast(), ConfigReader.getVisibilityTimeout());
         // Try to wait for min price toast but don't fail if it doesn't appear
         try {
             waitVisible(minPriceToast(), 3_000);
@@ -383,7 +384,7 @@ public class CreatorPromotionsPage extends BasePage {
 
     @Step("Assert promo created success toast visible")
     public void assertPromoCreatedSuccessOnly() {
-        waitVisible(promoCreatedToast(), 15_000);
+        waitVisible(promoCreatedToast(), ConfigReader.getVisibilityTimeout());
         try { clickWithRetry(promoCreatedToast(), 0, 0); } catch (Throwable ignored) {}
     }
 

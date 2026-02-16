@@ -25,7 +25,7 @@ public class FanRegistrationTest extends BaseTestClass {
 
         // Assert Home icon is visible as success indicator (fan may land on /fan/home or /common/discover)
         Locator homeIcon = page.getByRole(AriaRole.IMG, new com.microsoft.playwright.Page.GetByRoleOptions().setName("Home icon"));
-        homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(20000).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+        homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
         Assert.assertTrue(homeIcon.first().isVisible(), "Fan did not land on home after registration - Home icon not visible. Actual URL: " + page.url());
     }
 }

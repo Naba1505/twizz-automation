@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,7 +37,7 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Open plus menu on creator screen")
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plusImg.first(), 15000);
+        waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && svg.first().isVisible()) {
             clickWithRetry(svg.first(), 2, 200);
@@ -49,7 +50,7 @@ public class CreatorMediaPushPage extends BasePage {
     public void ensureOptionsPopup() {
         // Proactively dismiss blocking dialog if present
         clickIUnderstandIfPresent();
-        waitVisible(page.getByText(WHAT_DO_YOU_WANT).first(), 15000);
+        waitVisible(page.getByText(WHAT_DO_YOU_WANT).first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Dismiss 'I understand' dialog if present")
@@ -85,26 +86,26 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Choose Media push from options")
     public void chooseMediaPush() {
         Locator mp = page.getByText(MEDIA_PUSH);
-        waitVisible(mp.first(), 10000);
+        waitVisible(mp.first(), ConfigReader.getShortTimeout());
         clickWithRetry(mp.first(), 2, 200);
     }
 
     @Step("Ensure Media Push segments screen visible")
     public void ensureSegmentsScreen() {
-        waitVisible(page.getByText(SELECT_SEGMENTS).first(), 15000);
+        waitVisible(page.getByText(SELECT_SEGMENTS).first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Select Subscribers segment")
     public void selectSubscribersSegment() {
         Locator seg = page.getByText(SUBSCRIBERS);
-        waitVisible(seg.first(), 10000);
+        waitVisible(seg.first(), ConfigReader.getShortTimeout());
         clickWithRetry(seg.first(), 1, 150);
     }
 
     @Step("Select Interested segment")
     public void selectInterestedSegment() {
         Locator seg = page.getByText("Interested");
-        waitVisible(seg.first(), 10000);
+        waitVisible(seg.first(), ConfigReader.getShortTimeout());
         clickWithRetry(seg.first(), 1, 150);
     }
 
@@ -112,20 +113,20 @@ public class CreatorMediaPushPage extends BasePage {
     public void selectFormerSubscriberSegment() {
         // Use label text as in codegen: "Former Subscriber1"
         Locator seg = page.locator("label").filter(new Locator.FilterOptions().setHasText("Former Subscriber1"));
-        waitVisible(seg.first(), 10000);
+        waitVisible(seg.first(), ConfigReader.getShortTimeout());
         clickWithRetry(seg.first(), 1, 150);
     }
 
     @Step("Click Create to proceed from segments")
     public void clickCreateNext() {
         Locator create = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BTN));
-        waitVisible(create.first(), 15000);
+        waitVisible(create.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(create.first(), 2, 200);
     }
 
     @Step("Ensure Add Push Media screen visible")
     public void ensureAddPushMediaScreen() {
-        waitVisible(page.getByText(ADD_MEDIA_HINT).first(), 15000);
+        waitVisible(page.getByText(ADD_MEDIA_HINT).first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Click PLUS to add media")
@@ -134,20 +135,20 @@ public class CreatorMediaPushPage extends BasePage {
         if (plus.count() == 0) {
             plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         }
-        waitVisible(plus.first(), 10000);
+        waitVisible(plus.first(), ConfigReader.getShortTimeout());
         clickWithRetry(plus.first(), 2, 200);
     }
 
     @Step("Ensure Importation dialog visible")
     public void ensureImportation() {
-        waitVisible(page.getByText(IMPORTATION).first(), 10000);
+        waitVisible(page.getByText(IMPORTATION).first(), ConfigReader.getShortTimeout());
     }
 
     // Quick Files helpers (parity with Collection page)
     @Step("Choose 'Quick Files' in Importation dialog")
     public void chooseQuickFiles() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
-        waitVisible(btn.first(), 10000);
+        waitVisible(btn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(btn.first(), 2, 200);
     }
 
@@ -168,7 +169,7 @@ public class CreatorMediaPushPage extends BasePage {
 
         if (mixAlbumBtn.count() > 0) {
             Locator target = mixAlbumBtn.first();
-            waitVisible(target, 10000);
+            waitVisible(target, ConfigReader.getShortTimeout());
             try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
             clickWithRetry(target, 1, 150);
             return;
@@ -182,7 +183,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
 
         if (albums.count() > 0) {
-            waitVisible(albums.first(), 10000);
+            waitVisible(albums.first(), ConfigReader.getShortTimeout());
             Locator firstAlbum = albums.first();
             try { firstAlbum.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
             clickWithRetry(firstAlbum, 1, 150);
@@ -192,7 +193,7 @@ public class CreatorMediaPushPage extends BasePage {
         // Fallback 2: any reasonably album-like row
         Locator anyAlbum = page.locator("[role=row], .ant-list-item, .album, .list-item");
         if (anyAlbum.count() > 0) {
-            waitVisible(anyAlbum.first(), 10000);
+            waitVisible(anyAlbum.first(), ConfigReader.getShortTimeout());
             clickWithRetry(anyAlbum.first(), 1, 150);
             return;
         }
@@ -230,7 +231,7 @@ public class CreatorMediaPushPage extends BasePage {
         if (count == 0) {
             throw new RuntimeException("No media items found in Quick Files album (no .select-quick-file-media-thumb, div.select-quick-file-media-item, .cover or generic card/image elements)");
         }
-        waitVisible(covers.first(), 10000);
+        waitVisible(covers.first(), ConfigReader.getShortTimeout());
 
         int need = Math.max(1, n);
         int total = count;
@@ -370,7 +371,7 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Ensure blur toggle is enabled by default")
     public void ensureBlurToggleEnabled() {
         Locator sw = page.getByRole(AriaRole.SWITCH).first();
-        waitVisible(sw, 10000);
+        waitVisible(sw, ConfigReader.getShortTimeout());
         try {
             String checked = sw.getAttribute("aria-checked");
             if (!"true".equalsIgnoreCase(checked)) {
@@ -382,7 +383,7 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Disable blur toggle if currently enabled")
     public void disableBlurIfEnabled() {
         Locator sw = page.getByRole(AriaRole.SWITCH).first();
-        waitVisible(sw, 10000);
+        waitVisible(sw, ConfigReader.getShortTimeout());
         try {
             String checked = sw.getAttribute("aria-checked");
             if ("true".equalsIgnoreCase(checked)) {
@@ -397,7 +398,7 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Ensure blur toggle is disabled")
     public void ensureBlurToggleDisabled() {
         Locator sw = page.getByRole(AriaRole.SWITCH).first();
-        waitVisible(sw, 10000);
+        waitVisible(sw, ConfigReader.getShortTimeout());
         String checked = sw.getAttribute("aria-checked");
         if (!"false".equalsIgnoreCase(checked)) {
             logger.warn("Expected blur toggle disabled but aria-checked={}", checked);
@@ -407,7 +408,7 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Click Next")
     public void clickNext() {
         Locator next = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
-        waitVisible(next.first(), 10000);
+        waitVisible(next.first(), ConfigReader.getShortTimeout());
         clickWithRetry(next.first(), 2, 200);
     }
 
@@ -415,13 +416,13 @@ public class CreatorMediaPushPage extends BasePage {
     public void ensureMessageTitle() {
         // UI updated: message field is now a textbox with accessible name placeholder
         Locator ph = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(MESSAGE_PLACEHOLDER));
-        waitVisible(ph.first(), 15000);
+        waitVisible(ph.first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Fill message: {msg}")
     public void fillMessage(String msg) {
         Locator ph = page.getByPlaceholder(MESSAGE_PLACEHOLDER);
-        waitVisible(ph.first(), 10000);
+        waitVisible(ph.first(), ConfigReader.getShortTimeout());
         ph.first().click();
         ph.first().fill(msg == null ? "" : msg);
     }
@@ -431,7 +432,7 @@ public class CreatorMediaPushPage extends BasePage {
         // For 15€, match label text via regex like ^15€$
         String regex = "^" + euros + "€$";
         Locator label = page.locator("label").filter(new Locator.FilterOptions().setHasText(Pattern.compile(regex)));
-        waitVisible(label.first(), 10000);
+        waitVisible(label.first(), ConfigReader.getShortTimeout());
         clickWithRetry(label.first(), 1, 150);
     }
 
@@ -458,7 +459,7 @@ public class CreatorMediaPushPage extends BasePage {
         } else {
             target = toggles.first();
         }
-        waitVisible(target, 10000);
+        waitVisible(target, ConfigReader.getShortTimeout());
         // Click only if not already enabled
         try {
             String checked = target.getAttribute("aria-checked");
@@ -472,13 +473,13 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Ensure 'Discount' label visible")
     public void ensureDiscountVisible() {
-        waitVisible(page.getByText("Discount").first(), 10000);
+        waitVisible(page.getByText("Discount").first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open discount percent field")
     public void openDiscountPercentField() {
         Locator percentSpan = page.locator("span").filter(new Locator.FilterOptions().setHasText(Pattern.compile("%")));
-        waitVisible(percentSpan.first(), 10000);
+        waitVisible(percentSpan.first(), ConfigReader.getShortTimeout());
         clickWithRetry(percentSpan.first(), 1, 150);
     }
 
@@ -486,26 +487,26 @@ public class CreatorMediaPushPage extends BasePage {
     public void fillDiscountPercent(int percent) {
         // Based on UI, the discount textbox appears as the third textbox (index 2)
         Locator tb = page.getByRole(AriaRole.TEXTBOX).nth(2);
-        waitVisible(tb, 10000);
+        waitVisible(tb, ConfigReader.getShortTimeout());
         tb.fill(String.valueOf(percent));
     }
 
     @Step("Ensure 'Validity period' title visible")
     public void ensureValidityTitle() {
-        waitVisible(page.getByText("Validity period").first(), 10000);
+        waitVisible(page.getByText("Validity period").first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Select validity as 'Unlimited'")
     public void selectValidityUnlimited() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("Unlimited"));
-        waitVisible(lbl.first(), 10000);
+        waitVisible(lbl.first(), ConfigReader.getShortTimeout());
         clickWithRetry(lbl.first(), 1, 150);
     }
 
     @Step("Open euro discount field")
     public void openEuroDiscountField() {
         Locator euroSpan = page.locator("span").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^€$")));
-        waitVisible(euroSpan.first(), 10000);
+        waitVisible(euroSpan.first(), ConfigReader.getShortTimeout());
         clickWithRetry(euroSpan.first(), 1, 150);
     }
 
@@ -513,35 +514,35 @@ public class CreatorMediaPushPage extends BasePage {
     public void fillEuroDiscountEuro(int amount) {
         // Based on UI hint: euro discount textbox appears as index 1
         Locator tb = page.getByRole(AriaRole.TEXTBOX).nth(1);
-        waitVisible(tb, 10000);
+        waitVisible(tb, ConfigReader.getShortTimeout());
         tb.fill(String.valueOf(amount));
     }
 
     @Step("Select validity as '7 days'")
     public void selectValidity7Days() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("7 days"));
-        waitVisible(lbl.first(), 10000);
+        waitVisible(lbl.first(), ConfigReader.getShortTimeout());
         clickWithRetry(lbl.first(), 1, 150);
     }
 
     @Step("Open custom price field (0.00 €)")
     public void openCustomPriceField() {
         Locator zeroPrice = page.getByText("0.00 €");
-        waitVisible(zeroPrice.first(), 10000);
+        waitVisible(zeroPrice.first(), ConfigReader.getShortTimeout());
         clickWithRetry(zeroPrice.first(), 1, 150);
     }
 
     @Step("Fill custom price euros: {amount}€")
     public void fillCustomPriceEuro(int amount) {
         Locator spin = page.getByRole(AriaRole.SPINBUTTON);
-        waitVisible(spin.first(), 10000);
+        waitVisible(spin.first(), ConfigReader.getShortTimeout());
         spin.first().fill(String.valueOf(amount));
     }
 
     @Step("Select price as 'Free'")
     public void selectPriceFree() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("Free"));
-        waitVisible(lbl.first(), 10000);
+        waitVisible(lbl.first(), ConfigReader.getShortTimeout());
         clickWithRetry(lbl.first(), 1, 150);
     }
 
@@ -560,7 +561,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
         Locator first = btn.first();
         try {
-            waitVisible(first, 15000);
+            waitVisible(first, ConfigReader.getVisibilityTimeout());
         } catch (Exception e) {
             logger.warn("[MediaPush] 'Propose push media' button not visible within timeout; attempting click anyway", e);
         }
@@ -580,7 +581,7 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Assert landed on Messaging screen")
     public void assertOnMessagingScreen() {
-        waitVisible(page.getByText(MESSAGING_TITLE).first(), 60000);
+        waitVisible(page.getByText(MESSAGING_TITLE).first(), ConfigReader.getDefaultTimeout());
     }
 }
 

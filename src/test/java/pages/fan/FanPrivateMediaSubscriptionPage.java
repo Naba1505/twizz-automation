@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.util.regex.Pattern;
 
@@ -88,7 +89,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
 
     @Step("Assert Search icon is visible on dashboard")
     public void assertSearchIconVisible() {
-        waitVisible(searchIcon(), 15_000);
+        waitVisible(searchIcon(), ConfigReader.getVisibilityTimeout());
         logger.info("[FanPrivMedia] Search icon is visible on dashboard");
     }
 
@@ -102,7 +103,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Search for creator: {creatorUsername}")
     public void searchCreator(String creatorUsername) {
         Locator search = searchBox();
-        waitVisible(search, 10_000);
+        waitVisible(search, ConfigReader.getShortTimeout());
         search.fill(creatorUsername);
         page.waitForTimeout(1500);
         logger.info("[FanPrivMedia] Filled search with: {}", creatorUsername);
@@ -111,7 +112,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Click on creator search result: {creatorUsername}")
     public void clickCreatorResult(String creatorUsername) {
         Locator result = page.getByText(creatorUsername);
-        waitVisible(result.first(), 10_000);
+        waitVisible(result.first(), ConfigReader.getShortTimeout());
         clickWithRetry(result.first(), 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanPrivMedia] Clicked on creator result: {}", creatorUsername);
@@ -143,7 +144,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Click Subscribe button")
     public void clickSubscribe() {
         Locator btn = subscribeButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         dismissOverlay();
         clickWithRetry(btn, 2, 300);
@@ -153,7 +154,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
 
     @Step("Assert 'Subscription is free when' text is visible")
     public void assertFreeSubscriptionTextVisible() {
-        waitVisible(page.getByText("Subscription is free when"), 10_000);
+        waitVisible(page.getByText("Subscription is free when"), ConfigReader.getShortTimeout());
         logger.info("[FanPrivMedia] 'Subscription is free when' text is visible");
     }
 
@@ -161,7 +162,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     public void clickRequestPrivateMedia() {
         dismissOverlay();
         Locator btn = requestPrivateMediaButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanPrivMedia] Clicked 'Request private media' button");
@@ -170,7 +171,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Assert on creator message conversation screen and click message box")
     public void assertOnMessageScreen() {
         Locator msgBox = yourMessageTextbox();
-        waitVisible(msgBox, 15_000);
+        waitVisible(msgBox, ConfigReader.getVisibilityTimeout());
         msgBox.click();
         logger.info("[FanPrivMedia] On creator message conversation screen - message box visible");
     }
@@ -178,7 +179,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Send message: {message}")
     public void sendMessage(String message) {
         Locator msgBox = yourMessageTextbox();
-        waitVisible(msgBox, 10_000);
+        waitVisible(msgBox, ConfigReader.getShortTimeout());
         msgBox.fill(message);
         // Press Enter to send
         msgBox.press("Enter");
@@ -190,12 +191,12 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     public void assertPriceRowAndAccept() {
         // Wait for price row to appear (creator has sent the price)
         Locator priceRow = page.locator(".ant-row.priceRow");
-        waitVisible(priceRow.first(), 60_000);
+        waitVisible(priceRow.first(), ConfigReader.getVisibilityTimeout());
         logger.info("[FanPrivMedia] Price row is visible");
 
         // Click Accept
         Locator accept = acceptButton();
-        waitVisible(accept, 10_000);
+        waitVisible(accept, ConfigReader.getShortTimeout());
         clickWithRetry(accept, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanPrivMedia] Clicked Accept on price from creator");
@@ -203,14 +204,14 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
 
     @Step("Assert 'Secure payment' screen is visible")
     public void assertSecurePaymentVisible() {
-        waitVisible(securePaymentText(), 15_000);
+        waitVisible(securePaymentText(), ConfigReader.getVisibilityTimeout());
         logger.info("[FanPrivMedia] 'Secure payment' screen is visible");
     }
 
     @Step("Fill card number: {cardNumber}")
     public void fillCardNumber(String cardNumber) {
         Locator field = cardNumberField();
-        waitVisible(field, 10_000);
+        waitVisible(field, ConfigReader.getShortTimeout());
         field.click();
         field.fill(cardNumber);
         logger.info("[FanPrivMedia] Filled card number");
@@ -226,7 +227,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Fill expiry: {expiry}")
     public void fillExpiry(String expiry) {
         Locator field = expiryField();
-        waitVisible(field, 10_000);
+        waitVisible(field, ConfigReader.getShortTimeout());
         field.click();
         field.fill(expiry);
         logger.info("[FanPrivMedia] Filled expiry");
@@ -235,7 +236,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Fill CVC: {cvc}")
     public void fillCvc(String cvc) {
         Locator field = cvcField();
-        waitVisible(field, 10_000);
+        waitVisible(field, ConfigReader.getShortTimeout());
         field.click();
         field.fill(cvc);
         logger.info("[FanPrivMedia] Filled CVC");
@@ -253,7 +254,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Click Confirm button")
     public void clickConfirm() {
         Locator btn = confirmButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanPrivMedia] Clicked Confirm button");
@@ -316,7 +317,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
             try {
                 if (!threeDSPage.isClosed()) {
                     Locator okBtn = threeDSPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Everything is OK"));
-                    okBtn.waitFor(new Locator.WaitForOptions().setTimeout(15_000));
+                    okBtn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
                     if (okBtn.count() > 0 && safeIsVisible(okBtn.first())) {
                         clickWithRetry(okBtn.first(), 1, 150);
                         logger.info("[FanPrivMedia] Clicked 'Everything is OK' on 3DS page");
@@ -360,7 +361,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     public void clickTwizzMessagesIcon() {
         dismissOverlay();
         Locator icon = twizzMessagesIcon();
-        waitVisible(icon, 10_000);
+        waitVisible(icon, ConfigReader.getShortTimeout());
         clickWithRetry(icon, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanPrivMedia] Clicked Twizz messages icon");
@@ -370,7 +371,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     public void clickSettingsIcon() {
         dismissOverlay();
         Locator icon = settingsIcon();
-        waitVisible(icon, 10_000);
+        waitVisible(icon, ConfigReader.getShortTimeout());
         clickWithRetry(icon, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanPrivMedia] Clicked Settings icon");
@@ -379,7 +380,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Click 'My creators' menu item")
     public void clickMyCreators() {
         Locator myCreators = page.getByText("My creators");
-        waitVisible(myCreators, 10_000);
+        waitVisible(myCreators, ConfigReader.getShortTimeout());
         clickWithRetry(myCreators, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanPrivMedia] Clicked 'My creators'");
@@ -388,7 +389,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Assert creator '{creatorName}' is displayed in My creators")
     public void assertCreatorDisplayed(String creatorName) {
         Locator creator = page.getByText(creatorName);
-        waitVisible(creator.first(), 15_000);
+        waitVisible(creator.first(), ConfigReader.getVisibilityTimeout());
         logger.info("[FanPrivMedia] Creator '{}' is displayed in My creators - subscription confirmed!", creatorName);
     }
 }

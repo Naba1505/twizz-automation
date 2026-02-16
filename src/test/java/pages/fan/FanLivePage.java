@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -39,7 +40,7 @@ public class FanLivePage extends BasePage {
     @Step("Click on Live icon from home screen")
     public void clickLiveIcon() {
         Locator liveIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(LIVE_ICON_NAME));
-        waitVisible(liveIcon.first(), 15_000);
+        waitVisible(liveIcon.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(liveIcon.first(), 2, 200);
         logger.info("[Fan][Live] Clicked on Live icon");
     }
@@ -47,14 +48,14 @@ public class FanLivePage extends BasePage {
     @Step("Ensure on Lives screen by verifying title")
     public void assertOnLivesScreen() {
         Locator livesTitle = page.getByText(LIVES_TITLE);
-        waitVisible(livesTitle.first(), 15_000);
+        waitVisible(livesTitle.first(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Live] On Lives screen - title visible");
     }
 
     @Step("Click on Live tab")
     public void clickLiveTab() {
         Locator liveTab = page.getByText(LIVE_TEXT_EXACT, new Page.GetByTextOptions().setExact(true));
-        waitVisible(liveTab.first(), 10_000);
+        waitVisible(liveTab.first(), ConfigReader.getShortTimeout());
         clickWithRetry(liveTab.first(), 2, 200);
         logger.info("[Fan][Live] Clicked on Live tab");
     }
@@ -62,7 +63,7 @@ public class FanLivePage extends BasePage {
     @Step("Click on Events tab")
     public void clickEventsTab() {
         Locator eventsTab = page.getByText("Events", new Page.GetByTextOptions().setExact(true));
-        waitVisible(eventsTab.first(), 10_000);
+        waitVisible(eventsTab.first(), ConfigReader.getShortTimeout());
         clickWithRetry(eventsTab.first(), 2, 200);
         page.waitForTimeout(2000); // Wait for events to load
         logger.info("[Fan][Live] Clicked on Events tab");
@@ -81,14 +82,14 @@ public class FanLivePage extends BasePage {
     @Step("Verify creator name '{creatorName}' is displayed on live tile")
     public void assertCreatorOnLiveTile(String creatorName) {
         Locator creatorText = page.getByText(creatorName).first();
-        waitVisible(creatorText, 15_000);
+        waitVisible(creatorText, ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Live] Creator '{}' visible on live tile", creatorName);
     }
 
     @Step("Click 'Go to live' button")
     public void clickGoToLive() {
         Locator goToLiveBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GO_TO_LIVE_BTN)).first();
-        waitVisible(goToLiveBtn, 15_000);
+        waitVisible(goToLiveBtn, ConfigReader.getVisibilityTimeout());
         clickWithRetry(goToLiveBtn, 2, 200);
         logger.info("[Fan][Live] Clicked 'Go to live' button");
     }
@@ -98,7 +99,7 @@ public class FanLivePage extends BasePage {
     @Step("Select payment card")
     public void selectPaymentCard() {
         Locator selectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SELECT_BTN));
-        waitVisible(selectBtn.first(), 15_000);
+        waitVisible(selectBtn.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(selectBtn.first(), 2, 200);
         logger.info("[Fan][Live] Selected payment card");
     }
@@ -106,7 +107,7 @@ public class FanLivePage extends BasePage {
     @Step("Confirm payment")
     public void confirmPayment() {
         Locator confirmBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CONFIRM_BTN));
-        waitVisible(confirmBtn.first(), 15_000);
+        waitVisible(confirmBtn.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(confirmBtn.first(), 2, 200);
         logger.info("[Fan][Live] Confirmed payment");
     }
@@ -115,7 +116,7 @@ public class FanLivePage extends BasePage {
     public void clickEverythingOkIfPresent() {
         try {
             Locator okBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EVERYTHING_OK_BTN));
-            if (waitVisibleSafe(okBtn.first(), 10_000)) {
+            if (waitVisibleSafe(okBtn.first(), ConfigReader.getShortTimeout())) {
                 clickWithRetry(okBtn.first(), 2, 200);
                 logger.info("[Fan][Live] Clicked 'Everything is OK' - payment confirmed for live access");
             }
@@ -137,7 +138,7 @@ public class FanLivePage extends BasePage {
     @Step("Click on comment textbox")
     public void clickCommentTextbox() {
         Locator commentBox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(COMMENT_TEXTBOX));
-        waitVisible(commentBox.first(), 15_000);
+        waitVisible(commentBox.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(commentBox.first(), 2, 200);
         logger.info("[Fan][Live] Clicked on comment textbox");
     }
@@ -145,7 +146,7 @@ public class FanLivePage extends BasePage {
     @Step("Type comment: {message}")
     public void typeComment(String message) {
         Locator commentBox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(COMMENT_TEXTBOX));
-        waitVisible(commentBox.first(), 10_000);
+        waitVisible(commentBox.first(), ConfigReader.getShortTimeout());
         commentBox.first().fill(message);
         logger.info("[Fan][Live] Typed comment: {}", message);
     }
@@ -153,7 +154,7 @@ public class FanLivePage extends BasePage {
     @Step("Send comment")
     public void sendComment() {
         Locator sendIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(SEND_ICON));
-        waitVisible(sendIcon.first(), 10_000);
+        waitVisible(sendIcon.first(), ConfigReader.getShortTimeout());
         clickWithRetry(sendIcon.first(), 2, 200);
         logger.info("[Fan][Live] Sent comment");
     }
@@ -171,7 +172,7 @@ public class FanLivePage extends BasePage {
     @Step("Close live stream (fan side)")
     public void closeLive() {
         Locator closeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(CLOSE_ICON));
-        waitVisible(closeIcon.first(), 10_000);
+        waitVisible(closeIcon.first(), ConfigReader.getShortTimeout());
         clickWithRetry(closeIcon.first(), 2, 200);
         logger.info("[Fan][Live] Closed live stream");
     }
@@ -185,7 +186,7 @@ public class FanLivePage extends BasePage {
     @Step("Click on creator tile by name: {creatorName}")
     public void clickCreatorTile(String creatorName) {
         Locator creatorTile = page.getByText(creatorName);
-        waitVisible(creatorTile.first(), 15_000);
+        waitVisible(creatorTile.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(creatorTile.first(), 2, 200);
         logger.info("[Fan][Live] Clicked on creator tile: {}", creatorName);
     }
@@ -193,14 +194,14 @@ public class FanLivePage extends BasePage {
     @Step("Verify exclusive live show text is displayed")
     public void assertExclusiveLiveTextVisible() {
         Locator exclusiveText = page.getByText(EXCLUSIVE_LIVE_TEXT);
-        waitVisible(exclusiveText.first(), 10_000);
+        waitVisible(exclusiveText.first(), ConfigReader.getShortTimeout());
         logger.info("[Fan][Live] Exclusive live show text visible");
     }
 
     @Step("Click 'Get a ticket' button")
     public void clickGetTicket() {
         Locator getTicketBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GET_TICKET_BTN));
-        waitVisible(getTicketBtn.first(), 15_000);
+        waitVisible(getTicketBtn.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(getTicketBtn.first(), 2, 200);
         logger.info("[Fan][Live] Clicked 'Get a ticket' button");
     }
@@ -208,7 +209,7 @@ public class FanLivePage extends BasePage {
     @Step("Verify secure payment screen is displayed")
     public void assertSecurePaymentVisible() {
         Locator securePayment = page.getByText(SECURE_PAYMENT_TEXT);
-        waitVisible(securePayment.first(), 15_000);
+        waitVisible(securePayment.first(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Live] Secure payment screen visible");
     }
 

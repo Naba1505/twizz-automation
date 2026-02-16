@@ -27,7 +27,7 @@ public class FanRegistrationPage extends BasePage {
         try {
             // Primary: look for visible text 'Registration'
             Locator regText = getByTextExact("Registration");
-            waitVisible(regText, 15000);
+            waitVisible(regText, ConfigReader.getVisibilityTimeout());
             logger.info("Fan registration form visible via text 'Registration'");
             return true;
         } catch (Exception e) {
@@ -65,7 +65,7 @@ public class FanRegistrationPage extends BasePage {
         // Use Home icon visibility as success indicator (fan may land on /fan/home or /common/discover)
         try {
             Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
-            homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(20000).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+            homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
             boolean visible = homeIcon.first().isVisible();
             logger.info("Fan '{}' registration successful - Home icon visible: {} (URL: {})", username, visible, page.url());
             return visible;

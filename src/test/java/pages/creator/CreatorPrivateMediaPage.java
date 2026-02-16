@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -53,7 +54,7 @@ public class CreatorPrivateMediaPage extends BasePage {
     @Step("Click Messaging icon")
     public void clickMessagingIcon() {
         Locator icon = messagingIcon();
-        waitVisible(icon, 15_000);
+        waitVisible(icon, ConfigReader.getVisibilityTimeout());
         clickWithRetry(icon, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[CreatorPrivMedia] Clicked Messaging icon");
@@ -62,7 +63,7 @@ public class CreatorPrivateMediaPage extends BasePage {
     @Step("Click on received message: {messageText}")
     public void clickReceivedMessage(String messageText) {
         Locator msg = page.getByText(messageText, new Page.GetByTextOptions().setExact(true));
-        waitVisible(msg.first(), 15_000);
+        waitVisible(msg.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(msg.first(), 1, 150);
         page.waitForTimeout(2000);
         logger.info("[CreatorPrivMedia] Clicked on received message: {}", messageText);
@@ -71,7 +72,7 @@ public class CreatorPrivateMediaPage extends BasePage {
     @Step("Click Accept button on fan request")
     public void clickAccept() {
         Locator btn = acceptButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[CreatorPrivMedia] Clicked Accept button");
@@ -79,14 +80,14 @@ public class CreatorPrivateMediaPage extends BasePage {
 
     @Step("Assert Amount popup is displayed")
     public void assertAmountPopupVisible() {
-        waitVisible(amountText(), 10_000);
+        waitVisible(amountText(), ConfigReader.getShortTimeout());
         logger.info("[CreatorPrivMedia] Amount popup is displayed");
     }
 
     @Step("Set custom amount to: {amount}")
     public void setCustomAmount(String amount) {
         Locator input = customAmountInput();
-        waitVisible(input, 10_000);
+        waitVisible(input, ConfigReader.getShortTimeout());
         input.click();
         input.fill(amount);
         logger.info("[CreatorPrivMedia] Set custom amount to: {}", amount);
@@ -95,7 +96,7 @@ public class CreatorPrivateMediaPage extends BasePage {
     @Step("Type reply message: {message}")
     public void typeReplyMessage(String message) {
         Locator msgBox = creatorMessageBox();
-        waitVisible(msgBox, 10_000);
+        waitVisible(msgBox, ConfigReader.getShortTimeout());
         msgBox.click();
         msgBox.fill(message);
         logger.info("[CreatorPrivMedia] Typed reply message: {}", message);
@@ -104,7 +105,7 @@ public class CreatorPrivateMediaPage extends BasePage {
     @Step("Click Send button")
     public void clickSend() {
         Locator btn = sendButton();
-        waitVisible(btn, 10_000);
+        waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, 150);
         page.waitForTimeout(2000);
         logger.info("[CreatorPrivMedia] Clicked Send button");
@@ -112,7 +113,7 @@ public class CreatorPrivateMediaPage extends BasePage {
 
     @Step("Assert 'Pending' text is displayed")
     public void assertPendingVisible() {
-        waitVisible(pendingText(), 10_000);
+        waitVisible(pendingText(), ConfigReader.getShortTimeout());
         logger.info("[CreatorPrivMedia] 'Pending' text is displayed - price sent to fan");
     }
 }

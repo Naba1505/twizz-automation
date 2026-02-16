@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -141,7 +142,7 @@ public class CreatorMonetizationPage extends BasePage {
         waitVisible(monthlyToggle(), DEFAULT_WAIT);
         clickWithRetry(monthlyToggle(), 1, 120);
         // Expect popup toast/dialog
-        waitVisible(monthlyCannotTurnOffPopup(), 10_000);
+        waitVisible(monthlyCannotTurnOffPopup(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Ensure Quarterly offer section is visible")
@@ -267,7 +268,7 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Wait for monetization updated toast")
     public void waitForMonetizationUpdatedToast() {
-        waitVisible(monetizationUpdatedPopup(), 30_000);
+        waitVisible(monetizationUpdatedPopup(), ConfigReader.getLongTimeout());
         try { clickWithRetry(monetizationUpdatedPopup(), 0, 0); } catch (Throwable ignored) {}
     }
 }

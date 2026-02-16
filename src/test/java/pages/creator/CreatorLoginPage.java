@@ -44,8 +44,8 @@ public class CreatorLoginPage extends BasePage {
         try {
             Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(twizzLogoRoleName));
             Locator loginText = page.getByText(loginTextExact, new Page.GetByTextOptions().setExact(true));
-            waitVisible(logo, 20000);
-            waitVisible(loginText, 20000);
+            waitVisible(logo, ConfigReader.getVisibilityTimeout());
+            waitVisible(loginText, ConfigReader.getVisibilityTimeout());
             boolean ok = logo.isVisible() && loginText.isVisible();
             logger.info("Login header visible (logo and text): {}", ok);
             return ok;
@@ -76,8 +76,8 @@ public class CreatorLoginPage extends BasePage {
         // Fill credentials with robust clear
         Locator user = page.getByPlaceholder(usernamePlaceholder);
         Locator pass = page.getByPlaceholder(passwordPlaceholder);
-        waitVisible(user, 15000);
-        waitVisible(pass, 15000);
+        waitVisible(user, ConfigReader.getVisibilityTimeout());
+        waitVisible(pass, ConfigReader.getVisibilityTimeout());
         try {
             user.click(); user.fill(""); user.press("Control+A"); user.press("Backspace"); user.fill(username);
         } catch (Throwable t) { fillByPlaceholder(usernamePlaceholder, username); }
@@ -92,11 +92,11 @@ public class CreatorLoginPage extends BasePage {
         // Avoid NETWORKIDLE; wait for a reliable post-login marker instead
         boolean visible = false;
         try {
-            waitVisible(plusImg, 20000);
+            waitVisible(plusImg, ConfigReader.getVisibilityTimeout());
             visible = true;
         } catch (Exception ignored) {
             // Broaden detection: URL or common dashboard markers
-            try { page.waitForURL("**/creator/**", new Page.WaitForURLOptions().setTimeout(10000)); visible = true; } catch (Exception e) { /* ignore */ }
+            try { page.waitForURL("**/creator/**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout())); visible = true; } catch (Exception e) { /* ignore */ }
         }
         if (!visible) {
             // Final fallback to a lighter load-state to not hang
@@ -108,7 +108,7 @@ public class CreatorLoginPage extends BasePage {
     public boolean isHandleVisible(String handleWithAt) {
         try {
             Locator handle = page.getByText(handleWithAt, new Page.GetByTextOptions().setExact(true));
-            waitVisible(handle, 20000);
+            waitVisible(handle, ConfigReader.getVisibilityTimeout());
             boolean visible = handle.isVisible();
             logger.info("Handle '{}' visible: {}", handleWithAt, visible);
             return visible;

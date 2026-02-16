@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -153,12 +154,12 @@ public class CreatorLegalPages extends BasePage {
         waitVisible(contentPolicyMenu(), DEFAULT_WAIT);
         try { contentPolicyMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(contentPolicyMenu(), 1, 150);
-        waitVisible(contentPolicyTitle(), 20_000);
+        waitVisible(contentPolicyTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Assert on Content Policy page (title visible)")
     public void assertOnContentPolicyPage() {
-        waitVisible(contentPolicyTitle(), 20_000);
+        waitVisible(contentPolicyTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Scroll to bottom Content Policy snippet and back to title")
@@ -172,7 +173,7 @@ public class CreatorLegalPages extends BasePage {
             if (safeIsVisible(contentPolicyTitle())) break;
             try { page.mouse().wheel(0, -800); page.waitForTimeout(120); } catch (Throwable ignored) {}
         }
-        waitVisible(contentPolicyTitle(), 20_000);
+        waitVisible(contentPolicyTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Click back arrow")

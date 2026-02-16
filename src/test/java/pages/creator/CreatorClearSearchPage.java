@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -32,7 +33,7 @@ public class CreatorClearSearchPage extends BasePage {
         
         // Wait for discover screen to load
         page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", 
-                new Page.WaitForURLOptions().setTimeout(15000));
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         
         logger.info("Navigated to Discover screen");
     }

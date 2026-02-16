@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -33,7 +34,7 @@ public class CreatorLogoutPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Logout)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(settingsIcon(), 1, 150);
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
@@ -43,14 +44,13 @@ public class CreatorLogoutPage extends BasePage {
 
     @Step("Click 'Disconnect' to logout")
     public void clickDisconnect() {
-        waitVisible(disconnectMenu(), DEFAULT_WAIT);
+        waitVisible(disconnectMenu(), ConfigReader.getVisibilityTimeout());
         try { disconnectMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(disconnectMenu(), 1, 150);
     }
 
     @Step("Assert user is logged out and on intro screen (Twizz logo visible)")
     public void assertLoggedOutToIntro() {
-        waitVisible(twizzLogoOnIntro(), 30_000);
+        waitVisible(twizzLogoOnIntro(), ConfigReader.getVisibilityTimeout());
     }
 }
-

@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -134,7 +135,7 @@ public class CreatorPaymentMethodPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Payment method)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(settingsIcon(), 1, 150);
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
@@ -144,59 +145,59 @@ public class CreatorPaymentMethodPage extends BasePage {
 
     @Step("Open Payment method screen")
     public void openPaymentMethodScreen() {
-        waitVisible(paymentMethodMenu(), DEFAULT_WAIT);
+        waitVisible(paymentMethodMenu(), ConfigReader.getVisibilityTimeout());
         try { paymentMethodMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(paymentMethodMenu(), 1, 150);
-        waitVisible(paymentMethodTitle(), DEFAULT_WAIT);
+        waitVisible(paymentMethodTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Click 'Add an account'")
     public void clickAddAnAccount() {
-        waitVisible(addAnAccountButton(), DEFAULT_WAIT);
+        waitVisible(addAnAccountButton(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(addAnAccountButton(), 1, 150);
     }
 
     @Step("Fill bank account details")
     public void fillBankAccountDetails(String bankName, String swift, String iban, String countryQuery, String countryExact, String address, String postalCode, String city) {
-        waitVisible(bankNameTextbox(), DEFAULT_WAIT);
+        waitVisible(bankNameTextbox(), ConfigReader.getVisibilityTimeout());
         bankNameTextbox().click();
         bankNameTextbox().fill(bankName == null ? "" : bankName);
 
-        waitVisible(swiftTextbox(), DEFAULT_WAIT);
+        waitVisible(swiftTextbox(), ConfigReader.getVisibilityTimeout());
         swiftTextbox().click();
         swiftTextbox().fill(swift == null ? "" : swift);
 
-        waitVisible(ibanTextbox(), DEFAULT_WAIT);
+        waitVisible(ibanTextbox(), ConfigReader.getVisibilityTimeout());
         ibanTextbox().click();
         ibanTextbox().fill(iban == null ? "" : iban);
 
         // Country selection: open and filter then choose exact
         try { countrySearchInput().click(); } catch (Throwable ignored) {}
         try {
-            waitVisible(countrySearchInput(), DEFAULT_WAIT);
+            waitVisible(countrySearchInput(), ConfigReader.getVisibilityTimeout());
             countrySearchInput().fill(countryQuery == null ? "" : countryQuery);
-            waitVisible(countryOptionExact(countryExact), DEFAULT_WAIT);
+            waitVisible(countryOptionExact(countryExact), ConfigReader.getVisibilityTimeout());
             clickWithRetry(countryOptionExact(countryExact), 1, 150);
         } catch (Throwable e) {
             logger.warn("Country selection fallback: {}", e.getMessage());
         }
 
-        waitVisible(addressTextbox(), DEFAULT_WAIT);
+        waitVisible(addressTextbox(), ConfigReader.getVisibilityTimeout());
         addressTextbox().click();
         addressTextbox().fill(address == null ? "" : address);
 
-        waitVisible(postalCodeTextbox(), DEFAULT_WAIT);
+        waitVisible(postalCodeTextbox(), ConfigReader.getVisibilityTimeout());
         postalCodeTextbox().click();
         postalCodeTextbox().fill(postalCode == null ? "" : postalCode);
 
-        waitVisible(cityTextbox(), DEFAULT_WAIT);
+        waitVisible(cityTextbox(), ConfigReader.getVisibilityTimeout());
         cityTextbox().click();
         cityTextbox().fill(city == null ? "" : city);
     }
 
     @Step("Submit Add method")
     public void submitAddMethod() {
-        waitVisible(addMethodButton(), DEFAULT_WAIT);
+        waitVisible(addMethodButton(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(addMethodButton(), 1, 150);
     }
 
@@ -204,13 +205,13 @@ public class CreatorPaymentMethodPage extends BasePage {
     public void assertSuccessAndCardVisible() {
         // Wait up to 60s for any toast containing the expected text
         try {
-            waitVisible(successToast().first(), 60_000);
+            waitVisible(successToast().first(), ConfigReader.getVisibilityTimeout());
         } catch (Throwable t) {
             logger.warn("Success toast (Banking setting successfully) not detected within 60s: {}", t.getMessage());
         }
 
         // Then wait up to 120s for the payment card image to appear (can be slow on stage)
-        waitVisible(revoCardImage().first(), 120_000);
+        waitVisible(revoCardImage().first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Open added payment card")

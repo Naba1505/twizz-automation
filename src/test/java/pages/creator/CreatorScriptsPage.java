@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -131,7 +132,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator noteBox = page.getByRole(AriaRole.TEXTBOX,
                 new Page.GetByRoleOptions().setName("Write a note to not forget"));
         try {
-            waitVisible(noteBox.first(), 3_000);
+            waitVisible(noteBox.first(), ConfigReader.getVisibilityTimeout());
         } catch (Throwable ignored) {
             // Try to advance to the note step without touching bookmark or price
             Locator nextBtn = page.getByRole(AriaRole.BUTTON,
@@ -286,7 +287,7 @@ public class CreatorScriptsPage extends BasePage {
 
         Locator blurred = page.locator("div").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^Blurred media$")));
-        waitVisible(blurred.first(), 20_000);
+        waitVisible(blurred.first(), ConfigReader.getShortTimeout());
     }
 
     // ===== Quick Files helpers =====
@@ -474,7 +475,7 @@ public class CreatorScriptsPage extends BasePage {
 
         Locator blurred = page.locator("div").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^Blurred media$")));
-        waitVisible(blurred.first(), 20_000);
+        waitVisible(blurred.first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Upload script video from device: {fileName}")
@@ -498,7 +499,7 @@ public class CreatorScriptsPage extends BasePage {
 
         Locator blurred = page.locator("div").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^Blurred media$")));
-        waitVisible(blurred.first(), 20_000);
+        waitVisible(blurred.first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click Next after media upload")
@@ -893,7 +894,7 @@ public class CreatorScriptsPage extends BasePage {
         // Match any success toast that mentions script creation (case-insensitive)
         Locator success = page.getByText(Pattern.compile("script.*created", Pattern.CASE_INSENSITIVE));
         try {
-            waitVisible(success.first(), 30_000);
+            waitVisible(success.first(), ConfigReader.getLongTimeout());
             // Short settle then attempt to dismiss if clickable
             try { page.waitForTimeout(800); } catch (Throwable ignored) { }
             try { clickWithRetry(success.first(), 0, 0); } catch (Throwable ignored) { }

@@ -22,12 +22,12 @@ public class LandingPage {
     public void navigate() {
         String landingPageUrl = ConfigReader.getLandingPageUrl();
         page.navigate(landingPageUrl);
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(60000));
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getDefaultTimeout()));
         logger.info("Navigated to landing page: {}", landingPageUrl);
     }
 
     public void waitForPageToLoad() {
-        page.waitForSelector(twizzLogo, new Page.WaitForSelectorOptions().setTimeout(60000));
+        page.waitForSelector(twizzLogo, new Page.WaitForSelectorOptions().setTimeout(ConfigReader.getDefaultTimeout()));
         logger.info("Landing page loaded successfully.");
     }
 

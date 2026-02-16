@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,17 +26,17 @@ public class CreatorDiscoverPage extends BasePage {
     @Step("Navigate to Discover screen via Search icon")
     public void navigateToDiscover() {
         Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), 15000);
+        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(searchIcon.first(), 2, 200);
     }
 
     @Step("Assert on Discover screen (URL contains /common/discover)")
     public void assertOnDiscoverScreen() {
         // Wait for URL to include the discover path
-        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(15000));
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         // And for at least one feed container to appear
         Locator feeds = page.locator("xpath=" + FEED_XPATH);
-        waitVisible(feeds.first(), 20000);
+        waitVisible(feeds.first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Collect all visible feeds on the page")
@@ -57,7 +58,7 @@ public class CreatorDiscoverPage extends BasePage {
             Locator feed = feeds.nth(i);
             try {
                 feed.scrollIntoViewIfNeeded();
-                waitVisible(feed, 10000);
+                waitVisible(feed, ConfigReader.getShortTimeout());
                 page.waitForTimeout(150);
                 seen++;
             } catch (Exception e) {
@@ -78,7 +79,7 @@ public class CreatorDiscoverPage extends BasePage {
             Locator feed = feeds.nth(i);
             try {
                 feed.scrollIntoViewIfNeeded();
-                waitVisible(feed, 10000);
+                waitVisible(feed, ConfigReader.getShortTimeout());
                 int btnCount = muteButtons.count();
                 for (int b = 0; b < btnCount; b++) {
                     Locator btn = muteButtons.nth(b);
@@ -131,36 +132,36 @@ public class CreatorDiscoverPage extends BasePage {
     @Step("Ensure creator profile screen is visible via publications icon")
     public void ensureOnCreatorProfileScreen() {
         Locator publicationsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("publications icon"));
-        waitVisible(publicationsIcon.first(), 15000);
+        waitVisible(publicationsIcon.first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Navigate back from profile to Discover and assert URL")
     public void navigateBackToDiscover() {
         Locator back = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
-        waitVisible(back.first(), 10000);
+        waitVisible(back.first(), ConfigReader.getShortTimeout());
         clickWithRetry(back.first(), 1, 120);
         // Wait URL back on discover
-        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(15000));
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
     }
 
     @Step("Open search field on Discover")
     public void openSearchField() {
         Locator searchFieldActivator = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^Search$"))).nth(1);
-        waitVisible(searchFieldActivator, 10000);
+        waitVisible(searchFieldActivator, ConfigReader.getShortTimeout());
         clickWithRetry(searchFieldActivator, 1, 120);
     }
 
     @Step("Fill search query: {query}")
     public void fillSearch(String query) {
         Locator input = page.getByPlaceholder("Search");
-        waitVisible(input.first(), 10000);
+        waitVisible(input.first(), ConfigReader.getShortTimeout());
         input.first().fill(query == null ? "" : query);
     }
 
     @Step("Click search result by text: {resultText}")
     public void clickSearchResult(String resultText) {
         Locator res = page.getByText(resultText);
-        waitVisible(res.first(), 15000);
+        waitVisible(res.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(res.first(), 1, 120);
     }
 }

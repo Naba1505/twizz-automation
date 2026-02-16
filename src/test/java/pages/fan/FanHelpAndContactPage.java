@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -63,7 +64,7 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Click Settings icon from Fan home")
     public void clickSettingsIcon() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(settingsIcon(), 2, 200);
         logger.info("[Fan][HelpAndContact] Clicked Settings icon");
     }
@@ -82,7 +83,7 @@ public class FanHelpAndContactPage extends BasePage {
             page.mouse().wheel(0, 300);
             page.waitForTimeout(200);
         }
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
         clickWithRetry(menuItem, 2, 200);
         logger.info("[Fan][HelpAndContact] Clicked 'Help and contact' menu item");
@@ -90,7 +91,7 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Assert on Help and Contact screen")
     public void assertOnHelpAndContactScreen() {
-        waitVisible(helpAndContactTitle(), DEFAULT_WAIT);
+        waitVisible(helpAndContactTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][HelpAndContact] On Help and Contact screen - title visible");
     }
 
@@ -98,13 +99,13 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Assert Subject field heading visible")
     public void assertSubjectHeadingVisible() {
-        waitVisible(subjectHeading(), DEFAULT_WAIT);
+        waitVisible(subjectHeading(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][HelpAndContact] Subject heading visible");
     }
 
     @Step("Fill Subject field with: {subject}")
     public void fillSubject(String subject) {
-        waitVisible(subjectTextbox(), DEFAULT_WAIT);
+        waitVisible(subjectTextbox(), ConfigReader.getVisibilityTimeout());
         subjectTextbox().click();
         subjectTextbox().fill(subject);
         logger.info("[Fan][HelpAndContact] Filled Subject: {}", subject);
@@ -112,13 +113,13 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Assert Description field heading visible")
     public void assertDescriptionHeadingVisible() {
-        waitVisible(descriptionHeading(), DEFAULT_WAIT);
+        waitVisible(descriptionHeading(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][HelpAndContact] Description heading visible");
     }
 
     @Step("Fill Description/Message field with: {message}")
     public void fillMessage(String message) {
-        waitVisible(messageTextbox(), DEFAULT_WAIT);
+        waitVisible(messageTextbox(), ConfigReader.getVisibilityTimeout());
         messageTextbox().click();
         messageTextbox().fill(message);
         logger.info("[Fan][HelpAndContact] Filled Description: {}", message);
@@ -126,14 +127,14 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Click Send button")
     public void clickSendButton() {
-        waitVisible(sendButton(), DEFAULT_WAIT);
+        waitVisible(sendButton(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(sendButton(), 2, 200);
         logger.info("[Fan][HelpAndContact] Clicked Send button");
     }
 
     @Step("Assert success message 'Your message has been sent' is displayed")
     public void assertSuccessMessageVisible() {
-        waitVisible(successToast(), 30_000);
+        waitVisible(successToast(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][HelpAndContact] Success message displayed: 'Your message has been sent'");
     }
 

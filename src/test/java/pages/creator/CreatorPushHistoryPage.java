@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -107,7 +108,7 @@ public class CreatorPushHistoryPage extends BasePage {
 
     @Step("Assert Performance screen is visible")
     public void assertPerformanceVisible() {
-        waitVisible(performanceTitle(), 30_000);
+        waitVisible(performanceTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Navigate back via arrow left")

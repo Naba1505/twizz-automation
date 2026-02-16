@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -177,7 +178,7 @@ public class CreatorFreeSubscriptionPage extends BasePage {
 
     @Step("Assert 'Updated Personal Information' success toast is visible")
     public void assertUpdatedPersonalInfoToast() {
-        waitVisible(updatedPersonalInfoToast(), 15_000);
+        waitVisible(updatedPersonalInfoToast(), ConfigReader.getVisibilityTimeout());
         logger.info("[FreeSubscription] 'Updated Personal Information' success toast visible");
         // Dismiss toast if clickable
         try { clickWithRetry(updatedPersonalInfoToast(), 0, 0); } catch (Throwable ignored) {}

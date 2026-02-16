@@ -161,7 +161,7 @@ public class BusinessEmployeeSignUpPage {
         
         // Wait for URL to change to employee dashboard
         try {
-            page.waitForURL("**/employee**", new Page.WaitForURLOptions().setTimeout(10000));
+            page.waitForURL("**/employee**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
         } catch (Exception e) {
             logger.warn("[Business Employee] Did not navigate to employee dashboard within timeout. Current URL: {}", page.url());
         }

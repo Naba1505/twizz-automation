@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
@@ -66,34 +67,34 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Open Messaging from creator dashboard (header icon)")
     public void openMessagingFromDashboardIcon() {
         Locator icon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Messaging icon"));
-        waitVisible(icon.first(), 15_000);
+        waitVisible(icon.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(icon.first(), 1, 150);
-        waitVisible(page.getByText("Messaging"), 15_000);
+        waitVisible(page.getByText("Messaging"), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Assert 'Messaging' title visible")
     public void assertMessagingTitle() {
-        waitVisible(page.getByText("Messaging"), 10_000);
+        waitVisible(page.getByText("Messaging"), ConfigReader.getShortTimeout());
     }
 
     @Step("Click 'To Deliver' tab in Messaging")
     public void clickToDeliverTab() {
         Locator tab = page.getByText("To Deliver");
-        waitVisible(tab.first(), 10_000);
+        waitVisible(tab.first(), ConfigReader.getShortTimeout());
         clickWithRetry(tab.first(), 1, 120);
     }
 
     @Step("Click 'General' tab in Messaging")
     public void clickGeneralTab() {
         Locator tab = page.getByText("General");
-        waitVisible(tab.first(), 10_000);
+        waitVisible(tab.first(), ConfigReader.getShortTimeout());
         clickWithRetry(tab.first(), 1, 120);
     }
 
     @Step("Open Filter panel in Messaging")
     public void openFilter() {
         Locator filter = page.getByText("Filter");
-        waitVisible(filter.first(), 10_000);
+        waitVisible(filter.first(), ConfigReader.getShortTimeout());
         clickWithRetry(filter.first(), 1, 120);
     }
 
@@ -119,7 +120,7 @@ public class CreatorMessagingPage extends BasePage {
         // Ensure Quick Files albums screen is visible (codegen checks 'My albums')
         try {
             logger.info("[Messaging][QuickFiles] Waiting for 'My albums' label");
-            waitVisible(page.getByText("My albums"), 15_000);
+            waitVisible(page.getByText("My albums"), ConfigReader.getVisibilityTimeout());
         } catch (Throwable ignored) {
             logger.info("[Messaging][QuickFiles] 'My albums' not visible quickly; calling ensureQuickFilesAlbumsVisible()");
             ensureQuickFilesAlbumsVisible();
@@ -178,7 +179,7 @@ public class CreatorMessagingPage extends BasePage {
         // Ensure we are inside the album by waiting for the 'Select media' prompt
         try {
             Locator selectMediaTitle = page.getByText("Select media");
-            waitVisible(selectMediaTitle.first(), 10_000);
+            waitVisible(selectMediaTitle.first(), ConfigReader.getShortTimeout());
         } catch (Throwable ignored) {}
 
         // Wait for media thumbs/icons to appear, preferring role=IMG name "select" like codegen
@@ -238,27 +239,27 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Filter: select 'All ( by default )'")
     public void filterAllByDefault() {
         Locator byDiv = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^All \\( by default \\)$")));
-        waitVisible(byDiv.first(), 10_000);
+        waitVisible(byDiv.first(), ConfigReader.getShortTimeout());
         clickWithRetry(byDiv.first(), 1, 120);
     }
 
     @Step("Open search icon in Messaging")
     public void openSearchIcon() {
         Locator icon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("edit"));
-        waitVisible(icon.first(), 10_000);
+        waitVisible(icon.first(), ConfigReader.getShortTimeout());
         clickWithRetry(icon.first(), 1, 120);
     }
 
     @Step("Fill Messaging search with: {query}")
     public void fillMessagingSearch(String query) {
         Locator box = page.getByPlaceholder("Search");
-        waitVisible(box.first(), 10_000);
+        waitVisible(box.first(), ConfigReader.getShortTimeout());
         box.fill(query == null ? "" : query);
     }
 
     @Step("Assert search result visible: {text}")
     public void assertSearchResultVisible(String text) {
-        waitVisible(page.getByText(text), 10_000);
+        waitVisible(page.getByText(text), ConfigReader.getShortTimeout());
     }
 
     // ================= Private Media flow =================
@@ -293,10 +294,10 @@ public class CreatorMessagingPage extends BasePage {
         }
         // Final assertion to bubble up a clearer error
         if (privateMediaTitle().count() > 0) {
-            waitVisible(privateMediaTitle().first(), 2_000);
+            waitVisible(privateMediaTitle().first(), ConfigReader.getVisibilityTimeout());
             return;
         }
-        waitVisible(importationTitle().first(), 2_000);
+        waitVisible(importationTitle().first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Click plus icon to add private media")
@@ -374,17 +375,17 @@ public class CreatorMessagingPage extends BasePage {
         }
 
         // Wait for Importation title or container to appear
-        try { waitVisible(importationTitle().first(), 20_000); }
+        try { waitVisible(importationTitle().first(), ConfigReader.getVisibilityTimeout()); }
         catch (Throwable e) {
             // As a fallback, ensure container is visible
-            waitVisible(importationContainer().first(), 10_000);
+            waitVisible(importationContainer().first(), ConfigReader.getShortTimeout());
         }
     }
 
     @Step("Ensure blur toggle is enabled by default (private media)")
     public void ensureBlurToggleEnabled() {
         Locator sw = page.getByRole(AriaRole.SWITCH).first();
-        waitVisible(sw, 15_000);
+        waitVisible(sw, ConfigReader.getVisibilityTimeout());
         try {
             String checked = sw.getAttribute("aria-checked");
             if (!"true".equalsIgnoreCase(checked)) {
@@ -395,13 +396,13 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Assert 'Blurred media' label visible")
     public void assertBlurredMediaLabelVisible() {
-        waitVisible(page.getByText("Blurred media").first(), 10_000);
+        waitVisible(page.getByText("Blurred media").first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Disable blur toggle if currently enabled (private media)")
     public void disableBlurToggleIfEnabled() {
         Locator sw = page.getByRole(AriaRole.SWITCH).first();
-        waitVisible(sw, 15_000);
+        waitVisible(sw, ConfigReader.getVisibilityTimeout());
         try {
             String checked = sw.getAttribute("aria-checked");
             if ("true".equalsIgnoreCase(checked)) {
@@ -492,20 +493,20 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Assert private message input visible (Your message....)")
     public void assertPrivateMessagePlaceholder() {
-        waitVisible(privateMessagePlaceholder(), 15_000);
+        waitVisible(privateMessagePlaceholder(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Focus private message input")
     public void focusPrivateMessageInput() {
         Locator ph = privateMessagePlaceholder();
-        waitVisible(ph, 15_000);
+        waitVisible(ph, ConfigReader.getVisibilityTimeout());
         ph.click();
     }
 
     @Step("Fill private message: {msg}")
     public void fillPrivateMessage(String msg) {
         Locator ph = privateMessagePlaceholder();
-        waitVisible(ph, 15_000);
+        waitVisible(ph, ConfigReader.getVisibilityTimeout());
         ph.click();
         ph.fill(msg == null ? "" : msg);
     }
@@ -513,7 +514,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Click message template by text: {template}")
     public void clickMessageTemplate(String template) {
         Locator tpl = page.getByText(template, new Page.GetByTextOptions().setExact(true));
-        waitVisible(tpl.first(), 10_000);
+        waitVisible(tpl.first(), ConfigReader.getShortTimeout());
         clickWithRetry(tpl.first(), 1, 150);
     }
 
@@ -566,14 +567,14 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Select price as 'Free' (private media)")
     public void selectPriceFree() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("Free"));
-        waitVisible(lbl.first(), 15_000);
+        waitVisible(lbl.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(lbl.first(), 1, 150);
     }
 
     @Step("Click 'Propose the private media'")
     public void clickProposePrivateMedia() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Propose the private media"));
-        waitVisible(btn.first(), 30_000);
+        waitVisible(btn.first(), ConfigReader.getLongTimeout());
         clickWithRetry(btn.first(), 1, 200);
     }
 
@@ -581,25 +582,25 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Open actions menu (three dots)")
     public void openActionsMenu() {
         Locator dots = page.locator(".dots-wrapper");
-        waitVisible(dots.first(), 10_000);
+        waitVisible(dots.first(), ConfigReader.getShortTimeout());
         clickWithRetry(dots.first(), 1, 150);
     }
 
     @Step("Assert action prompt visible: 'What action do you want to take?'")
     public void assertActionPrompt() {
-        waitVisible(page.getByText("What action do you want to take?"), 10_000);
+        waitVisible(page.getByText("What action do you want to take?"), ConfigReader.getShortTimeout());
     }
 
     @Step("Click 'Private Gallery' option")
     public void clickPrivateGallery() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Private Gallery"));
-        waitVisible(btn.first(), 10_000);
+        waitVisible(btn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(btn.first(), 1, 150);
     }
 
     @Step("Assert 'Private Gallery' screen visible")
     public void assertPrivateGalleryScreen() {
-        waitVisible(page.getByText("Private Gallery"), 15_000);
+        waitVisible(page.getByText("Private Gallery"), ConfigReader.getVisibilityTimeout());
     }
 
     private Locator privateGalleryItems() {
@@ -642,7 +643,7 @@ public class CreatorMessagingPage extends BasePage {
         }
         // Fallback: first visible image mask
         Locator mask = page.locator(".galleryItem .ant-image .ant-image-mask, .ant-image .ant-image-mask").first();
-        waitVisible(mask, 10_000);
+        waitVisible(mask, ConfigReader.getShortTimeout());
         clickWithRetry(mask, 1, 150);
     }
 
@@ -677,7 +678,7 @@ public class CreatorMessagingPage extends BasePage {
     public void enablePromotionToggle() {
         Locator toggles = page.getByRole(AriaRole.SWITCH);
         Locator target = toggles.count() > 1 ? toggles.nth(1) : toggles.first();
-        waitVisible(target, 15_000);
+        waitVisible(target, ConfigReader.getVisibilityTimeout());
         try {
             String checked = target.getAttribute("aria-checked");
             if (!"true".equalsIgnoreCase(checked)) {
@@ -690,13 +691,13 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Ensure 'Discount' field visible")
     public void ensureDiscountVisible() {
-        waitVisible(page.getByText("Discount").first(), 15_000);
+        waitVisible(page.getByText("Discount").first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Fill euro discount amount: {amount}€ (textbox index 1)")
     public void fillPromotionEuroDiscount(int amount) {
         Locator tb = page.getByRole(AriaRole.TEXTBOX).nth(1);
-        waitVisible(tb, 10_000);
+        waitVisible(tb, ConfigReader.getShortTimeout());
         tb.click();
         tb.fill(String.valueOf(amount));
     }
@@ -704,27 +705,27 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Fill percent discount: {percent}% (textbox index 2)")
     public void fillPromotionPercent(int percent) {
         Locator tb = page.getByRole(AriaRole.TEXTBOX).nth(2);
-        waitVisible(tb, 10_000);
+        waitVisible(tb, ConfigReader.getShortTimeout());
         tb.click();
         tb.fill(String.valueOf(percent));
     }
 
     @Step("Ensure 'Validity period' title visible")
     public void ensureValidityTitle() {
-        waitVisible(page.getByText("Validity period").first(), 15_000);
+        waitVisible(page.getByText("Validity period").first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Select validity as 'Unlimited'")
     public void selectValidityUnlimited() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("Unlimited"));
-        waitVisible(lbl.first(), 10_000);
+        waitVisible(lbl.first(), ConfigReader.getShortTimeout());
         clickWithRetry(lbl.first(), 1, 150);
     }
 
     @Step("Select validity as '7 days'")
     public void selectValidity7Days() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("7 days"));
-        waitVisible(lbl.first(), 10_000);
+        waitVisible(lbl.first(), ConfigReader.getShortTimeout());
         clickWithRetry(lbl.first(), 1, 150);
     }
 
@@ -733,7 +734,7 @@ public class CreatorMessagingPage extends BasePage {
         try {
             Locator msg = uploadingStayOnPageText();
             if (msg.count() > 0) {
-                waitVisible(msg.first(), 10_000);
+                waitVisible(msg.first(), ConfigReader.getShortTimeout());
             }
         } catch (Throwable ignored) {}
     }
@@ -855,7 +856,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Assert 'Select the media you want to send' prompt visible in album")
     public void assertAlbumMediaPrompt() {
         logger.info("[Messaging] Asserting inside album: 'Select the media you want to send'");
-        waitVisible(page.getByText("Select the media you want to send"), 15_000);
+        waitVisible(page.getByText("Select the media you want to send"), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Wait for album items grid (.cover) to be visible")
@@ -890,7 +891,7 @@ public class CreatorMessagingPage extends BasePage {
             Locator thumbs = page.locator(".select-quick-file-media-thumb");
             if (thumbs.count() > 0) {
                 int max = Math.min(Math.max(1, n), thumbs.count());
-                waitVisible(thumbs.first(), 10_000);
+                waitVisible(thumbs.first(), ConfigReader.getShortTimeout());
                 for (int i = 0; i < max; i++) {
                     Locator t = thumbs.nth(i);
                     try { t.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
@@ -900,7 +901,7 @@ public class CreatorMessagingPage extends BasePage {
                 // Fallback to legacy .cover-based selection
                 Locator first = page.locator(".cover").first();
                 Locator second = page.locator("div:nth-child(2) > .cover");
-                waitVisible(first, 10_000);
+                waitVisible(first, ConfigReader.getShortTimeout());
                 clickWithRetry(first, 1, 120);
                 if (second.count() > 0 && safeIsVisible(second.first())) {
                     clickWithRetry(second.first(), 1, 120);
@@ -957,7 +958,7 @@ public class CreatorMessagingPage extends BasePage {
     public void selectFirstTwoCovers() {
         try {
             Locator first = page.locator(".cover").first();
-            waitVisible(first, 10_000);
+            waitVisible(first, ConfigReader.getShortTimeout());
             clickWithRetry(first, 1, 120);
         } catch (Throwable e) {
             logger.warn("[Messaging][QuickFiles] Could not click first .cover: {}", e.getMessage());
@@ -1024,7 +1025,7 @@ public class CreatorMessagingPage extends BasePage {
         // Ensure we are on Quick Files albums screen (codegen: My albums visible)
         try {
             Locator myAlbums = page.getByText("My albums");
-            waitVisible(myAlbums.first(), 15_000);
+            waitVisible(myAlbums.first(), ConfigReader.getVisibilityTimeout());
             logger.info("[Messaging] 'My albums' label visible on Quick Files screen");
         } catch (Throwable e) {
             logger.warn("[Messaging] 'My albums' label not quickly visible after clicking Quick Files; falling back to generic Quick Files screen assertion: {}", e.getMessage());
@@ -1035,7 +1036,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Assert Quick Files screen (title + 'My albums') is visible")
     public void assertQuickFilesScreen() {
         logger.info("[Messaging] Asserting Quick Files screen visible (title + 'My albums')");
-        waitVisible(page.getByText("Quick Files"), 15_000);
+        waitVisible(page.getByText("Quick Files"), ConfigReader.getVisibilityTimeout());
         // Prefer 'My albums' text; if absent, accept albums container or rows as valid screen
         try {
             waitVisible(page.getByText("My albums"), 6_000);
@@ -1114,7 +1115,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Ensure Quick Files albums screen is visible or skip if none")
     public void ensureQuickFilesAlbumsVisible() {
         logger.info("[Messaging] Ensuring 'Quick Files' albums screen is visible");
-        waitVisible(quickFilesTitle(), 15_000);
+        waitVisible(quickFilesTitle(), ConfigReader.getVisibilityTimeout());
         // Focus the Quick Files container (click title like codegen did)
         try { clickWithRetry(quickFilesTitle().first(), 1, 100); } catch (Throwable ignored) {}
         // Try clicking a 'My albums' tab/label if present to reveal rows
@@ -1424,7 +1425,7 @@ public class CreatorMessagingPage extends BasePage {
 
         // Finally, wait for the conversation input as the success signal
         try {
-            waitVisible(messageInput(), 30_000);
+            waitVisible(messageInput(), ConfigReader.getLongTimeout());
         } catch (Throwable e) {
             logger.warn("[Messaging] Conversation input not visible after confirm: {}", e.getMessage());
         }
@@ -1591,7 +1592,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Ensure 'Importation' dialog title is visible")
     public void ensureImportationVisible() {
         logger.info("[Messaging] Ensuring 'Importation' is visible");
-        waitVisible(importationTitle(), 15_000);
+        waitVisible(importationTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Choose 'My Device' to import files")

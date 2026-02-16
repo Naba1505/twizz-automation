@@ -11,7 +11,7 @@ import com.microsoft.playwright.options.WaitForSelectorState;
 import utils.ConfigReader;
 
 public class BasePage {
-    protected static final int DEFAULT_WAIT = 10_000;
+    protected static final int DEFAULT_WAIT = ConfigReader.getShortTimeout();
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     protected final Page page;
 

@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -49,7 +50,7 @@ public class CreatorHelpAndContactPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Help and contact)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(settingsIcon(), 1, 150);
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
@@ -59,35 +60,34 @@ public class CreatorHelpAndContactPage extends BasePage {
 
     @Step("Open 'Help and contact' screen")
     public void openHelpAndContact() {
-        waitVisible(helpAndContactMenu(), DEFAULT_WAIT);
+        waitVisible(helpAndContactMenu(), ConfigReader.getVisibilityTimeout());
         try { helpAndContactMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(helpAndContactMenu(), 1, 150);
-        waitVisible(helpAndContactTitle(), DEFAULT_WAIT);
+        waitVisible(helpAndContactTitle(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Fill Subject: {subject}")
     public void fillSubject(String subject) {
-        waitVisible(subjectTextbox(), DEFAULT_WAIT);
+        waitVisible(subjectTextbox(), ConfigReader.getVisibilityTimeout());
         subjectTextbox().click();
         subjectTextbox().fill(subject == null ? "" : subject);
     }
 
     @Step("Fill Message: {message}")
     public void fillMessage(String message) {
-        waitVisible(messageTextbox(), DEFAULT_WAIT);
+        waitVisible(messageTextbox(), ConfigReader.getVisibilityTimeout());
         messageTextbox().click();
         messageTextbox().fill(message == null ? "" : message);
     }
 
     @Step("Click Send button")
     public void clickSend() {
-        waitVisible(sendButton(), DEFAULT_WAIT);
+        waitVisible(sendButton(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(sendButton(), 1, 150);
     }
 
     @Step("Assert success toast is visible")
     public void assertSuccessToastVisible() {
-        waitVisible(successToast(), 30_000);
+        waitVisible(successToast(), ConfigReader.getVisibilityTimeout());
     }
 }
-

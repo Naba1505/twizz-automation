@@ -34,8 +34,8 @@ public class FanLoginPage extends BasePage {
         try {
             Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(twizzLogoRoleName));
             Locator loginText = page.getByText(loginTextExact, new Page.GetByTextOptions().setExact(true));
-            waitVisible(logo, 20000);
-            waitVisible(loginText, 20000);
+            waitVisible(logo, ConfigReader.getVisibilityTimeout());
+            waitVisible(loginText, ConfigReader.getVisibilityTimeout());
             return logo.isVisible() && loginText.isVisible();
         } catch (Exception e) {
             logger.warn("[Fan] Login header not visible: {}", e.getMessage());

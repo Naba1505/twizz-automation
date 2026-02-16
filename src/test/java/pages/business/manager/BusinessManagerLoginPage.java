@@ -61,7 +61,7 @@ public class BusinessManagerLoginPage {
         
         // Wait for URL to change to manager dashboard
         try {
-            page.waitForURL("**/manager**", new Page.WaitForURLOptions().setTimeout(10000));
+            page.waitForURL("**/manager**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
         } catch (Exception e) {
             logger.warn("[Business Manager Login] Did not navigate to manager dashboard within timeout. Current URL: {}", page.url());
         }

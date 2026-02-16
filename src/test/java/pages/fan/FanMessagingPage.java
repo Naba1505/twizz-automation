@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -233,7 +234,7 @@ public class FanMessagingPage extends BasePage {
         
         // Strategy 1: Direct wait
         try {
-            waitVisible(paymentTitle.first(), 15000);
+            waitVisible(paymentTitle.first(), ConfigReader.getVisibilityTimeout());
             found = true;
         } catch (Exception e) {
             logger.warn("[Fan][Messaging] Secure payment title not found directly");
@@ -318,7 +319,7 @@ public class FanMessagingPage extends BasePage {
         }
         
         if (confirmBtn.count() > 0 && safeIsVisible(confirmBtn.first())) {
-            waitVisible(confirmBtn.first(), 15000);
+            waitVisible(confirmBtn.first(), ConfigReader.getVisibilityTimeout());
             clickWithRetry(confirmBtn.first(), 2, 200);
             page.waitForTimeout(3000); // Wait for payment processing
             logger.info("[Fan][Messaging] Clicked Confirm button");
@@ -356,7 +357,7 @@ public class FanMessagingPage extends BasePage {
         }
         
         if (okBtn.count() > 0 && safeIsVisible(okBtn.first())) {
-            waitVisible(okBtn.first(), 15000);
+            waitVisible(okBtn.first(), ConfigReader.getVisibilityTimeout());
             clickWithRetry(okBtn.first(), 2, 200);
             page.waitForTimeout(1000);
             logger.info("[Fan][Messaging] Clicked Everything is OK button");
