@@ -5,12 +5,8 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.fan.FanTermsAndPoliciesPage;
-import pages.fan.FanLoginPage;
-import utils.ConfigReader;
 
 /**
  * Test class for Fan Terms and Policies verification.
@@ -18,22 +14,9 @@ import utils.ConfigReader;
  */
 @Epic("Fan")
 @Feature("Terms and Policies")
-public class FanTermsAndPoliciesTest extends BaseTestClass {
+public class FanTermsAndPoliciesTest extends BaseFanTest {
 
     private static final Logger logger = LoggerFactory.getLogger(FanTermsAndPoliciesTest.class);
-
-    // Fan credentials
-    private String fanUsername;
-    private String fanPassword;
-
-    /**
-     * Load fan credentials from config.
-     */
-    private void loadCredentials() {
-        fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-        logger.info("[FanTermsAndPolicies] Loaded credentials - Fan: {}", fanUsername);
-    }
 
     /**
      * Test: Verify Terms and Conditions, Community Regulations, and Content Policy
@@ -53,18 +36,7 @@ public class FanTermsAndPoliciesTest extends BaseTestClass {
     @Story("Fan verifies Terms and Conditions, Community Regulations, and Content Policy")
     @Test(priority = 1, description = "Fan navigates to Settings and verifies all Terms and Policies")
     public void fanCanVerifyAllTermsAndPolicies() {
-        // Load credentials
-        loadCredentials();
-
         logger.info("[FanTermsAndPolicies] Starting test: Verify all Terms and Policies");
-
-        // ==================== FAN LOGIN ====================
-        logger.info("[FanTermsAndPolicies] Step 1: Fan login");
-        FanLoginPage fanLogin = new FanLoginPage(page);
-        fanLogin.navigate();
-        Assert.assertTrue(fanLogin.isLoginFormVisible(), "Fan login form not visible");
-        fanLogin.login(fanUsername, fanPassword);
-        logger.info("[FanTermsAndPolicies] Fan logged in and on Home screen");
 
         // ==================== NAVIGATE TO SETTINGS ====================
         logger.info("[FanTermsAndPolicies] Step 2: Navigate to Settings");

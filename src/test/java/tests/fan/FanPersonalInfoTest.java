@@ -5,11 +5,8 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.fan.FanPersonalInfoPage;
-import pages.fan.FanLoginPage;
 import utils.ConfigReader;
 
 /**
@@ -18,22 +15,9 @@ import utils.ConfigReader;
  */
 @Epic("Fan")
 @Feature("Personal Information")
-public class FanPersonalInfoTest extends BaseTestClass {
+public class FanPersonalInfoTest extends BaseFanTest {
 
     private static final Logger logger = LoggerFactory.getLogger(FanPersonalInfoTest.class);
-
-    // Fan credentials
-    private String fanUsername;
-    private String fanPassword;
-
-    /**
-     * Load fan credentials from config.
-     */
-    private void loadCredentials() {
-        fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-        logger.info("[FanPersonalInfo] Loaded credentials - Fan: {}", fanUsername);
-    }
 
     /**
      * Test: Verify Personal Information fields and update email/phone
@@ -56,18 +40,9 @@ public class FanPersonalInfoTest extends BaseTestClass {
     @Story("Fan views and updates personal information")
     @Test(priority = 1, description = "Fan navigates to Personal Information, verifies fields, and updates info")
     public void fanCanViewAndUpdatePersonalInfo() {
-        // Load credentials
-        loadCredentials();
+        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
 
         logger.info("[FanPersonalInfo] Starting test: View and update personal information");
-
-        // ==================== FAN LOGIN ====================
-        logger.info("[FanPersonalInfo] Step 1: Fan login");
-        FanLoginPage fanLogin = new FanLoginPage(page);
-        fanLogin.navigate();
-        Assert.assertTrue(fanLogin.isLoginFormVisible(), "Fan login form not visible");
-        fanLogin.login(fanUsername, fanPassword);
-        logger.info("[FanPersonalInfo] Fan logged in and on Home screen");
 
         // ==================== NAVIGATE TO SETTINGS ====================
         logger.info("[FanPersonalInfo] Step 2: Navigate to Settings");

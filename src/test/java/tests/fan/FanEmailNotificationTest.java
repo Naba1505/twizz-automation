@@ -5,12 +5,8 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.fan.FanEmailNotificationPage;
-import pages.fan.FanLoginPage;
-import utils.ConfigReader;
 
 /**
  * Test class for Fan Email Notification settings.
@@ -18,22 +14,9 @@ import utils.ConfigReader;
  */
 @Epic("Fan")
 @Feature("Email Notification")
-public class FanEmailNotificationTest extends BaseTestClass {
+public class FanEmailNotificationTest extends BaseFanTest {
 
     private static final Logger logger = LoggerFactory.getLogger(FanEmailNotificationTest.class);
-
-    // Fan credentials
-    private String fanUsername;
-    private String fanPassword;
-
-    /**
-     * Load fan credentials from config.
-     */
-    private void loadCredentials() {
-        fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-        logger.info("[FanEmailNotification] Loaded credentials - Fan: {}", fanUsername);
-    }
 
     /**
      * Test 1: Disable all email notification toggles
@@ -54,18 +37,7 @@ public class FanEmailNotificationTest extends BaseTestClass {
     @Story("Fan disables all email notification toggles")
     @Test(priority = 1, description = "Fan navigates to Email Notification and disables all toggles")
     public void fanCanDisableAllEmailNotificationToggles() {
-        // Load credentials
-        loadCredentials();
-
         logger.info("[FanEmailNotification] Starting test: Disable all email notification toggles");
-
-        // ==================== FAN LOGIN ====================
-        logger.info("[FanEmailNotification] Step 1: Fan login");
-        FanLoginPage fanLogin = new FanLoginPage(page);
-        fanLogin.navigate();
-        Assert.assertTrue(fanLogin.isLoginFormVisible(), "Fan login form not visible");
-        fanLogin.login(fanUsername, fanPassword);
-        logger.info("[FanEmailNotification] Fan logged in and on Home screen");
 
         // ==================== NAVIGATE TO EMAIL NOTIFICATION ====================
         logger.info("[FanEmailNotification] Step 2: Navigate to Email Notification");
@@ -100,18 +72,7 @@ public class FanEmailNotificationTest extends BaseTestClass {
     @Story("Fan enables all email notification toggles")
     @Test(priority = 2, description = "Fan navigates to Email Notification and enables all toggles")
     public void fanCanEnableAllEmailNotificationToggles() {
-        // Load credentials
-        loadCredentials();
-
         logger.info("[FanEmailNotification] Starting test: Enable all email notification toggles");
-
-        // ==================== FAN LOGIN ====================
-        logger.info("[FanEmailNotification] Step 1: Fan login");
-        FanLoginPage fanLogin = new FanLoginPage(page);
-        fanLogin.navigate();
-        Assert.assertTrue(fanLogin.isLoginFormVisible(), "Fan login form not visible");
-        fanLogin.login(fanUsername, fanPassword);
-        logger.info("[FanEmailNotification] Fan logged in and on Home screen");
 
         // ==================== NAVIGATE TO EMAIL NOTIFICATION ====================
         logger.info("[FanEmailNotification] Step 2: Navigate to Email Notification");

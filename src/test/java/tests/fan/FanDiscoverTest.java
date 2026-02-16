@@ -7,26 +7,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.fan.FanDiscoverPage;
-import pages.fan.FanLoginPage;
 import utils.ConfigReader;
 
 @Epic("Fan")
 @Feature("Discover")
-public class FanDiscoverTest extends BaseTestClass {
+public class FanDiscoverTest extends BaseFanTest {
     private static final Logger logger = LoggerFactory.getLogger(FanDiscoverTest.class);
 
     @Story("Discover screen: feeds visible, unmute and scroll actions")
     @Test(priority = 1, description = "Navigate to Discover, verify feeds exist, scroll down/up, unmute each feed (Fan)")
     public void fanDiscoverFeedsAndUnmute() {
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        login.login(fanUsername, fanPassword);
-
         FanDiscoverPage discover = new FanDiscoverPage(page);
 
         logger.info("[Fan Discover] Navigate to discover via Search icon");
@@ -48,13 +39,6 @@ public class FanDiscoverTest extends BaseTestClass {
     @Story("Discover screen: open a creator profile from a feed and navigate back")
     @Test(priority = 2, description = "From Fan Discover, open a random visible profile from a feed, ensure profile screen, go back, and assert Discover")
     public void fanDiscoverOpenProfileAndBack() {
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        login.login(fanUsername, fanPassword);
-
         FanDiscoverPage discover = new FanDiscoverPage(page);
 
         logger.info("[Fan Discover->Profile] Navigate to discover via Search icon");
@@ -73,14 +57,8 @@ public class FanDiscoverTest extends BaseTestClass {
     @Story("Discover screen: search and open creator profile, then navigate back")
     @Test(priority = 3, description = "Search for a creator, open profile via result, verify profile, go back to Discover and assert URL (Fan)")
     public void fanDiscoverSearchOpenAndBack() {
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
         String searchQuery = ConfigReader.getProperty("fan.discover.search.query", "igor");
         String searchResultText = ConfigReader.getProperty("fan.discover.search.resultText", "igor test");
-
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        login.login(fanUsername, fanPassword);
 
         FanDiscoverPage discover = new FanDiscoverPage(page);
 

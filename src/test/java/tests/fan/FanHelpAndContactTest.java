@@ -5,12 +5,8 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.fan.FanHelpAndContactPage;
-import pages.fan.FanLoginPage;
-import utils.ConfigReader;
 
 /**
  * Test class for Fan Help and Contact functionality.
@@ -18,22 +14,9 @@ import utils.ConfigReader;
  */
 @Epic("Fan")
 @Feature("Help and Contact")
-public class FanHelpAndContactTest extends BaseTestClass {
+public class FanHelpAndContactTest extends BaseFanTest {
 
     private static final Logger logger = LoggerFactory.getLogger(FanHelpAndContactTest.class);
-
-    // Fan credentials
-    private String fanUsername;
-    private String fanPassword;
-
-    /**
-     * Load fan credentials from config.
-     */
-    private void loadCredentials() {
-        fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-        logger.info("[FanHelpAndContact] Loaded credentials - Fan: {}", fanUsername);
-    }
 
     /**
      * Test: Fan submits Help and Contact form
@@ -51,18 +34,7 @@ public class FanHelpAndContactTest extends BaseTestClass {
     @Story("Fan submits Help and Contact form")
     @Test(priority = 1, description = "Fan navigates to Help and Contact and submits a message")
     public void fanCanSubmitHelpAndContactForm() {
-        // Load credentials
-        loadCredentials();
-
         logger.info("[FanHelpAndContact] Starting test: Fan submits Help and Contact form");
-
-        // ==================== FAN LOGIN ====================
-        logger.info("[FanHelpAndContact] Step 1: Fan login");
-        FanLoginPage fanLogin = new FanLoginPage(page);
-        fanLogin.navigate();
-        Assert.assertTrue(fanLogin.isLoginFormVisible(), "Fan login form not visible");
-        fanLogin.login(fanUsername, fanPassword);
-        logger.info("[FanHelpAndContact] Fan logged in and on Home screen");
 
         // ==================== NAVIGATE TO HELP AND CONTACT ====================
         logger.info("[FanHelpAndContact] Step 2: Navigate to Help and Contact");

@@ -1,30 +1,18 @@
 package tests.fan;
 
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
-import pages.fan.FanLoginPage;
 import pages.fan.FanHomePage;
 import pages.fan.FanMyCreatorsPage;
-import utils.ConfigReader;
 
 /**
  * Test class for Fan My Creators functionality.
  * Tests viewing subscribed creators and their subscription details.
  */
-public class FanMyCreatorsTest extends BaseTestClass {
+public class FanMyCreatorsTest extends BaseFanTest {
 
     @Test(priority = 1, 
           description = "Fan can view My Creators and scroll through existing creators")
     public void fanCanViewMyCreators() {
-        // Arrange: credentials
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-
-        // Login as Fan
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        login.login(fanUsername, fanPassword);
-
         // Verify on home screen
         FanHomePage home = new FanHomePage(page);
         home.assertOnHomeUrl();

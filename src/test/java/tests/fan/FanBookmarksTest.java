@@ -2,32 +2,20 @@ package tests.fan;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.fan.FanBookmarksPage;
 import pages.fan.FanHomePage;
-import pages.fan.FanLoginPage;
-import utils.ConfigReader;
 
 /**
  * Test class for Fan Bookmarks functionality.
  * Tests bookmarking feeds, viewing bookmarked feeds, and unbookmarking.
  */
-public class FanBookmarksTest extends BaseTestClass {
+public class FanBookmarksTest extends BaseFanTest {
 
     private static final int FEEDS_TO_BOOKMARK = 3;
 
     @Test(priority = 1, 
           description = "Fan can bookmark multiple feeds from home screen")
     public void fanCanBookmarkMultipleFeeds() {
-        // Arrange: credentials
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-
-        // Login as Fan
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        login.login(fanUsername, fanPassword);
-
         // Verify on home screen and click Home icon to navigate to feed screen
         FanHomePage home = new FanHomePage(page);
         home.assertOnHomeUrl();
@@ -47,15 +35,6 @@ public class FanBookmarksTest extends BaseTestClass {
           description = "Fan can view bookmarked feeds in saved screen",
           dependsOnMethods = "fanCanBookmarkMultipleFeeds")
     public void fanCanViewBookmarkedFeeds() {
-        // Arrange: credentials
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-
-        // Login as Fan
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        login.login(fanUsername, fanPassword);
-
         // Verify on home screen
         FanHomePage home = new FanHomePage(page);
         home.assertOnHomeUrl();
@@ -74,15 +53,6 @@ public class FanBookmarksTest extends BaseTestClass {
           description = "Fan can unbookmark all feeds and verify 'No bookmarks found!' message",
           dependsOnMethods = "fanCanViewBookmarkedFeeds")
     public void fanCanUnbookmarkFeeds() {
-        // Arrange: credentials
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-
-        // Login as Fan
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        login.login(fanUsername, fanPassword);
-
         // Verify on home screen
         FanHomePage home = new FanHomePage(page);
         home.assertOnHomeUrl();

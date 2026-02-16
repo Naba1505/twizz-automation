@@ -7,10 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.fan.FanClearSearchPage;
-import pages.fan.FanLoginPage;
-import utils.ConfigReader;
 
 /**
  * Test class for Fan Clear Recent Searches functionality.
@@ -18,28 +15,12 @@ import utils.ConfigReader;
  */
 @Epic("Fan")
 @Feature("Clear Recent Searches")
-public class FanClearSearchTest extends BaseTestClass {
+public class FanClearSearchTest extends BaseFanTest {
     private static final Logger logger = LoggerFactory.getLogger(FanClearSearchTest.class);
 
     @Story("Clear all recent searches from search history")
     @Test(priority = 1, description = "Fan can clear all recent searches from discover/search screen")
     public void fanCanClearAllRecentSearches() {
-        // Arrange: credentials
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-
-        // Login as Fan (may land on home or discover screen)
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        
-        try {
-            login.login(fanUsername, fanPassword);
-            logger.info("[Fan Clear Search] Logged in and landed on home screen");
-        } catch (IllegalStateException e) {
-            // Fan may land directly on discover screen, which is fine for this test
-            logger.info("[Fan Clear Search] Logged in, landed on: {}", page.url());
-        }
-
         // Navigate to Discover screen (or stay if already there)
         FanClearSearchPage clearSearch = new FanClearSearchPage(page);
         clearSearch.navigateToDiscover();

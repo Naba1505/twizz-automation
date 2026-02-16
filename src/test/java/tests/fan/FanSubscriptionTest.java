@@ -4,21 +4,15 @@ import java.io.IOException;
 
 import org.testng.annotations.Test;
 
-import pages.common.BaseTestClass;
-import pages.fan.FanLoginPage;
 import pages.fan.FanSubscriptionPage;
 import utils.ConfigReader;
 import tests.admin.AdminApproveCreatorTest;
 import tests.creator.CreatorRegistrationTest;
 
-public class FanSubscriptionTest extends BaseTestClass {
+public class FanSubscriptionTest extends BaseFanTest {
 
     @Test(priority = 1, description = "Fan subscribes to a creator from search with 3DS flow")
     public void fanCanSubscribeToCreator() {
-        // Arrange: credentials
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-
         // Resolve the creator username from previous steps (prefer most recent approved)
         String candidate = AdminApproveCreatorTest.approvedUsername;
         if (candidate == null || candidate.isBlank()) {
@@ -50,11 +44,6 @@ public class FanSubscriptionTest extends BaseTestClass {
             candidate = ConfigReader.getProperty("approval.username", "twizzcreator20251030121513143");
         }
         String creatorUsername = candidate != null && !candidate.isBlank() ? candidate : ConfigReader.getProperty("approval.username", "twizzcreator20251030121513143");
-
-        // Fan login and land on home
-        FanLoginPage fanLogin = new FanLoginPage(page);
-        fanLogin.navigate();
-        fanLogin.login(fanUsername, fanPassword);
 
         // Subscription flow via search
         FanSubscriptionPage sub = new FanSubscriptionPage(page);

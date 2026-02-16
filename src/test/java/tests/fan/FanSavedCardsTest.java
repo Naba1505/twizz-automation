@@ -7,22 +7,18 @@ import org.testng.annotations.Test;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
-import pages.common.BaseTestClass;
-import pages.fan.FanLoginPage;
 import pages.fan.FanSavedCardsPage;
 import utils.ConfigReader;
 
 @Epic("Fan")
 @Feature("Saved Cards")
-public class FanSavedCardsTest extends BaseTestClass {
+public class FanSavedCardsTest extends BaseFanTest {
     private static final Logger logger = LoggerFactory.getLogger(FanSavedCardsTest.class);
 
     @Story("Create/Save a new card in Settings > Saved Cards")
     @Test(priority = 1, description = "Navigate to Saved Cards, add a new card, and verify it's visible")
     public void fanAddSavedCard() {
         // Arrange
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
         String firstName = ConfigReader.getProperty("fan.card.firstName", "Test");
         String lastName = ConfigReader.getProperty("fan.card.lastName", "Card");
         String cardNumber = ConfigReader.getProperty("fan.card.number", "4242 4242 4242 4242");
@@ -31,13 +27,6 @@ public class FanSavedCardsTest extends BaseTestClass {
         String holderFullName = firstName + " " + lastName;
 
         logger.info("[Saved Cards] Starting test: Add saved card with holder name '{}'", holderFullName);
-
-        // Act - Login to Fan account and land on Home screen
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        logger.info("[Saved Cards] Logging in as Fan user: {}", fanUsername);
-        login.login(fanUsername, fanPassword);
-        logger.info("[Saved Cards] Successfully logged in and landed on Fan home screen");
 
         // Navigate to Settings > Saved Cards
         FanSavedCardsPage cards = new FanSavedCardsPage(page);
@@ -83,20 +72,11 @@ public class FanSavedCardsTest extends BaseTestClass {
     @Test(priority = 2, description = "Navigate to Saved Cards, delete the saved card, and verify it's removed")
     public void fanDeleteSavedCard() {
         // Arrange
-        String fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
         String firstName = ConfigReader.getProperty("fan.card.firstName", "Test");
         String lastName = ConfigReader.getProperty("fan.card.lastName", "Card");
         String holderFullName = firstName + " " + lastName;
 
         logger.info("[Saved Cards-Delete] Starting test: Delete saved card with holder name '{}'", holderFullName);
-
-        // Act - Login to Fan account
-        FanLoginPage login = new FanLoginPage(page);
-        login.navigate();
-        logger.info("[Saved Cards-Delete] Logging in as Fan user: {}", fanUsername);
-        login.login(fanUsername, fanPassword);
-        logger.info("[Saved Cards-Delete] Successfully logged in and landed on Fan home screen");
 
         // Navigate to Settings > Saved Cards
         FanSavedCardsPage cards = new FanSavedCardsPage(page);

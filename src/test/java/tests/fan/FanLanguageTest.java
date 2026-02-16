@@ -5,12 +5,8 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.fan.FanLanguagePage;
-import pages.fan.FanLoginPage;
-import utils.ConfigReader;
 
 /**
  * Test class for Fan Language settings.
@@ -18,22 +14,9 @@ import utils.ConfigReader;
  */
 @Epic("Fan")
 @Feature("Language")
-public class FanLanguageTest extends BaseTestClass {
+public class FanLanguageTest extends BaseFanTest {
 
     private static final Logger logger = LoggerFactory.getLogger(FanLanguageTest.class);
-
-    // Fan credentials
-    private String fanUsername;
-    private String fanPassword;
-
-    /**
-     * Load fan credentials from config.
-     */
-    private void loadCredentials() {
-        fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
-        logger.info("[FanLanguage] Loaded credentials - Fan: {}", fanUsername);
-    }
 
     /**
      * Test: Switch language through all available options
@@ -50,18 +33,7 @@ public class FanLanguageTest extends BaseTestClass {
     @Story("Fan switches language through all available options")
     @Test(priority = 1, description = "Fan navigates to Settings and switches language: English → French → Spanish → English")
     public void fanCanSwitchLanguages() {
-        // Load credentials
-        loadCredentials();
-
         logger.info("[FanLanguage] Starting test: Switch through all languages");
-
-        // ==================== FAN LOGIN ====================
-        logger.info("[FanLanguage] Step 1: Fan login");
-        FanLoginPage fanLogin = new FanLoginPage(page);
-        fanLogin.navigate();
-        Assert.assertTrue(fanLogin.isLoginFormVisible(), "Fan login form not visible");
-        fanLogin.login(fanUsername, fanPassword);
-        logger.info("[FanLanguage] Fan logged in and on Home screen");
 
         // ==================== NAVIGATE TO SETTINGS ====================
         logger.info("[FanLanguage] Step 2: Navigate to Settings");
