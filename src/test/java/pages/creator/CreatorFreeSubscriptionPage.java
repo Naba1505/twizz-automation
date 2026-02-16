@@ -56,7 +56,7 @@ public class CreatorFreeSubscriptionPage extends BasePage {
 
     @Step("Navigate to Creator Profile via URL")
     public void navigateToProfile() {
-        page.navigate("https://stg.twizz.app/creator/profile");
+        navigateAndWait("https://stg.twizz.app/creator/profile");
         page.waitForURL("**/creator/profile**", new Page.WaitForURLOptions().setTimeout(DEFAULT_WAIT));
         logger.info("[FreeSubscription] Navigated to creator profile");
     }

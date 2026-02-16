@@ -161,7 +161,7 @@ public class CreatorSettingsPage extends BasePage {
 
     @Step("Directly navigate to Quick Files URL and ensure page is visible")
     public void navigateToQuickFilesDirect() {
-        page.navigate(QUICK_LINK_URL);
+        navigateAndWait(QUICK_LINK_URL);
         ensureOnQuickFiles();
     }
 

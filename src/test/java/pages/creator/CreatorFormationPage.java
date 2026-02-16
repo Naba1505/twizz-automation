@@ -41,7 +41,7 @@ public class CreatorFormationPage extends BasePage {
         if (!clicked) {
             logger.warn("Settings icon not found; navigating directly to Settings URL");
             // Fallback: direct navigate to settings
-            page.navigate("https://stg.twizz.app/common/setting");
+            navigateAndWait("https://stg.twizz.app/common/setting");
         }
         assertOnSettingsUrl();
     }

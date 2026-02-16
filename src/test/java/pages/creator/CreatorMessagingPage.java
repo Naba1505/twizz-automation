@@ -61,7 +61,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Navigate directly to Creator Profile via URL")
     public void navigateToCreatorProfileViaUrl() {
         // Using stage URL as provided in steps; could be parameterized if needed
-        page.navigate("https://stg.twizz.app/creator/profile");
+        navigateAndWait("https://stg.twizz.app/creator/profile");
     }
 
     @Step("Open Messaging from creator dashboard (header icon)")

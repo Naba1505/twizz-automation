@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 
 import utils.ConfigReader;
@@ -106,8 +107,14 @@ public class BasePage {
     }
 
     protected void waitForIdle() {
-        page.waitForLoadState();
-        page.waitForLoadState();
+        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+    }
+
+    protected void navigateAndWait(String url) {
+        page.navigate(url);
+        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        logger.info("Navigated to: {}", url);
     }
 
     // Non-throwing visibility check used by page objects for optional elements

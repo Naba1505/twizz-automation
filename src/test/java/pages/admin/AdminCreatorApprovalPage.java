@@ -32,7 +32,7 @@ public class AdminCreatorApprovalPage extends BasePage {
     public void navigateToLogin() {
         log.info("Navigating to admin login page");
         String url = adminBaseUrl.endsWith("/") ? adminBaseUrl + "auth/login" : adminBaseUrl + "/auth/login";
-        page.navigate(url);
+        navigateAndWait(url);
     }
 
     public void loginAs(String username, String password) {
