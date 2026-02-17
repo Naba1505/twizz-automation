@@ -1,24 +1,12 @@
 package tests.creator;
 
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
-import pages.creator.CreatorLoginPage;
 import pages.creator.CreatorProfilePage;
-import utils.ConfigReader;
 
-public class CreatorProfileTest extends BaseTestClass {
+public class CreatorProfileTest extends BaseCreatorTest {
 
     @Test(priority = 1, description = "Creator login and lands on profile screen; verify key elements and icons navigation")
     public void creatorCanLandOnProfileAndSeeKeyElements() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -42,15 +30,7 @@ public class CreatorProfileTest extends BaseTestClass {
 
     @Test(priority = 2, description = "Creator uploads profile avatar from Modify profile screen and sees success toast")
     public void creatorCanUploadProfileAvatar() {
-        // Arrange: credentials and image path
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path avatar = java.nio.file.Paths.get("src/test/resources/Images/ProfileImageA.jpg");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
 
         // Navigate to profile
         CreatorProfilePage profile = new CreatorProfilePage(page);
@@ -68,15 +48,6 @@ public class CreatorProfileTest extends BaseTestClass {
 
     @Test(priority = 3, description = "Creator updates Last name, Position, and Description on Modify profile and saves successfully")
     public void creatorCanUpdateProfileFields() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile and open Modify screen
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -96,15 +67,6 @@ public class CreatorProfileTest extends BaseTestClass {
 
     @Test(priority = 4, description = "Creator verifies Share Profile options (whatsapp, twitter, telegram, message, copy, cancel)")
     public void creatorCanUseShareProfileOptions() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -122,15 +84,6 @@ public class CreatorProfileTest extends BaseTestClass {
 
     @Test(priority = 5, description = "Creator deletes uploaded avatar from Modify profile with confirmation")
     public void creatorCanDeleteProfileAvatar() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();

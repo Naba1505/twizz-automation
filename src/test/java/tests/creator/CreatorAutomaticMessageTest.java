@@ -2,32 +2,19 @@ package tests.creator;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
 import pages.creator.CreatorAutomaticMessagePage;
-import pages.creator.CreatorLoginPage;
-import utils.ConfigReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CreatorAutomaticMessageTest extends BaseTestClass {
+public class CreatorAutomaticMessageTest extends BaseCreatorTest {
     private static final Logger log = LoggerFactory.getLogger(CreatorAutomaticMessageTest.class);
 
     @Test(priority = 1, description = "Verify Automatic Message - New subscriber create and enable")
     public void verifyNewSubscriberAutoMessageCreateAndEnable() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         String imagePath = "src/test/resources/Images/AutoMessageImage.png";
         String message = "Message";
 
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorAutomaticMessagePage amPage = new CreatorAutomaticMessagePage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
@@ -50,20 +37,10 @@ public class CreatorAutomaticMessageTest extends BaseTestClass {
 
     @Test(priority = 2, description = "Verify Automatic Message - Renew subscriber modify with free price")
     public void verifyRenewSubscriberAutoMessageModifyWithFreePrice() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         String imagePath = "src/test/resources/Images/AutoMessageImageA.png";
         String message = "Message";
 
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorAutomaticMessagePage amPage = new CreatorAutomaticMessagePage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
@@ -90,20 +67,10 @@ public class CreatorAutomaticMessageTest extends BaseTestClass {
 
         @Test(priority = 3, description = "Verify Automatic Message - Unsubscribe modify with free price")
     public void verifyUnsubscribeAutoMessageModifyWithFreePrice() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         String imagePath = "src/test/resources/Images/AutoMessageImageB.jpg";
         String message = "Message";
 
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorAutomaticMessagePage amPage = new CreatorAutomaticMessagePage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
@@ -131,20 +98,10 @@ public class CreatorAutomaticMessageTest extends BaseTestClass {
 
         @Test(priority = 4, description = "Verify Automatic Message - Re-subscription modify with 15€ and promotion")
     public void verifyResubscriptionAutoMessageModifyWithPromotion() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         String imagePath = "src/test/resources/Images/AutoMessageImageD.jpg";
         String message = "Message";
 
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorAutomaticMessagePage amPage = new CreatorAutomaticMessagePage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
@@ -173,18 +130,7 @@ public class CreatorAutomaticMessageTest extends BaseTestClass {
 
         @Test(priority = 5, description = "Verify Automatic Message - Delete added media and disable all messages")
     public void verifyDeleteMediaAndDisableAllAutoMessages() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorAutomaticMessagePage amPage = new CreatorAutomaticMessagePage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();

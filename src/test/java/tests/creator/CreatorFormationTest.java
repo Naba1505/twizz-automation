@@ -1,24 +1,13 @@
 package tests.creator;
 
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
-import pages.creator.CreatorLoginPage;
 import pages.creator.CreatorProfilePage;
 import pages.creator.CreatorFormationPage;
-import utils.ConfigReader;
 
-public class CreatorFormationTest extends BaseTestClass {
+public class CreatorFormationTest extends BaseCreatorTest {
 
     @Test(priority = 1, description = "Creator can navigate Formation help topics from Settings and back")
     public void creatorCanNavigateFormationTopics() {
-        // Arrange credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login and land on profile (common pattern)
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
         profile.assertOnProfileUrl();

@@ -1,27 +1,16 @@
 package tests.creator;
 
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
-import pages.creator.CreatorLoginPage;
 import pages.creator.CreatorMessagingPage;
-import utils.ConfigReader;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class CreatorMessagingTest extends BaseTestClass {
+public class CreatorMessagingTest extends BaseCreatorTest {
 
     @Test(priority = 1, description = "Creator sends a normal text message to a fan from Messaging (with timestamp)")
     public void creatorCanSendNormalTextMessageToFan() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
 
         // Messaging flow
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
@@ -34,15 +23,7 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 2, description = "Creator sends an image media message from Messaging using Importation -> My Device")
     public void creatorCanSendImageMediaMessage() {
-        // Arrange: credentials and media path
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path media = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
 
         // Messaging flow: open conversation and send media
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
@@ -59,16 +40,8 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 3, description = "Creator sends a video media message from Messaging using Importation -> My Device")
     public void creatorCanSendVideoMediaMessage() {
-        // Arrange: credentials and video path (choose one from repo)
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         // You can switch between A/B as needed; using B by default
         java.nio.file.Path video = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
 
         // Messaging flow: open conversation and send media
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
@@ -85,15 +58,6 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 4, description = "Creator sends media message from Messaging using Importation -> Quick Files (albums)")
     public void creatorCanSendMediaFromQuickFilesInMessaging() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
-
         // Messaging flow: open conversation
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
         msg.openMessagingFromProfile();
@@ -114,16 +78,8 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 5, description = "Creator sends a Private media message (image + video) via My Device")
     public void creatorCanSendPrivateMediaMessage() {
-        // Arrange: credentials and media paths
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
         java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
 
         // Messaging flow: open conversation
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
@@ -166,15 +122,7 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 6, description = "Creator sends a Private media message with promotion (10€, validity Unlimited)")
     public void creatorCanSendPrivateMediaWithPromotion() {
-        // Arrange: credentials and media paths
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
 
         // Messaging flow: open conversation
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
@@ -214,15 +162,7 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 7, description = "Creator sends a Private media message with promotion (5% discount, validity 7 days)")
     public void creatorCanSendPrivateMediaWithPromotionPercent() {
-        // Arrange: credentials and media paths
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
 
         // Messaging flow: open conversation
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
@@ -261,16 +201,8 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 8, description = "Creator sends a Private media message for Free (image + video) via My Device")
     public void creatorCanSendPrivateMediaFree() {
-        // Arrange: credentials and media paths
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
         java.nio.file.Path vid = java.nio.file.Paths.get("src/test/resources/Videos/MessageVideoMediaB.mp4");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
 
         // Messaging flow: open conversation
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
@@ -310,15 +242,7 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 9, description = "Creator sends a Free Private media message with unblurred media")
     public void creatorCanSendPrivateMediaFreeUnblurred() {
-        // Arrange: credentials and media paths
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
         java.nio.file.Path img = java.nio.file.Paths.get("src/test/resources/Images/MessageImageMediaB.jpg");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
 
         // Messaging flow: open conversation
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
@@ -352,15 +276,6 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 10, description = "Creator sends a Private media message using Quick Files (multi-select)")
     public void creatorCanSendPrivateMediaViaQuickFiles() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
-
         // Messaging flow: open conversation
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
         msg.openMessagingFromProfile();
@@ -398,15 +313,6 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 11, description = "Creator opens Private Gallery from messaging, scrolls, previews an item, and closes preview")
     public void creatorCanViewPrivateGallery() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
-
         // Messaging flow: open conversation
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
         msg.openMessagingFromProfile();
@@ -429,15 +335,6 @@ public class CreatorMessagingTest extends BaseTestClass {
 
     @Test(priority = 12, description = "Creator navigates Messaging dashboard tabs, uses filter and search")
     public void creatorCanUseMessagingTabsFilterAndSearch() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator and land on profile
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
-        loginPage.navigate();
-        loginPage.login(username, password);
-
         // Navigate directly to profile, then open Messaging via dashboard icon
         CreatorMessagingPage msg = new CreatorMessagingPage(page);
         msg.navigateToCreatorProfileViaUrl();

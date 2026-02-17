@@ -1,25 +1,13 @@
 package tests.creator;
 
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
-import pages.creator.CreatorLoginPage;
 import pages.creator.CreatorProfilePage;
 import pages.creator.CreatorScriptsPage;
-import utils.ConfigReader;
 
-public class CreatorScriptsTest extends BaseTestClass {
+public class CreatorScriptsTest extends BaseCreatorTest {
 
     @Test(priority = 1, description = "Creator can create a script using image media with two uploads and bookmark")
     public void creatorCanCreateScriptWithImages() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing (common entry for creator account features)
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -32,15 +20,6 @@ public class CreatorScriptsTest extends BaseTestClass {
 
     @Test(priority = 2, description = "Creator can create a script using video media with custom price and promo")
     public void creatorCanCreateScriptWithVideosAndPromo() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -53,15 +32,6 @@ public class CreatorScriptsTest extends BaseTestClass {
 
     @Test(priority = 3, description = "Creator can create a script using audio media with price 50 and 7 days promo")
     public void creatorCanCreateScriptWithAudiosAndPromo() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -74,15 +44,6 @@ public class CreatorScriptsTest extends BaseTestClass {
 
     @Test(priority = 4, description = "Creator can create a script with mixed media (image, video, audio) and free price")
     public void creatorCanCreateScriptWithMixedMediaFree() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -95,15 +56,6 @@ public class CreatorScriptsTest extends BaseTestClass {
 
     @Test(priority = 5, description = "Creator Scripts screen search functionality validation with multiple keywords")
     public void creatorCanUseScriptsSearchWithMultipleKeywords() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -118,15 +70,6 @@ public class CreatorScriptsTest extends BaseTestClass {
 
     @Test(priority = 6, description = "Creator can edit an existing image script by adding extra media and updating text")
     public void creatorCanEditImageScript() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -139,15 +82,6 @@ public class CreatorScriptsTest extends BaseTestClass {
 
     @Test(priority = 7, description = "Creator can edit an existing video script by adding extra media and updating text")
     public void creatorCanEditVideoScript() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -160,15 +94,6 @@ public class CreatorScriptsTest extends BaseTestClass {
 
     @Test(priority = 8, description = "Creator can edit an existing audio script by adding extra media and updating text")
     public void creatorCanEditAudioScript() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -181,15 +106,6 @@ public class CreatorScriptsTest extends BaseTestClass {
 
     @Test(priority = 9, description = "Creator can edit an existing mixed media script by adding extra media and updating text")
     public void creatorCanEditMixedMediaScript() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -203,15 +119,6 @@ public class CreatorScriptsTest extends BaseTestClass {
     @Test(priority = 10,
             description = "Creator can create an image script using Quick Files album (requires CreatorQuickFilesTest image album)")
     public void creatorCanCreateImageScriptFromQuickFiles() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -225,15 +132,6 @@ public class CreatorScriptsTest extends BaseTestClass {
     @Test(priority = 11,
             description = "Creator can create a video script using Quick Files album with promo (requires CreatorQuickFilesTest video album)")
     public void creatorCanCreateVideoScriptFromQuickFilesWithPromo() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -247,15 +145,6 @@ public class CreatorScriptsTest extends BaseTestClass {
     @Test(priority = 12,
             description = "Creator can create an audio script using Quick Files album with promo (requires CreatorQuickFilesTest audio album)")
     public void creatorCanCreateAudioScriptFromQuickFilesWithPromo() {
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();
@@ -296,15 +185,6 @@ public class CreatorScriptsTest extends BaseTestClass {
          * - A working JavaScript-based drag simulation is found
          */
         
-        // Arrange: credentials
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        // Login as Creator
-        CreatorLoginPage login = new CreatorLoginPage(page);
-        login.navigate();
-        login.login(username, password);
-
         // Navigate to profile landing
         CreatorProfilePage profile = new CreatorProfilePage(page);
         profile.navigateToProfile();

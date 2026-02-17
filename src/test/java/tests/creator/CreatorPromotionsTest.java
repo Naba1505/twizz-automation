@@ -1,28 +1,13 @@
 package tests.creator;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
-import pages.creator.CreatorLoginPage;
 import pages.creator.CreatorPromotionsPage;
-import utils.ConfigReader;
 
-public class CreatorPromotionsTest extends BaseTestClass {
+public class CreatorPromotionsTest extends BaseCreatorTest {
 
     @Test(priority = 1, description = "Creator can add a promo code with 10% discount on subscriptions (unlimited)")
     public void testAddPromoCode() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorPromotionsPage promotions = new CreatorPromotionsPage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Next: open settings and navigate to Promotions
         promotions.openSettingsFromProfile();
@@ -42,18 +27,7 @@ public class CreatorPromotionsTest extends BaseTestClass {
 
     @Test(priority = 2, description = "Creator can add a promo code for Media push / Collection with 7 days validity")
     public void testAddPromoCodeForMediaPush() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorPromotionsPage promotions = new CreatorPromotionsPage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Next: open settings and navigate to Promotions
         promotions.openSettingsFromProfile();
@@ -74,18 +48,7 @@ public class CreatorPromotionsTest extends BaseTestClass {
 
     @Test(priority = 3, description = "Creator can add a promo code with fixed euro discount for Subscription (unlimited)")
     public void testAddPromoCodeFixedAmount() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorPromotionsPage promotions = new CreatorPromotionsPage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Next: open settings and navigate to Promotions
         promotions.openSettingsFromProfile();
@@ -105,18 +68,7 @@ public class CreatorPromotionsTest extends BaseTestClass {
 
     @Test(priority = 4, description = "Creator can add a promo code with fixed euro discount for Media push / Collection (7 days)")
     public void testAddPromoCodeFixedAmountMediaPush() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorPromotionsPage promotions = new CreatorPromotionsPage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Next: open settings and navigate to Promotions
         promotions.openSettingsFromProfile();
@@ -137,18 +89,7 @@ public class CreatorPromotionsTest extends BaseTestClass {
 
     @Test(priority = 5, description = "Creator clicks all 'Copy' buttons on Promo code page; assert success popup only for the last click")
     public void testCopyAllPromoLinks() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorPromotionsPage promotions = new CreatorPromotionsPage(page);
-
-        // Act: login and go to Promo code page
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         promotions.openSettingsFromProfile();
         promotions.openPromoCodeScreen(); // waits for exact title visibility

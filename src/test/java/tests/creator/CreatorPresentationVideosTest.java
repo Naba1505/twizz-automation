@@ -1,32 +1,17 @@
 package tests.creator;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import pages.common.BaseTestClass;
-import pages.creator.CreatorLoginPage;
 import pages.creator.CreatorMediaPushPage;
 import pages.creator.CreatorPresentationVideosPage;
-import utils.ConfigReader;
 
 import java.nio.file.Path;
 
-public class CreatorPresentationVideosTest extends BaseTestClass {
+public class CreatorPresentationVideosTest extends BaseCreatorTest {
 
     @Test(priority = 1, description = "Creator can upload a Presentation Video (<60s) and see 'Waiting' status")
     public void creatorCanUploadPresentationVideo() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorPresentationVideosPage pvPage = new CreatorPresentationVideosPage(page);
         CreatorMediaPushPage mediaPushUtils = new CreatorMediaPushPage(page); // for waitForUploadingMessageIfFast()
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Navigate to Presentation Videos page
         pvPage.openSettingsFromProfile();
@@ -48,18 +33,7 @@ public class CreatorPresentationVideosTest extends BaseTestClass {
 
     @Test(priority = 2, description = "Creator can delete the created Presentation Video and see empty prompt")
     public void creatorCanDeletePresentationVideo() {
-        // Arrange
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
-
-        CreatorLoginPage loginPage = new CreatorLoginPage(page);
         CreatorPresentationVideosPage pvPage = new CreatorPresentationVideosPage(page);
-
-        // Act: login and land on profile
-        loginPage.navigate();
-        Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header (logo/text) not visible on login screen");
-        Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
-        loginPage.login(username, password);
 
         // Navigate to Presentation Videos page
         pvPage.openSettingsFromProfile();
