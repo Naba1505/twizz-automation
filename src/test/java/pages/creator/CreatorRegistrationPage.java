@@ -4,17 +4,14 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import pages.common.BasePage;
 import utils.ConfigReader;
 import utils.WaitUtils;
 
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
-public class CreatorRegistrationPage {
-    private static final Logger logger = LoggerFactory.getLogger(CreatorRegistrationPage.class);
-    private final Page page;
+public class CreatorRegistrationPage extends BasePage {
 
     // First Page Locators
     private final String nameInput = "input[name=\"name\"]";
@@ -52,7 +49,7 @@ public class CreatorRegistrationPage {
 
 
     public CreatorRegistrationPage(Page page) {
-        this.page = page;
+        super(page);
     }
 
     public boolean isRegistrationFormVisible() {

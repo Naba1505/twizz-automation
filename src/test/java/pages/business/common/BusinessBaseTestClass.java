@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
@@ -38,7 +39,7 @@ import utils.ConfigReader;
  * Provides setup/teardown for Business app testing
  */
 public class BusinessBaseTestClass {
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
+    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS");
     protected Page page;
     protected BusinessLandingPage businessLandingPage;
     protected BusinessManagerSignUpPage businessManagerSignUpPage;
@@ -97,7 +98,7 @@ public class BusinessBaseTestClass {
             try {
                 String screenshotDir = ConfigReader.getProperty("screenshot.dir", "screenshots");
                 Files.createDirectories(Paths.get(screenshotDir));
-                String timestamp = dateFormat.format(System.currentTimeMillis());
+                String timestamp = LocalDateTime.now().format(dateFormat);
                 String screenshotPath = screenshotDir + "/Business_" + result.getName() + "_" + timestamp + ".png";
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
                 Allure.addAttachment("Failure Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
@@ -113,7 +114,7 @@ public class BusinessBaseTestClass {
                 if (traceEnabled) {
                     String traceDir = ConfigReader.getProperty("trace.dir", "traces");
                     Files.createDirectories(Paths.get(traceDir));
-                    String timestamp = dateFormat.format(System.currentTimeMillis());
+                    String timestamp = LocalDateTime.now().format(dateFormat);
                     Path tracePath = Paths.get(traceDir, "Business_" + result.getName() + "_" + timestamp + ".zip");
                     page.context().tracing().stop(new Tracing.StopOptions().setPath(tracePath));
                     Allure.addAttachment("Playwright Trace", "application/zip", Files.newInputStream(tracePath), ".zip");
@@ -123,7 +124,7 @@ public class BusinessBaseTestClass {
             try {
                 String screenshotDir = ConfigReader.getProperty("screenshot.dir", "screenshots");
                 Files.createDirectories(Paths.get(screenshotDir));
-                String timestamp = dateFormat.format(System.currentTimeMillis());
+                String timestamp = LocalDateTime.now().format(dateFormat);
                 String screenshotPath = screenshotDir + "/Business_" + result.getName() + "_SUCCESS_" + timestamp + ".png";
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
                 Allure.addAttachment("Success Screenshot", "image/png", new ByteArrayInputStream(png), ".png");

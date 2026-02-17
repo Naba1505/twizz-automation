@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
@@ -19,13 +20,11 @@ import com.microsoft.playwright.options.WaitUntilState;
 import io.qameta.allure.Allure;
 import utils.BrowserFactory;
 import utils.ConfigReader;
-import pages.creator.CreatorRegistrationPage;
 
 public class BaseTestClass {
-    static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS");
+    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS");
     protected Page page;
     protected LandingPage landingPage;
-    protected CreatorRegistrationPage creatorRegistrationPage;
 
     @BeforeMethod
     public void setUp() {
@@ -69,7 +68,7 @@ public class BaseTestClass {
             try {
                 String screenshotDir = ConfigReader.getProperty("screenshot.dir", "screenshots");
                 Files.createDirectories(Paths.get(screenshotDir));
-                String timestamp = dateFormat.format(System.currentTimeMillis());
+                String timestamp = LocalDateTime.now().format(dateFormat);
                 String screenshotPath = screenshotDir + "/" + result.getName() + "_" + timestamp + ".png";
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
                 // Allure attachment
@@ -88,7 +87,7 @@ public class BaseTestClass {
                 if (traceEnabled) {
                     String traceDir = ConfigReader.getProperty("trace.dir", "traces");
                     Files.createDirectories(Paths.get(traceDir));
-                    String timestamp = dateFormat.format(System.currentTimeMillis());
+                    String timestamp = LocalDateTime.now().format(dateFormat);
                     Path tracePath = Paths.get(traceDir, result.getName() + "_" + timestamp + ".zip");
                     page.context().tracing().stop(new Tracing.StopOptions().setPath(tracePath));
                     Allure.addAttachment("Playwright Trace", "application/zip", Files.newInputStream(tracePath), ".zip");
@@ -98,7 +97,7 @@ public class BaseTestClass {
             try {
                 String screenshotDir = ConfigReader.getProperty("screenshot.dir", "screenshots");
                 Files.createDirectories(Paths.get(screenshotDir));
-                String timestamp = dateFormat.format(System.currentTimeMillis());
+                String timestamp = LocalDateTime.now().format(dateFormat);
                 String screenshotPath = screenshotDir + "/" + result.getName() + "_SUCCESS_" + timestamp + ".png";
                 byte[] png = page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)));
                 // Allure attachment
@@ -112,7 +111,7 @@ public class BaseTestClass {
                 if (traceExportOnSuccess) {
                     String traceDir = ConfigReader.getProperty("trace.dir", "traces");
                     Files.createDirectories(Paths.get(traceDir));
-                    String timestamp = dateFormat.format(System.currentTimeMillis());
+                    String timestamp = LocalDateTime.now().format(dateFormat);
                     Path tracePath = Paths.get(traceDir, result.getName() + "_SUCCESS_" + timestamp + ".zip");
                     page.context().tracing().stop(new Tracing.StopOptions().setPath(tracePath));
                     Allure.addAttachment("Playwright Trace (Success)", "application/zip", Files.newInputStream(tracePath), ".zip");

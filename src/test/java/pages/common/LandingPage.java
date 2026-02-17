@@ -2,13 +2,9 @@ package pages.common;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
 
-public class LandingPage {
-    private static final Logger logger = LoggerFactory.getLogger(LandingPage.class);
-    private final Page page;
+public class LandingPage extends BasePage {
 
     private final String twizzLogo = "role=img[name='Twizz']";
     private final String creatorRegistrationButton = "role=button[name='Creator']";
@@ -16,7 +12,7 @@ public class LandingPage {
     private final String loginButton = "text='Login'";
 
     public LandingPage(Page page) {
-        this.page = page;
+        super(page);
     }
 
     public void navigate() {
