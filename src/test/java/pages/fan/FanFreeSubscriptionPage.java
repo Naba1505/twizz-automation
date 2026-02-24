@@ -186,9 +186,9 @@ public class FanFreeSubscriptionPage extends BasePage {
     @Step("Click on visible collection item")
     public void clickCollectionItem() {
         dismissOverlay();
-        Locator collection = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Smithphoto hot"));
-        waitVisible(collection, ConfigReader.getShortTimeout());
-        clickWithRetry(collection, 1, 150);
+        Locator collection = page.locator(".collection-img");
+        waitVisible(collection.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(collection.first(), 1, 150);
         page.waitForTimeout(2000);
         logger.info("[FanFreeSub] Clicked on collection item");
     }
