@@ -45,15 +45,10 @@ public class AdminApproveCreatorTest extends BaseTestClass {
     public void testApproveCreatorAccount() {
         AdminCreatorApprovalPage admin = new AdminCreatorApprovalPage(page);
 
-        // Always navigate and login first so the test doesn't skip before hitting the URL
+        // Navigate to login, login, then go to Users > Creators
         admin.navigateToLogin();
         admin.loginWithConfig();
-        admin.waitUntilDashboardStable();
-        admin.waitForCreatorsShellVisible();
-
-        // Navigate to Creators even if username is not configured, per user's request to proceed after login
         admin.openCreatorsAll();
-        admin.waitForHeavyLoadToSettle();
 
         // Prefer the in-memory username from the registration test; else try file fallback
         String candidate = CreatorRegistrationTest.createdUsername;
@@ -78,9 +73,8 @@ public class AdminApproveCreatorTest extends BaseTestClass {
         admin.searchCreator(resolvedUsername);
         admin.waitForCreatorInResults(resolvedUsername);
 
-        // Edit and approve (row-scoped for correctness)
+        // Edit and approve
         admin.openActionEditForCreator(resolvedUsername);
-        admin.waitForHeavyLoadToSettle();
         admin.toggleVerificationAndStatus();
         admin.submitAndAssertUpdated();
 
