@@ -67,9 +67,30 @@ public class FanSpottedBugPage extends BasePage {
 
     @Step("Click Settings icon from Fan home")
     public void clickSettingsIcon() {
-        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon(), 2, 200);
-        logger.info("[Fan][SpottedBug] Clicked Settings icon");
+        // Add retry logic for intermittent settings icon visibility
+        int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                logger.info("[Fan][SpottedBug] Attempt {} to click Settings icon", attempt);
+                waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
+                clickWithRetry(settingsIcon(), 2, 200);
+                logger.info("[Fan][SpottedBug] Clicked Settings icon on attempt {}", attempt);
+                return; // Success, exit method
+            } catch (Exception e) {
+                logger.warn("[Fan][SpottedBug] Attempt {} failed: {}", attempt, e.getMessage());
+                if (attempt < maxRetries) {
+                    // Wait a bit and try again
+                    page.waitForTimeout(1000);
+                    // Try to ensure we're on a stable page
+                    try {
+                        page.waitForLoadState();
+                    } catch (Exception ignored) {}
+                } else {
+                    // Last attempt failed, re-throw the exception
+                    throw new RuntimeException("Failed to click Settings icon after " + maxRetries + " attempts", e);
+                }
+            }
+        }
     }
 
     @Step("Assert on Settings screen by viewing title")
