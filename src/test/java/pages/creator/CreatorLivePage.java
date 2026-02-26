@@ -28,7 +28,6 @@ public class CreatorLivePage extends BasePage {
     private static final String LIVE_ONBOARDING_TEXT = "How to use lives";
     private static final String ACCESS_EVERYONE = "Everyone";
     private static final String ACCESS_SUBSCRIBERS = "Subscribers";
-    private static final String PRICE_FREE = "Free";
     private static final String WHEN_SCHEDULE = "Schedule";
     private static final String DATE_PLACEHOLDER = "Date";
     private static final String DESC_PLACEHOLDER = "Your message....";
@@ -100,12 +99,7 @@ public class CreatorLivePage extends BasePage {
         logger.info("Set price to {}€", euro);
     }
 
-    @Step("Set price: Free")
-    public void setPriceFree() {
-        clickLabelByText(PRICE_FREE);
-        logger.info("Set price to Free");
-    }
-
+    
     @Step("Enable chat with Everyone if present")
     public void enableChatEveryoneIfPresent() {
         Locator chatBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ACCESS_EVERYONE));

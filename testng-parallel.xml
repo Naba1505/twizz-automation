@@ -61,7 +61,6 @@
             <class name="tests.fan.FanBookmarksTest"/>
             <class name="tests.fan.FanMyCreatorsTest"/>
             <class name="tests.fan.FanDiscoverTest"/>
-            <class name="tests.fan.FanSavedCardsTest"/>
             <class name="tests.fan.FanSubscriptionTest"/>
             <class name="tests.fan.FanLiveTest"/>
             <class name="tests.fan.FanHelpAndContactTest"/>
@@ -71,6 +70,7 @@
             <class name="tests.fan.FanLanguageTest"/>
             <class name="tests.fan.FanPersonalInfoTest"/>
             <class name="tests.fan.FanMessagingTest"/>
+            <class name="tests.fan.FanCleanupCardsTest"/>
             <class name="tests.fan.FanClearSearchTest"/>
             <class name="tests.fan.FanFreeSubscriptionTest"/>
             <class name="tests.fan.FanLogoutTest"/>

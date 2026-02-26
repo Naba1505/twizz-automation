@@ -29,6 +29,31 @@ public class FanSavedCardsPage extends BasePage {
         waitVisible(savedCards.first(), ConfigReader.getShortTimeout());
         clickWithRetry(savedCards.first(), 1, 120);
         assertOnSavedCards();
+        
+        // Debug: Log what elements are found on the page
+        page.waitForTimeout(1000);
+        logger.info("[Saved Cards] Debug: Checking for card elements...");
+        
+        // Check for various card selectors
+        Locator primary = page.locator("button[type='button'] span");
+        logger.info("[Saved Cards] Debug: Found {} elements with selector 'button[type='button'] span'", primary.count());
+        
+        Locator alt1 = page.locator(".saved-card-item");
+        logger.info("[Saved Cards] Debug: Found {} elements with selector '.saved-card-item'", alt1.count());
+        
+        Locator alt2 = page.locator("[data-testid*='card']");
+        logger.info("[Saved Cards] Debug: Found {} elements with selector '[data-testid*='card']'", alt2.count());
+        
+        Locator alt3 = page.locator(".card-item");
+        logger.info("[Saved Cards] Debug: Found {} elements with selector '.card-item'", alt3.count());
+        
+        // Check for "No Card Found!" message
+        Locator noCardMsg = page.getByText("No Card Found!");
+        if (safeIsVisible(noCardMsg)) {
+            logger.info("[Saved Cards] Debug: 'No Card Found!' message is visible");
+        } else {
+            logger.info("[Saved Cards] Debug: 'No Card Found!' message not found");
+        }
     }
 
     @Step("Assert on Saved Cards screen")
@@ -144,6 +169,89 @@ public class FanSavedCardsPage extends BasePage {
         // Wait for the card entry to disappear
         logger.info("[Saved Cards] Waiting for card '{}' to be removed", fullName);
         waitForCardToDisappear(fullName, ConfigReader.getVisibilityTimeout());
+    }
+
+    @Step("Delete all existing saved cards")
+    public void deleteAllExistingCards() {
+        logger.info("[Saved Cards] Starting to delete all existing cards");
+        
+        // First check if "No Card Found!" message is already visible
+        Locator noCardMessage = page.getByText("No Card Found!");
+        if (safeIsVisible(noCardMessage)) {
+            logger.info("[Saved Cards] 'No Card Found!' message is already visible - no cards to delete");
+            return;
+        }
+        
+        // Keep deleting until no more cards are found
+        int deletedCount = 0;
+        int maxAttempts = 10; // Prevent infinite loop
+        int attempts = 0;
+        
+        while (attempts < maxAttempts) {
+            try {
+                // Follow exact codegen approach - click on the card div
+                page.locator("div").nth(4).click();
+                
+                // Click Delete button
+                page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete")).click();
+                
+                // Confirm deletion - follow exact codegen sequence
+                page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete")).click();
+                
+                // Ensure popup is displayed
+                page.getByText("Do you really want to delete");
+                
+                // Click on "Yes delete" button
+                page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes delete")).click();
+                
+                // Wait for "No Card Found!" to be visible - follow codegen exactly
+                try {
+                    page.waitForSelector(":text-is('No Card Found!')", new Page.WaitForSelectorOptions().setTimeout(10000));
+                    logger.info("[Saved Cards] 'No Card Found!' message appeared after deletion");
+                    deletedCount++;
+                    break; // Exit loop when "No Card Found!" appears
+                } catch (Exception e) {
+                    logger.info("[Saved Cards] 'No Card Found!' message not yet visible, continuing...");
+                    deletedCount++;
+                    attempts++;
+                }
+                
+            } catch (Exception e) {
+                logger.info("[Saved Cards] No more cards to delete or error occurred: {}", e.getMessage());
+                break;
+            }
+        }
+        
+        logger.info("[Saved Cards] Completed deletion, removed {} cards", deletedCount);
+        
+        // Final verification - check for "No Card Found!" message
+        page.waitForTimeout(1000);
+        if (safeIsVisible(noCardMessage)) {
+            logger.info("[Saved Cards] Verified 'No Card Found!' message is displayed");
+        } else if (deletedCount == 0) {
+            logger.info("[Saved Cards] No cards were found to delete initially");
+        } else {
+            logger.info("[Saved Cards] 'No Card Found!' message not visible, but {} cards were deleted", deletedCount);
+        }
+    }
+
+    @Step("Assert no saved cards exist")
+    public void assertNoCardsExist() {
+        logger.info("[Saved Cards] Checking if any saved cards exist");
+        
+        // Try to find any card entry
+        Locator anyCard = page.locator("button[type='button'] span").first();
+        
+        // Wait a bit to ensure page is loaded
+        page.waitForTimeout(1000);
+        
+        // Check if any cards are visible
+        if (anyCard.count() > 0 && safeIsVisible(anyCard)) {
+            String cardText = anyCard.textContent();
+            throw new AssertionError("Expected no saved cards, but found card: " + cardText);
+        }
+        
+        logger.info("[Saved Cards] Verified: No saved cards exist");
     }
 
     @Step("Assert card not present for holder name: {fullName}")

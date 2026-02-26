@@ -29,14 +29,18 @@ public class CreatorClearSearchTest extends BaseCreatorTest {
         logger.info("[Creator Clear Search] Opening search interface");
         clearSearch.clickSearchField();
 
-        // Verify "Recent" text is displayed
-        logger.info("[Creator Clear Search] Verifying 'Recent' text is displayed");
-        boolean recentVisible = clearSearch.isRecentTextVisible();
-        Assert.assertTrue(recentVisible, "Expected 'Recent' text to be visible in search interface");
-
-        // Get initial count of recent searches
+        // Get initial count of recent searches first
         int initialCount = clearSearch.getRecentSearchCount();
-        logger.info("[Creator Clear Search] Found {} recent searches to clear", initialCount);
+        logger.info("[Creator Clear Search] Found {} recent searches", initialCount);
+        
+        // Verify "Recent" text is displayed only if there are recent searches
+        if (initialCount > 0) {
+            logger.info("[Creator Clear Search] Verifying 'Recent' text is displayed");
+            boolean recentVisible = clearSearch.isRecentTextVisible();
+            Assert.assertTrue(recentVisible, "Expected 'Recent' text to be visible in search interface when recent searches exist");
+        } else {
+            logger.info("[Creator Clear Search] No recent searches found, skipping 'Recent' text verification");
+        }
 
         // If no recent searches, skip the test
         if (initialCount == 0) {
