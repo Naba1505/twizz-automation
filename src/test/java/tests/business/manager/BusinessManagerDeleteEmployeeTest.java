@@ -36,13 +36,13 @@ public class BusinessManagerDeleteEmployeeTest extends BusinessBaseTestClass {
         // Click on Agency icon
         businessManagerDeleteEmployeePage.clickAgencyIcon();
         
-        // Verify 'Your employees' text
-        Assert.assertTrue(businessManagerDeleteEmployeePage.isYourEmployeesTextVisible(), 
-            "'Your employees' text is not visible");
-        logger.info("[Manager Delete Employee] On employee screen");
+        // Verify agency content element is visible
+        Assert.assertTrue(businessManagerDeleteEmployeePage.isAgencyContentElementVisible(), 
+            "Agency content element is not visible");
+        logger.info("[Manager Delete Employee] Agency content element is visible");
         
-        // Click on employee card
-        businessManagerDeleteEmployeePage.clickEmployeeCard();
+        // Click on employee info element
+        businessManagerDeleteEmployeePage.clickEmployeeInfo();
         
         // Verify 'Twizz identity Card' heading
         Assert.assertTrue(businessManagerDeleteEmployeePage.isTwizzIdentityCardHeadingVisible(), 

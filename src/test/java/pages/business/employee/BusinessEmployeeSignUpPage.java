@@ -88,9 +88,8 @@ public class BusinessEmployeeSignUpPage extends BasePage {
 
     @Step("Select birth date")
     public void selectBirthDate() {
-        Locator birthDateField = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Birth date"));
-        birthDateField.click();
-        page.waitForTimeout(500);
+        // Follow exact codegen sequence
+        page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Birth date")).click();
         
         // Select year 1995
         page.getByText("2008").click();
@@ -98,17 +97,17 @@ public class BusinessEmployeeSignUpPage extends BasePage {
         page.getByText("1995").click();
         page.waitForTimeout(300);
         
-        // Select month May
-        page.getByText("January").click();
+        // Select month January (changed from May to match codegen)
+        page.getByText("February").click();
         page.waitForTimeout(300);
-        page.getByText("May").click();
+        page.getByText("January").click();
         page.waitForTimeout(300);
         
         // Select day 1
         page.getByText("1", new Page.GetByTextOptions().setExact(true)).click();
         page.waitForTimeout(300);
         
-        logger.info("[Business Employee] Selected birth date: 1995-05-01");
+        logger.info("[Business Employee] Selected birth date: 1995-01-01");
     }
 
     @Step("Confirm birth date")

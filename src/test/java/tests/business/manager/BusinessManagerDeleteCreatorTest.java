@@ -36,13 +36,13 @@ public class BusinessManagerDeleteCreatorTest extends BusinessBaseTestClass {
         // Click on Agency icon
         businessManagerDeleteCreatorPage.clickAgencyIcon();
         
-        // Verify 'Your creators' text
-        Assert.assertTrue(businessManagerDeleteCreatorPage.isYourCreatorsTextVisible(), 
-            "'Your creators' text is not visible");
-        logger.info("[Manager Delete Creator] On creator screen");
+        // Verify agency content element is visible
+        Assert.assertTrue(businessManagerDeleteCreatorPage.isAgencyContentElementVisible(), 
+            "Agency content element is not visible");
+        logger.info("[Manager Delete Creator] Agency content element is visible");
         
-        // Click on creator card
-        businessManagerDeleteCreatorPage.clickCreatorCard();
+        // Click on creator info element
+        businessManagerDeleteCreatorPage.clickCreatorInfo();
         
         // Verify 'Twizz identity Card' heading
         Assert.assertTrue(businessManagerDeleteCreatorPage.isTwizzIdentityCardHeadingVisible(), 

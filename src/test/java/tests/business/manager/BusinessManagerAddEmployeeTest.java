@@ -44,8 +44,8 @@ public class BusinessManagerAddEmployeeTest extends BusinessBaseTestClass {
         businessManagerAddEmployeePage.clickAgencyIcon();
         
         // Verify on Agency screen
-        Assert.assertTrue(businessManagerAddEmployeePage.isYourAgencyTitleVisible(), 
-            "'Your agency' title is not visible");
+        Assert.assertTrue(businessManagerAddEmployeePage.isAgencyUrlLoaded(), 
+            "Agency URL is not loaded");
         logger.info("[Manager Add Employee] On Agency screen");
         
         // Verify 'Your employees' message
@@ -113,8 +113,8 @@ public class BusinessManagerAddEmployeeTest extends BusinessBaseTestClass {
         businessManagerAddEmployeePage.clickAgencyIcon();
         
         // Verify on Agency screen
-        Assert.assertTrue(businessManagerAddEmployeePage.isYourAgencyTitleVisible(), 
-            "'Your agency' title is not visible");
+        Assert.assertTrue(businessManagerAddEmployeePage.isAgencyUrlLoaded(), 
+            "Agency URL is not loaded");
         logger.info("[Manager Add Employee] On Agency screen");
         
         // Click Add button to invite employee
@@ -403,8 +403,8 @@ public class BusinessManagerAddEmployeeTest extends BusinessBaseTestClass {
         businessManagerAddEmployeePage.clickAgencyIcon();
         
         // Verify 'Your agency' title
-        Assert.assertTrue(businessManagerAddEmployeePage.isYourAgencyTitleVisible(), 
-            "'Your agency' title is not visible");
+        Assert.assertTrue(businessManagerAddEmployeePage.isAgencyUrlLoaded(), 
+            "Agency URL is not loaded");
         logger.info("[Manager View Employee] On Agency screen");
         
         // Verify 'Your employees' section

@@ -20,28 +20,28 @@ public class BusinessManagerDeleteCreatorPage extends BasePage {
 
     @Step("Click on Agency icon")
     public void clickAgencyIcon() {
-        Locator agencyIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Agency").setExact(true));
+        Locator agencyIcon = page.locator("img[alt='Agency']");
         agencyIcon.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
         logger.info("[Manager Delete Creator] Clicked on Agency icon");
     }
 
-    @Step("Verify 'Your creators' text is visible")
-    public boolean isYourCreatorsTextVisible() {
-        Locator yourCreatorsText = page.getByText("Your creators");
-        boolean isVisible = yourCreatorsText.isVisible();
-        logger.info("[Manager Delete Creator] 'Your creators' text visibility: {}", isVisible);
+    @Step("Verify agency content element is visible")
+    public boolean isAgencyContentElementVisible() {
+        Locator contentElement = page.locator("body div[id='root'] div[class='app'] div[class='ant-layout manager-layout css-1m2bkf9'] main[class='ant-layout-content manager-content css-1m2bkf9'] div[class='manager-agency-page manager-agency-desktop'] div[class='manager-agency-desktop-content'] div:nth-child(1) div:nth-child(1) div:nth-child(1) p:nth-child(1)");
+        boolean isVisible = contentElement.isVisible();
+        logger.info("[Manager Delete Creator] Agency content element visibility: {}", isVisible);
         return isVisible;
     }
 
-    @Step("Click on creator card")
-    public void clickCreatorCard() {
-        Locator creatorCard = page.getByText("Smith · @john_smith");
-        creatorCard.click();
-        page.waitForLoadState(LoadState.NETWORKIDLE);
-        page.waitForTimeout(2000);
-        logger.info("[Manager Delete Creator] Clicked on creator card");
+    @Step("Click on creator info element")
+    public void clickCreatorInfo() {
+        Locator creatorInfo = page.locator(".manager-agency-team-user-info");
+        creatorInfo.first().click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Manager Delete Creator] Clicked on creator info element");
     }
 
     @Step("Verify 'Twizz identity Card' heading is visible")
@@ -94,7 +94,7 @@ public class BusinessManagerDeleteCreatorPage extends BasePage {
     @Step("Complete delete creator flow")
     public void deleteCreator() {
         clickAgencyIcon();
-        clickCreatorCard();
+        clickCreatorInfo();
         clickDeleteCreatorText();
         clickValidateButton();
         logger.info("[Manager Delete Creator] Completed delete creator flow");

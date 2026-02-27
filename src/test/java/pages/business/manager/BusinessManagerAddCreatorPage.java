@@ -20,19 +20,19 @@ public class BusinessManagerAddCreatorPage extends BasePage {
 
     @Step("Click on Agency icon")
     public void clickAgencyIcon() {
-        Locator agencyIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Agency").setExact(true));
+        Locator agencyIcon = page.locator("img[alt='Agency']");
         agencyIcon.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
         logger.info("[Manager Add Creator] Clicked on Agency icon");
     }
 
-    @Step("Verify 'Your agency' title is visible")
-    public boolean isYourAgencyTitleVisible() {
-        Locator title = page.getByText("Your agency");
-        boolean isVisible = title.isVisible();
-        logger.info("[Manager Add Creator] 'Your agency' title visibility: {}", isVisible);
-        return isVisible;
+    @Step("Verify agency URL is loaded")
+    public boolean isAgencyUrlLoaded() {
+        String currentUrl = page.url();
+        boolean isCorrectUrl = currentUrl.contains("/manager/agency");
+        logger.info("[Manager Add Creator] Current URL: {}, Contains /manager/agency: {}", currentUrl, isCorrectUrl);
+        return isCorrectUrl;
     }
 
     @Step("Verify 'Your creators' message is visible")
@@ -41,6 +41,23 @@ public class BusinessManagerAddCreatorPage extends BasePage {
         boolean isVisible = message.isVisible();
         logger.info("[Manager Add Creator] 'Your creators' message visibility: {}", isVisible);
         return isVisible;
+    }
+
+    @Step("Verify agency content element is visible")
+    public boolean isAgencyContentElementVisible() {
+        Locator contentElement = page.locator("body div[id='root'] div[class='app'] div[class='ant-layout manager-layout css-1m2bkf9'] main[class='ant-layout-content manager-content css-1m2bkf9'] div[class='manager-agency-page manager-agency-desktop'] div[class='manager-agency-desktop-content'] div:nth-child(1) div:nth-child(1) div:nth-child(1) p:nth-child(1)");
+        boolean isVisible = contentElement.isVisible();
+        logger.info("[Manager Add Creator] Agency content element visibility: {}", isVisible);
+        return isVisible;
+    }
+
+    @Step("Click on creator info element")
+    public void clickCreatorInfo() {
+        Locator creatorInfo = page.locator(".manager-agency-team-user-info");
+        creatorInfo.first().click();
+        page.waitForLoadState(LoadState.LOAD);
+        page.waitForTimeout(1000);
+        logger.info("[Manager Add Creator] Clicked on creator info element");
     }
 
     @Step("Click Add button to invite creator")

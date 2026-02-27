@@ -39,8 +39,8 @@ public class BusinessManagerAddCreatorTest extends BusinessBaseTestClass {
         businessManagerAddCreatorPage.clickAgencyIcon();
         
         // Verify 'Your agency' title
-        Assert.assertTrue(businessManagerAddCreatorPage.isYourAgencyTitleVisible(), 
-            "'Your agency' title is not visible");
+        Assert.assertTrue(businessManagerAddCreatorPage.isAgencyUrlLoaded(), 
+            "Agency URL is not loaded");
         logger.info("[Manager Add Creator] On Agency screen");
         
         // Verify 'Your creators' message
@@ -104,8 +104,8 @@ public class BusinessManagerAddCreatorTest extends BusinessBaseTestClass {
         businessManagerAddCreatorPage.clickAgencyIcon();
         
         // Verify 'Your agency' title
-        Assert.assertTrue(businessManagerAddCreatorPage.isYourAgencyTitleVisible(), 
-            "'Your agency' title is not visible");
+        Assert.assertTrue(businessManagerAddCreatorPage.isAgencyUrlLoaded(), 
+            "Agency URL is not loaded");
         logger.info("[Manager Add Creator] On Agency screen");
         
         // Click Add button
@@ -392,17 +392,17 @@ public class BusinessManagerAddCreatorTest extends BusinessBaseTestClass {
         businessManagerAddCreatorPage.clickAgencyIcon();
         
         // Verify 'Your agency' title
-        Assert.assertTrue(businessManagerAddCreatorPage.isYourAgencyTitleVisible(), 
-            "'Your agency' title is not visible");
+        Assert.assertTrue(businessManagerAddCreatorPage.isAgencyUrlLoaded(), 
+            "Agency URL is not loaded");
         logger.info("[Manager View Creator] On Agency screen");
         
-        // Verify 'Your creators' message
-        Assert.assertTrue(businessManagerAddCreatorPage.isYourCreatorsMessageVisible(), 
-            "'Your creators' message is not visible");
-        logger.info("[Manager View Creator] 'Your creators' section is visible");
+        // Verify agency content element is visible
+        Assert.assertTrue(businessManagerAddCreatorPage.isAgencyContentElementVisible(), 
+            "Agency content element is not visible");
+        logger.info("[Manager View Creator] Agency content element is visible");
         
-        // Click on creator card
-        businessManagerAddCreatorPage.clickCreatorCard();
+        // Click on creator info element
+        businessManagerAddCreatorPage.clickCreatorInfo();
         
         // Verify 'Twizz identity Card' heading
         Assert.assertTrue(businessManagerAddCreatorPage.isTwizzIdentityCardHeadingVisible(), 

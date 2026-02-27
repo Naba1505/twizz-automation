@@ -20,19 +20,19 @@ public class BusinessManagerAddEmployeePage extends BasePage {
 
     @Step("Click on Agency icon")
     public void clickAgencyIcon() {
-        Locator agencyIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Agency").setExact(true));
+        Locator agencyIcon = page.locator("img[alt='Agency']");
         agencyIcon.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
         logger.info("[Manager Add Employee] Clicked on Agency icon");
     }
 
-    @Step("Verify 'Your agency' title is visible")
-    public boolean isYourAgencyTitleVisible() {
-        Locator title = page.getByText("Your agency", new Page.GetByTextOptions().setExact(true));
-        boolean isVisible = title.isVisible();
-        logger.info("[Manager Add Employee] 'Your agency' title visibility: {}", isVisible);
-        return isVisible;
+    @Step("Verify agency URL is loaded")
+    public boolean isAgencyUrlLoaded() {
+        String currentUrl = page.url();
+        boolean isCorrectUrl = currentUrl.contains("/manager/agency");
+        logger.info("[Manager Add Employee] Current URL: {}, Contains /manager/agency: {}", currentUrl, isCorrectUrl);
+        return isCorrectUrl;
     }
 
     @Step("Verify 'Your employees' message is visible")

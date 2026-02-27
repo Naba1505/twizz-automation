@@ -20,28 +20,28 @@ public class BusinessManagerDeleteEmployeePage extends BasePage {
 
     @Step("Click on Agency icon")
     public void clickAgencyIcon() {
-        Locator agencyIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Agency").setExact(true));
+        Locator agencyIcon = page.locator("img[alt='Agency']");
         agencyIcon.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
         logger.info("[Manager Delete Employee] Clicked on Agency icon");
     }
 
-    @Step("Verify 'Your employees' text is visible")
-    public boolean isYourEmployeesTextVisible() {
-        Locator yourEmployeesText = page.getByText("Your employees");
-        boolean isVisible = yourEmployeesText.isVisible();
-        logger.info("[Manager Delete Employee] 'Your employees' text visibility: {}", isVisible);
+    @Step("Verify agency content element is visible")
+    public boolean isAgencyContentElementVisible() {
+        Locator contentElement = page.locator("body div[id='root'] div[class='app'] div[class='ant-layout manager-layout css-1m2bkf9'] main[class='ant-layout-content manager-content css-1m2bkf9'] div[class='manager-agency-page manager-agency-desktop'] div[class='manager-agency-desktop-content'] div:nth-child(1) div:nth-child(1) div:nth-child(1) p:nth-child(1)");
+        boolean isVisible = contentElement.isVisible();
+        logger.info("[Manager Delete Employee] Agency content element visibility: {}", isVisible);
         return isVisible;
     }
 
-    @Step("Click on employee card")
-    public void clickEmployeeCard() {
-        Locator employeeCard = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("employee"));
-        employeeCard.click();
+    @Step("Click on employee info element")
+    public void clickEmployeeInfo() {
+        Locator employeeInfo = page.locator(".manager-agency-team-user-info");
+        employeeInfo.first().click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
-        logger.info("[Manager Delete Employee] Clicked on employee card");
+        logger.info("[Manager Delete Employee] Clicked on employee info element");
     }
 
     @Step("Verify 'Twizz identity Card' heading is visible")
@@ -94,7 +94,7 @@ public class BusinessManagerDeleteEmployeePage extends BasePage {
     @Step("Complete delete employee flow")
     public void deleteEmployee() {
         clickAgencyIcon();
-        clickEmployeeCard();
+        clickEmployeeInfo();
         clickDeleteAccountText();
         clickValidateButton();
         logger.info("[Manager Delete Employee] Completed delete employee flow");
