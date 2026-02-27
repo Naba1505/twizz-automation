@@ -193,7 +193,7 @@ public class CreatorPublicationPage extends BasePage {
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < timeoutMs) {
             if (isSuccessToastVisible()) return true;
-            try { page.waitForTimeout(200); } catch (Exception ignored) {}
+            try { page.waitForTimeout(100); } catch (Exception ignored) {} // Reduced from 200ms to 100ms
         }
         return false;
     }
@@ -457,8 +457,8 @@ private void confirmDeletionPopup() {
         clickCaptionOk();
         setBlurEnabled(blurEnabled);
         publish();
-        // Prefer immediate exit: very short toast wait, then force-exit composer and proceed
-        long toastWait = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "6000"));
+        // Optimized: reduced toast wait from 6000ms to 2000ms for faster execution
+        long toastWait = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "2000"));
         boolean success = waitForSuccessToast(toastWait);
         if (!success) {
             logger.warn("Success toast not detected within {} ms; exiting composer anyway", toastWait);

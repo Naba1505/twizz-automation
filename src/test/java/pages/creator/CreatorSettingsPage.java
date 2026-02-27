@@ -24,8 +24,8 @@ public class CreatorSettingsPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorSettingsPage.class);
     private static final int LONG_WAIT = ConfigReader.getMediumTimeout(); // for heavy pages/uploads
     // Small timing constants to avoid magic numbers
-    private static final int SHORT_PAUSE_MS = 300;   // brief settle between actions
-    private static final int SEQUENTIAL_PAUSE_MS = 500; // settle after each file in sequential flows
+    private static final int SHORT_PAUSE_MS = 200;   // brief settle between actions (reduced from 300)
+    private static final int SEQUENTIAL_PAUSE_MS = 300; // settle after each file in sequential flows (reduced from 500)
 
     public CreatorSettingsPage(Page page) {
         super(page);
@@ -47,7 +47,7 @@ public class CreatorSettingsPage extends BasePage {
                 log.info("Queued items reached target {} (now={})", target, now);
                 return;
             }
-            try { page.waitForTimeout(200); } catch (Exception ignored) {}
+            try { page.waitForTimeout(50); } catch (Exception ignored) {}
         }
         int finalCount = getQueuedMediaItems().count();
         log.warn("Queued items did not reach target {} within {} ms (final={})", target, timeoutMs, finalCount);
@@ -149,7 +149,7 @@ public class CreatorSettingsPage extends BasePage {
             while (System.currentTimeMillis() < end) {
                 int now = getTrashIcons().count();
                 if (now < count) break;
-                try { page.waitForTimeout(100); } catch (Exception ignored) {}
+                try { page.waitForTimeout(50); } catch (Exception ignored) {}
             }
 
             guard++;
@@ -200,7 +200,7 @@ public class CreatorSettingsPage extends BasePage {
                     } catch (Exception ignored) {}
                 }
             }
-            try { page.waitForTimeout(100); } catch (Exception ignored) {}
+            try { page.waitForTimeout(50); } catch (Exception ignored) {}
         }
         return false;
     }
@@ -211,7 +211,7 @@ public class CreatorSettingsPage extends BasePage {
         while (System.currentTimeMillis() < end) {
             if (getTrashIcons().count() > 0) return;
             if (getAlbumCards().count() > 0) return;
-            try { page.waitForTimeout(150); } catch (Exception ignored) {}
+            try { page.waitForTimeout(75); } catch (Exception ignored) {}
         }
     }
 
@@ -257,7 +257,7 @@ public class CreatorSettingsPage extends BasePage {
                     if (getTrashIcons().count() < total || getAlbumCards().count() < total) {
                         return true;
                     }
-                    try { page.waitForTimeout(100); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(50); } catch (Exception ignored) {}
                 }
                 return true; // best effort
             }

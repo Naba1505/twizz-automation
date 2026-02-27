@@ -67,7 +67,7 @@ public class CreatorCollectionPage extends BasePage {
                     continue;
                 }
                 clickTileRobust(tile);
-                try { page.waitForTimeout(300); } catch (Exception ignored) {}
+                try { page.waitForTimeout(200); } catch (Exception ignored) {}
                 // Quick check: are we on a details-like screen?
                 if (!isDetailsMarkersPresentQuick(3000)) {
                     logger.warn("[Cleanup] Details markers not present after opening tile index {}; going back", i);
@@ -629,7 +629,7 @@ public class CreatorCollectionPage extends BasePage {
                 return;
             }
             try { page.waitForLoadState(); } catch (Exception ignored) {}
-            try { page.waitForTimeout(1000); } catch (Exception ignored) {}
+            try { page.waitForTimeout(300); } catch (Exception ignored) {}
             
             // Check if empty state is visible - all collections deleted
             try {
@@ -676,7 +676,7 @@ public class CreatorCollectionPage extends BasePage {
             try { targetCollection.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
             logger.info("[Cleanup] Clicking collection image to open details");
             clickTileRobust(targetCollection);
-            try { page.waitForTimeout(2000); } catch (Exception ignored) {}
+            try { page.waitForTimeout(1500); } catch (Exception ignored) {}
             
             // Wait for details screen to load - check for "Details" text or back arrow
             boolean detailsLoaded = false;
@@ -712,13 +712,13 @@ public class CreatorCollectionPage extends BasePage {
                 waitVisible(menuIcon, 5000);
                 logger.info("[Cleanup] Clicking menu icon (nth(1)) on details screen");
                 clickWithRetry(menuIcon, 2, 200);
-                try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                try { page.waitForTimeout(300); } catch (Exception ignored) {}
             } catch (Exception e) {
                 logger.warn("[Cleanup] Menu icon nth(1) not found; trying .right-icon > img");
                 Locator altMenu = page.locator(".right-icon > img");
                 if (altMenu.count() > 0) {
                     clickWithRetry(altMenu.first(), 2, 200);
-                    try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(300); } catch (Exception ignored) {}
                 } else {
                     logger.warn("[Cleanup] No menu icon found; returning to list");
                     safeReturnToCollectionsList();
@@ -754,7 +754,7 @@ public class CreatorCollectionPage extends BasePage {
             logger.info("[Cleanup] Collection deleted successfully, returning to list");
             // Return to collections list for next iteration
             safeReturnToCollectionsList();
-            try { page.waitForTimeout(500); } catch (Exception ignored) {}
+            try { page.waitForTimeout(300); } catch (Exception ignored) {}
         }
         // After exhausting guard (or finishing deletions), verify empty state to ensure a clean end
         try {
@@ -837,7 +837,7 @@ public class CreatorCollectionPage extends BasePage {
                 safeReturnToCollectionsList();
             }
             // Small wait to allow list to refresh
-            try { page.waitForTimeout(500); } catch (Exception ignored) {}
+            try { page.waitForTimeout(300); } catch (Exception ignored) {}
             openCollectionsList();
         }
     }
@@ -849,7 +849,7 @@ public class CreatorCollectionPage extends BasePage {
             Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
             if (arrowLeft.count() > 0 && safeIsVisible(arrowLeft.first())) {
                 clickWithRetry(arrowLeft.first(), 1, 150);
-                try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                try { page.waitForTimeout(300); } catch (Exception ignored) {}
                 return;
             }
         } catch (Exception ignored) {}
@@ -858,16 +858,16 @@ public class CreatorCollectionPage extends BasePage {
             Locator backIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("back"));
             if (safeIsVisible(backIcon.first())) {
                 clickWithRetry(backIcon.first(), 1, 150);
-                try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                try { page.waitForTimeout(300); } catch (Exception ignored) {}
                 return;
             }
         } catch (Exception ignored) {}
         // Last resort: browser back twice to get to profile
         try {
             page.goBack();
-            try { page.waitForTimeout(500); } catch (Exception ignored) {}
+            try { page.waitForTimeout(300); } catch (Exception ignored) {}
             page.goBack();
-            try { page.waitForTimeout(500); } catch (Exception ignored) {}
+            try { page.waitForTimeout(300); } catch (Exception ignored) {}
         } catch (Exception ignored) {}
     }
 
@@ -891,7 +891,7 @@ public class CreatorCollectionPage extends BasePage {
             }
             deleteOneCollectionIfAny();
             // Small wait and re-check
-            try { page.waitForTimeout(500); } catch (Exception ignored) {}
+            try { page.waitForTimeout(300); } catch (Exception ignored) {}
         }
         logger.warn("[Cleanup] Guard exhausted while waiting for contentinfo to appear");
     }
@@ -1059,7 +1059,7 @@ public class CreatorCollectionPage extends BasePage {
                     Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
                     if (cancelBtn.count() > 0) {
                         clickWithRetry(cancelBtn.first(), 1, 150);
-                        try { page.waitForTimeout(300); } catch (Exception ignored) {}
+                        try { page.waitForTimeout(200); } catch (Exception ignored) {}
                     }
 
                     Locator plusIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
@@ -1071,7 +1071,7 @@ public class CreatorCollectionPage extends BasePage {
                     if (quickFilesBtn.count() > 0) {
                         clickWithRetry(quickFilesBtn.first(), 1, 150);
                     }
-                    try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(300); } catch (Exception ignored) {}
                 } catch (Exception ignored) {}
             }
         } catch (Exception ignored) {}
@@ -1128,7 +1128,7 @@ public class CreatorCollectionPage extends BasePage {
                     }
 
                     // small wait to ensure dialog closes
-                    try { page.waitForTimeout(300); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(200); } catch (Exception ignored) {}
 
                     // 2) Click plus icon again
                     Locator plusIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
@@ -1143,7 +1143,7 @@ public class CreatorCollectionPage extends BasePage {
                     }
 
                     // brief settle for album list to reappear
-                    try { page.waitForTimeout(500); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(300); } catch (Exception ignored) {}
                 } catch (Exception ignored) {}
             } catch (Exception ignored) {
                 // If click or navigation fails, continue to next candidate
@@ -1168,7 +1168,7 @@ public class CreatorCollectionPage extends BasePage {
                     waitVisible(icon, ConfigReader.getShortTimeout());
                     try { icon.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
                     clickWithRetry(icon, 1, 120);
-                    try { page.waitForTimeout(150); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(100); } catch (Exception ignored) {}
                     picked++;
                 } catch (Exception ignored) { }
             }
@@ -1191,7 +1191,7 @@ public class CreatorCollectionPage extends BasePage {
             try {
                 try { thumb.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
                 clickWithRetry(thumb, 1, 120);
-                try { page.waitForTimeout(150); } catch (Exception ignored) {}
+                try { page.waitForTimeout(100); } catch (Exception ignored) {}
                 picked++;
             } catch (Exception ignored) { }
         }
