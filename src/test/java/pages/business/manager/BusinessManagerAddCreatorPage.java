@@ -179,15 +179,7 @@ public class BusinessManagerAddCreatorPage extends BasePage {
         logger.info("[Manager Add Creator] Clicked 'I understand' button");
     }
 
-    @Step("Click on creator card to view details")
-    public void clickCreatorCard() {
-        Locator creatorCard = page.getByText("Smith · @john_smith");
-        creatorCard.click();
-        page.waitForLoadState(LoadState.NETWORKIDLE);
-        page.waitForTimeout(2000);
-        logger.info("[Manager Add Creator] Clicked on creator card");
-    }
-
+    
     @Step("Verify 'Twizz identity Card' heading is visible")
     public boolean isTwizzIdentityCardHeadingVisible() {
         Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Twizz identity Card"));

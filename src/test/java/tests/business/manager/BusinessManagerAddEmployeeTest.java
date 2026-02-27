@@ -407,13 +407,13 @@ public class BusinessManagerAddEmployeeTest extends BusinessBaseTestClass {
             "Agency URL is not loaded");
         logger.info("[Manager View Employee] On Agency screen");
         
-        // Verify 'Your employees' section
-        Assert.assertTrue(businessManagerAddEmployeePage.isYourEmployeesMessageVisible(), 
-            "'Your employees' section is not visible");
-        logger.info("[Manager View Employee] 'Your employees' section is visible");
+        // Verify agency content element is visible
+        Assert.assertTrue(businessManagerAddEmployeePage.isAgencyContentElementVisible(), 
+            "Agency content element is not visible");
+        logger.info("[Manager View Employee] Agency content element is visible");
         
-        // Click on employee card
-        businessManagerAddEmployeePage.clickEmployeeCard();
+        // Click on employee info element
+        businessManagerAddEmployeePage.clickEmployeeInfo();
         
         // Verify 'Twizz identity Card' heading
         Assert.assertTrue(businessManagerAddEmployeePage.isTwizzIdentityCardHeadingVisible(), 

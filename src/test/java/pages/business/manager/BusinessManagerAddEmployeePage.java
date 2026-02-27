@@ -43,6 +43,14 @@ public class BusinessManagerAddEmployeePage extends BasePage {
         return isVisible;
     }
 
+    @Step("Verify agency content element is visible")
+    public boolean isAgencyContentElementVisible() {
+        Locator contentElement = page.locator("body div[id='root'] div[class='app'] div[class='ant-layout manager-layout css-1m2bkf9'] main[class='ant-layout-content manager-content css-1m2bkf9'] div[class='manager-agency-page manager-agency-desktop'] div[class='manager-agency-desktop-content'] div:nth-child(1) div:nth-child(1) div:nth-child(1) p:nth-child(1)");
+        boolean isVisible = contentElement.isVisible();
+        logger.info("[Manager Add Employee] Agency content element visibility: {}", isVisible);
+        return isVisible;
+    }
+
     @Step("Click Add button to invite employee")
     public void clickAddButton() {
         Locator addButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add Add")).nth(1);
@@ -154,15 +162,16 @@ public class BusinessManagerAddEmployeePage extends BasePage {
         }
     }
 
-    @Step("Click on employee card to view details")
-    public void clickEmployeeCard() {
-        Locator employeeCard = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("employee"));
-        employeeCard.click();
+    @Step("Click on employee info element")
+    public void clickEmployeeInfo() {
+        Locator employeeInfo = page.locator(".manager-agency-team-user-info");
+        employeeInfo.first().click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
-        logger.info("[Manager Add Employee] Clicked on employee card");
+        logger.info("[Manager Add Employee] Clicked on employee info element");
     }
 
+    
     @Step("Verify 'Twizz identity Card' heading is visible")
     public boolean isTwizzIdentityCardHeadingVisible() {
         Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Twizz identity Card"));
