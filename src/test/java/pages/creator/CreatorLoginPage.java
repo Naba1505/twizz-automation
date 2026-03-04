@@ -11,6 +11,9 @@ import utils.ConfigReader;
 
 public class CreatorLoginPage extends BasePage {
 
+    // Timeout constants (in milliseconds)
+    private static final int RETRY_DELAY = 100; // For button click retry delay
+
     private final String usernamePlaceholder = "Email address or username";
     private final String passwordPlaceholder = "Password";
     private final String connectButtonName = "Connect";
@@ -87,7 +90,7 @@ public class CreatorLoginPage extends BasePage {
 
         // Click Connect with a light retry
         Locator connect = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true));
-        try { clickWithRetry(connect, 1, 200); } catch (Throwable ignored) { connect.click(); }
+        try { clickWithRetry(connect, 1, RETRY_DELAY); } catch (Throwable ignored) { connect.click(); }
 
         // Avoid NETWORKIDLE; wait for a reliable post-login marker instead
         boolean visible = false;
