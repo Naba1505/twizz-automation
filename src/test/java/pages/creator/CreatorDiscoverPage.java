@@ -14,6 +14,12 @@ import io.qameta.allure.Step;
 
 public class CreatorDiscoverPage extends BasePage {
 
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int POLLING_WAIT = 50;          // Quick polling operations
+    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int CLICK_RETRY_DELAY = 200;    // Standard click retry
+
     private static final String DISCOVER_PATH_FRAGMENT = "/common/discover";
     private static final String FEED_XPATH = "//div[@class='hls-video-player']";
     private static final String MUTE_BTN_XPATH = "//button[@class='mute-button']";
@@ -27,7 +33,7 @@ public class CreatorDiscoverPage extends BasePage {
     public void navigateToDiscover() {
         Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
         waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(searchIcon.first(), 2, 200);
+        clickWithRetry(searchIcon.first(), 2, CLICK_RETRY_DELAY);
     }
 
     @Step("Assert on Discover screen (URL contains /common/discover)")
@@ -59,7 +65,7 @@ public class CreatorDiscoverPage extends BasePage {
             try {
                 feed.scrollIntoViewIfNeeded();
                 waitVisible(feed, ConfigReader.getShortTimeout());
-                page.waitForTimeout(75);
+                page.waitForTimeout(POLLING_WAIT);
                 seen++;
             } catch (Exception e) {
                 logger.warn("Feed {} not confirmed visible: {}", i, e.toString());
@@ -85,12 +91,12 @@ public class CreatorDiscoverPage extends BasePage {
                     Locator btn = muteButtons.nth(b);
                     if (safeIsVisible(btn)) {
                         try { btn.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                        clickWithRetry(btn, 1, 120);
+                        clickWithRetry(btn, 1, NAVIGATION_WAIT);
                         toggled++;
                         break;
                     }
                 }
-                page.waitForTimeout(75);
+                page.waitForTimeout(POLLING_WAIT);
             } catch (Exception e) {
                 logger.warn("Unable to unmute feed {}: {}", i, e.toString());
             }
@@ -103,7 +109,7 @@ public class CreatorDiscoverPage extends BasePage {
         try {
             for (int i = 0; i < 6; i++) {
                 page.mouse().wheel(0, -1200);
-                page.waitForTimeout(60);
+                page.waitForTimeout(POLLING_WAIT);
             }
         } catch (Exception ignored) {}
     }
@@ -116,7 +122,7 @@ public class CreatorDiscoverPage extends BasePage {
         int attempts = 0;
         while ((profileText.count() == 0 || !safeIsVisible(profileText.first())) && attempts++ < 6) {
             try { page.mouse().wheel(0, 1200); } catch (Exception ignored) {}
-            try { page.waitForTimeout(100); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
             profileText = page.getByText("Discover profile");
         }
 
@@ -126,7 +132,7 @@ public class CreatorDiscoverPage extends BasePage {
 
         Locator target = profileText.first();
         try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-        clickWithRetry(target, 2, 150);
+        clickWithRetry(target, 2, BUTTON_RETRY_DELAY);
     }
 
     @Step("Ensure creator profile screen is visible via publications icon")
@@ -139,7 +145,7 @@ public class CreatorDiscoverPage extends BasePage {
     public void navigateBackToDiscover() {
         Locator back = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
         waitVisible(back.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(back.first(), 1, 120);
+        clickWithRetry(back.first(), 1, NAVIGATION_WAIT);
         // Wait URL back on discover
         page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
     }
@@ -148,7 +154,7 @@ public class CreatorDiscoverPage extends BasePage {
     public void openSearchField() {
         Locator searchFieldActivator = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^Search$"))).nth(1);
         waitVisible(searchFieldActivator, ConfigReader.getShortTimeout());
-        clickWithRetry(searchFieldActivator, 1, 120);
+        clickWithRetry(searchFieldActivator, 1, NAVIGATION_WAIT);
     }
 
     @Step("Fill search query: {query}")
@@ -162,7 +168,7 @@ public class CreatorDiscoverPage extends BasePage {
     public void clickSearchResult(String resultText) {
         Locator res = page.getByText(resultText);
         waitVisible(res.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(res.first(), 1, 120);
+        clickWithRetry(res.first(), 1, NAVIGATION_WAIT);
     }
 }
 
