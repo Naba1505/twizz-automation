@@ -225,7 +225,7 @@ public class CreatorCollectionTest extends BaseCreatorTest {
         logger.info("[QuickFiles] Selecting up to 3 media items from album");
         coll.selectUpToNCovers(3);
 
-        // 6) Confirm selection and proceed through Next steps
+        // 6) Confirm selection and proceed
         logger.info("[QuickFiles] Confirm selection and proceed");
         coll.clickSelectInQuickFiles();
         // Next through steps (thumbnail, options, summary)
@@ -233,7 +233,7 @@ public class CreatorCollectionTest extends BaseCreatorTest {
 
         // 7) Description and price
         logger.info("[QuickFiles] Filling description and setting price 15€");
-        coll.fillDescription("Descripion");
+        coll.fillDescription("Description");
         coll.setPriceEuro(15);
 
         // 8) Validate and wait for completion
