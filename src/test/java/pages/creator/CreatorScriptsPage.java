@@ -113,7 +113,7 @@ public class CreatorScriptsPage extends BasePage {
         clickWithRetry(cont.first(), 1, 200);
 
         // Small settle to allow navigation/state update to media step
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(250); } catch (Throwable ignored) { }
 
         return updatedName;
     }
@@ -202,10 +202,10 @@ public class CreatorScriptsPage extends BasePage {
             searchInput.first().click();
             searchInput.first().fill("");
             searchInput.first().fill(term);
-            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(250); } catch (Throwable ignored) { }
             // Clear before next term
             searchInput.first().fill("");
-            try { page.waitForTimeout(200); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(100); } catch (Throwable ignored) { }
         }
 
         // Cancel search and ensure we are back on Scripts list
@@ -273,7 +273,7 @@ public class CreatorScriptsPage extends BasePage {
         // Give the DOM a brief window to render the file input for this modal
         long inputDeadline = System.currentTimeMillis() + 5_000L;
         while (input.count() == 0 && System.currentTimeMillis() < inputDeadline) {
-            try { page.waitForTimeout(200); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(100); } catch (Throwable ignored) { }
         }
 
         if (input.count() == 0) {
@@ -283,7 +283,7 @@ public class CreatorScriptsPage extends BasePage {
         input.first().setInputFiles(file);
 
         // Give the UI a brief moment to process the upload and render blurred preview
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(250); } catch (Throwable ignored) { }
 
         Locator blurred = page.locator("div").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^Blurred media$")));
@@ -339,7 +339,7 @@ public class CreatorScriptsPage extends BasePage {
             // Scroll down to find the album
             logger.info("Album row with prefix '{}' not yet visible; scrolling down", normalizedPrefix);
             try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(150); } catch (Throwable ignored) {}
         }
 
         if (!clickedAlbum) {
@@ -355,7 +355,7 @@ public class CreatorScriptsPage extends BasePage {
         // Wait for media thumbnails to load
         long thumbDeadline = System.currentTimeMillis() + 10_000L;
         while (selectIcons.count() == 0 && System.currentTimeMillis() < thumbDeadline) {
-            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(150); } catch (Throwable ignored) {}
         }
         
         if (selectIcons.count() == 0) {
@@ -432,7 +432,7 @@ public class CreatorScriptsPage extends BasePage {
             // Scroll down to find the album
             logger.info("Audio album row not yet visible; scrolling down");
             try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(150); } catch (Throwable ignored) {}
         }
 
         if (!clickedAlbum) {
@@ -462,7 +462,7 @@ public class CreatorScriptsPage extends BasePage {
 
         long inputDeadline = System.currentTimeMillis() + 5_000L;
         while (input.count() == 0 && System.currentTimeMillis() < inputDeadline) {
-            try { page.waitForTimeout(200); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(100); } catch (Throwable ignored) { }
         }
 
         if (input.count() == 0) {
@@ -471,7 +471,7 @@ public class CreatorScriptsPage extends BasePage {
 
         input.first().setInputFiles(file);
 
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(250); } catch (Throwable ignored) { }
 
         Locator blurred = page.locator("div").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^Blurred media$")));
@@ -486,7 +486,7 @@ public class CreatorScriptsPage extends BasePage {
 
         long inputDeadline = System.currentTimeMillis() + 5_000L;
         while (input.count() == 0 && System.currentTimeMillis() < inputDeadline) {
-            try { page.waitForTimeout(200); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(100); } catch (Throwable ignored) { }
         }
 
         if (input.count() == 0) {
@@ -495,7 +495,7 @@ public class CreatorScriptsPage extends BasePage {
 
         input.first().setInputFiles(file);
 
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(250); } catch (Throwable ignored) { }
 
         Locator blurred = page.locator("div").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^Blurred media$")));
@@ -517,7 +517,7 @@ public class CreatorScriptsPage extends BasePage {
         waitVisible(next.first(), DEFAULT_WAIT);
         clickWithRetry(next.first(), 1, 200);
         // Small settle to allow navigation/state update
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(250); } catch (Throwable ignored) { }
     }
 
     @Step("Click plus to add more media")
@@ -877,10 +877,10 @@ public class CreatorScriptsPage extends BasePage {
             }
             if (safeIsVisible(stayOnPage)) {
                 // Still uploading, just wait a bit more
-                try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(250); } catch (Throwable ignored) { }
             } else {
                 // Neither toast nor uploading hint visible yet; short poll
-                try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(250); } catch (Throwable ignored) { }
             }
         }
 
@@ -1169,10 +1169,10 @@ public class CreatorScriptsPage extends BasePage {
             }
             if (safeIsVisible(stayOnPage)) {
                 // Still uploading, just wait a bit more
-                try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(250); } catch (Throwable ignored) { }
             } else {
                 // Neither toast nor uploading hint visible yet; short poll
-                try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(250); } catch (Throwable ignored) { }
             }
         }
 
@@ -1480,7 +1480,7 @@ public class CreatorScriptsPage extends BasePage {
                     break;
                 }
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(150); } catch (Throwable ignored) {}
         }
         
         if (!found) {
@@ -1563,7 +1563,7 @@ public class CreatorScriptsPage extends BasePage {
         clickWithRetry(iUnderstandBtn.first(), 1, 200);
         logger.info("Clicked 'I understand' button");
         
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(250); } catch (Throwable ignored) { }
     }
 
     @Step("Long press on QA bookmark tab to trigger delete dialog")
@@ -1583,7 +1583,7 @@ public class CreatorScriptsPage extends BasePage {
             } catch (Throwable ignored2) { }
         }
         
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(250); } catch (Throwable ignored) { }
     }
 
     @Step("Delete a single QA bookmark")
@@ -1621,7 +1621,7 @@ public class CreatorScriptsPage extends BasePage {
             logger.warn("Delete dialog did not appear after long press; retrying with click");
             // Try clicking instead
             clickWithRetry(qaBookmarkTab.first(), 1, 200);
-            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(250); } catch (Throwable ignored) { }
             longPressOnBookmarkTab(qaBookmarkTab);
             try {
                 waitVisible(deleteDialogDesc.first(), 5000);
@@ -1720,7 +1720,7 @@ public class CreatorScriptsPage extends BasePage {
             }
             
             // Small delay between deletions
-            try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(250); } catch (Throwable ignored) { }
         }
         
         logger.info("Bookmark cleanup completed. Total bookmarks deleted: {}", deletedCount);

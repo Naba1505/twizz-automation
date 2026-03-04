@@ -142,6 +142,17 @@ public class BrowserFactory {
         BrowserContext ctx = tlContext.get();
         if (ctx != null) {
             try {
+                // Stop tracing BEFORE closing context to avoid delays
+                boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));
+                if (traceEnabled) {
+                    try {
+                        ctx.tracing().stop(new Tracing.StopOptions()
+                                .setPath(java.nio.file.Paths.get("traces/" + Thread.currentThread().getName() + "_" + System.currentTimeMillis() + ".zip")));
+                        logger.info("Playwright tracing stopped for thread {}", Thread.currentThread().getName());
+                    } catch (Exception e) {
+                        logger.warn("Failed to stop tracing: {}", e.getMessage());
+                    }
+                }
                 ctx.close();
             } catch (Exception ignore) {
             }

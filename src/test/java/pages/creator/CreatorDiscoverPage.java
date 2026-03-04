@@ -59,7 +59,7 @@ public class CreatorDiscoverPage extends BasePage {
             try {
                 feed.scrollIntoViewIfNeeded();
                 waitVisible(feed, ConfigReader.getShortTimeout());
-                page.waitForTimeout(150);
+                page.waitForTimeout(75);
                 seen++;
             } catch (Exception e) {
                 logger.warn("Feed {} not confirmed visible: {}", i, e.toString());
@@ -90,7 +90,7 @@ public class CreatorDiscoverPage extends BasePage {
                         break;
                     }
                 }
-                page.waitForTimeout(150);
+                page.waitForTimeout(75);
             } catch (Exception e) {
                 logger.warn("Unable to unmute feed {}: {}", i, e.toString());
             }
@@ -103,7 +103,7 @@ public class CreatorDiscoverPage extends BasePage {
         try {
             for (int i = 0; i < 6; i++) {
                 page.mouse().wheel(0, -1200);
-                page.waitForTimeout(120);
+                page.waitForTimeout(60);
             }
         } catch (Exception ignored) {}
     }
@@ -116,7 +116,7 @@ public class CreatorDiscoverPage extends BasePage {
         int attempts = 0;
         while ((profileText.count() == 0 || !safeIsVisible(profileText.first())) && attempts++ < 6) {
             try { page.mouse().wheel(0, 1200); } catch (Exception ignored) {}
-            try { page.waitForTimeout(200); } catch (Exception ignored) {}
+            try { page.waitForTimeout(100); } catch (Exception ignored) {}
             profileText = page.getByText("Discover profile");
         }
 

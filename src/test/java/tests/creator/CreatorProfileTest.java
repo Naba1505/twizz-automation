@@ -40,8 +40,6 @@ public class CreatorProfileTest extends BaseCreatorTest {
         // Open Modify profile screen and upload avatar
         profile.openModifyProfile();
         profile.assertModifyProfileScreen();
-        profile.clickUploadAvatarPencil();
-        profile.clickAvatarEditMenuItem();
         profile.uploadAvatarImage(avatar);
         profile.waitForAvatarUpdatedToast();
     }

@@ -198,7 +198,7 @@ public class CreatorRevenuesPage extends BasePage {
         // Wait briefly until at least two appear
         long end = System.currentTimeMillis() + DEFAULT_WAIT;
         while (System.currentTimeMillis() < end && prices.count() < 2) {
-            try { page.waitForTimeout(150); } catch (Exception ignored) {}
+            try { page.waitForTimeout(75); } catch (Exception ignored) {}
         }
         int count = prices.count();
         logger.info("[Revenues] Chart price text count: {}", count);
@@ -258,7 +258,7 @@ public class CreatorRevenuesPage extends BasePage {
             } catch (Exception ignored) {}
             try { target.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
             try { page.mouse().wheel(0, deltaY); } catch (Exception ignored) {}
-            try { page.waitForTimeout(150); } catch (Exception ignored) {}
+            try { page.waitForTimeout(75); } catch (Exception ignored) {}
         }
     }
 
@@ -276,7 +276,7 @@ public class CreatorRevenuesPage extends BasePage {
     @Step("Open report type change dropdown")
     public void openChangeDropdown() {
         waitVisible(changeIcon(), DEFAULT_WAIT);
-        clickWithRetry(changeIcon(), 1, 120);
+        clickWithRetry(changeIcon(), 1, 100);
         // Wait for the UL dropdown menu to appear
         waitVisible(dropdownMenu(), DEFAULT_WAIT);
         logger.info("[Revenues] Change dropdown opened");
@@ -290,7 +290,7 @@ public class CreatorRevenuesPage extends BasePage {
         }
         Locator item = dropdownItemByText(type);
         waitVisible(item.first(), DEFAULT_WAIT);
-        clickWithRetry(item.first(), 1, 120);
+        clickWithRetry(item.first(), 1, 100);
         // After selection, dropdown typically closes; re-validate content still visible
         waitVisible(lastReportContent(), DEFAULT_WAIT);
         logger.info("[Revenues] Selected report type: {} and content visible", type);
@@ -306,7 +306,7 @@ public class CreatorRevenuesPage extends BasePage {
         try { filter.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
         waitVisible(filter.first(), DEFAULT_WAIT);
         try {
-            clickWithRetry(filter.first(), 1, 150);
+            clickWithRetry(filter.first(), 1, 100);
         } catch (RuntimeException e) {
             // Fallback: force click if overlapped
             try { filter.first().click(new Locator.ClickOptions().setForce(true)); } catch (Exception ignored) { throw e; }
@@ -334,7 +334,7 @@ public class CreatorRevenuesPage extends BasePage {
         }
         waitVisible(change.first(), DEFAULT_WAIT);
         try { change.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-        clickWithRetry(change.first(), 1, 150);
+        clickWithRetry(change.first(), 1, 100);
         waitVisible(filterDropdownMenu(), DEFAULT_WAIT);
         logger.info("[Revenues] Opened dropdown via change icon");
     }
@@ -389,8 +389,8 @@ public class CreatorRevenuesPage extends BasePage {
             Locator target = opt.first();
             try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
             waitVisible(target, DEFAULT_WAIT);
-            clickWithRetry(target, 1, 120);
-            try { page.waitForTimeout(200); } catch (Exception ignored) {}
+            clickWithRetry(target, 1, 100);
+            try { page.waitForTimeout(100); } catch (Exception ignored) {}
         }
         logger.info("[Revenues] Iterated filter options in requested order");
     }
@@ -401,7 +401,7 @@ public class CreatorRevenuesPage extends BasePage {
         int guard = 0;
         while (!safeIsVisible(title) && guard++ < 20) {
             try { page.mouse().wheel(0, -800); } catch (Exception ignored) {}
-            try { page.waitForTimeout(150); } catch (Exception ignored) {}
+            try { page.waitForTimeout(75); } catch (Exception ignored) {}
         }
         waitVisible(title, DEFAULT_WAIT);
         logger.info("[Revenues] Scrolled to top; 'Revenues' title visible");

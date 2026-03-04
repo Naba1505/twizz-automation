@@ -36,7 +36,7 @@ public class CreatorMessagingPage extends BasePage {
                 }
                 try { b.click(new Locator.ClickOptions().setForce(true)); return; } catch (Throwable ignored) {}
             }
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
         }
         throw new RuntimeException("Strict Next button not found or not clickable within timeout");
     }
@@ -51,7 +51,7 @@ public class CreatorMessagingPage extends BasePage {
                     return;
                 }
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
         }
         // Final assert
         waitVisible(second.first(), Math.max(2_000, timeoutMs));
@@ -163,7 +163,7 @@ public class CreatorMessagingPage extends BasePage {
             // Scroll down more aggressively to reach albums near the bottom
             logger.info("[Messaging][QuickFiles] Album row with prefix '{}' not yet visible; scrolling down", relaxedPrefix);
             try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(150); } catch (Throwable ignored) {}
         }
         if (!clickedAlbum) {
             logger.warn("[Messaging][QuickFiles] Failed to find album button '{}' within scroll timeout; falling back to generic album click by regex", targetName);
@@ -202,7 +202,7 @@ public class CreatorMessagingPage extends BasePage {
                 }
             } catch (Throwable ignored) {}
 
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
         }
 
         if (thumbs == null || thumbs.count() == 0) {
@@ -215,6 +215,16 @@ public class CreatorMessagingPage extends BasePage {
         for (int i = 0; i < max; i++) {
             Locator t = thumbs.nth(i);
             try { t.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            // Try to click the radio button first (look for role='radio' in parent or nearby)
+            try {
+                Locator parent = t.locator("..");
+                Locator radio = parent.locator("[role='radio']");
+                if (radio.count() > 0) {
+                    clickWithRetry(radio.first(), 1, 120);
+                    continue;
+                }
+            } catch (Throwable ignored) {}
+            // Fallback: click the thumbnail itself
             clickWithRetry(t, 1, 120);
         }
 
@@ -290,7 +300,7 @@ public class CreatorMessagingPage extends BasePage {
                     return;
                 }
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(150); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(75); } catch (Throwable ignored) {}
         }
         // Final assertion to bubble up a clearer error
         if (privateMediaTitle().count() > 0) {
@@ -313,7 +323,7 @@ public class CreatorMessagingPage extends BasePage {
         } catch (Throwable ignored) {}
 
         // Small stabilization to allow UI to render toolbar icons
-        try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(100); } catch (Throwable ignored) {}
 
         // Try a series of robust candidates for the plus control (composer and private media screens)
         Locator[] candidates = new Locator[] {
@@ -363,7 +373,7 @@ public class CreatorMessagingPage extends BasePage {
             }
             if (!clicked) {
                 // If composer/message input is visible, the plus is in the toolbar; give UI a moment then retry
-                try { if (safeIsVisible(privateMessagePlaceholder())) { page.waitForTimeout(200); } } catch (Throwable ignored) {}
+                try { if (safeIsVisible(privateMessagePlaceholder())) { page.waitForTimeout(100); } } catch (Throwable ignored) {}
             }
         }
 
@@ -450,7 +460,7 @@ public class CreatorMessagingPage extends BasePage {
                 return;
             }
             // Small stabilization before retrying
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
         }
         // Final attempt: if message placeholder appeared late, accept it; otherwise fail clearly
         if (!safeIsVisible(privateMessagePlaceholder())) {
@@ -479,11 +489,11 @@ public class CreatorMessagingPage extends BasePage {
             if (next.count() > 0 && safeIsVisible(next.first())) {
                 waitForBlurredMediaVisible(5_000);
                 clickWithRetry(next.first(), 1, 200);
-                try { page.waitForTimeout(Math.max(200, perStepWaitMs)); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(Math.max(100, perStepWaitMs)); } catch (Throwable ignored) {}
                 continue;
             }
             // If no Next and no message field, wait a bit and retry
-            try { page.waitForTimeout(Math.max(200, perStepWaitMs)); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(Math.max(100, perStepWaitMs)); } catch (Throwable ignored) {}
         }
         // Final check
         if (!safeIsVisible(privateMessagePlaceholder())) {
@@ -613,7 +623,7 @@ public class CreatorMessagingPage extends BasePage {
         while (System.currentTimeMillis() < end) {
             int c = privateGalleryItems().count();
             if (c > 0) return;
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
         }
         waitVisible(privateGalleryItems().first(), 5_000);
     }
@@ -624,11 +634,11 @@ public class CreatorMessagingPage extends BasePage {
             // Scroll down a few times to ensure lazy load, then back to top
             for (int i = 0; i < 6; i++) {
                 page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-                try { page.waitForTimeout(400); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(200); } catch (Throwable ignored) {}
             }
             for (int i = 0; i < 3; i++) {
                 page.evaluate("window.scrollTo(0, 0)");
-                try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(150); } catch (Throwable ignored) {}
             }
         } catch (Throwable ignored) {}
     }
@@ -750,7 +760,7 @@ public class CreatorMessagingPage extends BasePage {
                     return;
                 }
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(125); } catch (Throwable ignored) {}
         }
         logger.warn("[Messaging][Private] Uploading banner still visible after {} ms", timeoutMs);
     }
@@ -766,7 +776,7 @@ public class CreatorMessagingPage extends BasePage {
                     return;
                 }
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
         }
         // Fallback assert
         waitVisible(mediaSentToast(), (int) Math.max(DEFAULT_WAIT, timeoutMs));
@@ -790,7 +800,7 @@ public class CreatorMessagingPage extends BasePage {
                 }
                 // Scroll down a bit to surface albums near the bottom
                 try { page.mouse().wheel(0, 700); } catch (Throwable ignored) {}
-                try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(125); } catch (Throwable ignored) {}
             }
         } catch (Throwable ignored) {}
 
@@ -877,7 +887,7 @@ public class CreatorMessagingPage extends BasePage {
                     return;
                 }
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
         }
         // Final assertion to bubble up
         Locator thumbOrCover = page.locator(".select-quick-file-media-thumb, .cover").first();
@@ -1050,7 +1060,7 @@ public class CreatorMessagingPage extends BasePage {
                         return;
                     }
                 } catch (Throwable ignored) {}
-                try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(100); } catch (Throwable ignored) {}
             }
             // Final attempt: assert 'My albums' strictly to bubble error
             waitVisible(page.getByText("My albums"), 3_000);
@@ -1137,7 +1147,7 @@ public class CreatorMessagingPage extends BasePage {
             }
             // Light scroll to stimulate lazy load
             try { page.mouse().wheel(0, 400); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(125); } catch (Throwable ignored) {}
             // Fallback: regex probe for names starting with video/image/mix
             try {
                 Locator byText = page.locator("div").filter(new Locator.FilterOptions()
@@ -1231,7 +1241,7 @@ public class CreatorMessagingPage extends BasePage {
         long end = System.currentTimeMillis() + 8_000;
         while (System.currentTimeMillis() < end) {
             if (quickFilesItemThumbs().count() > 0) break;
-            try { page.waitForTimeout(200); } catch (Exception ignored) {}
+            try { page.waitForTimeout(100); } catch (Exception ignored) {}
         }
         if (quickFilesItemThumbs().count() == 0) {
             logger.warn("[Messaging] Items view not visible after album click, retrying click once");
@@ -1258,7 +1268,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator grid = quickFilesItemThumbs();
         long end = System.currentTimeMillis() + 15_000;
         while (grid.count() == 0 && System.currentTimeMillis() < end) {
-            try { page.waitForTimeout(150); } catch (Exception ignored) {}
+            try { page.waitForTimeout(75); } catch (Exception ignored) {}
         }
         int total = grid.count();
         logger.info("[Messaging] Quick Files items detected: {} (select up to {})", total, target);
@@ -1292,7 +1302,7 @@ public class CreatorMessagingPage extends BasePage {
                 if (!clicked) {
                     try { clickWithRetry(card, 1, 120); clicked = true; } catch (Exception ignored) {}
                 }
-                if (clicked) { try { page.waitForTimeout(150); } catch (Exception ignored) {} picked++; }
+                if (clicked) { try { page.waitForTimeout(75); } catch (Exception ignored) {} picked++; }
             }
         } catch (Throwable ignored) {}
         // Strategy A: click checkboxes if present
@@ -1339,7 +1349,7 @@ public class CreatorMessagingPage extends BasePage {
                         if (selectBtn.first().isEnabled()) break;
                     } catch (Throwable ignored) {}
                 }
-                page.waitForTimeout(150);
+                page.waitForTimeout(75);
             }
         } catch (Throwable ignored) {}
         if (picked == 0) {

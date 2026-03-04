@@ -21,14 +21,13 @@ import utils.WaitUtils;
 
 public class CreatorLivePage extends BasePage {
 
-    // Timeout constants (in milliseconds)
-    private static final int POLLING_WAIT = 100;     // Register button polling
-    private static final int DATE_PICKER_DELAY = 150; // Date picker interactions
-    private static final int BUTTON_RETRY_DELAY = 200; // Button click retry delay
-    private static final int LONG_DELAY = 300;       // Plus menu and longer delays
-    private static final int SHORT_TIMEOUT = 2000;   // Short element waits
-    private static final int MEDIUM_TIMEOUT = 3000;  // Medium element waits
-    private static final int LONG_TIMEOUT = 5000;    // Longer element waits
+    // Timeout constants (in milliseconds) - Standardized values
+    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int POST_ACTION_WAIT = 300;     // Post-action wait
+    private static final int SHORT_TIMEOUT = 2000;       // Short waits
+    private static final int MEDIUM_TIMEOUT = 3000;      // Medium waits
+    private static final int LONG_TIMEOUT = 5000;        // Long waits
     private static final int EDIT_TIMEOUT = 8000;    // Edit button wait timeout
 
     // UI strings
@@ -61,7 +60,7 @@ public class CreatorLivePage extends BasePage {
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plusImg, ConfigReader.getVisibilityTimeout());
-        clickWithRetry(plusImg, 2, LONG_DELAY);
+        clickWithRetry(plusImg, 2, POST_ACTION_WAIT);
         handleConversionPromptIfPresent();
         logger.info("Opened plus menu");
     }
@@ -310,7 +309,7 @@ public class CreatorLivePage extends BasePage {
             try {
                 if (reg.first().isEnabled()) return;
             } catch (Exception ignored) { }
-            page.waitForTimeout(POLLING_WAIT);
+            page.waitForTimeout(NAVIGATION_WAIT);
         }
         throw new RuntimeException("Register button did not become enabled within timeout");
     }
@@ -341,14 +340,14 @@ public class CreatorLivePage extends BasePage {
         String yearStr = String.valueOf(when.getYear());
         Locator yearBtn = panel.locator(".ant-picker-year-btn");
         if (yearBtn.count() > 0) {
-            clickWithRetry(yearBtn.first(), 2, DATE_PICKER_DELAY);
+            clickWithRetry(yearBtn.first(), 2, BUTTON_RETRY_DELAY);
             Locator yearCell = page.locator(".ant-picker-year-panel").getByText(yearStr, new Locator.GetByTextOptions().setExact(true));
             if (yearCell.count() == 0) {
                 // fallback within the panel
                 yearCell = panel.getByText(yearStr, new Locator.GetByTextOptions().setExact(true));
             }
             if (yearCell.count() > 0) {
-                clickWithRetry(yearCell.first(), 2, DATE_PICKER_DELAY);
+                clickWithRetry(yearCell.first(), 2, BUTTON_RETRY_DELAY);
                 logger.info("Picked year {}", yearStr);
             } else {
                 logger.warn("Could not locate target year {}", yearStr);
@@ -359,13 +358,13 @@ public class CreatorLivePage extends BasePage {
         String monStr = when.format(DateTimeFormatter.ofPattern("MMM"));
         Locator monthBtn = panel.locator(".ant-picker-month-btn");
         if (monthBtn.count() > 0) {
-            clickWithRetry(monthBtn.first(), 2, DATE_PICKER_DELAY);
+            clickWithRetry(monthBtn.first(), 2, BUTTON_RETRY_DELAY);
             Locator monthCell = page.locator(".ant-picker-month-panel").getByText(monStr, new Locator.GetByTextOptions().setExact(true));
             if (monthCell.count() == 0) {
                 monthCell = panel.getByText(monStr, new Locator.GetByTextOptions().setExact(true));
             }
             if (monthCell.count() > 0) {
-                clickWithRetry(monthCell.first(), 2, DATE_PICKER_DELAY);
+                clickWithRetry(monthCell.first(), 2, BUTTON_RETRY_DELAY);
                 logger.info("Picked month {}", monStr);
             } else {
                 logger.warn("Could not locate target month {}", monStr);
@@ -382,7 +381,7 @@ public class CreatorLivePage extends BasePage {
                     .getByText(dayText, new Locator.GetByTextOptions().setExact(true));
         }
         if (dayCell.count() > 0) {
-            clickWithRetry(dayCell.first(), 2, DATE_PICKER_DELAY);
+            clickWithRetry(dayCell.first(), 2, BUTTON_RETRY_DELAY);
             logger.info("Picked date day {}", dayText);
         } else {
             logger.warn("Could not find enabled day cell for {}", dayText);
@@ -416,7 +415,7 @@ public class CreatorLivePage extends BasePage {
         // If a date dropdown is still open, close it to avoid overlay blocking time dropdown
         if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
             try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
-            page.waitForTimeout(POLLING_WAIT);
+            page.waitForTimeout(NAVIGATION_WAIT);
         }
 
         // Try opening the time select near the Date field (robust against rc_select_* changes)
@@ -469,7 +468,7 @@ public class CreatorLivePage extends BasePage {
         if (opt.count() > 0) {
             // ensure visible
             WaitUtils.waitForVisible(opt.first(), SHORT_TIMEOUT);
-            clickWithRetry(opt.first(), 2, DATE_PICKER_DELAY);
+            clickWithRetry(opt.first(), 2, BUTTON_RETRY_DELAY);
             logger.info("Picked time {}", opt.first().innerText());
             return;
         }
@@ -521,7 +520,7 @@ public class CreatorLivePage extends BasePage {
         Locator dateDropdown = page.locator(".ant-picker-dropdown:visible");
         if (dateDropdown.count() > 0) {
             try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
-            page.waitForTimeout(POLLING_WAIT);
+            page.waitForTimeout(NAVIGATION_WAIT);
         }
         // If time dropdown still not visible, explicitly click the time selector again
         if (visibleDropdown.count() == 0) {
@@ -614,7 +613,7 @@ public class CreatorLivePage extends BasePage {
                 input.first().fill("");
                 input.first().fill(candidate);
                 page.keyboard().press("Enter");
-                page.waitForTimeout(POLLING_WAIT);
+                page.waitForTimeout(NAVIGATION_WAIT);
                 logger.info("Final fallback: typed time '{}' and pressed Enter", candidate);
                 return;
             } catch (Exception e) {

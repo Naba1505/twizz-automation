@@ -18,25 +18,19 @@ import utils.WaitUtils;
 
 public class CreatorCollectionPage extends BasePage {
 
-    // Timeout constants (in milliseconds)
-    private static final int POLLING_WAIT = 50;      // Quick polling operations
-    private static final int SCROLL_WAIT = 60;       // Scroll stabilization
-    private static final int TILE_SCROLL_WAIT = 75;  // Tile scroll wait
-    private static final int TOAST_CLICK_DELAY = 100; // Toast click delay
-    private static final int NAVIGATION_WAIT = 100;  // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150; // Button click retry delay
-    private static final int CLICK_RETRY_DELAY = 200; // Standard click retry
-    private static final int PAGE_TRANSITION = 250;  // Page transition delays
-    private static final int POST_TOAST_WAIT = 300;  // Wait after toast dismissal
-    private static final int LIST_REFRESH_WAIT = 400; // List refresh wait
-    private static final int UPLOAD_POLLING = 500;   // Upload progress polling
-    private static final int SCROLL_WHEEL_AMOUNT = 600; // Mouse wheel scroll amount
-    private static final int KEYBOARD_BLUR_WAIT = 600; // Keyboard blur wait
-    private static final int EMPTY_STATE_TIMEOUT = 2000; // Empty state check timeout
-    private static final int QUICK_CHECK_TIMEOUT = 3000; // Quick UI checks
-    private static final int TOAST_TIMEOUT = 4000;   // Toast detection timeout
-    private static final int SHORT_WAIT_TIMEOUT = 5000; // Short wait operations
-    private static final int TILE_VISIBILITY_TIMEOUT = 8000; // Tile visibility timeout
+    // Timeout constants (in milliseconds) - Standardized values
+    private static final int POLLING_WAIT = 50;          // Quick polling operations
+    private static final int NAVIGATION_WAIT = 100;      // Navigation delays, scroll stabilization
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int CLICK_RETRY_DELAY = 200;    // Standard click retry
+    private static final int PAGE_TRANSITION = 250;      // Page transition delays
+    private static final int POST_ACTION_WAIT = 300;     // Post-action wait (toast dismissal, list refresh)
+    private static final int STABILIZATION_WAIT = 500;   // UI stabilization (upload polling, keyboard blur)
+    private static final int SCROLL_WHEEL_AMOUNT = 600;  // Mouse wheel scroll amount
+    private static final int SHORT_TIMEOUT = 2000;       // Short waits (empty state check)
+    private static final int MEDIUM_TIMEOUT = 3000;      // Medium waits (quick UI checks)
+    private static final int LONG_TIMEOUT = 5000;        // Long waits (toast detection)
+    private static final int EXTENDED_TIMEOUT = 10000;   // Extended operations (tile visibility)
     private static final long DEFAULT_UPLOAD_TIMEOUT = 180000; // 3 minutes for uploads
 
     // Strings
@@ -90,13 +84,13 @@ public class CreatorCollectionPage extends BasePage {
                 clickTileRobust(tile);
                 try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
                 // Quick check: are we on a details-like screen?
-                if (!isDetailsMarkersPresentQuick(QUICK_CHECK_TIMEOUT)) {
+                if (!isDetailsMarkersPresentQuick(MEDIUM_TIMEOUT)) {
                     logger.warn("[Cleanup] Details markers not present after opening tile index {}; going back", i);
                     safeReturnToCollectionsList();
                     continue;
                 }
                 // Try opening actions menu quickly; if successful, proceed to delete flow
-                if (!openActionsMenuQuick(QUICK_CHECK_TIMEOUT)) {
+                if (!openActionsMenuQuick(MEDIUM_TIMEOUT)) {
                     // Fallback to the normal method which waits longer
                     try {
                         openActionsMenu();
@@ -134,7 +128,7 @@ public class CreatorCollectionPage extends BasePage {
                 // Then use keyboard/page scroll as a fallback
                 try { page.keyboard().press("PageDown"); } catch (Throwable ignored) {}
                 try { page.mouse().wheel(0, SCROLL_WHEEL_AMOUNT); } catch (Throwable ignored) {}
-                page.waitForTimeout(TILE_SCROLL_WAIT);
+                page.waitForTimeout(NAVIGATION_WAIT);
             } catch (Throwable ignored) {}
         }
         try { return loc.count() > 0 && loc.first().isVisible(); } catch (Throwable e) { return false; }
@@ -190,7 +184,7 @@ public class CreatorCollectionPage extends BasePage {
             // Wait for grid to render at least one tile
             Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
             Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-            if (!(WaitUtils.waitForVisible(tilesRole, TILE_VISIBILITY_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, TILE_VISIBILITY_TIMEOUT))) {
+            if (!(WaitUtils.waitForVisible(tilesRole, EXTENDED_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, EXTENDED_TIMEOUT))) {
                 logger.warn("Collections tiles not visible after clicking collections icon; continuing with fallbacks");
             } else {
                 return;
@@ -207,7 +201,7 @@ public class CreatorCollectionPage extends BasePage {
             waitForIdle();
             Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
             Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-            if (WaitUtils.waitForVisible(tilesRole, TILE_VISIBILITY_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, TILE_VISIBILITY_TIMEOUT)) return;
+            if (WaitUtils.waitForVisible(tilesRole, EXTENDED_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, EXTENDED_TIMEOUT)) return;
         } catch (RuntimeException ignored) {}
 
         // Strategy 3: Link or Tab role named 'Collection'
@@ -217,7 +211,7 @@ public class CreatorCollectionPage extends BasePage {
                 clickWithRetry(link.first(), 1, BUTTON_RETRY_DELAY);
                 Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
                 Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-                if (WaitUtils.waitForVisible(tilesRole, TILE_VISIBILITY_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, TILE_VISIBILITY_TIMEOUT)) return;
+                if (WaitUtils.waitForVisible(tilesRole, EXTENDED_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, EXTENDED_TIMEOUT)) return;
             }
         } catch (Exception ignored) {}
         try {
@@ -226,7 +220,7 @@ public class CreatorCollectionPage extends BasePage {
                 clickWithRetry(tab.first(), 1, BUTTON_RETRY_DELAY);
                 Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
                 Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-                if (WaitUtils.waitForVisible(tilesRole, TILE_VISIBILITY_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, TILE_VISIBILITY_TIMEOUT)) return;
+                if (WaitUtils.waitForVisible(tilesRole, EXTENDED_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, EXTENDED_TIMEOUT)) return;
             }
         } catch (Exception ignored) {}
 
@@ -236,7 +230,7 @@ public class CreatorCollectionPage extends BasePage {
             if (safeIsVisible(pluralExact.first())) {
                 clickWithRetry(pluralExact.first(), 1, BUTTON_RETRY_DELAY);
                 Locator tiles = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-                if (WaitUtils.waitForVisible(tiles, TILE_VISIBILITY_TIMEOUT)) return;
+                if (WaitUtils.waitForVisible(tiles, EXTENDED_TIMEOUT)) return;
             }
         } catch (Exception ignored) {}
         try {
@@ -257,7 +251,7 @@ public class CreatorCollectionPage extends BasePage {
                 }
                 Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
                 Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-                if (WaitUtils.waitForVisible(tilesRole, TILE_VISIBILITY_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, TILE_VISIBILITY_TIMEOUT)) return;
+                if (WaitUtils.waitForVisible(tilesRole, EXTENDED_TIMEOUT) || WaitUtils.waitForVisible(tilesXpath, EXTENDED_TIMEOUT)) return;
             }
         } catch (Exception ignored) {}
 
@@ -279,7 +273,7 @@ public class CreatorCollectionPage extends BasePage {
             }
             // Scroll and retry
             try { page.mouse().wheel(0, 1200); } catch (Exception ignored) {}
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         }
         throw new RuntimeException("Failed to open Collections list using available selectors");
     }
@@ -298,7 +292,7 @@ public class CreatorCollectionPage extends BasePage {
         try { candidate.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
         clickWithRetry(candidate, 2, CLICK_RETRY_DELAY);
         // brief wait for navigation/content transition
-        try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+        try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         return true;
     }
 
@@ -353,7 +347,7 @@ public class CreatorCollectionPage extends BasePage {
             try {
                 clickWithRetry(menuIcon.first(), 2, CLICK_RETRY_DELAY);
                 Locator popupTitle = page.getByText("What do you want to do?");
-                return WaitUtils.waitForVisible(popupTitle, QUICK_CHECK_TIMEOUT);
+                return WaitUtils.waitForVisible(popupTitle, MEDIUM_TIMEOUT);
             } catch (Exception ignored) {}
         }
         return false;
@@ -378,10 +372,10 @@ public class CreatorCollectionPage extends BasePage {
     public void assertCollectionDeletedToast() {
         // Try common toast texts first
         Locator toastExact = page.getByText("Collection successfully deleted");
-        if (WaitUtils.waitForVisible(toastExact, SHORT_WAIT_TIMEOUT)) return;
+        if (WaitUtils.waitForVisible(toastExact, LONG_TIMEOUT)) return;
         // Try regex match on any text containing 'deleted'
         Locator toastRegex = page.locator("text=/Collection( is)? (successfully )?deleted|deleted successfully|deleted/i");
-        if (WaitUtils.waitForVisible(toastRegex, TOAST_TIMEOUT)) return;
+        if (WaitUtils.waitForVisible(toastRegex, LONG_TIMEOUT)) return;
         // Try generic role alert that contains 'deleted'
         try {
             Locator alert = page.getByRole(AriaRole.ALERT);
@@ -392,7 +386,7 @@ public class CreatorCollectionPage extends BasePage {
             Locator confirmText = page.getByText("Are you sure you want to delete the collection? All linked data will be lost");
             confirmText.first().waitFor(new Locator.WaitForOptions()
                 .setState(com.microsoft.playwright.options.WaitForSelectorState.DETACHED)
-                .setTimeout(SHORT_WAIT_TIMEOUT));
+                .setTimeout(LONG_TIMEOUT));
         } catch (Exception ignored) {}
         // Fallback: details header no longer present or actions icon gone, suggesting navigation/refresh
         try {
@@ -404,7 +398,7 @@ public class CreatorCollectionPage extends BasePage {
             if (actions.count() == 0 || !actions.first().isVisible()) return;
         } catch (Exception ignored) {}
         // As last resort, short wait to allow list refresh
-        try { page.waitForTimeout(LIST_REFRESH_WAIT); } catch (Exception ignored) {}
+        try { page.waitForTimeout(POST_ACTION_WAIT); } catch (Exception ignored) {}
     }
 
     // ==============================
@@ -470,7 +464,7 @@ public class CreatorCollectionPage extends BasePage {
             deleteCurrentCollectionFromDetails();
             // Return to list for next iteration
             clickBackArrowIfPresent();
-            try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         }
         logger.warn("[Cleanup] Guard exhausted while deleting collections via files icon");
     }
@@ -650,11 +644,11 @@ public class CreatorCollectionPage extends BasePage {
                 return;
             }
             try { page.waitForLoadState(); } catch (Exception ignored) {}
-            try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
             
             // Check if empty state is visible - all collections deleted
             try {
-                if (isNoCollectionsEmptyStateVisible(EMPTY_STATE_TIMEOUT)) {
+                if (isNoCollectionsEmptyStateVisible(SHORT_TIMEOUT)) {
                     logger.info("[Cleanup] Empty-state visible; all collections deleted");
                     return;
                 }
@@ -730,16 +724,16 @@ public class CreatorCollectionPage extends BasePage {
             // Based on codegen: page.getByRole(AriaRole.IMG).nth(1).click()
             Locator menuIcon = page.getByRole(AriaRole.IMG).nth(1);
             try {
-                waitVisible(menuIcon, SHORT_WAIT_TIMEOUT);
+                waitVisible(menuIcon, LONG_TIMEOUT);
                 logger.info("[Cleanup] Clicking menu icon (nth(1)) on details screen");
                 clickWithRetry(menuIcon, 2, CLICK_RETRY_DELAY);
-                try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+                try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
             } catch (Exception e) {
                 logger.warn("[Cleanup] Menu icon nth(1) not found; trying .right-icon > img");
                 Locator altMenu = page.locator(".right-icon > img");
                 if (altMenu.count() > 0) {
                     clickWithRetry(altMenu.first(), 2, CLICK_RETRY_DELAY);
-                    try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
                 } else {
                     logger.warn("[Cleanup] No menu icon found; returning to list");
                     safeReturnToCollectionsList();
@@ -765,8 +759,8 @@ public class CreatorCollectionPage extends BasePage {
             // Wait for success toast, then click/dismiss (per user code-gen)
             Locator toast = page.getByText("Collection successfully deleted");
             if (toast.count() > 0) {
-                try { toast.first().waitFor(new Locator.WaitForOptions().setTimeout(SHORT_WAIT_TIMEOUT)); } catch (Exception ignored) {}
-                try { clickWithRetry(toast.first(), 1, TOAST_CLICK_DELAY); } catch (Exception ignored) {}
+                try { toast.first().waitFor(new Locator.WaitForOptions().setTimeout(LONG_TIMEOUT)); } catch (Exception ignored) {}
+                try { clickWithRetry(toast.first(), 1, NAVIGATION_WAIT); } catch (Exception ignored) {}
             } else {
                 // Fallback: assert via existing helper
                 try { assertCollectionDeletedToast(); } catch (Exception ignored) {}
@@ -775,7 +769,7 @@ public class CreatorCollectionPage extends BasePage {
             logger.info("[Cleanup] Collection deleted successfully, returning to list");
             // Return to collections list for next iteration
             safeReturnToCollectionsList();
-            try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         }
         // After exhausting guard (or finishing deletions), verify empty state to ensure a clean end
         try {
@@ -858,7 +852,7 @@ public class CreatorCollectionPage extends BasePage {
                 safeReturnToCollectionsList();
             }
             // Small wait to allow list to refresh
-            try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
             openCollectionsList();
         }
     }
@@ -870,7 +864,7 @@ public class CreatorCollectionPage extends BasePage {
             Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
             if (arrowLeft.count() > 0 && safeIsVisible(arrowLeft.first())) {
                 clickWithRetry(arrowLeft.first(), 1, BUTTON_RETRY_DELAY);
-                try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+                try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
                 return;
             }
         } catch (Exception ignored) {}
@@ -879,16 +873,16 @@ public class CreatorCollectionPage extends BasePage {
             Locator backIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("back"));
             if (safeIsVisible(backIcon.first())) {
                 clickWithRetry(backIcon.first(), 1, BUTTON_RETRY_DELAY);
-                try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+                try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
                 return;
             }
         } catch (Exception ignored) {}
         // Last resort: browser back twice to get to profile
         try {
             page.goBack();
-            try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
             page.goBack();
-            try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         } catch (Exception ignored) {}
     }
 
@@ -912,7 +906,7 @@ public class CreatorCollectionPage extends BasePage {
             }
             deleteOneCollectionIfAny();
             // Small wait and re-check
-            try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         }
         logger.warn("[Cleanup] Guard exhausted while waiting for contentinfo to appear");
     }
@@ -920,7 +914,7 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Dismiss 'I understand' dialog if present")
     public void clickIUnderstandIfPresent() {
         long start = System.currentTimeMillis();
-        long timeoutMs = SHORT_WAIT_TIMEOUT;
+        long timeoutMs = LONG_TIMEOUT;
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(I_UNDERSTAND_BTN));
@@ -941,7 +935,7 @@ public class CreatorCollectionPage extends BasePage {
                     }
                 }
             } catch (Exception ignored) {}
-            try { page.waitForTimeout(TILE_SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         }
     }
 
@@ -981,7 +975,7 @@ public class CreatorCollectionPage extends BasePage {
                     break;
                 }
             } catch (Exception ignored) {}
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         }
         // If still disabled, trigger validations on Title by blur and small edits
         if (!safeIsEnabled(create.first())) {
@@ -995,7 +989,7 @@ public class CreatorCollectionPage extends BasePage {
                     try { page.keyboard().press("Backspace"); } catch (Exception ignored) {}
                     // Blur via Tab
                     try { page.keyboard().press("Tab"); } catch (Exception ignored) {}
-                    try { page.waitForTimeout(KEYBOARD_BLUR_WAIT); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Exception ignored) {}
                 }
             } catch (Exception ignored) {}
         }
@@ -1371,7 +1365,7 @@ public class CreatorCollectionPage extends BasePage {
                 if (success.count() > 0 && success.first().isVisible()) {
                     logger.info("[Upload] Success toast detected during upload; finishing early");
                     try { clickWithRetry(success.first(), 1, BUTTON_RETRY_DELAY); } catch (Exception ignored) {}
-                    try { page.waitForTimeout(POST_TOAST_WAIT); } catch (Throwable ignored) {}
+                    try { page.waitForTimeout(POST_ACTION_WAIT); } catch (Throwable ignored) {}
                     return;
                 }
                 if (stayMsg.count() > 0 && stayMsg.first().isVisible()) {
@@ -1397,16 +1391,16 @@ public class CreatorCollectionPage extends BasePage {
                     }
                 }
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(UPLOAD_POLLING); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) {}
         }
 
-        long quickToastBudget = Math.min(SHORT_WAIT_TIMEOUT, Math.max(0, deadline - System.currentTimeMillis()));
+        long quickToastBudget = Math.min(LONG_TIMEOUT, Math.max(0, deadline - System.currentTimeMillis()));
         if (quickToastBudget > 0) {
             try {
                 waitVisible(success.first(), quickToastBudget);
                 logger.info("[Upload] Success toast detected right after banner; dismissing");
                 try { clickWithRetry(success.first(), 1, BUTTON_RETRY_DELAY); } catch (Exception ignored) {}
-                try { page.waitForTimeout(POST_TOAST_WAIT); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(POST_ACTION_WAIT); } catch (Throwable ignored) {}
                 return;
             } catch (Throwable ignored) {}
         }
@@ -1426,7 +1420,7 @@ public class CreatorCollectionPage extends BasePage {
             logger.warn("[Upload] Success toast not detected quickly after banner ({} ms cap, remaining was {} ms): {}",
                     capped, remaining, te.getMessage());
         }
-        try { page.waitForTimeout(POST_TOAST_WAIT); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(POST_ACTION_WAIT); } catch (Throwable ignored) {}
     }
 
     @Step("Assert success toast and dismiss it")
