@@ -23,7 +23,7 @@ public class LandingPage extends BasePage {
     }
 
     public void waitForPageToLoad() {
-        page.waitForSelector(twizzLogo, new Page.WaitForSelectorOptions().setTimeout(ConfigReader.getDefaultTimeout()));
+        page.waitForSelector(twizzLogo, new Page.WaitForSelectorOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         logger.info("Landing page loaded successfully.");
     }
 
@@ -35,16 +35,31 @@ public class LandingPage extends BasePage {
 
     public void clickCreatorRegistrationButton() {
         page.click(creatorRegistrationButton);
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         logger.info("Clicked on Creator Registration button.");
     }
 
     public void clickFansRegistrationButton() {
         page.click(fansRegistrationButton);
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         logger.info("Clicked on Fans Registration button.");
     }
 
     public void clickLoginButton() {
         page.click(loginButton);
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         logger.info("Clicked on Login button.");
+    }
+
+    public boolean isOnCreatorRegistrationPage() {
+        return page.url().contains("/auth/signUp?currentTab=creator");
+    }
+
+    public boolean isOnFanRegistrationPage() {
+        return page.url().contains("/auth/signUp") && !page.url().contains("currentTab=creator");
+    }
+
+    public boolean isOnLoginPage() {
+        return page.url().contains("/auth/signIn");
     }
 }
