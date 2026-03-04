@@ -15,7 +15,7 @@ import utils.TestAssets;
 @Epic("Creator")
 @Feature("Live")
 public class CreatorLiveTest extends BaseCreatorTest {
-    
+
     // Smart common cleanup: after each test, attempt to delete any scheduled live if present
     @AfterMethod(alwaysRun = true)
     public void cleanUpScheduledLive() {
@@ -27,34 +27,24 @@ public class CreatorLiveTest extends BaseCreatorTest {
     @Story("Create scheduled live event")
     @Test(priority = 1, description = "Creator schedules a live with price and description")
     public void creatorCanScheduleLive() {
-        // 1) Navigate to Live (plus menu -> Live)
         CreatorLivePage live = new CreatorLivePage(page);
         live.openPlusMenu();
         live.navigateToLive();
 
-        // 3) Prepare scheduling time using utility
         LocalDateTime when = DateTimeUtils.futureAtDaysHour(1, 3, 0);
-
-        // 4) Coverage image (optional if not present)
         Path coverage = TestAssets.imageOrNull("Live A.jpg");
 
-        // 2) Fill live form step-by-step
         live.setAccessEveryone();
         live.setPriceEuro(15);
         live.enableChatEveryoneIfPresent();
         live.chooseSchedule();
         live.pickDate(when);
-        // Prefer dynamic time candidates matching UI from the chosen date
         String[] timeCandidates = DateTimeUtils.futureTimeCandidates(when);
         live.pickTimeCandidates(timeCandidates);
         live.uploadCoverage(coverage);
         live.setDescription("Test");
         live.submitAndVerify();
-
-        // Flow completed without exceptions
     }
-
-    
 
     @Story("Create scheduled live event for Subscribers with custom price")
     @Test(priority = 2, description = "Creator schedules a live for Subscribers with custom price and chat")
@@ -64,21 +54,17 @@ public class CreatorLiveTest extends BaseCreatorTest {
         live.navigateToLive();
 
         LocalDateTime when = DateTimeUtils.futureAtDaysHour(1, 3, 0);
-
         Path coverage = TestAssets.imageOrNull("Live D.jpg");
 
         live.setAccessSubscribers();
-        // custom amount from request
         live.setCustomPriceEuro("5");
         live.enableChatSubscribersIfPresent();
         live.chooseSchedule();
         live.pickDate(when);
-        String[] timeCandidates2 = DateTimeUtils.futureTimeCandidates(when);
-        live.pickTimeCandidates(timeCandidates2);
+        String[] timeCandidates = DateTimeUtils.futureTimeCandidates(when);
+        live.pickTimeCandidates(timeCandidates);
         live.uploadCoverage(coverage);
         live.setDescription("Test - subscribers");
         live.submitAndVerify();
-
-        // Flow completed without exceptions
     }
 }
