@@ -15,6 +15,16 @@ import io.qameta.allure.Step;
 
 public class CreatorUnlockLinksPage extends BasePage {
 
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int POLLING_WAIT = 50;          // Quick polling operations
+    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int CLICK_RETRY_DELAY = 200;    // Standard click retry
+    private static final int POST_ACTION_WAIT = 250;     // Post-action wait
+    private static final int SHORT_TIMEOUT = 2000;       // Short waits (reduced from 4000)
+    private static final int LONG_TIMEOUT = 3000;        // Long waits (reduced from 5000)
+    private static final int UPLOAD_TIMEOUT = 60000;     // Upload processing timeout (1 minute, reduced from 2)
+
     private static final String WHAT_DO_YOU_WANT = "What do you want to do?";
     private static final String UNLOCK = "Unlock";
     private static final String IMPORTATION = "Importation";
@@ -32,9 +42,9 @@ public class CreatorUnlockLinksPage extends BasePage {
         waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && safeIsVisible(svg.first())) {
-            clickWithRetry(svg.first(), 2, 200);
+            clickWithRetry(svg.first(), 2, CLICK_RETRY_DELAY);
         } else {
-            clickWithRetry(plusImg.first(), 2, 200);
+            clickWithRetry(plusImg.first(), 2, CLICK_RETRY_DELAY);
         }
     }
 
@@ -48,13 +58,13 @@ public class CreatorUnlockLinksPage extends BasePage {
     @Step("Dismiss 'I understand' dialog if present")
     public void clickIUnderstandIfPresent() {
         long start = System.currentTimeMillis();
-        long timeoutMs = 5000;
+        long timeoutMs = LONG_TIMEOUT;
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
                 // Try role-based first
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I understand"));
                 if (btn.count() > 0 && safeIsVisible(btn.first())) {
-                    clickWithRetry(btn.first(), 2, 200);
+                    clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
                     return;
                 }
                 // Fallbacks: case/selector variants
@@ -66,12 +76,12 @@ public class CreatorUnlockLinksPage extends BasePage {
                 for (String s : sel) {
                     Locator cand = s.startsWith("//") ? page.locator("xpath=" + s) : page.locator(s);
                     if (cand.count() > 0 && safeIsVisible(cand.first())) {
-                        clickWithRetry(cand.first(), 2, 200);
+                        clickWithRetry(cand.first(), 2, NAVIGATION_WAIT);
                         return;
                     }
                 }
             } catch (Exception ignored) {}
-            try { page.waitForTimeout(150); } catch (Exception ignored) {}
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
         }
     }
 
@@ -79,7 +89,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     public void chooseUnlock() {
         Locator u = page.getByText(UNLOCK);
         waitVisible(u.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(u.first(), 2, 200);
+        clickWithRetry(u.first(), 2, NAVIGATION_WAIT);
     }
 
     @Step("Ensure Unlock screen visible")
@@ -93,14 +103,14 @@ public class CreatorUnlockLinksPage extends BasePage {
         Locator addIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("add"));
         if (addIcon.count() > 0) {
             waitVisible(addIcon.first(), ConfigReader.getShortTimeout());
-            clickWithRetry(addIcon.first(), 2, 200);
+            clickWithRetry(addIcon.first(), 2, CLICK_RETRY_DELAY);
             return;
         }
 
         // Fallback: older UI where the icon is named "plus"
         Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plus.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(plus.first(), 2, 200);
+        clickWithRetry(plus.first(), 2, CLICK_RETRY_DELAY);
     }
 
     @Step("Ensure Importation dialog visible")
@@ -141,7 +151,7 @@ public class CreatorUnlockLinksPage extends BasePage {
         try {
             Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
             if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
-                clickWithRetry(cancel.first(), 1, 150);
+                clickWithRetry(cancel.first(), 1, BUTTON_RETRY_DELAY);
             }
         } catch (Exception ignored) {}
     }
@@ -150,7 +160,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     public void openPriceField() {
         Locator zeroPrice = page.getByText("0.00 €");
         waitVisible(zeroPrice.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(zeroPrice.first(), 1, 150);
+        clickWithRetry(zeroPrice.first(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Fill price euros: {amount}€")
@@ -160,7 +170,7 @@ public class CreatorUnlockLinksPage extends BasePage {
         spin.first().fill(String.valueOf(amount));
         // Blur to trigger recalculations
         try { page.keyboard().press("Tab"); } catch (Exception ignored) {}
-        try { page.waitForTimeout(300); } catch (Exception ignored) {}
+        try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Exception ignored) {}
     }
 
     @Step("Ensure earnings message visible: {text}")
@@ -174,7 +184,7 @@ public class CreatorUnlockLinksPage extends BasePage {
                 "You will receive"
         };
         long start = System.currentTimeMillis();
-        long timeoutMs = 4000; // quick check; avoid slowing the flow
+        long timeoutMs = SHORT_TIMEOUT; // quick check; avoid slowing the flow
         while (System.currentTimeMillis() - start < timeoutMs) {
             for (String v : variants) {
                 try {
@@ -184,7 +194,7 @@ public class CreatorUnlockLinksPage extends BasePage {
                     }
                 } catch (Exception ignored) {}
             }
-            try { page.waitForTimeout(200); } catch (Exception ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
         }
         logger.warn("Earnings message not detected quickly; continuing the flow.");
     }
@@ -193,7 +203,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     public void clickGenerateLink() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Generate link"));
         waitVisible(btn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(btn.first(), 2, 200);
+        clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
     }
 
     @Step("Ensure 'Give your unlock a name' screen visible")
@@ -213,7 +223,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     public void clickCreate() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create"));
         waitVisible(btn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(btn.first(), 2, 200);
+        clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
     }
 
     @Step("Ensure final success title visible")
@@ -225,7 +235,7 @@ public class CreatorUnlockLinksPage extends BasePage {
                 "Everything is ready"
         };
 
-        long overallTimeoutMs = 120_000; // up to 2 minutes for large videos
+        long overallTimeoutMs = UPLOAD_TIMEOUT; // up to 2 minutes for large videos
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < overallTimeoutMs) {
             // Check success first
@@ -241,18 +251,18 @@ public class CreatorUnlockLinksPage extends BasePage {
             try {
                 Locator up = page.getByText(UPLOADING_MSG);
                 if (up.count() > 0 && up.first().isVisible()) {
-                    page.waitForTimeout(500);
+                    page.waitForTimeout(POST_ACTION_WAIT);
                     continue;
                 }
             } catch (Exception ignored) {}
             // Otherwise, short poll and re-check
-            try { page.waitForTimeout(300); } catch (Exception ignored) {}
+            try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Exception ignored) {}
         }
         // One last attempt with regex (in case of minor punctuation changes)
         try {
             Locator rx = page.getByText(Pattern.compile("Everything is ready\\s*!?"));
             if (rx.count() > 0) {
-                waitVisible(rx.first(), 5000);
+                waitVisible(rx.first(), LONG_TIMEOUT);
                 return;
             }
         } catch (Exception ignored) {}
@@ -263,7 +273,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     public void closeWithCross() {
         Locator cross = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("cross"));
         waitVisible(cross.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(cross.first(), 1, 150);
+        clickWithRetry(cross.first(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Ensure 'Important' popup visible")
@@ -275,7 +285,7 @@ public class CreatorUnlockLinksPage extends BasePage {
     public void clickCEstCompris() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("C'est compris"));
         waitVisible(btn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(btn.first(), 2, 200);
+        clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
     }
 }
 
