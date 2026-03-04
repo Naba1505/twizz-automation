@@ -16,6 +16,18 @@ import utils.WaitUtils;
 
 public class CreatorPublicationPage extends BasePage {
 
+    // Timeout constants (in milliseconds)
+    private static final int QUICK_WAIT = 60;       // Quick UI updates
+    private static final int POLLING_WAIT = 75;     // Polling operations
+    private static final int RETRY_DELAY = 100;     // Button click retry delay
+    private static final int SHORT_DELAY = 150;     // Short delays
+    private static final int MEDIUM_DELAY = 200;    // Medium delays
+    private static final int PAGE_TRANSITION = 250; // Page transition delays
+    private static final int LONG_DELAY = 300;      // Longer delays
+    private static final int NAVIGATION_TIMEOUT = 800; // Navigation timeout
+    private static final int TOAST_TIMEOUT = 5000;  // Toast visibility timeout
+    private static final int POST_CLICK_TIMEOUT = 6000; // Post entry click timeout
+
     // UI strings (some localized)
     private static final String CONVERSION_TOOLS_TEXT = "Vos meilleurs outils de conversion";
     private static final String I_UNDERSTAND_BTN = "I understand";
@@ -33,7 +45,7 @@ public class CreatorPublicationPage extends BasePage {
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plusImg, ConfigReader.getVisibilityTimeout());
-        clickWithRetry(plusImg, 2, 300);
+        clickWithRetry(plusImg, 2, LONG_DELAY);
         handleConversionPromptIfPresent();
         logger.info("Opened plus menu");
     }
@@ -46,19 +58,19 @@ public class CreatorPublicationPage extends BasePage {
         // Faster loop with early exit
         long start = System.currentTimeMillis();
         boolean clicked = false;
-        while (System.currentTimeMillis() - start < 6000) {
+        while (System.currentTimeMillis() - start < POST_CLICK_TIMEOUT) {
             try {
                 if (post.isVisible()) {
-                    clickWithRetry(post, 2, 150);
+                    clickWithRetry(post, 2, SHORT_DELAY);
                     clicked = true;
                     break;
                 }
             } catch (Exception ignored) {}
-            try { page.waitForTimeout(120); } catch (Exception ignored) {}
+            try { page.waitForTimeout(QUICK_WAIT); } catch (Exception ignored) {}
         }
         if (!clicked) {
-            try { waitVisible(post, 5000); } catch (Exception ignored) {}
-            clickWithRetry(post, 2, 200);
+            try { waitVisible(post, TOAST_TIMEOUT); } catch (Exception ignored) {}
+            clickWithRetry(post, 2, MEDIUM_DELAY);
         }
         logger.info("Clicked Post entry");
 
@@ -94,7 +106,7 @@ public class CreatorPublicationPage extends BasePage {
     public void openCaptionEditor() {
         Locator openCaption = page.getByText(CAPTION_PLACEHOLDER);
         waitVisible(openCaption, ConfigReader.getVisibilityTimeout());
-        clickWithRetry(openCaption, 2, 200);
+        clickWithRetry(openCaption, 2, MEDIUM_DELAY);
         logger.info("Opened caption editor");
     }
 
@@ -112,7 +124,7 @@ public class CreatorPublicationPage extends BasePage {
     public void clickCaptionOk() {
         Locator ok = page.getByText(CAPTION_OK_TEXT, new Page.GetByTextOptions().setExact(true));
         waitVisible(ok, ConfigReader.getShortTimeout());
-        clickWithRetry(ok, 2, 200);
+        clickWithRetry(ok, 2, MEDIUM_DELAY);
         logger.info("Clicked CaptionOK");
     }
 
@@ -122,7 +134,7 @@ public class CreatorPublicationPage extends BasePage {
         String ariaChecked = sw.getAttribute("aria-checked");
         if (!"true".equalsIgnoreCase(ariaChecked)) {
             logger.warn("Blur switch not enabled by default. Enabling now.");
-            clickWithRetry(sw, 2, 200);
+            clickWithRetry(sw, 2, MEDIUM_DELAY);
         } else {
             logger.info("Blur switch is enabled by default");
         }
@@ -141,7 +153,7 @@ public class CreatorPublicationPage extends BasePage {
         boolean current = getBlurSwitchState();
         if (current != enabled) {
             logger.info("Toggling blur switch to {}", enabled);
-            clickWithRetry(sw, 2, 200);
+            clickWithRetry(sw, 2, MEDIUM_DELAY);
         } else {
             logger.info("Blur switch already {}", enabled ? "enabled" : "disabled");
         }
@@ -156,7 +168,7 @@ public class CreatorPublicationPage extends BasePage {
         }
         // Use a shorter enable wait with retries
         waitForPublishEnabled(publishBtn, ConfigReader.getVisibilityTimeout());
-        clickWithRetry(publishBtn, 2, 200);
+        clickWithRetry(publishBtn, 2, MEDIUM_DELAY);
         // Do not wait for page load state here; SPA may not trigger it. Success toast wait happens later.
         logger.info("Clicked Publish");
     }
@@ -182,7 +194,7 @@ public class CreatorPublicationPage extends BasePage {
     private boolean isTextVisible(String text, boolean exact) {
         try {
             Locator toast = exact ? page.getByText(text, new Page.GetByTextOptions().setExact(true)) : page.getByText(text);
-            waitVisible(toast, 5000);
+            waitVisible(toast, TOAST_TIMEOUT);
             return toast.isVisible();
         } catch (Exception e) {
             return false;
@@ -193,7 +205,7 @@ public class CreatorPublicationPage extends BasePage {
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() - start < timeoutMs) {
             if (isSuccessToastVisible()) return true;
-            try { page.waitForTimeout(100); } catch (Exception ignored) {} // Reduced from 200ms to 100ms
+            try { page.waitForTimeout(RETRY_DELAY); } catch (Exception ignored) {} // Reduced from 200ms to 100ms
         }
         return false;
     }
@@ -221,14 +233,14 @@ public class CreatorPublicationPage extends BasePage {
         try {
             Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
             if (closeBtn.isVisible()) {
-                clickWithRetry(closeBtn, 2, 150);
+                clickWithRetry(closeBtn, 2, SHORT_DELAY);
                 return;
             }
         } catch (Exception ignored) {}
         try {
             Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
             if (cancelBtn.isVisible()) {
-                clickWithRetry(cancelBtn, 2, 150);
+                clickWithRetry(cancelBtn, 2, SHORT_DELAY);
                 return;
             }
         } catch (Exception ignored) {}
@@ -236,7 +248,7 @@ public class CreatorPublicationPage extends BasePage {
             // Generic .close icon or top-right X in dialogs
             Locator x = page.locator(".close, button[aria-label='Close'], [data-testid='close']").first();
             if (x != null && x.count() > 0 && x.isVisible()) {
-                clickWithRetry(x, 2, 150);
+                clickWithRetry(x, 2, SHORT_DELAY);
             }
         } catch (Exception ignored) {}
     }
@@ -248,7 +260,7 @@ public class CreatorPublicationPage extends BasePage {
 
         // Try ESC key
         try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
-        try { page.waitForTimeout(150); } catch (Exception ignored) {}
+        try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
         if (!isComposerOpen()) return;
 
         // Use existing close attempts
@@ -257,11 +269,11 @@ public class CreatorPublicationPage extends BasePage {
 
         // Click outside the dialog area (top-left corner)
         try { page.mouse().click(5, 5); } catch (Exception ignored) {}
-        try { page.waitForTimeout(120); } catch (Exception ignored) {}
+        try { page.waitForTimeout(QUICK_WAIT); } catch (Exception ignored) {}
         if (!isComposerOpen()) return;
 
         // Quick back navigation as last resort (short timeout)
-        try { page.goBack(new Page.GoBackOptions().setTimeout(800)); } catch (Exception ignored) {}
+        try { page.goBack(new Page.GoBackOptions().setTimeout(NAVIGATION_TIMEOUT)); } catch (Exception ignored) {}
     }
 
     private Locator getPublishButton() {
@@ -287,7 +299,7 @@ public class CreatorPublicationPage extends BasePage {
                 page.evaluate("window.scrollBy(0, document.body.scrollHeight)");
             } catch (Exception ignored) {
             }
-            clickWithRetry(understand, 2, 300);
+            clickWithRetry(understand, 2, LONG_DELAY);
             logger.info("Clicked 'I understand' button");
         }
     }
@@ -296,7 +308,7 @@ public class CreatorPublicationPage extends BasePage {
     public void openProfilePublicationsIcon() {
         Locator icon = page.getByRole(AriaRole.TABPANEL, new Page.GetByRoleOptions().setName("publications icon")).locator("img").first();
         if (icon.count() > 0 && icon.isVisible()) {
-            clickWithRetry(icon, 2, 300);
+            clickWithRetry(icon, 2, LONG_DELAY);
             logger.info("Clicked publications icon from profile");
             return;
         }
@@ -306,10 +318,10 @@ public class CreatorPublicationPage extends BasePage {
         }
         Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Connect").setExact(true));
         if (connectBtn.isVisible()) {
-            clickWithRetry(connectBtn, 2, 200);
-            try { page.waitForTimeout(300); } catch (Exception ignored) {}
+            clickWithRetry(connectBtn, 2, MEDIUM_DELAY);
+            try { page.waitForTimeout(SHORT_DELAY); } catch (Exception ignored) {}
             if (icon.count() > 0 && icon.isVisible()) {
-                clickWithRetry(icon, 2, 300);
+                clickWithRetry(icon, 2, LONG_DELAY);
                 logger.info("Clicked publications icon after Connect");
                 return;
             }
@@ -335,21 +347,21 @@ private boolean isPublicationsScreen() {
 
 // Delete a single publication via available UI entry points
 public void deleteOnePublication() {
-    try { page.waitForTimeout(300); } catch (Exception ignored) {}
+    try { page.waitForTimeout(SHORT_DELAY); } catch (Exception ignored) {}
 
     // 1) Some flows require clicking 'Connect' first
     Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Connect").setExact(true));
     if (connectBtn.isVisible()) {
-      clickWithRetry(connectBtn, 2, 200);
+      clickWithRetry(connectBtn, 2, MEDIUM_DELAY);
       logger.info("Clicked 'Connect' before deletion flow");
-      try { page.waitForTimeout(300); } catch (Exception ignored) {}
+      try { page.waitForTimeout(SHORT_DELAY); } catch (Exception ignored) {}
     }
 
     // 2) Primary path: menu beside post '.dots-wrapper'
     Locator dotsWrapper = page.locator(".dots-wrapper");
     if (dotsWrapper.count() > 0) {
       try { dotsWrapper.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-      clickWithRetry(dotsWrapper.first(), 2, 200);
+      clickWithRetry(dotsWrapper.first(), 2, MEDIUM_DELAY);
       confirmDeletionPopup();
       return;
     }
@@ -358,7 +370,7 @@ public void deleteOnePublication() {
     Locator dotImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).first();
     if (dotImg != null && dotImg.count() > 0) {
       try { dotImg.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-      clickWithRetry(dotImg, 2, 200);
+      clickWithRetry(dotImg, 2, MEDIUM_DELAY);
       confirmDeletionPopup();
       return;
     }
@@ -367,10 +379,10 @@ public void deleteOnePublication() {
     Locator fanPost = page.locator(".fanProfilePost").first();
     Locator actionBtn = page.locator(".d-flex").first();
     if (fanPost.count() > 0 && fanPost.isVisible()) {
-      clickWithRetry(fanPost, 2, 200);
+      clickWithRetry(fanPost, 2, MEDIUM_DELAY);
       logger.info("Opened first fan profile post");
       waitVisible(actionBtn, ConfigReader.getShortTimeout());
-      clickWithRetry(actionBtn, 2, 200);
+      clickWithRetry(actionBtn, 2, MEDIUM_DELAY);
       confirmDeletionPopup();
       return;
     }
@@ -383,9 +395,9 @@ private void confirmDeletionPopup() {
     waitVisible(confirmText, ConfigReader.getShortTimeout());
     Locator yesDelete = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
     waitVisible(yesDelete, ConfigReader.getShortTimeout());
-    clickWithRetry(yesDelete, 2, 200);
+    clickWithRetry(yesDelete, 2, MEDIUM_DELAY);
     logger.info("Confirmed publication deletion");
-    try { page.waitForTimeout(600); } catch (Exception ignored) {}
+    try { page.waitForTimeout(LONG_DELAY); } catch (Exception ignored) {}
 }
 
 // Loop delete until none remain
@@ -397,7 +409,7 @@ private void confirmDeletionPopup() {
         openProfilePublicationsIcon();
         // If still not on publications, try a brief wait and check again
         if (!isPublicationsScreen()) {
-          try { page.waitForTimeout(700); } catch (Exception ignored) {}
+          try { page.waitForTimeout(LONG_DELAY); } catch (Exception ignored) {}
           if (!isPublicationsScreen()) {
             logger.warn("Could not navigate to Publications screen; stopping loop");
             break;
@@ -413,7 +425,7 @@ private void confirmDeletionPopup() {
         int dotsImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).count();
         int posts = page.locator(".fanProfilePost").count();
         if (dots > 0 || dotsImg > 0 || posts > 0) { anyPresent = true; break; }
-        try { page.waitForTimeout(200); } catch (Exception ignored) {}
+        try { page.waitForTimeout(RETRY_DELAY); } catch (Exception ignored) {}
       }
 
       // Gentle scroll to trigger lazy load if nothing yet
@@ -433,7 +445,7 @@ private void confirmDeletionPopup() {
       // Delete one and loop
       deleteOnePublication();
       deleted++;
-      try { page.waitForTimeout(500); } catch (Exception ignored) {}
+      try { page.waitForTimeout(PAGE_TRANSITION); } catch (Exception ignored) {}
     }
     logger.info("Deleted {} publications (loop until none left)", deleted);
   }

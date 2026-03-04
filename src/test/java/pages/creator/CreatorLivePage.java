@@ -269,7 +269,15 @@ public class CreatorLivePage extends BasePage {
         }
         try {
             openEditEvent();
-            ensureScheduledLiveScreen();
+            // Use shorter timeout for cleanup - if screen doesn't appear quickly, likely no event
+            Locator txt = page.getByText(SCHEDULED_LIVE_TEXT);
+            try {
+                waitVisible(txt.first(), ConfigReader.getShortTimeout()); // 10s instead of 20s
+                logger.info("Scheduled Live screen visible");
+            } catch (Exception e) {
+                logger.info("Scheduled Live screen not visible quickly; likely no event to delete");
+                return false;
+            }
             clickDeleteEvent();
             confirmDeleteYes();
             verifyDeleteSuccessToast();
@@ -292,7 +300,7 @@ public class CreatorLivePage extends BasePage {
             try {
                 if (reg.first().isEnabled()) return;
             } catch (Exception ignored) { }
-            page.waitForTimeout(200);
+            page.waitForTimeout(100);
         }
         throw new RuntimeException("Register button did not become enabled within timeout");
     }
@@ -398,7 +406,7 @@ public class CreatorLivePage extends BasePage {
         // If a date dropdown is still open, close it to avoid overlay blocking time dropdown
         if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
             try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
-            page.waitForTimeout(200);
+            page.waitForTimeout(100);
         }
 
         // Try opening the time select near the Date field (robust against rc_select_* changes)
@@ -503,7 +511,7 @@ public class CreatorLivePage extends BasePage {
         Locator dateDropdown = page.locator(".ant-picker-dropdown:visible");
         if (dateDropdown.count() > 0) {
             try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
-            page.waitForTimeout(150);
+            page.waitForTimeout(75);
         }
         // If time dropdown still not visible, explicitly click the time selector again
         if (visibleDropdown.count() == 0) {
@@ -596,7 +604,7 @@ public class CreatorLivePage extends BasePage {
                 input.first().fill("");
                 input.first().fill(candidate);
                 page.keyboard().press("Enter");
-                page.waitForTimeout(200);
+                page.waitForTimeout(100);
                 logger.info("Final fallback: typed time '{}' and pressed Enter", candidate);
                 return;
             } catch (Exception e) {
