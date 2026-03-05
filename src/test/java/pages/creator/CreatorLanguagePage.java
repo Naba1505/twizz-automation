@@ -14,6 +14,13 @@ import java.util.regex.Pattern;
  * Page object for Creator -> Settings -> Language switch
  */
 public class CreatorLanguagePage extends BasePage {
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int POLLING_WAIT = 200;         // Polling intervals
+    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
+    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 20000ms)
+
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorLanguagePage(Page page) {
@@ -65,8 +72,8 @@ public class CreatorLanguagePage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Language)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 1, 150);
+        waitVisible(settingsIcon(), SHORT_TIMEOUT);
+        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
@@ -75,47 +82,47 @@ public class CreatorLanguagePage extends BasePage {
 
     @Step("Open Language screen")
     public void openLanguageScreen() {
-        waitVisible(languageMenu(), DEFAULT_WAIT);
+        waitVisible(languageMenu(), SHORT_TIMEOUT);
         try { languageMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(languageMenu(), 1, 150);
-        waitVisible(languageTitleEnglish(), DEFAULT_WAIT);
+        clickWithRetry(languageMenu(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(languageTitleEnglish(), SHORT_TIMEOUT);
     }
 
     @Step("Switch to Français and verify")
     public void switchToFrenchAndVerify() {
-        waitVisible(optionFrancais(), DEFAULT_WAIT);
-        clickWithRetry(optionFrancais(), 1, 150);
-        waitVisible(languageTitleFrench(), ConfigReader.getVisibilityTimeout());
+        waitVisible(optionFrancais(), SHORT_TIMEOUT);
+        clickWithRetry(optionFrancais(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(languageTitleFrench(), MEDIUM_TIMEOUT);
     }
 
     @Step("Switch to Español and verify")
     public void switchToSpanishAndVerify() {
-        waitVisible(optionEspanol(), DEFAULT_WAIT);
-        clickWithRetry(optionEspanol(), 1, 150);
-        waitVisible(languageTitleSpanish(), ConfigReader.getVisibilityTimeout());
+        waitVisible(optionEspanol(), SHORT_TIMEOUT);
+        clickWithRetry(optionEspanol(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(languageTitleSpanish(), MEDIUM_TIMEOUT);
     }
 
     @Step("Switch to English and verify")
     public void switchToEnglishAndVerify() {
-        waitVisible(optionEnglish(), DEFAULT_WAIT);
-        clickWithRetry(optionEnglish(), 1, 150);
-        waitVisible(languageTitleEnglish(), ConfigReader.getVisibilityTimeout());
+        waitVisible(optionEnglish(), SHORT_TIMEOUT);
+        clickWithRetry(optionEnglish(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(languageTitleEnglish(), MEDIUM_TIMEOUT);
     }
 
     @Step("Navigate back to profile (two back arrows)")
     public void navigateBackToProfile() {
         for (int i = 0; i < 2; i++) {
             try {
-                waitVisible(backArrow(), DEFAULT_WAIT);
-                clickWithRetry(backArrow(), 1, 150);
+                waitVisible(backArrow(), SHORT_TIMEOUT);
+                clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY);
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
         }
         if (!safeIsVisible(profilePlusIcon())) {
             // Attempt additional back clicks if needed
             for (int i = 0; i < 2 && !safeIsVisible(profilePlusIcon()); i++) {
-                try { clickWithRetry(backArrow(), 1, 150); } catch (Throwable ignored) {}
-                try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+                try { clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
             }
         }
     }
