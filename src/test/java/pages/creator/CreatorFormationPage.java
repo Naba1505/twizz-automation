@@ -10,6 +10,14 @@ import io.qameta.allure.Step;
 
 public class CreatorFormationPage extends BasePage {
 
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
+    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
+    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
+    private static final int LONG_TIMEOUT = 4000;        // Long waits for settings icon
+
     public CreatorFormationPage(Page page) {
         super(page);
     }
@@ -29,9 +37,9 @@ public class CreatorFormationPage extends BasePage {
         for (Locator cand : candidates) {
             try {
                 if (cand != null && cand.count() > 0) {
-                    waitVisible(cand.first(), 4_000);
+                    waitVisible(cand.first(), LONG_TIMEOUT);
                     try { cand.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                    clickWithRetry(cand.first(), 1, 120);
+                    clickWithRetry(cand.first(), 1, NAVIGATION_WAIT);
                     clicked = true;
                     break;
                 }
@@ -49,7 +57,7 @@ public class CreatorFormationPage extends BasePage {
 
     @Step("Assert on Settings URL (/common/setting)")
     public void assertOnSettingsUrl() {
-        page.waitForURL("**/common/setting**", new Page.WaitForURLOptions().setTimeout(DEFAULT_WAIT));
+        page.waitForURL("**/common/setting**", new Page.WaitForURLOptions().setTimeout(MEDIUM_TIMEOUT));
     }
 
     @Step("Open Formation tile from Settings")
@@ -64,8 +72,8 @@ public class CreatorFormationPage extends BasePage {
             // Fallback: link by href
             formation = page.locator("a[href*='/creator/formation']");
         }
-        waitVisible(formation.first(), DEFAULT_WAIT);
-        clickWithRetry(formation.first(), 1, 120);
+        waitVisible(formation.first(), SHORT_TIMEOUT);
+        clickWithRetry(formation.first(), 1, NAVIGATION_WAIT);
         // Ensure formation screen is actually loaded
         assertOnFormationScreen();
     }
@@ -73,7 +81,7 @@ public class CreatorFormationPage extends BasePage {
     @Step("Assert on Formation screen (\"How can we help you?\" visible)")
     public void assertOnFormationScreen() {
         Locator help = page.getByText("How can we help you?");
-        waitVisible(help.first(), DEFAULT_WAIT);
+        waitVisible(help.first(), SHORT_TIMEOUT);
         // Also ensure we're on the correct URL
         assertOnFormationUrl();
     }
@@ -94,9 +102,9 @@ public class CreatorFormationPage extends BasePage {
                 tile = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(title));
             }
         }
-        waitVisible(tile.first(), DEFAULT_WAIT);
+        waitVisible(tile.first(), SHORT_TIMEOUT);
         try { tile.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(tile.first(), 1, 120);
+        clickWithRetry(tile.first(), 1, NAVIGATION_WAIT);
         // After navigation, assert topic title
         assertTopicTitle(title.equals("Presentation Video") ? "Presentation Videos" : title);
     }
@@ -106,19 +114,19 @@ public class CreatorFormationPage extends BasePage {
         // Try exact title first
         Locator heading = getByTextExact(exactTitle);
         if (heading.count() > 0) {
-            waitVisible(heading.first(), DEFAULT_WAIT);
+            waitVisible(heading.first(), SHORT_TIMEOUT);
             return;
         }
         // Fallback: contains-based span selector useful for cases like 'Profile'
         Locator containsSpan = page.locator("//span[contains(text(),'" + exactTitle + "')]");
-        waitVisible(containsSpan.first(), DEFAULT_WAIT);
+        waitVisible(containsSpan.first(), SHORT_TIMEOUT);
     }
 
     @Step("Scroll to 'Do you have any other questions?' section")
     public void scrollToQuestionsFooter() {
         Locator q = page.getByText("Do you have any other questions?");
         try {
-            waitVisible(q.first(), 6_000);
+            waitVisible(q.first(), LONG_TIMEOUT);
             try { q.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         } catch (Throwable t) {
             logger.warn("Questions footer not found quickly; continuing. Title assertions will validate page.");
@@ -128,29 +136,29 @@ public class CreatorFormationPage extends BasePage {
     @Step("Scroll to topic title: {exactTitle}")
     public void scrollToTopicTitle(String exactTitle) {
         Locator heading = getByTextExact(exactTitle);
-        waitVisible(heading.first(), DEFAULT_WAIT);
+        waitVisible(heading.first(), SHORT_TIMEOUT);
         try { heading.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
     }
 
     @Step("Navigate back (topic -> formation) via back icon")
     public void backToFormationFromTopic() {
         Locator back = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("back"));
-        waitVisible(back.first(), DEFAULT_WAIT);
-        clickWithRetry(back.first(), 1, 120);
+        waitVisible(back.first(), SHORT_TIMEOUT);
+        clickWithRetry(back.first(), 1, NAVIGATION_WAIT);
         // Ensure we returned to Formation
         assertOnFormationUrl();
     }
 
     @Step("Assert on Formation URL (/creator/formation)")
     public void assertOnFormationUrl() {
-        page.waitForURL("**/creator/formation**", new Page.WaitForURLOptions().setTimeout(DEFAULT_WAIT));
+        page.waitForURL("**/creator/formation**", new Page.WaitForURLOptions().setTimeout(MEDIUM_TIMEOUT));
     }
 
     @Step("Navigate back to Settings via arrow left icon")
     public void backToSettingsFromFormation() {
         Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
-        waitVisible(arrowLeft.first(), DEFAULT_WAIT);
-        clickWithRetry(arrowLeft.first(), 1, 120);
+        waitVisible(arrowLeft.first(), SHORT_TIMEOUT);
+        clickWithRetry(arrowLeft.first(), 1, NAVIGATION_WAIT);
         assertOnSettingsUrl();
     }
 }
