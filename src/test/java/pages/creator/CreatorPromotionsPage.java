@@ -13,6 +13,17 @@ import org.slf4j.LoggerFactory;
 public class CreatorPromotionsPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorPromotionsPage.class);
 
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
+    private static final int SCROLL_WAIT = 80;           // Scroll stabilization
+    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int POLLING_WAIT = 200;         // Polling intervals
+    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
+    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
+    private static final int LONG_TIMEOUT = 8000;        // Long waits for deletion/copy
+    private static final int PAGE_LOAD_WAIT = 1500;      // Page load stabilization
+
     // URLs and texts
     private static final String SETTINGS_URL_PART = "/common/setting";
     private static final String PROMO_TITLE = "Promo code"; // exact title on promotions screen
@@ -107,7 +118,7 @@ public class CreatorPromotionsPage extends BasePage {
         try {
             try {
                 page.mouse().wheel(0, 200);
-                page.waitForTimeout(80);
+                page.waitForTimeout(SCROLL_WAIT);
                 page.mouse().wheel(0, -200);
             } catch (Throwable ignored) {}
             return automationSpans().count();
@@ -120,23 +131,23 @@ public class CreatorPromotionsPage extends BasePage {
     private void nudgeLazyLoad() {
         try {
             page.mouse().wheel(0, 600);
-            page.waitForTimeout(120);
+            page.waitForTimeout(NAVIGATION_WAIT);
             page.mouse().wheel(0, -600);
         } catch (Throwable ignored) {}
     }
 
     private void scrollToEndAndBack() {
         try {
-            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, 800); page.waitForTimeout(120); }
-            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, -800); page.waitForTimeout(80); }
+            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); }
+            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, -800); page.waitForTimeout(SCROLL_WAIT); }
         } catch (Throwable ignored) {}
     }
 
     // ----------- Steps -----------
     @Step("Open Settings from profile")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 1, 150);
+        waitVisible(settingsIcon(), SHORT_TIMEOUT);
+        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
         // Ensure URL contains /common/setting
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
@@ -148,7 +159,7 @@ public class CreatorPromotionsPage extends BasePage {
     public void deleteAllAutomationPromosSoft() {
         try {
             // Ensure we are on the Promo code page
-            waitVisible(promoTitleExact(), DEFAULT_WAIT);
+            waitVisible(promoTitleExact(), SHORT_TIMEOUT);
             // Keep deleting until there are zero AUTOMATION promos visible
             int safety = 0; // prevent infinite loops
             while (safety++ < 50) {
@@ -164,33 +175,33 @@ public class CreatorPromotionsPage extends BasePage {
 
                 // Delete the first visible row - click to open promo details
                 Locator row = automationSpans().first();
-                waitVisible(row, DEFAULT_WAIT);
+                waitVisible(row, SHORT_TIMEOUT);
                 try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
                 log.info("Deleting an 'AUTOMATION' promo; remaining before delete: {}", beforeCount);
-                clickWithRetry(row, 1, 120);
-                page.waitForTimeout(500);
+                clickWithRetry(row, 1, NAVIGATION_WAIT);
+                page.waitForTimeout(BUTTON_RETRY_DELAY);
 
                 // Click Delete button inside promo details (if present)
                 try {
                     if (deletePromoButton().isVisible()) {
-                        clickWithRetry(deletePromoButton(), 1, 120);
-                        page.waitForTimeout(300);
+                        clickWithRetry(deletePromoButton(), 1, NAVIGATION_WAIT);
+                        page.waitForTimeout(POLLING_WAIT);
                     }
                 } catch (Throwable ignored) {}
 
                 // Confirm delete
-                waitVisible(yesDeleteButton(), DEFAULT_WAIT);
-                clickWithRetry(yesDeleteButton(), 1, 120);
+                waitVisible(yesDeleteButton(), SHORT_TIMEOUT);
+                clickWithRetry(yesDeleteButton(), 1, NAVIGATION_WAIT);
 
                 // Wait for the count to decrease or the row to detach
                 long startWait = System.currentTimeMillis();
                 boolean countDecreased = false;
-                while (System.currentTimeMillis() - startWait < 8_000) {
+                while (System.currentTimeMillis() - startWait < LONG_TIMEOUT) {
                     try {
                         int now = automationSpans().count();
                         if (now < beforeCount) { countDecreased = true; break; }
                     } catch (Throwable ignored) {}
-                    try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
                 }
 
                 // Determine if this was the last deletion
@@ -201,7 +212,7 @@ public class CreatorPromotionsPage extends BasePage {
                 if (isLast) {
                     // Last deletion: try to observe and close the success toast, but do not fail if not seen
                     try {
-                        waitVisible(deleteSuccessToast(), 8_000);
+                        waitVisible(deleteSuccessToast(), LONG_TIMEOUT);
                         try { clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
                     } catch (Throwable t) {
                         log.warn("Last deletion did not surface success toast within timeout; proceeding without failure");
@@ -209,7 +220,7 @@ public class CreatorPromotionsPage extends BasePage {
                 } else {
                     // Intermediate deletion: close toast if it appears; do not assert
                     try {
-                        waitVisible(deleteSuccessToast(), 2_000);
+                        waitVisible(deleteSuccessToast(), MEDIUM_TIMEOUT);
                         try { clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
                     } catch (Throwable ignored) {
                         // toast did not appear; proceed
@@ -223,7 +234,7 @@ public class CreatorPromotionsPage extends BasePage {
                 }
 
                 // Small pause before next iteration
-                try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
             }
 
             // Validation pass: if any still remain, attempt deeper scroll and re-open promo page, then delete again
@@ -231,11 +242,11 @@ public class CreatorPromotionsPage extends BasePage {
             if (remaining > 0) {
                 log.warn("Validation: {} 'AUTOMATION' promos still visible after first pass; attempting second pass", remaining);
                 scrollToEndAndBack();
-                try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
                 // Re-open promo menu to refresh view
                 try {
-                    clickWithRetry(promoMenuItem(), 1, 150);
-                    waitVisible(promoTitleExact(), DEFAULT_WAIT);
+                    clickWithRetry(promoMenuItem(), 1, BUTTON_RETRY_DELAY);
+                    waitVisible(promoTitleExact(), SHORT_TIMEOUT);
                 } catch (Throwable ignored) {}
 
                 // Secondary loop with smaller safety bound
@@ -247,38 +258,38 @@ public class CreatorPromotionsPage extends BasePage {
                     if (before <= 0) break;
 
                     Locator row = automationSpans().first();
-                    waitVisible(row, DEFAULT_WAIT);
+                    waitVisible(row, SHORT_TIMEOUT);
                     try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                    clickWithRetry(row, 1, 120);
-                    page.waitForTimeout(500);
+                    clickWithRetry(row, 1, NAVIGATION_WAIT);
+                    page.waitForTimeout(BUTTON_RETRY_DELAY);
 
                     // Click Delete button inside promo details (if present)
                     try {
                         if (deletePromoButton().isVisible()) {
-                            clickWithRetry(deletePromoButton(), 1, 120);
-                            page.waitForTimeout(300);
+                            clickWithRetry(deletePromoButton(), 1, NAVIGATION_WAIT);
+                            page.waitForTimeout(POLLING_WAIT);
                         }
                     } catch (Throwable ignored) {}
 
-                    waitVisible(yesDeleteButton(), DEFAULT_WAIT);
-                    clickWithRetry(yesDeleteButton(), 1, 120);
+                    waitVisible(yesDeleteButton(), SHORT_TIMEOUT);
+                    clickWithRetry(yesDeleteButton(), 1, NAVIGATION_WAIT);
 
                     // Toast handling: only assert when it becomes last
                     int after;
                     long startCheck = System.currentTimeMillis();
-                    while (System.currentTimeMillis() - startCheck < 6_000) {
+                    while (System.currentTimeMillis() - startCheck < LONG_TIMEOUT) {
                         try { after = automationSpans().count(); } catch (Throwable ignored) { after = 0; }
                         if (after < before) break;
-                        try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+                        try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
                     }
                     try { after = automationSpans().count(); } catch (Throwable ignored) { after = 0; }
                     boolean lastNow = after == 0;
                     if (lastNow) {
-                        try { waitVisible(deleteSuccessToast(), 6_000); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
+                        try { waitVisible(deleteSuccessToast(), LONG_TIMEOUT); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
                     } else {
-                        try { waitVisible(deleteSuccessToast(), 2_000); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
+                        try { waitVisible(deleteSuccessToast(), MEDIUM_TIMEOUT); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
                     }
-                    try { page.waitForTimeout(180); } catch (Throwable ignored) {}
+                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
                 }
 
                 int finalRemain = getAutomationPromoCount();
@@ -296,16 +307,16 @@ public class CreatorPromotionsPage extends BasePage {
     @Step("Navigate to 'Promo code' in Settings")
     public void openPromoCodeScreen() {
         // Scroll into view and click
-        waitVisible(promoMenuItem(), DEFAULT_WAIT);
+        waitVisible(promoMenuItem(), SHORT_TIMEOUT);
         try { promoMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(promoMenuItem(), 1, 150);
+        clickWithRetry(promoMenuItem(), 1, BUTTON_RETRY_DELAY);
         // Verify Promotions page title exact
-        waitVisible(promoTitleExact(), DEFAULT_WAIT);
+        waitVisible(promoTitleExact(), SHORT_TIMEOUT);
         // Wait for page to fully load
-        page.waitForTimeout(1500);
+        page.waitForTimeout(PAGE_LOAD_WAIT);
         // Wait for promo items to render
         try {
-            page.waitForSelector("span.creatorCodePromoName", new Page.WaitForSelectorOptions().setTimeout(5000));
+            page.waitForSelector("span.creatorCodePromoName", new Page.WaitForSelectorOptions().setTimeout(MEDIUM_TIMEOUT));
             log.info("Promo code items found on screen");
         } catch (Throwable t) {
             log.info("No promo code items found on screen (may be empty)");
@@ -318,62 +329,62 @@ public class CreatorPromotionsPage extends BasePage {
 
     @Step("Click 'Create a promo code' button")
     public void clickCreatePromoCode() {
-        waitVisible(createPromoButton(), DEFAULT_WAIT);
-        clickWithRetry(createPromoButton(), 1, 150);
+        waitVisible(createPromoButton(), SHORT_TIMEOUT);
+        clickWithRetry(createPromoButton(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Fill promo code: {code}")
     public void fillPromoCode(String code) {
-        waitVisible(codeInput(), DEFAULT_WAIT);
+        waitVisible(codeInput(), SHORT_TIMEOUT);
         typeAndAssert(codeInput(), code);
     }
 
     @Step("Fill discount percent: {percent}")
     public void fillDiscountPercent(String percent) {
-        waitVisible(discountTextbox(), DEFAULT_WAIT);
+        waitVisible(discountTextbox(), SHORT_TIMEOUT);
         typeAndAssert(discountTextbox(), percent);
     }
 
     @Step("Fill discount amount: {amount}")
     public void fillDiscountAmount(String amount) {
-        waitVisible(discountAmountTextbox(), DEFAULT_WAIT);
+        waitVisible(discountAmountTextbox(), SHORT_TIMEOUT);
         typeAndAssert(discountAmountTextbox(), amount);
     }
 
     @Step("Select 'Subscription' and 'Unlimited' options")
     public void selectSubscriptionUnlimited() {
-        waitVisible(subscriptionLabel(), DEFAULT_WAIT);
-        clickWithRetry(subscriptionLabel(), 1, 120);
-        waitVisible(unlimitedLabel(), DEFAULT_WAIT);
-        clickWithRetry(unlimitedLabel(), 1, 120);
+        waitVisible(subscriptionLabel(), SHORT_TIMEOUT);
+        clickWithRetry(subscriptionLabel(), 1, NAVIGATION_WAIT);
+        waitVisible(unlimitedLabel(), SHORT_TIMEOUT);
+        clickWithRetry(unlimitedLabel(), 1, NAVIGATION_WAIT);
     }
 
     @Step("Select applicability: {applicabilityText}")
     public void selectApplicability(String applicabilityText) {
         Locator opt = page.locator("label").filter(new Locator.FilterOptions().setHasText(applicabilityText));
-        waitVisible(opt, DEFAULT_WAIT);
-        clickWithRetry(opt, 1, 120);
+        waitVisible(opt, SHORT_TIMEOUT);
+        clickWithRetry(opt, 1, NAVIGATION_WAIT);
     }
 
     @Step("Select validity: {validityText}")
     public void selectValidity(String validityText) {
         Locator opt = page.locator("label").filter(new Locator.FilterOptions().setHasText(validityText));
-        waitVisible(opt, DEFAULT_WAIT);
-        clickWithRetry(opt, 1, 120);
+        waitVisible(opt, SHORT_TIMEOUT);
+        clickWithRetry(opt, 1, NAVIGATION_WAIT);
     }
 
     @Step("Click Create to submit promo")
     public void submitCreate() {
-        waitVisible(createButton(), DEFAULT_WAIT);
-        clickWithRetry(createButton(), 1, 150);
+        waitVisible(createButton(), SHORT_TIMEOUT);
+        clickWithRetry(createButton(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Assert promo created toasts visible")
     public void assertPromoCreatedToasts() {
-        waitVisible(promoCreatedToast(), ConfigReader.getVisibilityTimeout());
+        waitVisible(promoCreatedToast(), MEDIUM_TIMEOUT);
         // Try to wait for min price toast but don't fail if it doesn't appear
         try {
-            waitVisible(minPriceToast(), 3_000);
+            waitVisible(minPriceToast(), MEDIUM_TIMEOUT);
             try { clickWithRetry(minPriceToast(), 0, 0); } catch (Throwable ignored) {}
         } catch (Throwable e) {
             log.info("Min price toast did not appear: {}", e.getMessage());
@@ -384,7 +395,7 @@ public class CreatorPromotionsPage extends BasePage {
 
     @Step("Assert promo created success toast visible")
     public void assertPromoCreatedSuccessOnly() {
-        waitVisible(promoCreatedToast(), ConfigReader.getVisibilityTimeout());
+        waitVisible(promoCreatedToast(), MEDIUM_TIMEOUT);
         try { clickWithRetry(promoCreatedToast(), 0, 0); } catch (Throwable ignored) {}
     }
 
@@ -392,25 +403,25 @@ public class CreatorPromotionsPage extends BasePage {
     public void clickAllCopyButtonsAndAssert() {
         try {
             // Ensure we are on the Promo code page
-            waitVisible(promoTitleExact(), DEFAULT_WAIT);
+            waitVisible(promoTitleExact(), SHORT_TIMEOUT);
             // Additional guard: wait for any automation promo rows to render, if present
             try {
                 if (automationSpans().count() > 0) {
-                    waitVisible(automationSpans().first(), DEFAULT_WAIT);
+                    waitVisible(automationSpans().first(), SHORT_TIMEOUT);
                 }
             } catch (Throwable ignored) {}
             // Poll for copy elements to appear, with gentle scroll nudges
             Locator copies = copySpans();
             int count = 0;
             long start = System.currentTimeMillis();
-            long timeoutMs = 15_000;
+            long timeoutMs = LONG_TIMEOUT;
             while (System.currentTimeMillis() - start < timeoutMs) {
                 try { count = copies.count(); } catch (Throwable ignored) { count = 0; }
                 if (count > 0) break;
                 try {
                     // Nudge scroll to trigger lazy-loaded content
                     page.mouse().wheel(0, 600);
-                    page.waitForTimeout(200);
+                    page.waitForTimeout(POLLING_WAIT);
                     page.mouse().wheel(0, -600);
                 } catch (Throwable ignored) {}
             }
@@ -422,14 +433,14 @@ public class CreatorPromotionsPage extends BasePage {
             for (int i = 0; i < count; i++) {
                 // Refetch each iteration to avoid stale indexes after DOM updates
                 Locator btn = copies.nth(i);
-                waitVisible(btn, DEFAULT_WAIT);
+                waitVisible(btn, SHORT_TIMEOUT);
                 try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
                 log.info("Clicking 'Copy' element index {} (will assert toast only for last index: {})", i, count - 1);
-                clickWithRetry(btn, 1, 120);
+                clickWithRetry(btn, 1, NAVIGATION_WAIT);
                 if (i == count - 1) {
                     // For the last click, try to observe and close the toast, but do not fail if not seen
                     try {
-                        waitVisible(copySuccessToast(), 8_000);
+                        waitVisible(copySuccessToast(), LONG_TIMEOUT);
                         try { clickWithRetry(copySuccessToast(), 0, 0); } catch (Throwable ignored) {}
                     } catch (Throwable t) {
                         log.warn("Last 'Copy' click did not surface the success toast within timeout; proceeding without failure");
@@ -437,14 +448,14 @@ public class CreatorPromotionsPage extends BasePage {
                 } else {
                     // For intermediate clicks, if a toast appears, close it without asserting
                     try {
-                        waitVisible(copySuccessToast(), 2_000);
+                        waitVisible(copySuccessToast(), MEDIUM_TIMEOUT);
                         try { clickWithRetry(copySuccessToast(), 0, 0); } catch (Throwable ignored) {}
                     } catch (Throwable ignored) {
                         // toast did not appear within short timeout; proceed
                     }
                 }
                 // small pause to avoid any overlap before next iteration
-                try { page.waitForTimeout(150); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
             }
         } catch (Throwable t) {
             log.error("Unexpected error during clicking all 'Copy' elements; proceeding without failing test: {}", t.getMessage());
