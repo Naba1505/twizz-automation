@@ -13,6 +13,14 @@ import io.qameta.allure.Step;
  */
 public class CreatorProfilePage extends BasePage {
 
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
+    private static final int SCROLL_WAIT = 75;           // Scroll stabilization
+    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
+    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
+
     public CreatorProfilePage(Page page) {
         super(page);
     }
@@ -56,55 +64,55 @@ public class CreatorProfilePage extends BasePage {
 
     @Step("Assert URL contains /creator/profile")
     public void assertOnProfileUrl() {
-        Page.WaitForURLOptions opts = new Page.WaitForURLOptions().setTimeout(DEFAULT_WAIT);
+        Page.WaitForURLOptions opts = new Page.WaitForURLOptions().setTimeout(MEDIUM_TIMEOUT);
         page.waitForURL("**/creator/profile**", opts);
     }
 
     @Step("Assert profile header username is visible")
     public void assertHeaderUsernameVisible() {
-        waitVisible(headerUsername(), DEFAULT_WAIT);
+        waitVisible(headerUsername(), SHORT_TIMEOUT);
     }
 
     @Step("Assert profile avatar is visible")
     public void assertAvatarVisible() {
-        waitVisible(avatarImg(), DEFAULT_WAIT);
+        waitVisible(avatarImg(), SHORT_TIMEOUT);
     }
 
     @Step("Assert Publications, Subscribers, Interested counts are visible")
     public void assertTopCountersVisible() {
-        waitVisible(publicationsText(), DEFAULT_WAIT);
-        waitVisible(subscribersText(), DEFAULT_WAIT);
-        waitVisible(interestedText(), DEFAULT_WAIT);
+        waitVisible(publicationsText(), SHORT_TIMEOUT);
+        waitVisible(subscribersText(), SHORT_TIMEOUT);
+        waitVisible(interestedText(), SHORT_TIMEOUT);
     }
 
     @Step("Scroll to bottom of the page")
     public void scrollToBottom() {
         try { page.evaluate("window.scrollTo(0, document.body.scrollHeight)"); } catch (Throwable ignored) {}
-        page.waitForTimeout(75);
+        page.waitForTimeout(SCROLL_WAIT);
     }
 
     @Step("Scroll to top of the page")
     public void scrollToTop() {
         try { page.evaluate("window.scrollTo(0, 0)"); } catch (Throwable ignored) {}
-        page.waitForTimeout(75);
+        page.waitForTimeout(SCROLL_WAIT);
     }
 
     @Step("Assert Publications and Collections icons visible")
     public void assertBottomIconsVisible() {
-        waitVisible(publicationsIcon(), DEFAULT_WAIT);
-        waitVisible(collectionsIcon(), DEFAULT_WAIT);
+        waitVisible(publicationsIcon(), SHORT_TIMEOUT);
+        waitVisible(collectionsIcon(), SHORT_TIMEOUT);
     }
 
     @Step("Click Collections icon")
     public void clickCollectionsIcon() {
-        waitVisible(collectionsIcon(), DEFAULT_WAIT);
-        clickWithRetry(collectionsIcon(), 1, 100);
+        waitVisible(collectionsIcon(), SHORT_TIMEOUT);
+        clickWithRetry(collectionsIcon(), 1, NAVIGATION_WAIT);
     }
 
     @Step("Click Publications icon")
     public void clickPublicationsIcon() {
-        waitVisible(publicationsIcon(), DEFAULT_WAIT);
-        clickWithRetry(publicationsIcon(), 1, 100);
+        waitVisible(publicationsIcon(), SHORT_TIMEOUT);
+        clickWithRetry(publicationsIcon(), 1, NAVIGATION_WAIT);
     }
 
     @Step("Open Messaging from header (optional fast nav)")
@@ -112,7 +120,7 @@ public class CreatorProfilePage extends BasePage {
         // Some profile screens expose a Messaging icon as in other modules
         Locator msgIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Messaging icon"));
         if (msgIcon.count() > 0) {
-            clickWithRetry(msgIcon.first(), 1, 150);
+            clickWithRetry(msgIcon.first(), 1, BUTTON_RETRY_DELAY);
         }
     }
 
@@ -121,23 +129,24 @@ public class CreatorProfilePage extends BasePage {
     @Step("Open 'Modify' profile screen")
     public void openModifyProfile() {
         Locator modifyBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Modify"));
-        waitVisible(modifyBtn.first(), DEFAULT_WAIT);
-        clickWithRetry(modifyBtn.first(), 1, 100);
+        waitVisible(modifyBtn.first(), SHORT_TIMEOUT);
+        clickWithRetry(modifyBtn.first(), 1, NAVIGATION_WAIT);
         // Wait for title
-        waitVisible(page.getByText("Modify my profile"), DEFAULT_WAIT);
+        waitVisible(page.getByText("Modify my profile"), SHORT_TIMEOUT);
     }
 
     @Step("Assert 'Modify my profile' screen is visible")
     public void assertModifyProfileScreen() {
-        waitVisible(page.getByText("Modify my profile"), DEFAULT_WAIT);
+        waitVisible(page.getByText("Modify my profile"), SHORT_TIMEOUT);
     }
 
-    @Step("Click avatar upload pencil icon")
+    @Step("Click avatar upload pencil icon to open action menu")
     public void clickUploadAvatarPencil() {
         Locator pencil = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("icon"));
-        waitVisible(pencil.first(), DEFAULT_WAIT);
-        clickWithRetry(pencil.first(), 1, 100);
-        page.waitForTimeout(100);
+        waitVisible(pencil.first(), SHORT_TIMEOUT);
+        clickWithRetry(pencil.first(), 1, NAVIGATION_WAIT);
+        // Wait for "What action do you want to" popup
+        waitVisible(page.getByText("What action do you want to"), SHORT_TIMEOUT);
     }
 
     @Step("Upload avatar image from: {file}")
@@ -146,14 +155,14 @@ public class CreatorProfilePage extends BasePage {
             throw new RuntimeException("Avatar image file not found: " + file);
         }
         
-        // Step 1: Click pencil to open menu
+        // Step 1: Click pencil to open "What action do you want to" menu
         clickUploadAvatarPencil();
         
-        // Step 2: Intercept FileChooser when clicking Edit menu item
+        // Step 2: Intercept FileChooser when clicking Edit button
         com.microsoft.playwright.FileChooser chooser = page.waitForFileChooser(() -> {
-            Locator menuItem = page.getByRole(AriaRole.MENUITEM, new Page.GetByRoleOptions().setName("edit Edit"));
-            waitVisible(menuItem.first(), DEFAULT_WAIT);
-            clickWithRetry(menuItem.first(), 1, 100);
+            Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Edit"));
+            waitVisible(editBtn, SHORT_TIMEOUT);
+            clickWithRetry(editBtn, 1, BUTTON_RETRY_DELAY);
         });
         
         // Step 3: Upload file
@@ -163,62 +172,60 @@ public class CreatorProfilePage extends BasePage {
 
     @Step("Wait for avatar updated success toast")
     public void waitForAvatarUpdatedToast() {
-        Locator toast = page.getByText("Avatar image updated successfully");
-        waitVisible(toast.first(), ConfigReader.getVisibilityTimeout());
-        // Click to dismiss if clickable
-        try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable ignored) {}
+        Locator toast = page.getByText("Avatar image updated");
+        waitVisible(toast, MEDIUM_TIMEOUT);
+        logger.info("[Profile] Avatar image updated toast visible");
     }
 
     @Step("Click 'Delete' option for avatar")
     public void clickDeleteAvatarOption() {
-        Locator delete = page.getByText("Delete");
-        waitVisible(delete.first(), DEFAULT_WAIT);
-        clickWithRetry(delete.first(), 1, 100);
+        Locator deleteBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete"));
+        waitVisible(deleteBtn, SHORT_TIMEOUT);
+        clickWithRetry(deleteBtn, 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Assert delete avatar confirmation is visible")
     public void assertDeleteAvatarConfirmVisible() {
-        waitVisible(page.getByText("Are you sure to delete avatar image ?"), DEFAULT_WAIT);
+        waitVisible(page.getByText("Are you sure to delete avatar"), SHORT_TIMEOUT);
     }
 
     @Step("Confirm delete avatar (Yes)")
     public void confirmDeleteAvatarYes() {
         Locator yes = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes"));
-        waitVisible(yes.first(), DEFAULT_WAIT);
-        clickWithRetry(yes.first(), 1, 100);
+        waitVisible(yes, SHORT_TIMEOUT);
+        clickWithRetry(yes, 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Wait for avatar removed success toast")
     public void waitForAvatarRemovedToast() {
-        Locator toast = page.getByText("Avatar image removed successfully");
-        waitVisible(toast.first(), ConfigReader.getVisibilityTimeout());
-        // Click to dismiss if clickable
-        try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable ignored) {}
+        Locator toast = page.getByText("Avatar image removed");
+        waitVisible(toast, MEDIUM_TIMEOUT);
+        logger.info("[Profile] Avatar image removed toast visible");
     }
     @Step("Click 'Register' to save profile changes")
     public void clickRegisterUpdate() {
         // Prefer explicit XPath text match per spec
         Locator xpathBtn = page.locator("//div//button[contains(text(),'Register')]");
         if (xpathBtn.count() > 0) {
-            waitVisible(xpathBtn.first(), DEFAULT_WAIT);
+            waitVisible(xpathBtn.first(), SHORT_TIMEOUT);
             try { xpathBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-            clickWithRetry(xpathBtn.first(), 1, 100);
+            clickWithRetry(xpathBtn.first(), 1, NAVIGATION_WAIT);
         } else {
             // Fallback: role button by name
             Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Register"));
-            waitVisible(btn.first(), DEFAULT_WAIT);
-            clickWithRetry(btn.first(), 1, 100);
+            waitVisible(btn.first(), SHORT_TIMEOUT);
+            clickWithRetry(btn.first(), 1, NAVIGATION_WAIT);
         }
         // Short settle even if toast appears instantly
-        try { page.waitForTimeout(150); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
     }
 
     @Step("Wait for 'Updated Personal Information Successfully.' toast")
     public void waitForProfileUpdatedToast() {
         Locator toast = page.getByText("Updated Personal Information Successfully.");
-        waitVisible(toast.first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(toast.first(), MEDIUM_TIMEOUT);
         // Allow a brief pause even when toast is visible, then dismiss
-        try { page.waitForTimeout(150); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
         try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable ignored) {}
     }
 
@@ -227,7 +234,7 @@ public class CreatorProfilePage extends BasePage {
         Locator toast = page.getByText("Updated Personal Information Successfully.");
         try {
             waitVisible(toast.first(), timeoutMs);
-            try { page.waitForTimeout(100); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
             try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable ignored) {}
             return true;
         } catch (Throwable t) {
@@ -239,7 +246,7 @@ public class CreatorProfilePage extends BasePage {
 
     // ===== Modify Profile: Text fields (Last name, Position, Description) =====
     private void clearAndFill(Locator input, String text) {
-        waitVisible(input.first(), DEFAULT_WAIT);
+        waitVisible(input.first(), SHORT_TIMEOUT);
         Locator el = input.first();
         el.click();
         // Clear robustly
@@ -283,15 +290,15 @@ public class CreatorProfilePage extends BasePage {
     @Step("Open Share profile panel")
     public void openShareProfile() {
         Locator shareBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Share profile"));
-        waitVisible(shareBtn.first(), DEFAULT_WAIT);
-        clickWithRetry(shareBtn.first(), 1, 100);
+        waitVisible(shareBtn.first(), SHORT_TIMEOUT);
+        clickWithRetry(shareBtn.first(), 1, NAVIGATION_WAIT);
         assertShareProfileVisible();
     }
 
     @Step("Assert Share profile title visible")
     public void assertShareProfileVisible() {
         Locator title = page.getByText("Share profile");
-        waitVisible(title.first(), DEFAULT_WAIT);
+        waitVisible(title.first(), SHORT_TIMEOUT);
     }
 
     @Step("Open share option '{option}' and close popup")
@@ -307,8 +314,8 @@ public class CreatorProfilePage extends BasePage {
         try {
             Page popup = page.waitForPopup(() -> {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(btnName));
-                waitVisible(btn.first(), DEFAULT_WAIT);
-                clickWithRetry(btn.first(), 1, 100);
+                waitVisible(btn.first(), SHORT_TIMEOUT);
+                clickWithRetry(btn.first(), 1, NAVIGATION_WAIT);
             });
             try { popup.close(); } catch (Throwable ignored) {}
         } catch (Throwable t) {
@@ -319,22 +326,21 @@ public class CreatorProfilePage extends BasePage {
     @Step("Click share Message icon")
     public void clickShareMessageIcon() {
         Locator msg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("message icon"));
-        waitVisible(msg.first(), DEFAULT_WAIT);
-        clickWithRetry(msg.first(), 1, 100);
+        waitVisible(msg.first(), SHORT_TIMEOUT);
+        clickWithRetry(msg.first(), 1, NAVIGATION_WAIT);
     }
 
     @Step("Click share Copy icon")
     public void clickShareCopyIcon() {
         Locator copy = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("copy icon"));
-        waitVisible(copy.first(), DEFAULT_WAIT);
-        clickWithRetry(copy.first(), 1, 100);
+        waitVisible(copy.first(), SHORT_TIMEOUT);
+        clickWithRetry(copy.first(), 1, NAVIGATION_WAIT);
     }
 
     @Step("Cancel Share profile")
     public void cancelShare() {
         Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
-        waitVisible(cancel.first(), DEFAULT_WAIT);
-        clickWithRetry(cancel.first(), 1, 100);
+        waitVisible(cancel.first(), SHORT_TIMEOUT);
+        clickWithRetry(cancel.first(), 1, NAVIGATION_WAIT);
     }
 }
-
