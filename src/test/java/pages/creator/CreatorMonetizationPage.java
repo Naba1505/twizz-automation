@@ -16,6 +16,15 @@ import org.slf4j.LoggerFactory;
 public class CreatorMonetizationPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorMonetizationPage.class);
 
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
+    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int POLLING_WAIT = 250;         // Polling intervals
+    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
+    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
+    private static final int LONG_TIMEOUT = 15000;       // Long waits for button enable
+
     // URLs
     private static final String MONETIZATION_URL = ConfigReader.getBaseUrl() + "/creator/monetization";
 
@@ -99,15 +108,15 @@ public class CreatorMonetizationPage extends BasePage {
     @Step("Open Settings from Profile and navigate to 'Subscription price'")
     public void openSubscriptionPriceFromProfile() {
         log.info("Clicking settings icon to open Settings");
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 1, 150);
+        waitVisible(settingsIcon(), SHORT_TIMEOUT);
+        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
 
         log.info("Clicking 'Subscription price' in Settings");
-        waitVisible(subscriptionPriceMenuItem(), DEFAULT_WAIT);
-        clickWithRetry(subscriptionPriceMenuItem(), 1, 150);
+        waitVisible(subscriptionPriceMenuItem(), SHORT_TIMEOUT);
+        clickWithRetry(subscriptionPriceMenuItem(), 1, BUTTON_RETRY_DELAY);
 
         // Title exact text should be visible on the target screen
-        waitVisible(pageTitleExact(), DEFAULT_WAIT);
+        waitVisible(pageTitleExact(), SHORT_TIMEOUT);
         assertOnMonetizationUrl();
     }
 
@@ -121,10 +130,10 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Ensure Monthly offer section visible and toggle enabled by default")
     public void assertMonthlyOfferDefaultEnabled() {
-        waitVisible(monthlyOfferLabel(), DEFAULT_WAIT);
-        waitVisible(monthlyToggle(), DEFAULT_WAIT);
+        waitVisible(monthlyOfferLabel(), SHORT_TIMEOUT);
+        waitVisible(monthlyToggle(), SHORT_TIMEOUT);
         // Also ensure the Monthly price input is present and log its current value for debugging
-        waitVisible(monthlyPriceInput(), DEFAULT_WAIT);
+        waitVisible(monthlyPriceInput(), SHORT_TIMEOUT);
         try {
             String val = monthlyPriceInput().inputValue();
             log.info("Monthly price input visible, current value='{}'", val);
@@ -139,50 +148,50 @@ public class CreatorMonetizationPage extends BasePage {
     @Step("Attempt to disable Monthly and expect validation popup")
     public void attemptDisableMonthlyShowsPopup() {
         // Click the monthly toggle switch as per spec
-        waitVisible(monthlyToggle(), DEFAULT_WAIT);
-        clickWithRetry(monthlyToggle(), 1, 120);
+        waitVisible(monthlyToggle(), SHORT_TIMEOUT);
+        clickWithRetry(monthlyToggle(), 1, NAVIGATION_WAIT);
         // Expect popup toast/dialog
-        waitVisible(monthlyCannotTurnOffPopup(), ConfigReader.getVisibilityTimeout());
+        waitVisible(monthlyCannotTurnOffPopup(), MEDIUM_TIMEOUT);
     }
 
     @Step("Ensure Quarterly offer section is visible")
     public void assertQuarterlyOfferVisible() {
-        waitVisible(quarterlyOfferLabel(), DEFAULT_WAIT);
+        waitVisible(quarterlyOfferLabel(), SHORT_TIMEOUT);
     }
 
     @Step("Enable Quarterly price toggle")
     public void enableQuarterlyToggleIfNeeded() {
-        waitVisible(quarterlyToggle(), DEFAULT_WAIT);
+        waitVisible(quarterlyToggle(), SHORT_TIMEOUT);
         try {
             String aria = quarterlyToggle().getAttribute("aria-checked");
             boolean isOn = aria != null ? Boolean.parseBoolean(aria) : quarterlyToggle().isChecked();
             if (!isOn) {
                 log.info("Quarterly toggle is OFF, enabling it now.");
-                clickWithRetry(quarterlyToggle(), 1, 120);
+                clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
             } else {
                 log.info("Quarterly toggle already ON");
             }
         } catch (Throwable t) {
             // Fallback: just click once if read fails
-            clickWithRetry(quarterlyToggle(), 1, 120);
+            clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
         }
     }
 
     @Step("Disable Quarterly price toggle if currently enabled")
     public void disableQuarterlyToggleIfOn() {
-        waitVisible(quarterlyToggle(), DEFAULT_WAIT);
+        waitVisible(quarterlyToggle(), SHORT_TIMEOUT);
         try {
             String aria = quarterlyToggle().getAttribute("aria-checked");
             boolean isOn = aria != null ? Boolean.parseBoolean(aria) : quarterlyToggle().isChecked();
             if (isOn) {
                 log.info("Quarterly toggle is ON, disabling it now.");
-                clickWithRetry(quarterlyToggle(), 1, 120);
+                clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
             } else {
                 log.info("Quarterly toggle already OFF");
             }
         } catch (Throwable t) {
             // Fallback: just click once if read fails
-            clickWithRetry(quarterlyToggle(), 1, 120);
+            clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
         }
     }
 
@@ -198,35 +207,35 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Ensure quarterly ends disabled; make a change if already OFF (toggle ON then OFF)")
     public void ensureQuarterlyDisabledWithChange() {
-        waitVisible(quarterlyToggle(), DEFAULT_WAIT);
+        waitVisible(quarterlyToggle(), SHORT_TIMEOUT);
         boolean isOn = isQuarterlyOnSafe();
         if (isOn) {
             log.info("Quarterly currently ON -> turning OFF");
-            clickWithRetry(quarterlyToggle(), 1, 120);
+            clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
         } else {
             log.info("Quarterly already OFF -> toggling ON then OFF to register change");
-            clickWithRetry(quarterlyToggle(), 1, 120);
-            try { page.waitForTimeout(200); } catch (Throwable ignored) {}
-            clickWithRetry(quarterlyToggle(), 1, 120);
+            clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
         }
     }
 
     @Step("Wait and then ensure Quarterly is OFF, always registering a change")
     public void waitAndDisableQuarterlyWithChange() {
         // Wait a bit after navigation so the page fully settles
-        try { page.waitForTimeout(5_000); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(MEDIUM_TIMEOUT); } catch (Throwable ignored) {}
 
-        waitVisible(quarterlyToggle(), DEFAULT_WAIT);
+        waitVisible(quarterlyToggle(), SHORT_TIMEOUT);
 
         // First click always to guarantee a change event
-        clickWithRetry(quarterlyToggle(), 1, 120);
-        try { page.waitForTimeout(200); } catch (Throwable ignored) {}
+        clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
+        try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
 
         // If after first click it is still ON, click once more to end OFF
         boolean afterFirstClickOn = isQuarterlyOnSafe();
         if (afterFirstClickOn) {
             log.info("Quarterly still ON after first click -> clicking again to turn OFF");
-            clickWithRetry(quarterlyToggle(), 1, 120);
+            clickWithRetry(quarterlyToggle(), 1, NAVIGATION_WAIT);
         } else {
             log.info("Quarterly OFF after first click; no extra click needed");
         }
@@ -234,7 +243,7 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Set Quarterly price to: {price}")
     public void setQuarterlyPrice(String price) {
-        waitVisible(quarterlyPriceInput(), DEFAULT_WAIT);
+        waitVisible(quarterlyPriceInput(), SHORT_TIMEOUT);
         Locator el = quarterlyPriceInput();
         el.click();
         // Clear robustly before filling
@@ -250,25 +259,25 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Click Continue to save monetization changes")
     public void clickContinue() {
-        waitVisible(continueButton(), DEFAULT_WAIT);
+        waitVisible(continueButton(), SHORT_TIMEOUT);
         // Wait for button to become enabled (it may be disabled if no changes were made)
         long start = System.currentTimeMillis();
-        long timeoutMs = 15_000; // 15s should be enough after a change
+        long timeoutMs = LONG_TIMEOUT;
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
                 if (continueButton().isEnabled()) break;
             } catch (Throwable ignored) {}
-            try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
         }
         if (!continueButton().isEnabled()) {
             log.warn("Continue button still disabled after waiting; attempting click regardless");
         }
-        clickWithRetry(continueButton(), 2, 150);
+        clickWithRetry(continueButton(), 2, BUTTON_RETRY_DELAY);
     }
 
     @Step("Wait for monetization updated toast")
     public void waitForMonetizationUpdatedToast() {
-        waitVisible(monetizationUpdatedPopup(), ConfigReader.getMediumTimeout());
+        waitVisible(monetizationUpdatedPopup(), MEDIUM_TIMEOUT);
         try { clickWithRetry(monetizationUpdatedPopup(), 0, 0); } catch (Throwable ignored) {}
     }
 }
