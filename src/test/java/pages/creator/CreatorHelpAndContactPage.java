@@ -12,6 +12,12 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> Help and contact
  */
 public class CreatorHelpAndContactPage extends BasePage {
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
+    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
+    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
+    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 20000ms)
+
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorHelpAndContactPage(Page page) {
@@ -50,8 +56,8 @@ public class CreatorHelpAndContactPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Help and contact)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon(), 1, 150);
+        waitVisible(settingsIcon(), MEDIUM_TIMEOUT);
+        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
@@ -60,34 +66,34 @@ public class CreatorHelpAndContactPage extends BasePage {
 
     @Step("Open 'Help and contact' screen")
     public void openHelpAndContact() {
-        waitVisible(helpAndContactMenu(), ConfigReader.getVisibilityTimeout());
+        waitVisible(helpAndContactMenu(), MEDIUM_TIMEOUT);
         try { helpAndContactMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(helpAndContactMenu(), 1, 150);
-        waitVisible(helpAndContactTitle(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(helpAndContactMenu(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(helpAndContactTitle(), SHORT_TIMEOUT);
     }
 
     @Step("Fill Subject: {subject}")
     public void fillSubject(String subject) {
-        waitVisible(subjectTextbox(), ConfigReader.getVisibilityTimeout());
+        waitVisible(subjectTextbox(), SHORT_TIMEOUT);
         subjectTextbox().click();
         subjectTextbox().fill(subject == null ? "" : subject);
     }
 
     @Step("Fill Message: {message}")
     public void fillMessage(String message) {
-        waitVisible(messageTextbox(), ConfigReader.getVisibilityTimeout());
+        waitVisible(messageTextbox(), SHORT_TIMEOUT);
         messageTextbox().click();
         messageTextbox().fill(message == null ? "" : message);
     }
 
     @Step("Click Send button")
     public void clickSend() {
-        waitVisible(sendButton(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(sendButton(), 1, 150);
+        waitVisible(sendButton(), SHORT_TIMEOUT);
+        clickWithRetry(sendButton(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Assert success toast is visible")
     public void assertSuccessToastVisible() {
-        waitVisible(successToast(), ConfigReader.getVisibilityTimeout());
+        waitVisible(successToast(), MEDIUM_TIMEOUT);
     }
 }
