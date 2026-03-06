@@ -7,7 +7,6 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
-import utils.ConfigReader;
 
 
 /**
@@ -15,6 +14,17 @@ import utils.ConfigReader;
  * Handles viewing subscribed creators and their details.
  */
 public class FanMyCreatorsPage extends BasePage {
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int SCROLL_WAIT = 300;           // Wait between scroll actions
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
+    private static final int LOAD_WAIT = 2000;            // Wait for page to load
+    private static final int DETAIL_VIEW_WAIT = 1500;     // Wait for detail view to load
+    
+    // Scroll configuration constants
+    private static final int MAX_SCROLL_ATTEMPTS = 10;     // Maximum scroll attempts
+    private static final int SCROLL_STEP_SIZE = 500;       // Scroll step size in pixels
 
     public FanMyCreatorsPage(Page page) {
         super(page);
@@ -79,7 +89,7 @@ public class FanMyCreatorsPage extends BasePage {
     @Step("Check if any creators are listed")
     public boolean hasCreatorsListed() {
         logger.info("Checking if any creators are listed");
-        try { page.waitForTimeout(2000); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
         
         Locator arrowRight = page.getByRole(AriaRole.IMG, 
                 new Page.GetByRoleOptions().setName("arrow right"));
@@ -97,7 +107,7 @@ public class FanMyCreatorsPage extends BasePage {
         waitVisible(arrowRight, DEFAULT_WAIT);
         arrowRight.click();
         
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
         logger.info("Clicked on first creator arrow");
     }
 
@@ -120,10 +130,10 @@ public class FanMyCreatorsPage extends BasePage {
         
         Locator seeAllResults = page.getByText("See all results");
         
-        // Scroll down until element is visible using configurable parameters
-        int maxScrollAttempts = ConfigReader.getMaxScrollAttempts();
-        int scrollStep = ConfigReader.getScrollStepSize();
-        int waitBetween = ConfigReader.getScrollWaitBetween();
+        // Scroll down until element is visible using standardized parameters
+        int maxScrollAttempts = MAX_SCROLL_ATTEMPTS;
+        int scrollStep = SCROLL_STEP_SIZE;
+        int waitBetween = SCROLL_WAIT;
         
         for (int i = 0; i < maxScrollAttempts; i++) {
             if (seeAllResults.count() > 0 && safeIsVisible(seeAllResults.first())) {
@@ -152,9 +162,9 @@ public class FanMyCreatorsPage extends BasePage {
         logger.info("Scrolling to last creator avatar in the list");
         
         // Scroll down until we can't find any more creator avatars
-        int maxScrollAttempts = ConfigReader.getMaxScrollAttempts();
-        int scrollStep = ConfigReader.getScrollStepSize();
-        int waitBetween = ConfigReader.getScrollWaitBetween();
+        int maxScrollAttempts = MAX_SCROLL_ATTEMPTS;
+        int scrollStep = SCROLL_STEP_SIZE;
+        int waitBetween = SCROLL_WAIT;
         
         int lastVisibleIndex = 0;
         for (int i = 0; i < maxScrollAttempts; i++) {
@@ -193,9 +203,9 @@ public class FanMyCreatorsPage extends BasePage {
     public void scrollToFirstCreatorAvatar() {
         logger.info("Scrolling back to first creator avatar");
         
-        int maxScrollAttempts = ConfigReader.getMaxScrollAttempts();
-        int scrollStep = ConfigReader.getScrollStepSize();
-        int waitBetween = ConfigReader.getScrollWaitBetween();
+        int maxScrollAttempts = MAX_SCROLL_ATTEMPTS;
+        int scrollStep = SCROLL_STEP_SIZE;
+        int waitBetween = SCROLL_WAIT;
         
         // First, scroll all the way to the top
         for (int i = 0; i < maxScrollAttempts; i++) {
