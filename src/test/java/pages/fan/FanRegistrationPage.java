@@ -9,6 +9,10 @@ import com.microsoft.playwright.options.AriaRole;
 import utils.ConfigReader;
 
 public class FanRegistrationPage extends BasePage {
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int VISIBILITY_TIMEOUT = 5000;    // Element visibility timeout - increased for fan registration
+    private static final int NAVIGATION_TIMEOUT = 5000;    // Page navigation timeout
 
     // Locators (using helpers by placeholder/button name when needed)
 
@@ -18,7 +22,7 @@ public class FanRegistrationPage extends BasePage {
 
     public void navigate() {
         String url = ConfigReader.getFanSignupUrl();
-        page.navigate(url);
+        page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT));
         page.waitForLoadState();
         logger.info("Navigated to Fan Registration page: {}", url);
     }
@@ -27,7 +31,7 @@ public class FanRegistrationPage extends BasePage {
         try {
             // Primary: look for visible text 'Registration'
             Locator regText = getByTextExact("Registration");
-            waitVisible(regText, ConfigReader.getVisibilityTimeout());
+            waitVisible(regText, VISIBILITY_TIMEOUT);
             logger.info("Fan registration form visible via text 'Registration'");
             return true;
         } catch (Exception e) {
@@ -65,7 +69,7 @@ public class FanRegistrationPage extends BasePage {
         // Use Home icon visibility as success indicator (fan may land on /fan/home or /common/discover)
         try {
             Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
-            homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+            homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(VISIBILITY_TIMEOUT).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
             boolean visible = homeIcon.first().isVisible();
             logger.info("Fan '{}' registration successful - Home icon visible: {} (URL: {})", username, visible, page.url());
             return visible;
