@@ -12,6 +12,11 @@ import com.microsoft.playwright.options.LoadState;
 import utils.ConfigReader;
 
 public class FanLoginPage extends BasePage {
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int VISIBILITY_TIMEOUT = 3000;    // Element visibility timeout
+    private static final int LOGIN_TIMEOUT = 10000;       // Home icon wait after login
+    private static final int NAVIGATION_TIMEOUT = 5000;   // Page navigation timeout
 
     private final String usernamePlaceholder = "Email address or username";
     private final String passwordPlaceholder = "Password";
@@ -25,7 +30,7 @@ public class FanLoginPage extends BasePage {
 
     public void navigate() {
         String url = ConfigReader.getLoginUrl();
-        page.navigate(url);
+        page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT));
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         logger.info("[Fan] Navigated to Fan Login page: {}", url);
     }
@@ -34,8 +39,8 @@ public class FanLoginPage extends BasePage {
         try {
             Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(twizzLogoRoleName));
             Locator loginText = page.getByText(loginTextExact, new Page.GetByTextOptions().setExact(true));
-            waitVisible(logo, ConfigReader.getVisibilityTimeout());
-            waitVisible(loginText, ConfigReader.getVisibilityTimeout());
+            waitVisible(logo, VISIBILITY_TIMEOUT);
+            waitVisible(loginText, VISIBILITY_TIMEOUT);
             return logo.isVisible() && loginText.isVisible();
         } catch (Exception e) {
             logger.warn("[Fan] Login header not visible: {}", e.getMessage());
@@ -55,7 +60,7 @@ public class FanLoginPage extends BasePage {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).click();
         // Wait for Home icon to be visible - this confirms successful login
         // Fan may land on /fan/home or /common/discover, so use Home icon as success indicator
-        waitForHomeIconVisible(20_000);
+        waitForHomeIconVisible(LOGIN_TIMEOUT);
     }
 
     public boolean isHomeIconVisible(long timeoutMs) {

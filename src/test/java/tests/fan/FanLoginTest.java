@@ -7,6 +7,9 @@ import pages.fan.FanLoginPage;
 import utils.ConfigReader;
 
 public class FanLoginTest extends BaseTestClass {
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int HOME_ICON_TIMEOUT = 5000;    // Home icon visibility timeout
 
     @Test(priority = 1, description = "Verify fan can login and lands on fan home URL")
     public void testFanLogin() {
@@ -20,6 +23,6 @@ public class FanLoginTest extends BaseTestClass {
         pageObj.login(username, password);
         // Login method already asserts Home icon visibility
         // Verify Home icon is visible as success indicator (fan may land on /fan/home or /common/discover)
-        Assert.assertTrue(pageObj.isHomeIconVisible(5_000), "Fan login failed - Home icon not visible. Actual URL: " + page.url());
+        Assert.assertTrue(pageObj.isHomeIconVisible(HOME_ICON_TIMEOUT), "Fan login failed - Home icon not visible. Actual URL: " + page.url());
     }
 }
