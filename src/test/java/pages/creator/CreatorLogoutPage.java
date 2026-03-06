@@ -1,7 +1,6 @@
 package pages.creator;
 
 import pages.common.BasePage;
-import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;

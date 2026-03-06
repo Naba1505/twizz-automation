@@ -13,7 +13,6 @@ public class CreatorFormationPage extends BasePage {
     // Timeout constants (in milliseconds) - Standardized values (optimized)
     // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
     private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
     private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
     private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
     private static final int LONG_TIMEOUT = 4000;        // Long waits for settings icon
