@@ -16,7 +16,13 @@ import org.slf4j.LoggerFactory;
 public class FanLanguagePage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanLanguagePage.class);
-    private static final int DEFAULT_WAIT = 10000;
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
+    private static final int STABILIZATION_WAIT = 500;    // Wait for page to stabilize
+    private static final int LOAD_WAIT = 1500;            // Wait for page to load
+    private static final int LANGUAGE_CHANGE_WAIT = 1000; // Wait for language change to take effect
 
     public FanLanguagePage(Page page) {
         super(page);
@@ -73,7 +79,7 @@ public class FanLanguagePage extends BasePage {
     @Step("Click Settings icon")
     public void clickSettingsIcon() {
         waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, 200);
+        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
         logger.info("[Fan][Language] Clicked Settings icon");
     }
 
@@ -86,8 +92,8 @@ public class FanLanguagePage extends BasePage {
     @Step("Click back arrow to navigate back")
     public void clickBackArrow() {
         waitVisible(backArrow(), DEFAULT_WAIT);
-        clickWithRetry(backArrow(), 2, 200);
-        page.waitForTimeout(500);
+        clickWithRetry(backArrow(), 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Fan][Language] Clicked back arrow");
     }
 
@@ -108,8 +114,8 @@ public class FanLanguagePage extends BasePage {
         Locator menuItem = languageMenuEnglish();
         waitVisible(menuItem, DEFAULT_WAIT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
-        page.waitForTimeout(1500); // Wait for language screen to fully load
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(LOAD_WAIT); // Wait for language screen to fully load
         logger.info("[Fan][Language] Clicked 'Language' menu item");
     }
 
@@ -118,8 +124,8 @@ public class FanLanguagePage extends BasePage {
         Locator menuItem = languageMenuFrench();
         waitVisible(menuItem, DEFAULT_WAIT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
-        page.waitForTimeout(1500); // Wait for language screen to fully load
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(LOAD_WAIT); // Wait for language screen to fully load
         logger.info("[Fan][Language] Clicked 'Langue' menu item");
     }
 
@@ -128,8 +134,8 @@ public class FanLanguagePage extends BasePage {
         Locator menuItem = languageMenuSpanish();
         waitVisible(menuItem, DEFAULT_WAIT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
-        page.waitForTimeout(1500); // Wait for language screen to fully load
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(LOAD_WAIT); // Wait for language screen to fully load
         logger.info("[Fan][Language] Clicked 'Idioma' menu item");
     }
 
@@ -158,30 +164,30 @@ public class FanLanguagePage extends BasePage {
     @Step("Select Français language")
     public void selectFrench() {
         waitVisible(frenchOption(), DEFAULT_WAIT);
-        clickWithRetry(frenchOption(), 2, 200);
+        clickWithRetry(frenchOption(), 2, UI_UPDATE_WAIT);
         // Wait for checkbox to appear confirming language selection
         waitVisible(languageCheckbox(), DEFAULT_WAIT);
-        page.waitForTimeout(1000); // Wait for language change to take effect
+        page.waitForTimeout(LANGUAGE_CHANGE_WAIT); // Wait for language change to take effect
         logger.info("[Fan][Language] Selected Français language - checkbox visible");
     }
 
     @Step("Select Español language")
     public void selectSpanish() {
         waitVisible(spanishOption(), DEFAULT_WAIT);
-        clickWithRetry(spanishOption(), 2, 200);
+        clickWithRetry(spanishOption(), 2, UI_UPDATE_WAIT);
         // Wait for checkbox to appear confirming language selection
         waitVisible(languageCheckbox(), DEFAULT_WAIT);
-        page.waitForTimeout(1000); // Wait for language change to take effect
+        page.waitForTimeout(LANGUAGE_CHANGE_WAIT); // Wait for language change to take effect
         logger.info("[Fan][Language] Selected Español language - checkbox visible");
     }
 
     @Step("Select English language")
     public void selectEnglish() {
         waitVisible(englishOption(), DEFAULT_WAIT);
-        clickWithRetry(englishOption(), 2, 200);
+        clickWithRetry(englishOption(), 2, UI_UPDATE_WAIT);
         // Wait for checkbox to appear confirming language selection
         waitVisible(languageCheckbox(), DEFAULT_WAIT);
-        page.waitForTimeout(1000); // Wait for language change to take effect
+        page.waitForTimeout(LANGUAGE_CHANGE_WAIT); // Wait for language change to take effect
         logger.info("[Fan][Language] Selected English language - checkbox visible");
     }
 
