@@ -16,7 +16,11 @@ import org.slf4j.LoggerFactory;
 public class FanTermsAndPoliciesPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanTermsAndPoliciesPage.class);
-    private static final int DEFAULT_WAIT = 10000;
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
+    private static final int STABILIZATION_WAIT = 500;    // Wait for page to stabilize
 
     public FanTermsAndPoliciesPage(Page page) {
         super(page);
@@ -81,7 +85,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
     @Step("Click Settings icon")
     public void clickSettingsIcon() {
         waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, 200);
+        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
         logger.info("[Fan][TermsAndPolicies] Clicked Settings icon");
     }
 
@@ -94,8 +98,8 @@ public class FanTermsAndPoliciesPage extends BasePage {
     @Step("Click back arrow to navigate back")
     public void clickBackArrow() {
         waitVisible(backArrow(), DEFAULT_WAIT);
-        clickWithRetry(backArrow(), 2, 200);
-        page.waitForTimeout(500);
+        clickWithRetry(backArrow(), 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Fan][TermsAndPolicies] Clicked back arrow");
     }
 
@@ -116,7 +120,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator menuItem = termsAndConditionsMenuItem();
         waitVisible(menuItem, DEFAULT_WAIT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
         logger.info("[Fan][TermsAndPolicies] Clicked 'Terms and conditions of sale' menu item");
     }
 
@@ -131,7 +135,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator endText = termsAndConditionsEndText();
         endText.scrollIntoViewIfNeeded();
         waitVisible(endText, DEFAULT_WAIT);
-        page.waitForTimeout(500);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Terms and Conditions");
     }
 
@@ -140,7 +144,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator title = termsAndConditionsTitle();
         title.scrollIntoViewIfNeeded();
         waitVisible(title, DEFAULT_WAIT);
-        page.waitForTimeout(500);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Terms and Conditions");
     }
 
@@ -165,7 +169,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator menuItem = communityRegulationsMenuItem();
         waitVisible(menuItem, DEFAULT_WAIT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
         logger.info("[Fan][TermsAndPolicies] Clicked 'Community regulations' menu item");
     }
 
@@ -180,7 +184,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator endText = communityRegulationsEndText();
         endText.scrollIntoViewIfNeeded();
         waitVisible(endText, DEFAULT_WAIT);
-        page.waitForTimeout(500);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Community Regulations");
     }
 
@@ -189,7 +193,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator title = communityRegulationsTitle();
         title.scrollIntoViewIfNeeded();
         waitVisible(title, DEFAULT_WAIT);
-        page.waitForTimeout(500);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Community Regulations");
     }
 
@@ -214,7 +218,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator menuItem = contentPolicyMenuItem();
         waitVisible(menuItem, DEFAULT_WAIT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
         logger.info("[Fan][TermsAndPolicies] Clicked 'Content Policy' menu item");
     }
 
@@ -229,7 +233,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator endText = contentPolicyEndText();
         endText.scrollIntoViewIfNeeded();
         waitVisible(endText, DEFAULT_WAIT);
-        page.waitForTimeout(500);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Content Policy");
     }
 
@@ -238,7 +242,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator title = contentPolicyTitle();
         title.scrollIntoViewIfNeeded();
         waitVisible(title, DEFAULT_WAIT);
-        page.waitForTimeout(500);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Content Policy");
     }
 
