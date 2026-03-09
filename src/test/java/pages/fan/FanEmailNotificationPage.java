@@ -15,6 +15,13 @@ import org.slf4j.LoggerFactory;
 public class FanEmailNotificationPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanEmailNotificationPage.class);
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
+    private static final int LOAD_WAIT = 1500;            // Wait for page to load
+    private static final int SCROLL_WAIT = 200;           // Wait after scroll
+    private static final int TOGGLE_UPDATE_WAIT = 500;    // Wait for toggle state to update
 
     public FanEmailNotificationPage(Page page) {
         super(page);
@@ -119,7 +126,7 @@ public class FanEmailNotificationPage extends BasePage {
     @Step("Click Settings icon from Fan home")
     public void clickSettingsIcon() {
         waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, 200);
+        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
         logger.info("[Fan][EmailNotification] Clicked Settings icon");
     }
 
@@ -135,11 +142,11 @@ public class FanEmailNotificationPage extends BasePage {
         // Scroll to make it visible if needed
         for (int i = 0; i < 5 && !safeIsVisible(menuItem); i++) {
             page.mouse().wheel(0, 300);
-            page.waitForTimeout(200);
+            page.waitForTimeout(SCROLL_WAIT);
         }
         waitVisible(menuItem, DEFAULT_WAIT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
         logger.info("[Fan][EmailNotification] Clicked 'Email notification' menu item");
     }
 
@@ -147,7 +154,7 @@ public class FanEmailNotificationPage extends BasePage {
     public void assertOnEmailNotificationScreen() {
         waitVisible(emailNotificationTitle(), DEFAULT_WAIT);
         // Wait for page to fully load and toggles to be ready
-        page.waitForTimeout(1500);
+        page.waitForTimeout(LOAD_WAIT);
         logger.info("[Fan][EmailNotification] On Email Notification screen - title visible");
     }
 
@@ -199,7 +206,7 @@ public class FanEmailNotificationPage extends BasePage {
     public void clickToggle(int index) {
         Locator toggle = toggleSwitch(index);
         waitVisible(toggle, DEFAULT_WAIT);
-        clickWithRetry(toggle, 2, 200);
+        clickWithRetry(toggle, 2, UI_UPDATE_WAIT);
         logger.info("[Fan][EmailNotification] Clicked toggle at index {}", index);
     }
 
@@ -218,16 +225,16 @@ public class FanEmailNotificationPage extends BasePage {
     @Step("Click 'Yes, disable' button")
     public void clickYesDisable() {
         waitVisible(yesDisableButton(), DEFAULT_WAIT);
-        clickWithRetry(yesDisableButton(), 2, 200);
-        page.waitForTimeout(1000); // Wait for toggle state to update and dialog to close
+        clickWithRetry(yesDisableButton(), 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(STABILIZATION_WAIT); // Wait for toggle state to update and dialog to close
         logger.info("[Fan][EmailNotification] Clicked 'Yes, disable' button");
     }
 
     @Step("Click 'Yes, enable' button")
     public void clickYesEnable() {
         waitVisible(yesEnableButton(), DEFAULT_WAIT);
-        clickWithRetry(yesEnableButton(), 2, 200);
-        page.waitForTimeout(500); // Wait for toggle state to update
+        clickWithRetry(yesEnableButton(), 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(TOGGLE_UPDATE_WAIT); // Wait for toggle state to update
         logger.info("[Fan][EmailNotification] Clicked 'Yes, enable' button");
     }
 
@@ -332,7 +339,7 @@ public class FanEmailNotificationPage extends BasePage {
             return;
         }
         clickToggle(index);
-        page.waitForTimeout(1000); // Wait for toggle state to update
+        page.waitForTimeout(STABILIZATION_WAIT); // Wait for toggle state to update
         logger.info("[Fan][EmailNotification] Toggle at index {} enabled (simple click)", index);
     }
 
@@ -348,7 +355,7 @@ public class FanEmailNotificationPage extends BasePage {
             logger.info("[Fan][EmailNotification] Toggle at index {} force disabled with confirmation", index);
         } else {
             // Toggle was already disabled, clicking it enabled it - need to click again
-            page.waitForTimeout(500);
+            page.waitForTimeout(TOGGLE_UPDATE_WAIT);
             clickToggle(index);
             if (safeIsVisible(disableConfirmationDialog())) {
                 clickYesDisable();
@@ -367,11 +374,11 @@ public class FanEmailNotificationPage extends BasePage {
         if (safeIsVisible(disableConfirmationDialog())) {
             // Click outside or press escape to cancel
             page.keyboard().press("Escape");
-            page.waitForTimeout(500);
+            page.waitForTimeout(TOGGLE_UPDATE_WAIT);
             logger.info("[Fan][EmailNotification] Toggle at index {} already enabled", index);
         } else {
             // Toggle was disabled, now enabled
-            page.waitForTimeout(1000);
+            page.waitForTimeout(STABILIZATION_WAIT);
             logger.info("[Fan][EmailNotification] Toggle at index {} force enabled", index);
         }
     }
