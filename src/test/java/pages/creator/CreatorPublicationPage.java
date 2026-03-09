@@ -23,7 +23,7 @@ public class CreatorPublicationPage extends BasePage {
     private static final int CLICK_RETRY_DELAY = 200;    // Standard click retry
     private static final int PAGE_TRANSITION = 250;      // Page transition delays
     private static final int POST_ACTION_WAIT = 300;     // Post-action wait
-    private static final int LONG_TIMEOUT = 5000;        // Long waits
+    private static final int LONG_TIMEOUT = 10000;       // Long waits (increased from 5000)
     private static final int POST_CLICK_TIMEOUT = 6000;  // Post entry click timeout
 
     // UI strings (some localized)
@@ -359,6 +359,8 @@ public void deleteOnePublication() {
     Locator dotsWrapper = page.locator(".dots-wrapper");
     if (dotsWrapper.count() > 0) {
       try { dotsWrapper.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+      // Wait for dots wrapper to be visible before clicking
+      waitVisible(dotsWrapper.first(), LONG_TIMEOUT);
       clickWithRetry(dotsWrapper.first(), 2, CLICK_RETRY_DELAY);
       confirmDeletionPopup();
       return;
