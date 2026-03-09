@@ -1,13 +1,16 @@
 package pages.fan;
 
 import pages.common.BasePage;
-import utils.ConfigReader;
+
+import java.util.regex.Pattern;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Page Object for Fan Clear Recent Searches functionality.
@@ -15,7 +18,14 @@ import io.qameta.allure.Step;
  */
 public class FanClearSearchPage extends BasePage {
 
+    private static final Logger logger = LoggerFactory.getLogger(FanClearSearchPage.class);
     private static final String DISCOVER_PATH_FRAGMENT = "/common/discover";
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int VISIBILITY_TIMEOUT = 20000;  // Element visibility timeout
+    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
+    private static final int SHORT_WAIT = 500;            // Short wait for UI updates
 
     public FanClearSearchPage(Page page) {
         super(page);
@@ -36,11 +46,11 @@ public class FanClearSearchPage extends BasePage {
         Locator searchIcon = page.getByRole(AriaRole.IMG, 
                 new Page.GetByRoleOptions().setName("Search icon"));
         waitVisible(searchIcon.first(), DEFAULT_WAIT);
-        clickWithRetry(searchIcon.first(), 2, 200);
+        clickWithRetry(searchIcon.first(), 2, UI_UPDATE_WAIT);
         
         // Wait for discover screen to load
         page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", 
-                new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+                new Page.WaitForURLOptions().setTimeout(VISIBILITY_TIMEOUT));
         
         logger.info("Navigated to Discover screen");
     }
@@ -52,9 +62,9 @@ public class FanClearSearchPage extends BasePage {
         // Click on the search field (5th div element)
         Locator searchField = page.locator("div").nth(5);
         waitVisible(searchField, DEFAULT_WAIT);
-        clickWithRetry(searchField, 1, 200);
+        clickWithRetry(searchField, 1, UI_UPDATE_WAIT);
         
-        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(SHORT_WAIT); } catch (Throwable ignored) { }
         logger.info("Clicked on search field");
     }
 
@@ -72,7 +82,7 @@ public class FanClearSearchPage extends BasePage {
     @Step("Get count of recent search items")
     public int getRecentSearchCount() {
         // Wait for search interface to fully load
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
         
         // Use exact codegen locator: page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Remove"))
         Locator removeIcons = page.getByRole(AriaRole.IMG, 
@@ -105,7 +115,7 @@ public class FanClearSearchPage extends BasePage {
             firstRemove.click();
             
             // Wait for UI to update
-            try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
             
             logger.info("Removed one recent search item");
             return true;
@@ -142,7 +152,7 @@ public class FanClearSearchPage extends BasePage {
             }
             
             // Wait between removals
-            try { page.waitForTimeout(300); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable ignored) { }
         }
         
         logger.info("Total recent searches cleared: {}", removedCount);
@@ -154,7 +164,7 @@ public class FanClearSearchPage extends BasePage {
         logger.info("Verifying all recent searches are cleared");
         
         // Wait a bit for UI to update
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
         
         int remainingCount = getRecentSearchCount();
         boolean allCleared = remainingCount == 0;
