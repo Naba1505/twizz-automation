@@ -1,7 +1,6 @@
 package pages.fan;
 
 import pages.common.BasePage;
-import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -16,6 +15,12 @@ import org.slf4j.LoggerFactory;
 public class FanSpottedBugPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanSpottedBugPage.class);
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int VISIBILITY_TIMEOUT = 20000;  // Element visibility timeout
+    private static final int SCROLL_WAIT = 200;           // Wait after scroll
+    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
 
     public FanSpottedBugPage(Page page) {
         super(page);
@@ -72,15 +77,15 @@ public class FanSpottedBugPage extends BasePage {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 logger.info("[Fan][SpottedBug] Attempt {} to click Settings icon", attempt);
-                waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
-                clickWithRetry(settingsIcon(), 2, 200);
+                waitVisible(settingsIcon(), VISIBILITY_TIMEOUT);
+                clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
                 logger.info("[Fan][SpottedBug] Clicked Settings icon on attempt {}", attempt);
                 return; // Success, exit method
             } catch (Exception e) {
                 logger.warn("[Fan][SpottedBug] Attempt {} failed: {}", attempt, e.getMessage());
                 if (attempt < maxRetries) {
                     // Wait a bit and try again
-                    page.waitForTimeout(1000);
+                    page.waitForTimeout(STABILIZATION_WAIT);
                     // Try to ensure we're on a stable page
                     try {
                         page.waitForLoadState();
@@ -95,7 +100,7 @@ public class FanSpottedBugPage extends BasePage {
 
     @Step("Assert on Settings screen by viewing title")
     public void assertOnSettingsScreen() {
-        waitVisible(settingsTitle(), ConfigReader.getVisibilityTimeout());
+        waitVisible(settingsTitle(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][SpottedBug] On Settings screen - title visible");
     }
 
@@ -105,17 +110,17 @@ public class FanSpottedBugPage extends BasePage {
         // Scroll to make it visible if needed
         for (int i = 0; i < 5 && !safeIsVisible(menuItem); i++) {
             page.mouse().wheel(0, 300);
-            page.waitForTimeout(200);
+            page.waitForTimeout(SCROLL_WAIT);
         }
-        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
+        waitVisible(menuItem, VISIBILITY_TIMEOUT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
         logger.info("[Fan][SpottedBug] Clicked 'I've spotted a bug' menu item");
     }
 
     @Step("Assert on 'I've spotted a bug' screen by viewing title")
     public void assertOnSpottedBugScreen() {
-        waitVisible(spottedBugTitle(), ConfigReader.getVisibilityTimeout());
+        waitVisible(spottedBugTitle(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][SpottedBug] On 'I've spotted a bug' screen - title visible");
     }
 
@@ -123,13 +128,13 @@ public class FanSpottedBugPage extends BasePage {
 
     @Step("Assert Subject field heading visible")
     public void assertSubjectHeadingVisible() {
-        waitVisible(subjectHeading(), ConfigReader.getVisibilityTimeout());
+        waitVisible(subjectHeading(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][SpottedBug] Subject heading visible");
     }
 
     @Step("Fill Subject field with: {subject}")
     public void fillSubject(String subject) {
-        waitVisible(subjectTextbox(), ConfigReader.getVisibilityTimeout());
+        waitVisible(subjectTextbox(), VISIBILITY_TIMEOUT);
         subjectTextbox().click();
         subjectTextbox().fill(subject);
         logger.info("[Fan][SpottedBug] Filled Subject: {}", subject);
@@ -137,13 +142,13 @@ public class FanSpottedBugPage extends BasePage {
 
     @Step("Assert Description field heading visible")
     public void assertDescriptionHeadingVisible() {
-        waitVisible(descriptionHeading(), ConfigReader.getVisibilityTimeout());
+        waitVisible(descriptionHeading(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][SpottedBug] Description heading visible");
     }
 
     @Step("Fill Description/Message field with: {message}")
     public void fillMessage(String message) {
-        waitVisible(messageTextbox(), ConfigReader.getVisibilityTimeout());
+        waitVisible(messageTextbox(), VISIBILITY_TIMEOUT);
         messageTextbox().click();
         messageTextbox().fill(message);
         logger.info("[Fan][SpottedBug] Filled Description: {}", message);
@@ -151,14 +156,14 @@ public class FanSpottedBugPage extends BasePage {
 
     @Step("Click Send button")
     public void clickSendButton() {
-        waitVisible(sendButton(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(sendButton(), 2, 200);
+        waitVisible(sendButton(), VISIBILITY_TIMEOUT);
+        clickWithRetry(sendButton(), 2, UI_UPDATE_WAIT);
         logger.info("[Fan][SpottedBug] Clicked Send button");
     }
 
     @Step("Assert success message 'Your message has been sent' is displayed")
     public void assertSuccessMessageVisible() {
-        waitVisible(successToast(), ConfigReader.getVisibilityTimeout());
+        waitVisible(successToast(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][SpottedBug] Success message displayed: 'Your message has been sent'");
     }
 
