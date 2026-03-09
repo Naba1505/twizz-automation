@@ -1,7 +1,6 @@
 package pages.fan;
 
 import pages.common.BasePage;
-import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -17,6 +16,11 @@ public class FanHelpAndContactPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanHelpAndContactPage.class);
     private static final String SETTINGS_URL_PART = "/common/setting";
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int VISIBILITY_TIMEOUT = 20000;  // Element visibility timeout
+    private static final int SCROLL_WAIT = 200;           // Wait after scroll
 
     public FanHelpAndContactPage(Page page) {
         super(page);
@@ -64,8 +68,8 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Click Settings icon from Fan home")
     public void clickSettingsIcon() {
-        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon(), 2, 200);
+        waitVisible(settingsIcon(), VISIBILITY_TIMEOUT);
+        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
         logger.info("[Fan][HelpAndContact] Clicked Settings icon");
     }
 
@@ -81,17 +85,17 @@ public class FanHelpAndContactPage extends BasePage {
         // Scroll to make it visible if needed
         for (int i = 0; i < 5 && !safeIsVisible(menuItem); i++) {
             page.mouse().wheel(0, 300);
-            page.waitForTimeout(200);
+            page.waitForTimeout(SCROLL_WAIT);
         }
-        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
+        waitVisible(menuItem, VISIBILITY_TIMEOUT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
         logger.info("[Fan][HelpAndContact] Clicked 'Help and contact' menu item");
     }
 
     @Step("Assert on Help and Contact screen")
     public void assertOnHelpAndContactScreen() {
-        waitVisible(helpAndContactTitle(), ConfigReader.getVisibilityTimeout());
+        waitVisible(helpAndContactTitle(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][HelpAndContact] On Help and Contact screen - title visible");
     }
 
@@ -99,13 +103,13 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Assert Subject field heading visible")
     public void assertSubjectHeadingVisible() {
-        waitVisible(subjectHeading(), ConfigReader.getVisibilityTimeout());
+        waitVisible(subjectHeading(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][HelpAndContact] Subject heading visible");
     }
 
     @Step("Fill Subject field with: {subject}")
     public void fillSubject(String subject) {
-        waitVisible(subjectTextbox(), ConfigReader.getVisibilityTimeout());
+        waitVisible(subjectTextbox(), VISIBILITY_TIMEOUT);
         subjectTextbox().click();
         subjectTextbox().fill(subject);
         logger.info("[Fan][HelpAndContact] Filled Subject: {}", subject);
@@ -113,13 +117,13 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Assert Description field heading visible")
     public void assertDescriptionHeadingVisible() {
-        waitVisible(descriptionHeading(), ConfigReader.getVisibilityTimeout());
+        waitVisible(descriptionHeading(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][HelpAndContact] Description heading visible");
     }
 
     @Step("Fill Description/Message field with: {message}")
     public void fillMessage(String message) {
-        waitVisible(messageTextbox(), ConfigReader.getVisibilityTimeout());
+        waitVisible(messageTextbox(), VISIBILITY_TIMEOUT);
         messageTextbox().click();
         messageTextbox().fill(message);
         logger.info("[Fan][HelpAndContact] Filled Description: {}", message);
@@ -127,14 +131,14 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Click Send button")
     public void clickSendButton() {
-        waitVisible(sendButton(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(sendButton(), 2, 200);
+        waitVisible(sendButton(), VISIBILITY_TIMEOUT);
+        clickWithRetry(sendButton(), 2, UI_UPDATE_WAIT);
         logger.info("[Fan][HelpAndContact] Clicked Send button");
     }
 
     @Step("Assert success message 'Your message has been sent' is displayed")
     public void assertSuccessMessageVisible() {
-        waitVisible(successToast(), ConfigReader.getVisibilityTimeout());
+        waitVisible(successToast(), VISIBILITY_TIMEOUT);
         logger.info("[Fan][HelpAndContact] Success message displayed: 'Your message has been sent'");
     }
 
