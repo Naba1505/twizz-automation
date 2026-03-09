@@ -18,7 +18,12 @@ import java.util.regex.Pattern;
 public class FanPersonalInfoPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanPersonalInfoPage.class);
-    private static final int DEFAULT_WAIT = 10000;
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
+    private static final int LOAD_WAIT = 1500;            // Wait for page to load
+    private static final int SAVE_WAIT = 1000;            // Wait for save to complete
 
     public FanPersonalInfoPage(Page page) {
         super(page);
@@ -103,7 +108,7 @@ public class FanPersonalInfoPage extends BasePage {
     @Step("Click Settings icon")
     public void clickSettingsIcon() {
         waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, 200);
+        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
         logger.info("[Fan][PersonalInfo] Clicked Settings icon");
     }
 
@@ -130,8 +135,8 @@ public class FanPersonalInfoPage extends BasePage {
         Locator menuItem = personalInfoMenu();
         waitVisible(menuItem, DEFAULT_WAIT);
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, 200);
-        page.waitForTimeout(1500); // Wait for screen to load
+        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(LOAD_WAIT); // Wait for screen to load
         logger.info("[Fan][PersonalInfo] Clicked 'Personal information' menu item");
     }
 
@@ -212,7 +217,7 @@ public class FanPersonalInfoPage extends BasePage {
         Locator button = registerButton();
         waitVisible(button, DEFAULT_WAIT);
         button.scrollIntoViewIfNeeded();
-        clickWithRetry(button, 2, 200);
+        clickWithRetry(button, 2, UI_UPDATE_WAIT);
         logger.info("[Fan][PersonalInfo] Clicked Register button");
     }
 
@@ -246,7 +251,7 @@ public class FanPersonalInfoPage extends BasePage {
         updateEmail(email);
         updatePhoneNumber(phoneNumber);
         clickRegisterButton();
-        page.waitForTimeout(1000); // Wait for save to complete
+        page.waitForTimeout(SAVE_WAIT); // Wait for save to complete
         verifySuccessMessage();
         logger.info("[Fan][PersonalInfo] Personal information updated and saved successfully");
     }
