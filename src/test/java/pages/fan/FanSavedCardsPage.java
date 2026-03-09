@@ -1,15 +1,26 @@
 package pages.fan;
 
 import pages.common.BasePage;
-import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FanSavedCardsPage extends BasePage {
+
+    private static final Logger logger = LoggerFactory.getLogger(FanSavedCardsPage.class);
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 150;        // Wait for UI to update after click
+    private static final int VISIBILITY_TIMEOUT = 20000;  // Element visibility timeout
+    private static final int SHORT_TIMEOUT = 10000;       // Short timeout for quick operations
+    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
+    private static final int CHECKBOX_WAIT = 100;         // Wait for checkbox operations
+    private static final int FINAL_WAIT = 250;            // Final wait before cleanup
 
     public FanSavedCardsPage(Page page) { super(page); }
 
@@ -17,21 +28,21 @@ public class FanSavedCardsPage extends BasePage {
     public void navigateToSavedCards() {
         logger.info("[Saved Cards] Navigating to Settings > Saved Cards");
         Locator settingsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon"));
-        waitVisible(settingsIcon.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon.first(), 1, 150);
+        waitVisible(settingsIcon.first(), VISIBILITY_TIMEOUT);
+        clickWithRetry(settingsIcon.first(), 1, UI_UPDATE_WAIT);
         // Click Settings entry if intermediate menu appears
         Locator settingsEntry = page.getByText("Settings");
         if (safeIsVisible(settingsEntry.first())) {
-            clickWithRetry(settingsEntry.first(), 1, 120);
+            clickWithRetry(settingsEntry.first(), 1, UI_UPDATE_WAIT);
         }
         // Open Saved Cards
         Locator savedCards = page.getByText("Saved Cards");
-        waitVisible(savedCards.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(savedCards.first(), 1, 120);
+        waitVisible(savedCards.first(), SHORT_TIMEOUT);
+        clickWithRetry(savedCards.first(), 1, UI_UPDATE_WAIT);
         assertOnSavedCards();
         
         // Debug: Log what elements are found on the page
-        page.waitForTimeout(1000);
+        page.waitForTimeout(STABILIZATION_WAIT);
         logger.info("[Saved Cards] Debug: Checking for card elements...");
         
         // Check for various card selectors
@@ -59,36 +70,36 @@ public class FanSavedCardsPage extends BasePage {
     @Step("Assert on Saved Cards screen")
     public void assertOnSavedCards() {
         Locator title = page.getByText("Saved Cards");
-        waitVisible(title.first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(title.first(), VISIBILITY_TIMEOUT);
         logger.info("[Saved Cards] On Saved Cards screen");
     }
 
     @Step("Click 'Add a card' on Saved Cards")
     public void clickAddCard() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add a card"));
-        waitVisible(btn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(btn.first(), 1, 120);
+        waitVisible(btn.first(), SHORT_TIMEOUT);
+        clickWithRetry(btn.first(), 1, UI_UPDATE_WAIT);
         logger.info("[Saved Cards] Clicked 'Add a card' button");
     }
 
     @Step("Assert on Card information screen")
     public void assertOnCardInformationScreen() {
         Locator cardInfoHeading = page.getByText("Card information");
-        waitVisible(cardInfoHeading.first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(cardInfoHeading.first(), VISIBILITY_TIMEOUT);
         logger.info("[Saved Cards] On Card information screen - heading visible");
     }
 
     @Step("Fill cardholder first name: {firstName}")
     public void fillFirstName(String firstName) {
         Locator input = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("First name"));
-        waitVisible(input.first(), ConfigReader.getShortTimeout());
+        waitVisible(input.first(), SHORT_TIMEOUT);
         typeAndAssert(input.first(), firstName);
     }
 
     @Step("Fill cardholder last name: {lastName}")
     public void fillLastName(String lastName) {
         Locator input = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Last name"));
-        waitVisible(input.first(), ConfigReader.getShortTimeout());
+        waitVisible(input.first(), SHORT_TIMEOUT);
         typeAndAssert(input.first(), lastName);
     }
 
@@ -96,21 +107,21 @@ public class FanSavedCardsPage extends BasePage {
     public void fillCardNumber(String number) {
         // Some implementations expose the masked label as the accessible name
         Locator input = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("**** **** **** ****"));
-        waitVisible(input.first(), ConfigReader.getShortTimeout());
+        waitVisible(input.first(), SHORT_TIMEOUT);
         input.first().fill(number);
     }
 
     @Step("Fill card expiry")
     public void fillExpiry(String expiry) {
         Locator input = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("MM/YY"));
-        waitVisible(input.first(), ConfigReader.getShortTimeout());
+        waitVisible(input.first(), SHORT_TIMEOUT);
         input.first().fill(expiry);
     }
 
     @Step("Fill card CVV")
     public void fillCvv(String cvv) {
         Locator input = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("CVV"));
-        waitVisible(input.first(), ConfigReader.getShortTimeout());
+        waitVisible(input.first(), SHORT_TIMEOUT);
         input.first().fill(cvv);
     }
 
@@ -118,31 +129,31 @@ public class FanSavedCardsPage extends BasePage {
     public void acceptTermsIfPresent() {
         Locator checkbox = page.getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName("I declare that I have read"));
         if (safeIsVisible(checkbox.first())) {
-            try { checkbox.first().check(); } catch (Exception e) { clickWithRetry(checkbox.first(), 1, 100); }
+            try { checkbox.first().check(); } catch (Exception e) { clickWithRetry(checkbox.first(), 1, CHECKBOX_WAIT); }
         }
     }
 
     @Step("Submit Add new card")
     public void submitAddCard() {
         Locator add = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add new card"));
-        waitVisible(add.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(add.first(), 1, 150);
+        waitVisible(add.first(), SHORT_TIMEOUT);
+        clickWithRetry(add.first(), 1, UI_UPDATE_WAIT);
     }
 
     @Step("Assert saved card visible by holder name: {fullName}")
     public void assertSavedCardVisible(String fullName) {
         Locator name = page.getByText(fullName);
-        waitVisible(name.first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(name.first(), VISIBILITY_TIMEOUT);
     }
 
     @Step("Open card actions for holder name: {fullName}")
     public void openCardActions(String fullName) {
         Locator card = page.getByText(fullName);
-        waitVisible(card.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(card.first(), 1, 120);
+        waitVisible(card.first(), VISIBILITY_TIMEOUT);
+        clickWithRetry(card.first(), 1, UI_UPDATE_WAIT);
         Locator actionTitle = page.getByText("What do you want to do?");
         logger.info("[Saved Cards] Waiting for actions popup: 'What do you want to do?'");
-        waitVisible(actionTitle.first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(actionTitle.first(), VISIBILITY_TIMEOUT);
     }
 
     @Step("Delete card for holder name: {fullName}")
@@ -153,22 +164,22 @@ public class FanSavedCardsPage extends BasePage {
         int count = deleteButtons.count();
         if (count == 0) throw new RuntimeException("No 'Delete' button found in actions popup");
         Locator targetDelete = deleteButtons.nth(count - 1);
-        waitVisible(targetDelete, ConfigReader.getVisibilityTimeout());
+        waitVisible(targetDelete, VISIBILITY_TIMEOUT);
         logger.info("[Saved Cards] Clicking 'Delete' button (index {} of {})", count - 1, count);
-        clickWithRetry(targetDelete, 1, 150);
+        clickWithRetry(targetDelete, 1, UI_UPDATE_WAIT);
 
         // Ensure confirmation popup visible
         Locator confirmText = page.getByText("Do you really want to delete");
         logger.info("[Saved Cards] Waiting for confirmation popup: 'Do you really want to delete'");
-        waitVisible(confirmText.first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(confirmText.first(), VISIBILITY_TIMEOUT);
 
         Locator yesDelete = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes delete"));
-        waitVisible(yesDelete.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(yesDelete.first(), 1, 150);
+        waitVisible(yesDelete.first(), SHORT_TIMEOUT);
+        clickWithRetry(yesDelete.first(), 1, UI_UPDATE_WAIT);
 
         // Wait for the card entry to disappear
         logger.info("[Saved Cards] Waiting for card '{}' to be removed", fullName);
-        waitForCardToDisappear(fullName, ConfigReader.getVisibilityTimeout());
+        waitForCardToDisappear(fullName, VISIBILITY_TIMEOUT);
     }
 
     @Step("Delete all existing saved cards")
@@ -206,7 +217,7 @@ public class FanSavedCardsPage extends BasePage {
                 
                 // Wait for "No Card Found!" to be visible - follow codegen exactly
                 try {
-                    page.waitForSelector(":text-is('No Card Found!')", new Page.WaitForSelectorOptions().setTimeout(10000));
+                    page.waitForSelector(":text-is('No Card Found!')", new Page.WaitForSelectorOptions().setTimeout(SHORT_TIMEOUT));
                     logger.info("[Saved Cards] 'No Card Found!' message appeared after deletion");
                     deletedCount++;
                     break; // Exit loop when "No Card Found!" appears
@@ -225,7 +236,7 @@ public class FanSavedCardsPage extends BasePage {
         logger.info("[Saved Cards] Completed deletion, removed {} cards", deletedCount);
         
         // Final verification - check for "No Card Found!" message
-        page.waitForTimeout(1000);
+        page.waitForTimeout(STABILIZATION_WAIT);
         if (safeIsVisible(noCardMessage)) {
             logger.info("[Saved Cards] Verified 'No Card Found!' message is displayed");
         } else if (deletedCount == 0) {
@@ -243,7 +254,7 @@ public class FanSavedCardsPage extends BasePage {
         Locator anyCard = page.locator("button[type='button'] span").first();
         
         // Wait a bit to ensure page is loaded
-        page.waitForTimeout(1000);
+        page.waitForTimeout(STABILIZATION_WAIT);
         
         // Check if any cards are visible
         if (anyCard.count() > 0 && safeIsVisible(anyCard)) {
@@ -257,7 +268,7 @@ public class FanSavedCardsPage extends BasePage {
     @Step("Assert card not present for holder name: {fullName}")
     public void assertCardNotPresent(String fullName) {
         // Ensure disappearance within timeout
-        waitForCardToDisappear(fullName, ConfigReader.getVisibilityTimeout());
+        waitForCardToDisappear(fullName, VISIBILITY_TIMEOUT);
     }
 
     private void waitForCardToDisappear(String fullName, int timeoutMs) {
@@ -270,7 +281,7 @@ public class FanSavedCardsPage extends BasePage {
             } catch (Throwable ignored) {
                 return; // likely detached
             }
-            try { page.waitForTimeout(250); } catch (Exception ignored) {}
+            try { page.waitForTimeout(FINAL_WAIT); } catch (Exception ignored) {}
         }
         throw new AssertionError("Card still visible after delete within timeout: " + fullName);
     }

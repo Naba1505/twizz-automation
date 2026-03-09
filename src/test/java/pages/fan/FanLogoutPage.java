@@ -16,7 +16,11 @@ import org.slf4j.LoggerFactory;
 public class FanLogoutPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanLogoutPage.class);
-    private static final int DEFAULT_WAIT = 10000;
+    
+    // Timeout constants (in milliseconds) - Standardized values (optimized)
+    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
+    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
+    private static final int LOGOUT_WAIT = 2000;          // Wait for logout to complete
 
     public FanLogoutPage(Page page) {
         super(page);
@@ -48,7 +52,7 @@ public class FanLogoutPage extends BasePage {
     @Step("Click Settings icon")
     public void clickSettingsIcon() {
         waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, 200);
+        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
         logger.info("[Fan][Logout] Clicked Settings icon");
     }
 
@@ -75,8 +79,8 @@ public class FanLogoutPage extends BasePage {
         Locator disconnect = disconnectButton();
         waitVisible(disconnect, DEFAULT_WAIT);
         disconnect.scrollIntoViewIfNeeded();
-        clickWithRetry(disconnect, 2, 200);
-        page.waitForTimeout(2000); // Wait for logout to complete
+        clickWithRetry(disconnect, 2, UI_UPDATE_WAIT);
+        page.waitForTimeout(LOGOUT_WAIT); // Wait for logout to complete
         logger.info("[Fan][Logout] Clicked Disconnect button");
     }
 
