@@ -275,7 +275,7 @@ public class FanLiveTest extends BaseTestClass {
     private void loadCredentials() {
         creatorUsername = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
         creatorPassword = ConfigReader.getProperty("creator.password", "Twizz$123");
-        creatorDisplayName = ConfigReader.getProperty("creator.displayName", "Smith");
+        creatorDisplayName = ConfigReader.getProperty("creator.handle", "john_smith").replace("@", "");
 
         fanUsername = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
         fanPassword = ConfigReader.getProperty("fan.password", "Twizz$123");
