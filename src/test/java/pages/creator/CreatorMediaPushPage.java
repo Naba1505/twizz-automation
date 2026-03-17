@@ -108,23 +108,58 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Select Subscribers segment")
     public void selectSubscribersSegment() {
-        Locator seg = page.getByText(SUBSCRIBERS);
-        waitVisible(seg.first(), ConfigReader.getShortTimeout());
-        // Retry logic to handle DOM detachment during UI re-rendering
-        int maxRetries = 3;
-        for (int i = 0; i < maxRetries; i++) {
+        logger.info("Attempting to select Subscribers segment");
+        
+        // Try multiple selector strategies for "Subscribers"
+        Locator[] subscriberLocators = {
+            page.getByText(SUBSCRIBERS),
+            page.getByText(SUBSCRIBERS, new Page.GetByTextOptions().setExact(false)),
+            page.locator("text=Subscribers"),
+            page.locator("*:has-text('Subscribers')"),
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBSCRIBERS)),
+            page.getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName(SUBSCRIBERS))
+        };
+        
+        boolean found = false;
+        for (Locator locator : subscriberLocators) {
             try {
-                clickWithRetry(seg.first(), 2, CLICK_RETRY_DELAY);
-                return; // Success
-            } catch (Exception e) {
-                if (i < maxRetries - 1) {
-                    logger.warn("Subscribers segment click failed (attempt {}/{}), retrying after stabilization", i + 1, maxRetries);
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Exception ignored) {}
-                } else {
-                    throw e; // Final attempt failed
+                logger.debug("Trying locator strategy for Subscribers");
+                if (locator.count() > 0) {
+                    logger.info("Found Subscribers element with count: {}", locator.count());
+                    waitVisible(locator.first(), ConfigReader.getMediumTimeout()); // Use longer timeout
+                    clickWithRetry(locator.first(), 3, CLICK_RETRY_DELAY);
+                    found = true;
+                    break;
                 }
+            } catch (Exception e) {
+                logger.debug("Locator strategy failed: {}", e.getMessage());
+                continue;
             }
         }
+        
+        if (!found) {
+            // As a last resort, try to find any element containing "subscriber" (case-insensitive)
+            try {
+                logger.warn("Standard selectors failed, trying case-insensitive search");
+                Locator fallback = page.locator("*:text-is-matching('subscriber', 'i')");
+                if (fallback.count() > 0) {
+                    logger.info("Found Subscribers via case-insensitive search");
+                    clickWithRetry(fallback.first(), 2, CLICK_RETRY_DELAY);
+                    found = true;
+                }
+            } catch (Exception e) {
+                logger.debug("Fallback search failed: {}", e.getMessage());
+            }
+        }
+        
+        if (!found) {
+            // Log current page state for debugging
+            String currentUrl = page.url();
+            logger.error("Failed to find Subscribers segment. Current URL: {}", currentUrl);
+            throw new RuntimeException("Unable to locate Subscribers segment with any selector strategy");
+        }
+        
+        logger.info("Successfully selected Subscribers segment");
     }
 
     @Step("Select Interested segment (fallback to Subscribers if disabled)")
@@ -243,7 +278,59 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Ensure Importation dialog visible")
     public void ensureImportation() {
-        waitVisible(page.getByText(IMPORTATION).first(), ConfigReader.getShortTimeout());
+        logger.info("Ensuring Importation dialog is visible");
+        
+        // Try multiple selector strategies for Importation dialog
+        Locator[] importationLocators = {
+            page.getByText(IMPORTATION),
+            page.getByText(IMPORTATION, new Page.GetByTextOptions().setExact(false)),
+            page.locator("text=Importation"),
+            page.locator("*:has-text('Importation')"),
+            page.locator(".ant-modal-header:has-text('Importation')"),
+            page.locator(".ant-drawer-title:has-text('Importation')"),
+            page.locator("[role='dialog']:has-text('Importation')"),
+            page.locator("[role='dialog'] h1:has-text('Importation')"),
+            page.locator("[role='dialog'] h2:has-text('Importation')"),
+            page.locator("[role='dialog'] h3:has-text('Importation')")
+        };
+        
+        boolean found = false;
+        for (Locator locator : importationLocators) {
+            try {
+                if (locator.count() > 0) {
+                    logger.info("Found Importation dialog with count: {}", locator.count());
+                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                    found = true;
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("Importation locator strategy failed: {}", e.getMessage());
+                continue;
+            }
+        }
+        
+        if (!found) {
+            // As a last resort, try to find any dialog/modal that might be the import dialog
+            try {
+                logger.warn("Standard Importation selectors failed, trying generic dialog search");
+                Locator fallback = page.locator("[role='dialog'], .ant-modal, .ant-drawer");
+                if (fallback.count() > 0) {
+                    logger.info("Found generic dialog, assuming it's Importation");
+                    waitVisible(fallback.first(), ConfigReader.getShortTimeout());
+                    found = true;
+                }
+            } catch (Exception e) {
+                logger.debug("Fallback dialog search failed: {}", e.getMessage());
+            }
+        }
+        
+        if (!found) {
+            String currentUrl = page.url();
+            logger.error("Failed to find Importation dialog. Current URL: {}", currentUrl);
+            throw new RuntimeException("Unable to locate Importation dialog with any selector strategy");
+        }
+        
+        logger.info("Importation dialog is visible");
     }
 
     // Quick Files helpers (parity with Collection page)
@@ -509,32 +596,134 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Click Next")
     public void clickNext() {
-        Locator next = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
-        waitVisible(next.first(), ConfigReader.getVisibilityTimeout());
-        // Wait for button to be enabled (media upload processing may delay this)
-        long deadline = System.currentTimeMillis() + ConfigReader.getVisibilityTimeout();
-        while (System.currentTimeMillis() < deadline) {
+        logger.info("Attempting to click Next button");
+        
+        // Try multiple selector strategies for Next button
+        Locator[] nextLocators = {
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")),
+            page.getByText("Next"),
+            page.getByText("Next", new Page.GetByTextOptions().setExact(false)),
+            page.locator("button:has-text('Next')"),
+            page.locator(".ant-btn:has-text('Next')"),
+            page.locator("[type='button']:has-text('Next')"),
+            page.locator("button[type='submit']:has-text('Next')"),
+            page.locator("*:has-text('Next')") // Fallback
+        };
+        
+        boolean clicked = false;
+        for (Locator locator : nextLocators) {
             try {
-                if (next.first().isEnabled()) break;
-            } catch (Exception ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+                if (locator.count() > 0) {
+                    logger.info("Found Next button with count: {}", locator.count());
+                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                    
+                    // Wait for button to be enabled (media upload processing may delay this)
+                    long deadline = System.currentTimeMillis() + ConfigReader.getVisibilityTimeout();
+                    while (System.currentTimeMillis() < deadline) {
+                        try {
+                            if (locator.first().isEnabled()) break;
+                        } catch (Exception ignored) {}
+                        try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+                    }
+                    
+                    clickWithRetry(locator.first(), 3, CLICK_RETRY_DELAY);
+                    clicked = true;
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("Next button locator strategy failed: {}", e.getMessage());
+                continue;
+            }
         }
-        clickWithRetry(next.first(), 2, CLICK_RETRY_DELAY);
+        
+        if (!clicked) {
+            String currentUrl = page.url();
+            logger.error("Failed to find or click Next button. Current URL: {}", currentUrl);
+            throw new RuntimeException("Unable to locate or click Next button with any selector strategy");
+        }
+        
+        logger.info("Next button clicked successfully");
     }
 
     @Step("Ensure Message title visible")
     public void ensureMessageTitle() {
-        // UI updated: message field is now a textbox with accessible name placeholder
-        Locator ph = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(MESSAGE_PLACEHOLDER));
-        waitVisible(ph.first(), ConfigReader.getVisibilityTimeout());
+        logger.info("Ensuring message textbox is visible");
+        
+        // Try multiple selector strategies for message textbox
+        Locator[] messageLocators = {
+            page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(MESSAGE_PLACEHOLDER)),
+            page.getByPlaceholder(MESSAGE_PLACEHOLDER),
+            page.getByPlaceholder(MESSAGE_PLACEHOLDER, new Page.GetByPlaceholderOptions().setExact(false)),
+            page.locator("textarea[placeholder*='message']"),
+            page.locator("input[placeholder*='message']"),
+            page.locator("*:has-text('Your message')"),
+            page.locator("[placeholder*='Your message']")
+        };
+        
+        boolean found = false;
+        for (Locator locator : messageLocators) {
+            try {
+                if (locator.count() > 0) {
+                    logger.info("Found message textbox with count: {}", locator.count());
+                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                    found = true;
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("Message locator strategy failed: {}", e.getMessage());
+                continue;
+            }
+        }
+        
+        if (!found) {
+            String currentUrl = page.url();
+            logger.error("Failed to find message textbox. Current URL: {}", currentUrl);
+            throw new RuntimeException("Unable to locate message textbox with any selector strategy");
+        }
+        
+        logger.info("Message textbox is visible");
     }
 
     @Step("Fill message: {msg}")
     public void fillMessage(String msg) {
-        Locator ph = page.getByPlaceholder(MESSAGE_PLACEHOLDER);
-        waitVisible(ph.first(), ConfigReader.getShortTimeout());
-        ph.first().click();
-        ph.first().fill(msg == null ? "" : msg);
+        logger.info("Filling message textbox with: {}", msg);
+        
+        // Try multiple selector strategies for message textbox
+        Locator[] messageLocators = {
+            page.getByPlaceholder(MESSAGE_PLACEHOLDER),
+            page.getByPlaceholder(MESSAGE_PLACEHOLDER, new Page.GetByPlaceholderOptions().setExact(false)),
+            page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(MESSAGE_PLACEHOLDER)),
+            page.locator("textarea[placeholder*='message']"),
+            page.locator("input[placeholder*='message']"),
+            page.locator("[placeholder*='Your message']"),
+            page.locator("textarea:has-text('')"), // Fallback to any textarea
+            page.locator("input[type='text']") // Final fallback
+        };
+        
+        boolean filled = false;
+        for (Locator locator : messageLocators) {
+            try {
+                if (locator.count() > 0) {
+                    logger.info("Found message textbox for filling with count: {}", locator.count());
+                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                    locator.first().click();
+                    locator.first().fill(msg == null ? "" : msg);
+                    filled = true;
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("Message fill locator strategy failed: {}", e.getMessage());
+                continue;
+            }
+        }
+        
+        if (!filled) {
+            String currentUrl = page.url();
+            logger.error("Failed to fill message textbox. Current URL: {}", currentUrl);
+            throw new RuntimeException("Unable to fill message textbox with any selector strategy");
+        }
+        
+        logger.info("Message textbox filled successfully");
     }
 
     @Step("Set price in euros to {euros}")

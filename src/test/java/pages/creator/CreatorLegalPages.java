@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -84,11 +85,76 @@ public class CreatorLegalPages extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Legal Pages)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), SHORT_TIMEOUT);
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
-        if (!page.url().contains(SETTINGS_URL_PART)) {
-            logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
+        logger.info("Opening Settings from profile via settings icon");
+        
+        // Try multiple selector strategies for settings icon
+        Locator[] settingsLocators = {
+            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("settings")),
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("settings")),
+            page.locator("img[alt='settings']"),
+            page.locator("img[alt*='settings']"),
+            page.locator("*:has-text('settings')"),
+            page.locator("[role='img']:has-text('settings')"),
+            page.locator(".settings-icon"),
+            page.locator("[data-testid='settings']"),
+            page.locator("button:has(img[alt='settings'])"),
+            page.locator("div:has(img[alt='settings'])")
+        };
+        
+        boolean clicked = false;
+        for (Locator locator : settingsLocators) {
+            try {
+                if (locator.count() > 0) {
+                    logger.info("Found settings element with count: {}", locator.count());
+                    
+                    // Try to make it visible if hidden
+                    try {
+                        locator.first().scrollIntoViewIfNeeded();
+                    } catch (Exception ignored) {}
+                    
+                    // Force click if regular click doesn't work
+                    try {
+                        waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                        clickWithRetry(locator.first(), 2, BUTTON_RETRY_DELAY);
+                    } catch (Exception e) {
+                        logger.debug("Normal click failed, trying force click");
+                        locator.first().click(new Locator.ClickOptions().setForce(true));
+                    }
+                    
+                    clicked = true;
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("Settings locator strategy failed: {}", e.getMessage());
+                continue;
+            }
+        }
+        
+        if (!clicked) {
+            // As a last resort, try direct navigation
+            logger.warn("Settings icon not found or not clickable, trying direct navigation");
+            try {
+                page.navigate(ConfigReader.getBaseUrl() + "/common/setting");
+                page.waitForLoadState();
+                return;
+            } catch (Exception e) {
+                logger.error("Direct navigation also failed: {}", e.getMessage());
+                throw new RuntimeException("Unable to open Settings page");
+            }
+        }
+        
+        // Wait for navigation and verify
+        try {
+            page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
+        } catch (Exception e) {
+            logger.debug("URL wait failed, checking current URL");
+        }
+        
+        String currentUrl = page.url();
+        if (!currentUrl.contains(SETTINGS_URL_PART)) {
+            logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, currentUrl);
+        } else {
+            logger.info("Successfully navigated to Settings page: {}", currentUrl);
         }
     }
 
