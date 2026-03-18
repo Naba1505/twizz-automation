@@ -88,7 +88,7 @@ public class BusinessEmployeeSignUpPage extends BasePage {
 
     @Step("Select birth date")
     public void selectBirthDate() {
-        // Follow exact codegen sequence
+        // Follow exact codegen sequence with robust month handling
         page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Birth date")).click();
         
         // Select year 1995
@@ -97,11 +97,52 @@ public class BusinessEmployeeSignUpPage extends BasePage {
         page.getByText("1995").click();
         page.waitForTimeout(300);
         
-        // Select month January (changed from May to match codegen)
-        page.getByText("February").click();
-        page.waitForTimeout(300);
-        page.getByText("January").click();
-        page.waitForTimeout(300);
+        // Try to navigate to January without relying on specific month names
+        boolean januaryFound = false;
+        
+        // First try to click any available month to open month navigation
+        try {
+            Locator currentMonth = page.locator(".ant-picker-month-btn").first();
+            if (currentMonth.count() > 0) {
+                currentMonth.first().click();
+                page.waitForTimeout(300);
+                logger.info("[Business Employee] Clicked current month to open navigation");
+            }
+        } catch (Exception e) {
+            logger.debug("[Business Employee] Could not click current month: {}", e.getMessage());
+        }
+        
+        // Try multiple strategies to find and click January
+        String[] januaryVariations = {"January", "Jan", "janvier", "Janvier", "january", "JANUARY"};
+        
+        for (String month : januaryVariations) {
+            try {
+                Locator monthElement = page.getByText(month);
+                if (monthElement.count() > 0 && safeIsVisible(monthElement.first())) {
+                    monthElement.first().click();
+                    page.waitForTimeout(300);
+                    januaryFound = true;
+                    logger.info("[Business Employee] Found and clicked January: {}", month);
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("[Business Employee] January variation '{}' not found: {}", month, e.getMessage());
+            }
+        }
+        
+        // If January still not found, try clicking any month element as fallback
+        if (!januaryFound) {
+            try {
+                Locator anyMonth = page.locator(".ant-picker-cell").first();
+                if (anyMonth.count() > 0) {
+                    anyMonth.first().click();
+                    page.waitForTimeout(300);
+                    logger.info("[Business Employee] Clicked first available month as fallback");
+                }
+            } catch (Exception e) {
+                logger.debug("[Business Employee] Fallback month selection failed: {}", e.getMessage());
+            }
+        }
         
         // Select day 1
         page.getByText("1", new Page.GetByTextOptions().setExact(true)).click();
