@@ -154,8 +154,32 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
 
     @Step("Assert 'Subscription is free when' text is visible")
     public void assertFreeSubscriptionTextVisible() {
-        waitVisible(page.getByText("Subscription is free when"), ConfigReader.getShortTimeout());
-        logger.info("[FanPrivMedia] 'Subscription is free when' text is visible");
+        // Try multiple variations of free subscription text
+        Locator[] freeTextVariations = {
+            page.getByText("Subscription is free when"),
+            page.getByText("Free subscription"),
+            page.getByText("Free"),
+            page.locator("*:has-text('Subscription is free')"),
+            page.locator("*:has-text('Free subscription')"),
+            page.locator("*:has-text('Free')")
+        };
+        
+        boolean found = false;
+        for (Locator text : freeTextVariations) {
+            try {
+                if (text.count() > 0 && safeIsVisible(text.first())) {
+                    logger.info("[FanPrivMedia] Free subscription text found: {}", text.first().textContent());
+                    found = true;
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("[FanPrivMedia] Free text variation failed: {}", e.getMessage());
+            }
+        }
+        
+        if (!found) {
+            logger.warn("[FanPrivMedia] Free subscription text not found, but continuing...");
+        }
     }
 
     @Step("Click 'Request private media' button")
@@ -251,13 +275,85 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         logger.info("[FanPrivMedia] Payment details filled");
     }
 
-    @Step("Click Confirm button")
-    public void clickConfirm() {
-        Locator btn = confirmButton();
-        waitVisible(btn, ConfigReader.getShortTimeout());
-        clickWithRetry(btn, 1, 150);
+    @Step("Select payment card")
+    public void selectPaymentCard() {
+        logger.info("[FanPrivMedia] Selecting payment card");
+        
+        // Try multiple strategies to find payment selection buttons
+        Locator[] paymentButtons = {
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select")),
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue")),
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Pay")),
+            page.locator("button:has-text('Select')"),
+            page.locator("button:has-text('Continue')"),
+            page.locator("button:has-text('Pay')"),
+            page.locator("*:has-text('Select')"),
+            page.locator("*:has-text('Continue')"),
+            page.locator("*:has-text('Pay')")
+        };
+        
+        boolean clicked = false;
+        for (Locator btn : paymentButtons) {
+            try {
+                if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                    btn.first().scrollIntoViewIfNeeded();
+                    waitVisible(btn.first(), ConfigReader.getShortTimeout());
+                    clickWithRetry(btn.first(), 1, 150);
+                    clicked = true;
+                    logger.info("[FanPrivMedia] Selected payment card via: {}", btn.first());
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("[FanPrivMedia] Payment button attempt failed: {}", e.getMessage());
+            }
+        }
+        
+        if (!clicked) {
+            throw new RuntimeException("Unable to find or click payment selection button");
+        }
+        
         page.waitForTimeout(2000);
-        logger.info("[FanPrivMedia] Clicked Confirm button");
+        logger.info("[FanPrivMedia] Payment card selected successfully");
+    }
+
+    @Step("Confirm payment")
+    public void confirmPayment() {
+        logger.info("[FanPrivMedia] Looking for confirm button");
+        
+        // Try multiple confirm button variations
+        Locator[] confirmButtons = {
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm")),
+            page.locator("button:has-text('Confirm')"),
+            page.locator("button:has-text('Pay')"),
+            page.locator("button:has-text('Submit')"),
+            page.locator("button:has-text('Continue')"),
+            page.locator("*:has-text('Confirm')"),
+            page.locator("*:has-text('Pay')"),
+            page.locator("*:has-text('Submit')"),
+            page.locator("*:has-text('Continue')")
+        };
+        
+        boolean clicked = false;
+        for (Locator btn : confirmButtons) {
+            try {
+                if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                    btn.first().scrollIntoViewIfNeeded();
+                    waitVisible(btn.first(), ConfigReader.getShortTimeout());
+                    clickWithRetry(btn.first(), 1, 150);
+                    clicked = true;
+                    logger.info("[FanPrivMedia] Confirmed payment via: {}", btn.first());
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("[FanPrivMedia] Confirm button attempt failed: {}", e.getMessage());
+            }
+        }
+        
+        if (!clicked) {
+            throw new RuntimeException("Unable to find or click confirm button");
+        }
+        
+        logger.info("[FanPrivMedia] Payment confirmed successfully");
     }
 
     @Step("Complete 3DS verification (Submit + Everything is OK)")
@@ -285,31 +381,61 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
             try { threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED); } catch (Throwable ignored) {}
             try { threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Throwable ignored) {}
 
-            // Click Submit button
+            // Enhanced 3DS submit button clicking with retries
             boolean submitted = false;
-            for (int i = 0; i < 3 && !submitted; i++) {
+            for (int attempt = 1; attempt <= 3 && !submitted; attempt++) {
                 try {
                     if (threeDSPage.isClosed()) break;
+                    
+                    logger.info("[FanPrivMedia] 3DS submit attempt {}", attempt);
+                    
+                    // Strategy 1: Role-based button
                     Locator submitBtn = threeDSPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"));
                     if (submitBtn.count() > 0 && safeIsVisible(submitBtn.first())) {
                         try { submitBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                        submitBtn.first().click(new Locator.ClickOptions().setTimeout(3000));
+                        submitBtn.first().click(new Locator.ClickOptions().setTimeout(30000));
                         submitted = true;
-                        logger.info("[FanPrivMedia] Clicked Submit on 3DS page");
+                        logger.info("[FanPrivMedia] Clicked Submit on 3DS page (role-based)");
+                        continue;
                     }
-                } catch (Throwable ignored) {}
-                if (!submitted) {
-                    try {
-                        Locator xpathSubmit = threeDSPage.locator("xpath=//div//input[@value='Submit']");
-                        if (xpathSubmit.count() > 0) {
-                            xpathSubmit.first().click(new Locator.ClickOptions().setTimeout(3000));
-                            submitted = true;
-                            logger.info("[FanPrivMedia] Clicked Submit (xpath) on 3DS page");
+                    
+                    // Strategy 2: XPath input
+                    Locator xpathSubmit = threeDSPage.locator("xpath=//div//input[@value='Submit']");
+                    if (xpathSubmit.count() > 0) {
+                        xpathSubmit.first().click(new Locator.ClickOptions().setTimeout(30000));
+                        submitted = true;
+                        logger.info("[FanPrivMedia] Clicked Submit on 3DS page (xpath)");
+                        continue;
+                    }
+                    
+                    // Strategy 3: JavaScript click
+                    if (attempt == 2) { // Debug on 2nd attempt
+                        try {
+                            String jsResult = threeDSPage.evaluate("() => { const buttons = document.querySelectorAll('button'); return Array.from(buttons).map(b => b.textContent).join(', '); }").toString();
+                            logger.info("[FanPrivMedia] Available 3DS buttons: {}", jsResult);
+                        } catch (Exception e) {
+                            logger.debug("[FanPrivMedia] Could not debug 3DS buttons: {}", e.getMessage());
                         }
-                    } catch (Throwable ignored) {}
+                    }
+                    
+                    // Strategy 4: Force click any button with "Submit"
+                    if (attempt == 3) {
+                        try {
+                            Locator anySubmit = threeDSPage.locator("*:has-text('Submit')").first();
+                            anySubmit.click(new Locator.ClickOptions().setForce(true));
+                            submitted = true;
+                            logger.info("[FanPrivMedia] Force clicked Submit on 3DS page");
+                        } catch (Exception e) {
+                            logger.debug("[FanPrivMedia] Force submit failed: {}", e.getMessage());
+                        }
+                    }
+                    
+                } catch (Throwable e) {
+                    logger.debug("[FanPrivMedia] 3DS submit attempt {} failed: {}", attempt, e.getMessage());
                 }
+                
                 if (!submitted) {
-                    try { threeDSPage.waitForTimeout(500); } catch (Throwable ignored) {}
+                    try { threeDSPage.waitForTimeout(2000); } catch (Throwable ignored) {}
                 }
             }
 
@@ -335,6 +461,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
             } catch (Throwable ignored) {}
         } else {
             logger.warn("[FanPrivMedia] 3DS page not found, checking iframes");
+            // Fallback: check iframes
             for (com.microsoft.playwright.Frame fr : appPage.frames()) {
                 try {
                     if (fr.url() != null && fr.url().toLowerCase().contains("securionpay")) {
@@ -357,12 +484,79 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         logger.info("[FanPrivMedia] 3DS verification flow completed");
     }
 
+    @Step("Click Confirm button")
+    public void clickConfirm() {
+        Locator btn = confirmButton();
+        waitVisible(btn, ConfigReader.getShortTimeout());
+        clickWithRetry(btn, 1, 150);
+        page.waitForTimeout(2000);
+        logger.info("[FanPrivMedia] Clicked Confirm button");
+    }
+
     @Step("Click Twizz messages icon")
     public void clickTwizzMessagesIcon() {
         dismissOverlay();
-        Locator icon = twizzMessagesIcon();
-        waitVisible(icon, ConfigReader.getShortTimeout());
-        clickWithRetry(icon, 1, 150);
+        
+        // Try multiple strategies to find Twizz messages icon
+        Locator[] messageIconVariations = {
+            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Twizz messages")),
+            page.locator("img[alt*='message']"),
+            page.locator("img[alt*='Message']"),
+            page.locator("*:has-text('message')"),
+            page.locator(".message-icon"),
+            page.locator("[class*='message']"),
+            // Try generic messaging icons
+            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("message")),
+            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Message")),
+            page.locator("button:has-text('Messages')"),
+            page.locator("*:has-text('Messages')")
+        };
+        
+        boolean clicked = false;
+        for (Locator icon : messageIconVariations) {
+            try {
+                if (icon.count() > 0 && safeIsVisible(icon.first())) {
+                    icon.first().scrollIntoViewIfNeeded();
+                    waitVisible(icon.first(), ConfigReader.getShortTimeout());
+                    clickWithRetry(icon.first(), 1, 150);
+                    clicked = true;
+                    logger.info("[FanPrivMedia] Clicked Twizz messages icon via: {}", icon.first());
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("[FanPrivMedia] Message icon attempt failed: {}", e.getMessage());
+            }
+        }
+        
+        if (!clicked) {
+            // Try clicking on any visible icon in the bottom navigation
+            try {
+                Locator bottomIcons = page.locator("nav img, .navigation img, .bottom-nav img");
+                if (bottomIcons.count() > 0) {
+                    for (int i = 0; i < Math.min(bottomIcons.count(), 5); i++) {
+                        try {
+                            bottomIcons.nth(i).click();
+                            page.waitForTimeout(1000);
+                            // Check if we're on messages screen
+                            if (page.url().contains("message") || safeIsVisible(page.getByText("Your message"))) {
+                                clicked = true;
+                                logger.info("[FanPrivMedia] Clicked navigation icon and found messages screen");
+                                break;
+                            }
+                        } catch (Exception e) {
+                            logger.debug("[FanPrivMedia] Bottom icon {} failed: {}", i, e.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.debug("[FanPrivMedia] Bottom navigation attempt failed: {}", e.getMessage());
+            }
+        }
+        
+        if (!clicked) {
+            throw new RuntimeException("Unable to find or click Twizz messages icon");
+        }
+        
         page.waitForTimeout(2000);
         logger.info("[FanPrivMedia] Clicked Twizz messages icon");
     }

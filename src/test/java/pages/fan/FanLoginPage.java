@@ -30,7 +30,7 @@ public class FanLoginPage extends BasePage {
 
     public void navigate() {
         String url = ConfigReader.getLoginUrl();
-        page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT));
+        page.navigate(url, new Page.NavigateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         logger.info("[Fan] Navigated to Fan Login page: {}", url);
     }

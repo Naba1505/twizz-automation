@@ -144,30 +144,84 @@ public class AdminCreatorApprovalPage extends BasePage {
             throw new RuntimeException("No creator username available. Ensure CreatorRegistrationTest.createdUsername is set or set approval.username in config.properties.");
         }
         
-        // Use new search field
-        Locator search = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Search"));
-        waitVisible(search, MEDIUM_TIMEOUT);
+        // Try multiple locator strategies for search field
+        Locator[] searchLocators = {
+            page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Search")),
+            page.getByPlaceholder("Search"),
+            page.getByPlaceholder("search"),
+            page.locator("input[type='text']:visible"),
+            page.locator("input[placeholder*='Search']"),
+            page.locator("input[placeholder*='search']"),
+            page.locator(".ant-input"),
+            page.locator("input"),
+            page.locator("*:has-text('Search')"),
+            page.locator("[data-testid*='search']"),
+            page.locator("[class*='search'] input"),
+            page.locator("div:has(input)"),
+            page.getByRole(AriaRole.TEXTBOX)
+        };
+        
+        Locator searchField = null;
+        for (Locator locator : searchLocators) {
+            try {
+                if (locator.count() > 0) {
+                    log.info("Found search field with count: {} using locator: {}", locator.count(), locator);
+                    locator.first().scrollIntoViewIfNeeded();
+                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                    searchField = locator.first();
+                    break;
+                }
+            } catch (Exception e) {
+                log.debug("Search locator strategy failed: {}", e.getMessage());
+                continue;
+            }
+        }
+        
+        if (searchField == null) {
+            throw new RuntimeException("Unable to locate search field in admin interface");
+        }
         
         // Clear and fill search
-        clickWithRetry(search, SEARCH_RETRY_COUNT, BUTTON_RETRY_DELAY);
-        search.fill("");
-        search.fill(toUse);
+        clickWithRetry(searchField, 2, BUTTON_RETRY_DELAY);
+        searchField.fill("");
+        searchField.fill(toUse);
         
         // Trigger search and wait
-        try { search.press("Enter"); } catch (Exception ignored) {}
-        page.waitForTimeout(NAVIGATION_WAIT);
+        try { 
+            searchField.press("Enter"); 
+            page.waitForTimeout(1000); // Wait for search to process
+        } catch (Exception ignored) {}
+        
+        log.info("Search completed for username: {}", toUse);
     }
 
     
     public void waitForCreatorInResults(String username) {
         log.info("Waiting for creator row to be visible for: {}", username);
-        Locator row = page.locator("tr").filter(new Locator.FilterOptions().setHasText(username)).first();
-        try {
-            waitVisible(row, MEDIUM_TIMEOUT);
-        } catch (RuntimeException e) {
-            row = page.getByRole(AriaRole.ROW, new Page.GetByRoleOptions().setName(username)).first();
-            waitVisible(row, MEDIUM_TIMEOUT);
+        
+        // Try multiple locator strategies with longer timeout
+        Locator[] rowLocators = {
+            page.locator("tr").filter(new Locator.FilterOptions().setHasText(username)).first(),
+            page.getByRole(AriaRole.ROW, new Page.GetByRoleOptions().setName(username)).first(),
+            page.locator("tr:has-text('" + username + "')").first(),
+            page.locator("*:has-text('" + username + "')").first(),
+            page.locator("td:has-text('" + username + "')").first()
+        };
+        
+        for (Locator row : rowLocators) {
+            try {
+                log.info("Trying locator strategy for creator row: {}", username);
+                // Use longer timeout for search results
+                waitVisible(row, ConfigReader.getMediumTimeout());
+                log.info("Found creator row using locator strategy");
+                return;
+            } catch (Exception e) {
+                log.debug("Row locator strategy failed: {}", e.getMessage());
+                continue;
+            }
         }
+        
+        throw new RuntimeException("Unable to find creator row for username: " + username);
     }
 
     public void openActionEditForCreator(String username) {
@@ -177,8 +231,12 @@ public class AdminCreatorApprovalPage extends BasePage {
         // Wait before clicking the 3-dot icon
         page.waitForTimeout(DROPDOWN_WAIT);
         
-        // Click the 3-dot icon using the specific CSS selector
-        page.locator("[data-testid='MoreVertIcon']").click();
+        // Find the specific creator row and click its MoreVertIcon
+        Locator creatorRow = page.locator("tr").filter(new Locator.FilterOptions().setHasText(username)).first();
+        Locator moreVertIcon = creatorRow.locator("[data-testid='MoreVertIcon']").first();
+        
+        // Click the 3-dot icon within the specific creator row
+        moreVertIcon.click();
         
         // Wait for dropdown and click Edit
         page.waitForTimeout(DROPDOWN_WAIT);

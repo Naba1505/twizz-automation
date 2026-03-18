@@ -58,7 +58,7 @@ public class FanSubscriptionTest extends BaseFanTest {
             String cardNumber = ConfigReader.getProperty("payment.card.number", "4012 0018 0000 0016");
             String cardExpiry = ConfigReader.getProperty("payment.card.expiry", "07/34");
             String cardCvc = ConfigReader.getProperty("payment.card.cvc", "657");
-            sub.fillCardDetails(cardNumber, cardExpiry, cardCvc);
+            sub.handlePaymentScreen(cardNumber, cardExpiry, cardCvc);
             sub.selectCountryIfNeeded();
             sub.confirmAndComplete3DS();
         }

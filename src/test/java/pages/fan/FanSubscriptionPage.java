@@ -196,6 +196,33 @@ public class FanSubscriptionPage extends BasePage {
         return false;
     }
 
+    @Step("Handle payment screen - check for saved cards or fill manually")
+    public void handlePaymentScreen(String cardNumber, String expiry, String cvc) {
+        logger.info("[Fan][Subscribe] Handling payment screen");
+        
+        // Wait for payment screen to load
+        page.waitForTimeout(2000);
+        
+        // Check if "No saved cards" is displayed
+        Locator noSavedCards = page.getByText("No saved cards");
+        Locator addNewCardButton = page.getByText("Add new card");
+        
+        try {
+            if (noSavedCards.count() > 0 && safeIsVisible(noSavedCards.first())) {
+                logger.info("[Fan][Subscribe] No saved cards found - clicking Add new card");
+                if (addNewCardButton.count() > 0) {
+                    addNewCardButton.first().click();
+                    page.waitForTimeout(1000);
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("[Fan][Subscribe] Error checking for saved cards: {}", e.getMessage());
+        }
+        
+        // Now fill card details (whether saved cards existed or not)
+        fillCardDetails(cardNumber, expiry, cvc);
+    }
+
     @Step("Fill card details")
     public void fillCardDetails(String cardNumber, String expiry, String cvc) {
         logger.info("[Fan][Subscribe] Filling payment card details");
