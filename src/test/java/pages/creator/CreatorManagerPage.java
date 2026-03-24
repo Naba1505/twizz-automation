@@ -54,7 +54,11 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Click Refuse button")
     public void clickRefuseButton() {
+        // This is the initial Refuse button on the invitation list (not the modal)
         Locator refuseButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Refuse"));
+        if (refuseButton.count() == 0) {
+            refuseButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Refuser")); // French
+        }
         refuseButton.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
@@ -63,15 +67,20 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Verify confirmation dialog is visible")
     public boolean isConfirmationDialogVisible() {
-        Locator confirmationText = page.getByText("Are you sure you want to");
-        boolean isVisible = confirmationText.isVisible();
+        Locator confirmationDialog = page.locator(".manager-modal-title");
+        try {
+            confirmationDialog.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+        } catch (Exception e) {
+            logger.warn("[Creator Manager] Confirmation dialog did not appear within timeout");
+        }
+        boolean isVisible = confirmationDialog.isVisible();
         logger.info("[Creator Manager] Confirmation dialog visibility: {}", isVisible);
         return isVisible;
     }
 
     @Step("Click 'I refuse' button to confirm")
     public void clickIRefuseButton() {
-        Locator iRefuseButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I refuse"));
+        Locator iRefuseButton = page.locator(".manager-modal-refuse-button");
         iRefuseButton.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
@@ -80,20 +89,32 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Verify 'Invitation rejected' message is visible")
     public boolean isInvitationRejectedMessageVisible() {
+        // Try multiple language variations for the success message
         Locator rejectedMessage = page.getByText("Invitation rejected");
+        Locator rejectedMessageFr = page.getByText("Invitation refusée");
+        
         try {
-            rejectedMessage.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+            // Wait for either English or French message
+            page.waitForCondition(() -> 
+                rejectedMessage.isVisible() || rejectedMessageFr.isVisible(),
+                new Page.WaitForConditionOptions().setTimeout(5000)
+            );
         } catch (Exception e) {
             logger.warn("[Creator Manager] Invitation rejected message did not appear within timeout");
         }
-        boolean isVisible = rejectedMessage.isVisible();
+        
+        boolean isVisible = rejectedMessage.isVisible() || rejectedMessageFr.isVisible();
         logger.info("[Creator Manager] 'Invitation rejected' message visibility: {}", isVisible);
         return isVisible;
     }
 
     @Step("Click Accept button")
     public void clickAcceptButton() {
+        // This is the initial Accept button on the invitation list (not the modal)
         Locator acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
+        if (acceptButton.count() == 0) {
+            acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accepter")); // French
+        }
         acceptButton.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
@@ -102,7 +123,7 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Click 'I accept' button to confirm")
     public void clickIAcceptButton() {
-        Locator iAcceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I accept"));
+        Locator iAcceptButton = page.locator(".manager-modal-accept-button");
         iAcceptButton.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
@@ -111,13 +132,21 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Verify 'Invitation accepted' message is visible")
     public boolean isInvitationAcceptedMessageVisible() {
+        // Try multiple language variations for the success message
         Locator acceptedMessage = page.getByText("Invitation accepted");
+        Locator acceptedMessageFr = page.getByText("Invitation acceptée");
+        
         try {
-            acceptedMessage.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+            // Wait for either English or French message
+            page.waitForCondition(() -> 
+                acceptedMessage.isVisible() || acceptedMessageFr.isVisible(),
+                new Page.WaitForConditionOptions().setTimeout(5000)
+            );
         } catch (Exception e) {
             logger.warn("[Creator Manager] Invitation accepted message did not appear within timeout");
         }
-        boolean isVisible = acceptedMessage.isVisible();
+        
+        boolean isVisible = acceptedMessage.isVisible() || acceptedMessageFr.isVisible();
         logger.info("[Creator Manager] 'Invitation accepted' message visibility: {}", isVisible);
         return isVisible;
     }
