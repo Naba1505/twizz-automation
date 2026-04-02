@@ -54,10 +54,16 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Click Refuse button")
     public void clickRefuseButton() {
-        // This is the initial Refuse button on the invitation list (not the modal)
-        Locator refuseButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Refuse"));
-        if (refuseButton.count() == 0) {
-            refuseButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Refuser")); // French
+        // Use CSS selector for the Refuse button from invitation list
+        Locator refuseButton = page.locator(".invitation-manager-refuse-button");
+        try {
+            refuseButton.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+        } catch (Exception e) {
+            logger.warn("[Creator Manager] Refuse button not found with CSS, trying text-based locator");
+            refuseButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Refuse"));
+            if (refuseButton.count() == 0) {
+                refuseButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Refuser")); // French
+            }
         }
         refuseButton.click();
         page.waitForLoadState(LoadState.LOAD);
@@ -110,10 +116,16 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Click Accept button")
     public void clickAcceptButton() {
-        // This is the initial Accept button on the invitation list (not the modal)
-        Locator acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
-        if (acceptButton.count() == 0) {
-            acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accepter")); // French
+        // Use CSS selector for the Accept button container from invitation list
+        Locator acceptButton = page.locator(".invitation-manager-button-container button");
+        try {
+            acceptButton.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+        } catch (Exception e) {
+            logger.warn("[Creator Manager] Accept button not found with CSS, trying text-based locator");
+            acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
+            if (acceptButton.count() == 0) {
+                acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accepter")); // French
+            }
         }
         acceptButton.click();
         page.waitForLoadState(LoadState.LOAD);

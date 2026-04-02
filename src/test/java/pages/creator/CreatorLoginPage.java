@@ -6,6 +6,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
 
 import utils.ConfigReader;
 
@@ -60,6 +61,26 @@ public class CreatorLoginPage extends BasePage {
 
     public void login(String username, String password) {
         logger.info("Attempting login for user: {}", username);
+        
+        // Clear any existing session/cookies and refresh to ensure clean state
+        try {
+            page.context().clearCookies();
+            page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+            page.waitForTimeout(1000);
+        } catch (Exception e) {
+            logger.warn("Failed to clear session/refresh: {}", e.getMessage());
+        }
+        
+        Locator loginForm = page.locator("form").first();
+        boolean formVisible = false;
+        try {
+            loginForm.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+            formVisible = loginForm.isVisible();
+        } catch (Exception e) {
+            logger.warn("Login form not immediately visible, continuing anyway");
+        }
+        logger.info("Login form visible: {}", formVisible);
+
         // If already logged-in marker is visible, skip login
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         try {
