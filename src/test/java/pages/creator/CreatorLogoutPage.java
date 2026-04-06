@@ -12,9 +12,9 @@ import io.qameta.allure.Step;
  */
 public class CreatorLogoutPage extends BasePage {
     // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
     private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 20000ms)
+    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits for settings
+    private static final int LOGOUT_TIMEOUT = 10000;     // Timeout for logout redirect
 
     private static final String SETTINGS_URL_PART = "/common/setting";
 
@@ -55,6 +55,6 @@ public class CreatorLogoutPage extends BasePage {
 
     @Step("Assert user is logged out and on intro screen (Twizz logo visible)")
     public void assertLoggedOutToIntro() {
-        waitVisible(twizzLogoOnIntro(), MEDIUM_TIMEOUT);
+        waitVisible(twizzLogoOnIntro(), LOGOUT_TIMEOUT);
     }
 }

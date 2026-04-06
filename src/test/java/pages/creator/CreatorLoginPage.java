@@ -33,6 +33,20 @@ public class CreatorLoginPage extends BasePage {
         logger.info("Navigated to Creator Login page: {}", url);
     }
 
+    /**
+     * Clear session cookies and reload page - use this explicitly when needed for retry scenarios
+     */
+    public void clearSessionAndReload() {
+        try {
+            page.context().clearCookies();
+            page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+            page.waitForTimeout(1000);
+            logger.info("Cleared session and reloaded page for clean state");
+        } catch (Exception e) {
+            logger.warn("Failed to clear session/refresh: {}", e.getMessage());
+        }
+    }
+
     public boolean isLoginFormVisible() {
         Locator user = page.getByPlaceholder(usernamePlaceholder);
         Locator pass = page.getByPlaceholder(passwordPlaceholder);
@@ -62,25 +76,6 @@ public class CreatorLoginPage extends BasePage {
     public void login(String username, String password) {
         logger.info("Attempting login for user: {}", username);
         
-        // Clear any existing session/cookies and refresh to ensure clean state
-        try {
-            page.context().clearCookies();
-            page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-            page.waitForTimeout(1000);
-        } catch (Exception e) {
-            logger.warn("Failed to clear session/refresh: {}", e.getMessage());
-        }
-        
-        Locator loginForm = page.locator("form").first();
-        boolean formVisible = false;
-        try {
-            loginForm.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-            formVisible = loginForm.isVisible();
-        } catch (Exception e) {
-            logger.warn("Login form not immediately visible, continuing anyway");
-        }
-        logger.info("Login form visible: {}", formVisible);
-
         // If already logged-in marker is visible, skip login
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         try {
@@ -90,18 +85,12 @@ public class CreatorLoginPage extends BasePage {
             }
         } catch (Throwable ignored) {}
 
-        // Ensure we are on login screen (form or header visible)
-        try {
-            if (!isLoginFormVisible()) {
-                isLoginHeaderVisible();
-            }
-        } catch (Throwable ignored) {}
-
-        // Fill credentials with robust clear
+        // Fill credentials - use shorter timeout (5s instead of 20s) since form should already be visible
         Locator user = page.getByPlaceholder(usernamePlaceholder);
         Locator pass = page.getByPlaceholder(passwordPlaceholder);
-        waitVisible(user, ConfigReader.getVisibilityTimeout());
-        waitVisible(pass, ConfigReader.getVisibilityTimeout());
+        // Reduced from 20s to 5s for faster execution
+        waitVisible(user, 5000);
+        waitVisible(pass, 5000);
         try {
             user.click(); user.fill(""); user.press("Control+A"); user.press("Backspace"); user.fill(username);
         } catch (Throwable t) { fillByPlaceholder(usernamePlaceholder, username); }
