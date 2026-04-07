@@ -50,8 +50,13 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Open plus menu on creator dashboard")
     public void openPlusMenu() {
+        // Login now ensures page is fully loaded, so just wait for plus icon
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
+        
+        // Small stabilization to ensure icon is clickable
+        page.waitForTimeout(300);
+        
         // Some builds require clicking the nested svg
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && svg.first().isVisible()) {

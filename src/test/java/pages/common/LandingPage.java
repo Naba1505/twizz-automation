@@ -46,8 +46,19 @@ public class LandingPage extends BasePage {
     }
 
     public void clickLoginButton() {
+        // Wait for login button to be visible and clickable
+        page.waitForSelector(loginButton, new Page.WaitForSelectorOptions()
+            .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
+            .setTimeout(ConfigReader.getVisibilityTimeout()));
+        
+        // Small stabilization wait to ensure button is fully interactive
+        page.waitForTimeout(300);
+        
         page.click(loginButton);
+        
+        // Wait for navigation to complete
         page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        
         logger.info("Clicked on Login button.");
     }
 

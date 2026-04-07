@@ -45,8 +45,13 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Open plus menu on creator screen")
     public void openPlusMenu() {
+        // Login ensures page is fully loaded, just wait for plus icon with stabilization
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
+        
+        // Small stabilization to ensure icon is clickable
+        page.waitForTimeout(300);
+        
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && svg.first().isVisible()) {
             clickWithRetry(svg.first(), 2, CLICK_RETRY_DELAY);
@@ -546,6 +551,19 @@ public class CreatorMediaPushPage extends BasePage {
         }
         Locator target = inputs.nth(inputs.count() - 1);
         target.setInputFiles(file);
+        
+        logger.info("File input set, waiting for upload to process...");
+        
+        // Wait for upload to complete - network activity should settle
+        try {
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE, 
+                new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        } catch (Exception e) {
+            logger.debug("Network idle timeout after file upload, continuing");
+        }
+        
+        // Additional stabilization for UI to update after upload
+        page.waitForTimeout(1500);
 
         // After setting files, dismiss the Importation bottom sheet if a Cancel
         // button is present so it does not block subsequent steps.
@@ -598,6 +616,17 @@ public class CreatorMediaPushPage extends BasePage {
     public void clickNext() {
         logger.info("Attempting to click Next button");
         
+        // Wait for page to stabilize after media upload/processing
+        try {
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE, 
+                new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getShortTimeout()));
+        } catch (Exception e) {
+            logger.debug("Network idle timeout, continuing with button search");
+        }
+        
+        // Additional stabilization wait for UI to settle
+        page.waitForTimeout(1000);
+        
         // Try multiple selector strategies for Next button
         Locator[] nextLocators = {
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")),
@@ -615,7 +644,8 @@ public class CreatorMediaPushPage extends BasePage {
             try {
                 if (locator.count() > 0) {
                     logger.info("Found Next button with count: {}", locator.count());
-                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                    // Use full visibility timeout instead of medium
+                    waitVisible(locator.first(), ConfigReader.getVisibilityTimeout());
                     
                     // Wait for button to be enabled (media upload processing may delay this)
                     long deadline = System.currentTimeMillis() + ConfigReader.getVisibilityTimeout();
@@ -625,6 +655,9 @@ public class CreatorMediaPushPage extends BasePage {
                         } catch (Exception ignored) {}
                         try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
                     }
+                    
+                    // Additional small wait to ensure button is fully interactive
+                    page.waitForTimeout(300);
                     
                     clickWithRetry(locator.first(), 3, CLICK_RETRY_DELAY);
                     clicked = true;

@@ -78,7 +78,8 @@ public class CreatorSettingsPage extends BasePage {
         log.info("Opening Settings from profile via IMG[name='{}']", SETTINGS_ICON_NAME);
         try {
             Locator settingsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(SETTINGS_ICON_NAME));
-            waitVisible(settingsIcon, DEFAULT_WAIT);
+            // Use visibility timeout (20s) instead of short timeout (10s) to handle slow page loads
+            waitVisible(settingsIcon, ConfigReader.getVisibilityTimeout());
             settingsIcon.click();
             
             // Wait for page to load and check for Settings indicators

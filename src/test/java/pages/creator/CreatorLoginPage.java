@@ -85,36 +85,96 @@ public class CreatorLoginPage extends BasePage {
             }
         } catch (Throwable ignored) {}
 
-        // Fill credentials - use shorter timeout (5s instead of 20s) since form should already be visible
+        // Fill credentials with robust waits to prevent race conditions
         Locator user = page.getByPlaceholder(usernamePlaceholder);
         Locator pass = page.getByPlaceholder(passwordPlaceholder);
-        // Reduced from 20s to 5s for faster execution
-        waitVisible(user, 5000);
-        waitVisible(pass, 5000);
+        
+        // Use full visibility timeout and ensure fields are ready
+        waitVisible(user, ConfigReader.getVisibilityTimeout());
+        waitVisible(pass, ConfigReader.getVisibilityTimeout());
+        
+        // Wait for fields to be enabled (not disabled/readonly)
+        user.waitFor(new Locator.WaitForOptions()
+            .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
+            .setTimeout(ConfigReader.getVisibilityTimeout()));
+        pass.waitFor(new Locator.WaitForOptions()
+            .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
+            .setTimeout(ConfigReader.getVisibilityTimeout()));
+        
+        // Small stabilization wait to ensure fields are fully interactive
+        page.waitForTimeout(500);
+        
+        // Fill username with proper clearing and slower typing
         try {
-            user.click(); user.fill(""); user.press("Control+A"); user.press("Backspace"); user.fill(username);
-        } catch (Throwable t) { fillByPlaceholder(usernamePlaceholder, username); }
+            user.click();
+            page.waitForTimeout(200); // Wait after click
+            user.fill(""); // Clear first
+            page.waitForTimeout(100);
+            user.type(username, new Locator.TypeOptions().setDelay(50)); // Type with 50ms delay between keys
+        } catch (Throwable t) {
+            logger.warn("Username fill failed, using fallback: {}", t.getMessage());
+            fillByPlaceholder(usernamePlaceholder, username);
+        }
+        
+        // Fill password with proper clearing and slower typing
         try {
-            pass.click(); pass.fill(""); pass.press("Control+A"); pass.press("Backspace"); pass.fill(password);
-        } catch (Throwable t) { fillByPlaceholder(passwordPlaceholder, password); }
+            pass.click();
+            page.waitForTimeout(200); // Wait after click
+            pass.fill(""); // Clear first
+            page.waitForTimeout(100);
+            pass.type(password, new Locator.TypeOptions().setDelay(50)); // Type with 50ms delay between keys
+        } catch (Throwable t) {
+            logger.warn("Password fill failed, using fallback: {}", t.getMessage());
+            fillByPlaceholder(passwordPlaceholder, password);
+        }
+        
+        // Final stabilization before clicking connect
+        page.waitForTimeout(300);
 
-        // Click Connect with a light retry
+        // Click Connect with robust wait and retry
         Locator connect = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true));
-        try { clickWithRetry(connect, 1, NAVIGATION_WAIT); } catch (Throwable ignored) { connect.click(); }
+        waitVisible(connect, ConfigReader.getVisibilityTimeout());
+        try { 
+            clickWithRetry(connect, 2, 500); // Increased retries and delay
+        } catch (Throwable ignored) { 
+            connect.click(); 
+        }
 
-        // Avoid NETWORKIDLE; wait for a reliable post-login marker instead
+        // Wait for post-login page to fully load with multiple strategies
         boolean visible = false;
+        
+        // Strategy 1: Wait for network to settle
+        try {
+            page.waitForLoadState(LoadState.NETWORKIDLE, 
+                new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getShortTimeout()));
+        } catch (Exception e) {
+            logger.debug("Network idle timeout, continuing with other checks");
+        }
+        
+        // Strategy 2: Wait for plus icon (primary success indicator)
         try {
             waitVisible(plusImg, ConfigReader.getVisibilityTimeout());
             visible = true;
         } catch (Exception ignored) {
-            // Broaden detection: URL or common dashboard markers
-            try { page.waitForURL("**/creator/**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout())); visible = true; } catch (Exception e) { /* ignore */ }
+            // Strategy 3: Check URL pattern
+            try { 
+                page.waitForURL("**/creator/**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout())); 
+                visible = true; 
+            } catch (Exception e) { 
+                logger.debug("URL check failed, using fallback");
+            }
         }
+        
         if (!visible) {
-            // Final fallback to a lighter load-state to not hang
-            try { page.waitForLoadState(LoadState.DOMCONTENTLOADED); } catch (Exception ignored) {}
+            // Final fallback: at least wait for DOM
+            try { 
+                page.waitForLoadState(LoadState.DOMCONTENTLOADED); 
+            } catch (Exception ignored) {}
         }
+        
+        // Additional stabilization wait to ensure page is fully settled
+        page.waitForTimeout(1000);
+        
         logger.info("Clicked Connect; post-login UI visible: {}", visible);
     }
 
