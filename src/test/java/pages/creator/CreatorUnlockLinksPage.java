@@ -38,8 +38,13 @@ public class CreatorUnlockLinksPage extends BasePage {
 
     @Step("Open plus menu on creator screen")
     public void openPlusMenu() {
+        // Login ensures page is fully loaded, just wait for plus icon with stabilization
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
+        
+        // Small stabilization to ensure icon is clickable
+        page.waitForTimeout(300);
+        
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && safeIsVisible(svg.first())) {
             clickWithRetry(svg.first(), 2, CLICK_RETRY_DELAY);
@@ -58,20 +63,27 @@ public class CreatorUnlockLinksPage extends BasePage {
     @Step("Dismiss 'I understand' dialog if present")
     public void clickIUnderstandIfPresent() {
         long start = System.currentTimeMillis();
-        long timeoutMs = LONG_TIMEOUT;
+        long timeoutMs = ConfigReader.getShortTimeout(); // Use configurable timeout instead of hardcoded
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
-                // Try role-based first
-                Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I understand"));
-                if (btn.count() > 0 && safeIsVisible(btn.first())) {
-                    clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
-                    return;
+                // Try multiple language variants (English and French)
+                String[] buttonNames = {"I understand", "C'est compris"};
+                for (String name : buttonNames) {
+                    Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
+                    if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                        clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
+                        return;
+                    }
                 }
-                // Fallbacks: case/selector variants
+                
+                // Fallbacks: case/selector variants for both languages
                 String[] sel = new String[] {
                         "button:has-text('I understand')",
+                        "button:has-text('C\\'est compris')",
                         "text=I understand",
-                        "//*[self::button or self::*][contains(translate(normalize-space(.), 'IUNDERSTAND', 'iunderstand'), 'i understand')]"
+                        "text=C'est compris",
+                        "//*[self::button or self::*][contains(translate(normalize-space(.), 'IUNDERSTAND', 'iunderstand'), 'i understand')]",
+                        "//*[self::button or self::*][contains(normalize-space(.), 'compris')]"
                 };
                 for (String s : sel) {
                     Locator cand = s.startsWith("//") ? page.locator("xpath=" + s) : page.locator(s);
@@ -281,11 +293,41 @@ public class CreatorUnlockLinksPage extends BasePage {
         waitVisible(page.getByText("Important").first(), ConfigReader.getShortTimeout());
     }
 
-    @Step("Click 'C'est compris'")
+    @Step("Click 'C'est compris' or 'Got it'")
     public void clickCEstCompris() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("C'est compris"));
-        waitVisible(btn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
+        // Try multiple language variants (French and English)
+        String[] buttonNames = {"C'est compris", "Got it", "I understand"};
+        
+        for (String name : buttonNames) {
+            try {
+                Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
+                if (btn.count() > 0 && btn.first().isVisible()) {
+                    clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        // Fallback: try text-based selectors
+        String[] selectors = {
+            "button:has-text('C\\'est compris')",
+            "button:has-text('Got it')",
+            "button:has-text('I understand')",
+            "text=C'est compris",
+            "text=Got it"
+        };
+        
+        for (String sel : selectors) {
+            try {
+                Locator btn = page.locator(sel);
+                if (btn.count() > 0 && btn.first().isVisible()) {
+                    clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        throw new RuntimeException("Unable to find 'C'est compris' or 'Got it' button");
     }
 }
 

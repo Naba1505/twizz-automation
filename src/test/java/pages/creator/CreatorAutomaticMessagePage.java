@@ -31,7 +31,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     @Step("Save auto message (no waits)")
     public void clickSaveOnly() {
-        waitVisible(saveButton(), SHORT_TIMEOUT);
+        waitVisible(saveButton(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(saveButton(), 1, BUTTON_RETRY_DELAY);
     }
 
@@ -180,7 +180,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     private boolean clickAnyConfirmDeleteInline() {
         String[] labels = new String[]{"Yes, delete", "Yes, Delete", "Delete", "Yes"};
-        long end = System.currentTimeMillis() + SHORT_TIMEOUT;
+        long end = System.currentTimeMillis() + utils.ConfigReader.getShortTimeout();
         while (System.currentTimeMillis() < end) {
             for (String label : labels) {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
@@ -196,81 +196,81 @@ public class CreatorAutomaticMessagePage extends BasePage {
     // -------- Steps --------
     @Step("Open Settings from profile (Automatic Message)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), MEDIUM_TIMEOUT);
+        waitVisible(settingsIcon(), utils.ConfigReader.getVisibilityTimeout());
         clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
     }
 
     @Step("Open Automatic Message screen")
     public void openAutomaticMessage() {
-        waitVisible(automaticMessageMenu(), SHORT_TIMEOUT);
+        waitVisible(automaticMessageMenu(), utils.ConfigReader.getShortTimeout());
         try { automaticMessageMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         clickWithRetry(automaticMessageMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(automationTitle(), SHORT_TIMEOUT);
+        waitVisible(automationTitle(), utils.ConfigReader.getShortTimeout());
     }
 
     @Step("Assert New subscriber section and info visible")
     public void assertNewSubscriberHeaderAndInfo() {
-        waitVisible(newSubscriberHeading(), SHORT_TIMEOUT);
-        waitVisible(newSubscriberInfoText(), SHORT_TIMEOUT);
+        waitVisible(newSubscriberHeading(), utils.ConfigReader.getShortTimeout());
+        waitVisible(newSubscriberInfoText(), utils.ConfigReader.getShortTimeout());
     }
     
     @Step("Assert Renew subscriber section and info visible")
     public void assertRenewSubscriberHeaderAndInfo() {
-        waitVisible(renewSubscriberHeading(), SHORT_TIMEOUT);
-        waitVisible(renewSubscriberInfoText(), SHORT_TIMEOUT);
+        waitVisible(renewSubscriberHeading(), utils.ConfigReader.getShortTimeout());
+        waitVisible(renewSubscriberInfoText(), utils.ConfigReader.getShortTimeout());
     }
 
     @Step("Click Modify for New subscriber (first)")
     public void clickModifyFirst() {
-        waitVisible(modifyButtonFirst(), SHORT_TIMEOUT);
+        waitVisible(modifyButtonFirst(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(modifyButtonFirst(), 1, BUTTON_RETRY_DELAY);
     }
     
     @Step("Click Modify for Renew subscriber (second)")
     public void clickModifySecond() {
-        waitVisible(modifyButtonSecond(), SHORT_TIMEOUT);
+        waitVisible(modifyButtonSecond(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(modifyButtonSecond(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Assert Unsubscribe section and info visible")
     public void assertUnsubscribeHeaderAndInfo() {
-        waitVisible(unsubscribeHeading(), SHORT_TIMEOUT);
-        waitVisible(unsubscribeInfoText(), SHORT_TIMEOUT);
+        waitVisible(unsubscribeHeading(), utils.ConfigReader.getShortTimeout());
+        waitVisible(unsubscribeInfoText(), utils.ConfigReader.getShortTimeout());
     }
 
     @Step("Click Modify for Unsubscribe (third)")
     public void clickModifyThird() {
-        waitVisible(modifyButtonThird(), SHORT_TIMEOUT);
+        waitVisible(modifyButtonThird(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(modifyButtonThird(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Assert Re-subscription section and info visible")
     public void assertResubscriptionHeaderAndInfo() {
-        waitVisible(resubscriptionHeading(), SHORT_TIMEOUT);
-        waitVisible(resubscriptionInfoText(), SHORT_TIMEOUT);
+        waitVisible(resubscriptionHeading(), utils.ConfigReader.getShortTimeout());
+        waitVisible(resubscriptionInfoText(), utils.ConfigReader.getShortTimeout());
     }
 
     @Step("Click Modify for Re-subscription (fourth)")
     public void clickModifyFourth() {
-        waitVisible(modifyButtonFourth(), SHORT_TIMEOUT);
+        waitVisible(modifyButtonFourth(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(modifyButtonFourth(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Add media via plus > My Device: {filePath}")
     public void addMediaViaPlusFromMyDevice(String filePath) {
-        waitVisible(plusImage(), SHORT_TIMEOUT);
+        waitVisible(plusImage(), utils.ConfigReader.getVisibilityTimeout());
         clickWithRetry(plusImage(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(importationTitle(), SHORT_TIMEOUT);
+        waitVisible(importationTitle(), utils.ConfigReader.getShortTimeout());
         // Avoid native OS file dialog: directly set files on hidden inputs in Importation dialog
         uploadMediaFromDevice(Paths.get(filePath));
     }
 
     @Step("Add media from My Device: {filePath}")
     public void addMediaFromMyDevice(String filePath) {
-        waitVisible(addCircle(), SHORT_TIMEOUT);
+        waitVisible(addCircle(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(addCircle(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(importationTitle(), SHORT_TIMEOUT);
+        waitVisible(importationTitle(), utils.ConfigReader.getShortTimeout());
         // Avoid native OS file dialog: directly set files on hidden inputs in Importation dialog
         uploadMediaFromDevice(Paths.get(filePath));
     }
@@ -303,25 +303,25 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     @Step("Click Next in auto message flow")
     public void clickNext() {
-        waitVisible(nextButton(), SHORT_TIMEOUT);
+        waitVisible(nextButton(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(nextButton(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Fill message and set price to 15€")
     public void fillMessageAndSetPrice(String message) {
-        waitVisible(messageTextbox(), SHORT_TIMEOUT);
+        waitVisible(messageTextbox(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(messageTextbox(), 1, BUTTON_RETRY_DELAY);
         messageTextbox().fill(message);
-        waitVisible(priceLabel15(), SHORT_TIMEOUT);
+        waitVisible(priceLabel15(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(priceLabel15(), 1, BUTTON_RETRY_DELAY);
     }
     
     @Step("Fill message and set price to Free")
     public void fillMessageAndSetPriceFree(String message) {
-        waitVisible(messageTextbox(), SHORT_TIMEOUT);
+        waitVisible(messageTextbox(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(messageTextbox(), 1, BUTTON_RETRY_DELAY);
         messageTextbox().fill(message);
-        waitVisible(priceLabelFree(), SHORT_TIMEOUT);
+        waitVisible(priceLabelFree(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(priceLabelFree(), 1, BUTTON_RETRY_DELAY);
     }
 
@@ -330,7 +330,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
         // Give UI a brief moment after price selection to enable the toggle
         try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
         Locator promoSwitch = anySwitch();
-        waitVisible(promoSwitch, SHORT_TIMEOUT);
+        waitVisible(promoSwitch, utils.ConfigReader.getShortTimeout());
         try { promoSwitch.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
         // Try regular click first
         try { clickWithRetry(promoSwitch, 1, BUTTON_RETRY_DELAY); } catch (Throwable ignored) { }
@@ -348,14 +348,14 @@ public class CreatorAutomaticMessagePage extends BasePage {
             try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
         }
         // Proceed to discount field
-        waitVisible(discountTextboxSecond(), SHORT_TIMEOUT);
+        waitVisible(discountTextboxSecond(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(discountTextboxSecond(), 1, BUTTON_RETRY_DELAY);
         discountTextboxSecond().fill(discount);
     }
 
     @Step("Save auto message and wait for upload to finish")
     public void clickSaveAndWaitUploadComplete() {
-        waitVisible(saveButton(), SHORT_TIMEOUT);
+        waitVisible(saveButton(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(saveButton(), 1, BUTTON_RETRY_DELAY);
         // Poll until uploading indicators and transient alerts are gone (max ~30s)
         for (int i = 0; i < 60; i++) {
@@ -367,10 +367,10 @@ public class CreatorAutomaticMessagePage extends BasePage {
             try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
         }
         // Allow network to settle if supported by current page state
-        try { page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(LONG_TIMEOUT)); } catch (Throwable ignored) {}
+        try { page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(utils.ConfigReader.getMediumTimeout())); } catch (Throwable ignored) {}
         // Finally, wait for the Modify button to be visible again
         try {
-            waitVisible(modifyButtonVisibleAgain(), MEDIUM_TIMEOUT);
+            waitVisible(modifyButtonVisibleAgain(), utils.ConfigReader.getMediumTimeout());
         } catch (Throwable firstWait) {
             // If not visible yet, try dismissing overlays/backdrops and re-wait
             try {
