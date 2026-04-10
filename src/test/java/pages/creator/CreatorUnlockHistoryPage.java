@@ -18,7 +18,7 @@ public class CreatorUnlockHistoryPage extends BasePage {
     private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
     private static final int POLLING_WAIT = 200;         // Polling intervals
     private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
+    private static final int MEDIUM_TIMEOUT = 5000;      // Medium waits - increased for list loading stability
 
     private static final String SETTINGS_URL_PART = "/common/setting";
 

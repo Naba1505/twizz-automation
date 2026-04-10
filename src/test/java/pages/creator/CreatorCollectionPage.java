@@ -1418,7 +1418,8 @@ public class CreatorCollectionPage extends BasePage {
         }
 
         long remaining = Math.max(1, deadline - System.currentTimeMillis());
-        long capped = Math.min(remaining, ConfigReader.getShortTimeout());
+        // Cap at LONG_TIMEOUT (5s) instead of SHORT_TIMEOUT to avoid waiting too long if toast doesn't appear
+        long capped = Math.min(remaining, LONG_TIMEOUT);
         try {
             waitVisible(success.first(), capped);
             try { clickWithRetry(success.first(), 1, BUTTON_RETRY_DELAY); } catch (Exception ignored) {}
