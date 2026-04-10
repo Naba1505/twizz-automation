@@ -37,6 +37,20 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         fanReg.completeFanRegistrationFlow(firstName, lastName, username, email, password);
 
+        // Switch language to English (default is French from SEO team)
+        page.waitForTimeout(2000); // Wait for registration to complete
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
+        page.waitForTimeout(1000);
+        page.getByText("Langue").click();
+        page.waitForTimeout(1000);
+        page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
+        page.waitForTimeout(1000);
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        page.waitForTimeout(500);
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        page.waitForTimeout(2000); // Wait for language change to take effect
+        logger.info("Switched language to English after registration");
+
         // Step 2: Search for creator and subscribe
         FanFreeSubscriptionPage freeSub = new FanFreeSubscriptionPage(page);
 
@@ -104,6 +118,20 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         String password = ConfigReader.getProperty("fan.default.password", "Twizz$123");
 
         fanReg.completeFanRegistrationFlow(firstName, lastName, username, email, password);
+
+        // Switch language to English (default is French from SEO team)
+        page.waitForTimeout(2000); // Wait for registration to complete
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
+        page.waitForTimeout(1000);
+        page.getByText("Langue").click();
+        page.waitForTimeout(1000);
+        page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
+        page.waitForTimeout(1000);
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        page.waitForTimeout(500);
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        page.waitForTimeout(2000); // Wait for language change to take effect
+        logger.info("Switched language to English after registration");
 
         // ===== STEP 2: Fan searches for creator and subscribes =====
         FanPrivateMediaSubscriptionPage fanPage = new FanPrivateMediaSubscriptionPage(page);
@@ -224,6 +252,20 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         String password = ConfigReader.getProperty("fan.default.password", "Twizz$123");
 
         fanReg.completeFanRegistrationFlow(firstName, lastName, username, email, password);
+
+        // Switch language to English (default is French from SEO team)
+        page.waitForTimeout(2000); // Wait for registration to complete
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
+        page.waitForTimeout(1000);
+        page.getByText("Langue").click();
+        page.waitForTimeout(1000);
+        page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
+        page.waitForTimeout(1000);
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        page.waitForTimeout(500);
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        page.waitForTimeout(2000); // Wait for language change to take effect
+        logger.info("Switched language to English after registration");
 
         // Step 2: Search for creator and subscribe
         FanFreeSubscriptionPage freeSub = new FanFreeSubscriptionPage(page);

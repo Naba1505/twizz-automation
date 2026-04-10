@@ -417,24 +417,30 @@ private void confirmDeletionPopup() {
         }
       }
 
-      // Wait for list to load: try multiple selectors
+      // Aggressive scroll to trigger lazy load immediately
+      try {
+        page.evaluate("window.scrollTo(0, 0)");
+        page.waitForTimeout(300);
+        page.evaluate("window.scrollBy(0, 500)");
+        page.waitForTimeout(300);
+        page.evaluate("window.scrollBy(0, -500)");
+        page.waitForTimeout(500);
+      } catch (Exception ignored) {}
+
+      // Wait for list to load: try multiple selectors with increased timeout
       long start = System.currentTimeMillis();
       boolean anyPresent = false;
-      while (System.currentTimeMillis() - start < 5000) {
+      while (System.currentTimeMillis() - start < 10000) {
         int dots = page.locator(".dots-wrapper").count();
         int dotsImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).count();
         int posts = page.locator(".fanProfilePost").count();
-        if (dots > 0 || dotsImg > 0 || posts > 0) { anyPresent = true; break; }
+        if (dots > 0 || dotsImg > 0 || posts > 0) { 
+          anyPresent = true; 
+          logger.info("Found {} publications (dots: {}, dotsImg: {}, posts: {})", 
+                     Math.max(Math.max(dots, dotsImg), posts), dots, dotsImg, posts);
+          break; 
+        }
         try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
-      }
-
-      // Gentle scroll to trigger lazy load if nothing yet
-      if (!anyPresent) {
-        try { page.evaluate("window.scrollTo(0, 0)"); } catch (Exception ignored) {}
-        try { page.evaluate("window.scrollBy(0, 400)"); } catch (Exception ignored) {}
-        anyPresent = page.locator(".dots-wrapper").count() > 0
-                || page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).count() > 0
-                || page.locator(".fanProfilePost").count() > 0;
       }
 
       if (!anyPresent) {
@@ -445,7 +451,18 @@ private void confirmDeletionPopup() {
       // Delete one and loop
       deleteOnePublication();
       deleted++;
-      try { page.waitForTimeout(PAGE_TRANSITION); } catch (Exception ignored) {}
+      
+      // Force a full page reload to ensure the Publications list is completely refreshed
+      try {
+        logger.info("Reloading page to refresh Publications list after deletion");
+        page.reload();
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
+        // Extra wait for UI to stabilize and lazy loading to complete
+        try { page.waitForTimeout(2000); } catch (Exception ignored) {}
+        logger.info("Page reloaded, waiting for Publications list to refresh");
+      } catch (Exception e) {
+        logger.warn("Failed to reload page after deletion: {}", e.getMessage());
+      }
     }
     logger.info("Deleted {} publications (loop until none left)", deleted);
   }

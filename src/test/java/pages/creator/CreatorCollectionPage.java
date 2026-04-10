@@ -788,7 +788,8 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Verify 'No collection at the moment' empty state is visible")
     public void assertNoCollectionsEmptyState() {
         Locator empty = page.getByText("No collection at the moment");
-        waitVisible(empty.first(), ConfigReader.getShortTimeout());
+        // Use medium timeout (30s) to allow time for empty state to appear after deletions
+        waitVisible(empty.first(), ConfigReader.getMediumTimeout());
     }
 
     // Fast, non-throwing check to determine if the empty-state is visible
