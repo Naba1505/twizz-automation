@@ -48,7 +48,9 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
         page.waitForTimeout(500);
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(2000); // Wait for language change to take effect
+        page.waitForTimeout(3000); // Wait for language change to take effect
+        page.waitForLoadState(LoadState.NETWORKIDLE); // Wait for network to be idle
+        page.waitForTimeout(2000); // Additional stabilization for UI re-render
         logger.info("Switched language to English after registration");
 
         // Step 2: Search for creator and subscribe
@@ -130,7 +132,9 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
         page.waitForTimeout(500);
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(2000); // Wait for language change to take effect
+        page.waitForTimeout(3000); // Wait for language change to take effect
+        page.waitForLoadState(LoadState.NETWORKIDLE); // Wait for network to be idle
+        page.waitForTimeout(2000); // Additional stabilization for UI re-render
         logger.info("Switched language to English after registration");
 
         // ===== STEP 2: Fan searches for creator and subscribes =====
@@ -264,7 +268,9 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
         page.waitForTimeout(500);
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(2000); // Wait for language change to take effect
+        page.waitForTimeout(3000); // Wait for language change to take effect
+        page.waitForLoadState(LoadState.NETWORKIDLE); // Wait for network to be idle
+        page.waitForTimeout(2000); // Additional stabilization for UI re-render
         logger.info("Switched language to English after registration");
 
         // Step 2: Search for creator and subscribe
