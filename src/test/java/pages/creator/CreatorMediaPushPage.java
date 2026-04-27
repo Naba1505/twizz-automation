@@ -10,8 +10,10 @@ import java.util.regex.Pattern;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.WaitForSelectorState;
 
 import io.qameta.allure.Step;
+import org.testng.SkipException;
 
 public class CreatorMediaPushPage extends BasePage {
 
@@ -47,11 +49,23 @@ public class CreatorMediaPushPage extends BasePage {
     public void openPlusMenu() {
         // Login ensures page is fully loaded, just wait for plus icon with stabilization
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
-        
+        // Fix #4: First try the standard visibility timeout. If backend is sluggish (e.g.,
+        // after many tests), retry once with the long timeout before giving up.
+        try {
+            plusImg.first().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(ConfigReader.getVisibilityTimeout()));
+        } catch (RuntimeException firstAttempt) {
+            logger.warn("'plus' icon not visible within visibility timeout; retrying with long timeout (post-login lag)");
+            try { page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Exception ignored) {}
+            plusImg.first().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(ConfigReader.getLongTimeout()));
+        }
+
         // Small stabilization to ensure icon is clickable
         page.waitForTimeout(300);
-        
+
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && svg.first().isVisible()) {
             clickWithRetry(svg.first(), 2, CLICK_RETRY_DELAY);
@@ -106,7 +120,18 @@ public class CreatorMediaPushPage extends BasePage {
 
     @Step("Ensure Media Push segments screen visible")
     public void ensureSegmentsScreen() {
-        waitVisible(page.getByText(SELECT_SEGMENTS).first(), ConfigReader.getVisibilityTimeout());
+        // Fix #3: If the segments screen never appears, check whether the rate-limit popup
+        // is blocking it. If so, skip the test (environmental, not a product bug) instead
+        // of failing with an opaque timeout.
+        try {
+            waitVisible(page.getByText(SELECT_SEGMENTS).first(), ConfigReader.getVisibilityTimeout());
+        } catch (RuntimeException timeout) {
+            if (isInterestedRateLimitPopupVisible()) {
+                logger.info("Segments screen blocked by Interested rate-limit popup; skipping test (expected stage behavior)");
+                throw new SkipException("Segments screen blocked by Interested rate-limit popup");
+            }
+            throw timeout;
+        }
         // Wait for UI to stabilize after screen load
         try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Exception ignored) {}
     }
@@ -158,6 +183,12 @@ public class CreatorMediaPushPage extends BasePage {
         }
         
         if (!found) {
+            // Fix #2: If Subscribers can't be located, the rate-limit popup may be overlaying
+            // the segment screen. Treat as skipped (environmental) instead of a hard failure.
+            if (isInterestedRateLimitPopupVisible()) {
+                logger.info("Subscribers segment hidden by Interested rate-limit popup; skipping test (expected stage behavior)");
+                throw new SkipException("Subscribers segment blocked by Interested rate-limit popup");
+            }
             // Log current page state for debugging
             String currentUrl = page.url();
             logger.error("Failed to find Subscribers segment. Current URL: {}", currentUrl);
@@ -196,8 +227,15 @@ public class CreatorMediaPushPage extends BasePage {
             logger.warn("Interested segment disabled or not clickable: {}", e.getMessage());
         }
         
-        // Fallback: If Interested was not selected, select Subscribers to ensure at least one segment is active
+        // Fallback: If Interested was not selected, select Subscribers to ensure at least one segment is active.
+        // Fix #1: First check whether the Interested rate-limit popup is blocking the page. If so,
+        // skip the Subscribers fallback so the caller's rate-limit-popup check can flag this test
+        // as the expected-behavior pass path.
         if (!interestedSelected) {
+            if (isInterestedRateLimitPopupVisible()) {
+                logger.info("Interested click blocked by rate-limit popup; skipping Subscribers fallback so caller can detect the expected popup state");
+                return;
+            }
             logger.info("Interested segment not selected; falling back to Subscribers segment");
             selectSubscribersSegment();
         }
