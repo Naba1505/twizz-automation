@@ -28,9 +28,21 @@ public class CreatorLoginPage extends BasePage {
     public void navigate() {
         // Use env-specific login URL with safe fallback
         String url = ConfigReader.getLoginUrl();
-        page.navigate(url);
-        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        logger.info("Navigated to Creator Login page: {}", url);
+        
+        // Try navigation with retry for slow network conditions
+        int maxRetries = 3;
+        for (int i = 0; i < maxRetries; i++) {
+            try {
+                page.navigate(url, new Page.NavigateOptions().setTimeout(60000)); // 60s timeout
+                page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(30000));
+                logger.info("Navigated to Creator Login page: {}", url);
+                return;
+            } catch (Exception e) {
+                if (i == maxRetries - 1) throw e;
+                logger.warn("Navigation attempt {} failed, retrying...", i + 1);
+                page.waitForTimeout(2000);
+            }
+        }
     }
 
     /**

@@ -1964,48 +1964,58 @@ public class CreatorMessagingPage extends BasePage {
             logger.info("[Messaging] Found message: {}", message);
         }
         
-        // Strategy 1: Find Accept button in the same message container as the message text
-        // Look for Accept button that's a sibling or nearby the message
+        // Poll for Accept button - it may take time to appear after conversation loads
         Locator acceptBtn = null;
+        int maxPollAttempts = 20; // Poll for up to 20 seconds
         
-        // Try to find Accept button within the message's parent container
-        if (messageFound) {
-            // Look for Accept button near the message - check parent containers
-            Locator messageParent = messageLocator.locator("xpath=ancestor::div[contains(@class, 'message') or contains(@class, 'bubble') or contains(@class, 'chat')]");
-            if (messageParent.count() > 0) {
-                Locator nearbyAccept = messageParent.first().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Accept"));
-                if (nearbyAccept.count() > 0 && safeIsVisible(nearbyAccept.first())) {
-                    acceptBtn = nearbyAccept.first();
-                    logger.info("[Messaging] Found Accept button in message container");
+        for (int poll = 0; poll < maxPollAttempts && (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)); poll++) {
+            if (poll > 0) {
+                page.waitForTimeout(SHORT_TIMEOUT); // Wait 1 second between attempts
+            }
+            
+            // Strategy 1: Find Accept button in the same message container as the message text
+            if (messageFound) {
+                Locator messageParent = messageLocator.locator("xpath=ancestor::div[contains(@class, 'message') or contains(@class, 'bubble') or contains(@class, 'chat')]");
+                if (messageParent.count() > 0) {
+                    Locator nearbyAccept = messageParent.first().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Accept"));
+                    if (nearbyAccept.count() > 0 && safeIsVisible(nearbyAccept.first())) {
+                        acceptBtn = nearbyAccept.first();
+                        logger.info("[Messaging] Found Accept button in message container (poll {})", poll + 1);
+                        break;
+                    }
                 }
             }
-        }
-        
-        // Strategy 2: Find the LAST Accept button (most recent message)
-        if (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
-            Locator allAcceptBtns = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
-            int acceptCount = allAcceptBtns.count();
-            logger.info("[Messaging] Found {} Accept buttons on page", acceptCount);
             
-            if (acceptCount > 0) {
-                // Click the LAST Accept button (most recent message at bottom)
-                acceptBtn = allAcceptBtns.last();
-                logger.info("[Messaging] Using last Accept button (most recent)");
+            // Strategy 2: Find the LAST Accept button (most recent message)
+            if (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
+                Locator allAcceptBtns = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept"));
+                int acceptCount = allAcceptBtns.count();
+                
+                if (acceptCount > 0) {
+                    acceptBtn = allAcceptBtns.last();
+                    logger.info("[Messaging] Found last Accept button (poll {}, count {})", poll + 1, acceptCount);
+                    break;
+                }
+            }
+            
+            // Strategy 3: Try text-based locator as fallback
+            if (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
+                Locator allAcceptText = page.getByText("Accept");
+                if (allAcceptText.count() > 0) {
+                    acceptBtn = allAcceptText.last();
+                    logger.info("[Messaging] Found Accept text element (poll {})", poll + 1);
+                    break;
+                }
+            }
+            
+            if (poll % 5 == 0) {
+                logger.info("[Messaging] Polling for Accept button... ({}/{})", poll + 1, maxPollAttempts);
             }
         }
         
-        // Strategy 3: Try text-based locator as fallback
+        // If still not found after polling, the message might already be accepted
         if (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
-            Locator allAcceptText = page.getByText("Accept");
-            if (allAcceptText.count() > 0) {
-                acceptBtn = allAcceptText.last();
-                logger.info("[Messaging] Using last Accept text element");
-            }
-        }
-        
-        // If still not found, the message might already be accepted or we're in wrong conversation
-        if (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)) {
-            logger.warn("[Messaging] No Accept button found - message may already be accepted or wrong conversation");
+            logger.warn("[Messaging] No Accept button found after {} polls - message may already be accepted", maxPollAttempts);
             throw new RuntimeException("No Accept button found. Message found: " + messageFound + ", Message: " + message);
         }
         
@@ -2150,9 +2160,20 @@ public class CreatorMessagingPage extends BasePage {
         clickPlusIconForMedia();
         verifyImportationPopup();
         
-        // First try to find file input directly
-        Locator fileInput = page.locator("input[type='file']");
-        if (fileInput.count() > 0) {
+        // Wait for file input to be available (it may take time after popup opens)
+        page.waitForTimeout(SHORT_TIMEOUT);
+        
+        // First try to find file input directly with retry
+        Locator fileInput = null;
+        for (int i = 0; i < 5; i++) {
+            fileInput = page.locator("input[type='file']");
+            if (fileInput.count() > 0) {
+                break;
+            }
+            page.waitForTimeout(SHORT_TIMEOUT);
+        }
+        
+        if (fileInput != null && fileInput.count() > 0) {
             logger.info("[Messaging] Using existing input[type=file] to upload: {}", filePath.getFileName());
             fileInput.first().setInputFiles(filePath);
             logger.info("[Messaging] File selected: {}", filePath.getFileName());
