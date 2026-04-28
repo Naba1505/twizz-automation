@@ -1603,14 +1603,14 @@ public class CreatorScriptsPage extends BasePage {
         try { page.waitForTimeout(250); } catch (Throwable ignored) { }
     }
 
-    @Step("Delete a single QA bookmark")
+    @Step("Delete a single test bookmark (QA_ or QF_ pattern)")
     private boolean deleteSingleQABookmark() {
-        // Find any bookmark tab starting with "QA_"
+        // Find any bookmark tab starting with "QA_" or "QF_" (Quick Files)
         Locator qaBookmarkTab = page.getByRole(AriaRole.TAB,
-                new Page.GetByRoleOptions().setName(Pattern.compile("^QA_.*")));
+                new Page.GetByRoleOptions().setName(Pattern.compile("^(QA_|QF_).*")));
         
         if (qaBookmarkTab.count() == 0) {
-            logger.info("No QA bookmark tabs found");
+            logger.info("No QA or QF bookmark tabs found");
             return false;
         }
         
@@ -1673,7 +1673,7 @@ public class CreatorScriptsPage extends BasePage {
         return true;
     }
 
-    @Step("Verify all QA bookmarks are deleted")
+    @Step("Verify all test bookmarks are deleted (QA_ and QF_ patterns)")
     private boolean verifyAllBookmarksDeleted() {
         // Primary check: "You haven't created any" text visible (indicates no scripts/bookmarks)
         Locator noScriptsText = page.getByText("You haven't created any");
@@ -1689,11 +1689,11 @@ public class CreatorScriptsPage extends BasePage {
             return true;
         }
         
-        // Check if any QA bookmarks remain
+        // Check if any QA or QF bookmarks remain
         Locator qaBookmarkTab = page.getByRole(AriaRole.TAB,
-                new Page.GetByRoleOptions().setName(Pattern.compile("^QA_.*")));
+                new Page.GetByRoleOptions().setName(Pattern.compile("^(QA_|QF_).*")));
         if (qaBookmarkTab.count() == 0) {
-            logger.info("No QA bookmark tabs remaining");
+            logger.info("No QA or QF bookmark tabs remaining");
             return true;
         }
         
