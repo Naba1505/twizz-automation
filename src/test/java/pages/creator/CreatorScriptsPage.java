@@ -1667,14 +1667,27 @@ public class CreatorScriptsPage extends BasePage {
         clickWithRetry(confirmBtn.first(), 1, POLLING_WAIT);
         logger.info("Clicked Confirm button - bookmark '{}' deleted", bookmarkName);
         
-        // Wait for deletion to complete
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
+        // Wait for deletion to complete and UI to update
+        try { page.waitForTimeout(2000); } catch (Throwable ignored) { }
         
         return true;
     }
 
     @Step("Verify all test bookmarks are deleted (QA_ and QF_ patterns)")
     private boolean verifyAllBookmarksDeleted() {
+        // Wait briefly for UI to settle before checking
+        try { page.waitForTimeout(500); } catch (Throwable ignored) { }
+        
+        // Check if any QA or QF bookmarks remain
+        Locator qaBookmarkTab = page.getByRole(AriaRole.TAB,
+                new Page.GetByRoleOptions().setName(Pattern.compile("^(QA_|QF_).*")));
+        int count = qaBookmarkTab.count();
+        logger.info("Remaining QA/QF bookmark tabs: {}", count);
+        if (count == 0) {
+            logger.info("No QA or QF bookmark tabs remaining");
+            return true;
+        }
+        
         // Primary check: "You haven't created any" text visible (indicates no scripts/bookmarks)
         Locator noScriptsText = page.getByText("You haven't created any");
         if (noScriptsText.count() > 0 && safeIsVisible(noScriptsText.first())) {
@@ -1682,27 +1695,12 @@ public class CreatorScriptsPage extends BasePage {
             return true;
         }
         
-        // Secondary check: note element visible
-        Locator noteElement = page.locator("div[role='note']");
-        if (noteElement.count() > 0 && safeIsVisible(noteElement.first())) {
-            logger.info("Note element visible - all bookmarks deleted");
-            return true;
-        }
-        
-        // Check if any QA or QF bookmarks remain
-        Locator qaBookmarkTab = page.getByRole(AriaRole.TAB,
-                new Page.GetByRoleOptions().setName(Pattern.compile("^(QA_|QF_).*")));
-        if (qaBookmarkTab.count() == 0) {
-            logger.info("No QA or QF bookmark tabs remaining");
-            return true;
-        }
-        
         return false;
     }
 
-    @Step("Delete all QA bookmarks and their associated scripts")
+    @Step("Delete all test bookmarks (QA_ and QF_ patterns) and their associated scripts")
     public void deleteAllQABookmarks() {
-        logger.info("Starting cleanup: deleting all QA bookmarks and associated scripts");
+        logger.info("Starting cleanup: deleting all test bookmarks (QA_ and QF_) and associated scripts");
         
         // Navigate to Scripts screen
         openSettingsFromProfile();
@@ -1721,7 +1719,7 @@ public class CreatorScriptsPage extends BasePage {
         for (int i = 0; i < maxAttempts; i++) {
             // Check if all bookmarks are deleted
             if (verifyAllBookmarksDeleted()) {
-                logger.info("All QA bookmarks have been deleted. Total deleted: {}", deletedCount);
+                logger.info("All test bookmarks deleted. Total deleted: {}", deletedCount);
                 break;
             }
             
@@ -1732,12 +1730,12 @@ public class CreatorScriptsPage extends BasePage {
                 logger.info("Deleted bookmark #{}", deletedCount);
             } else {
                 // No more bookmarks to delete or error occurred
-                logger.info("No more QA bookmarks to delete or deletion failed");
+                logger.info("No more test bookmarks to delete or deletion failed");
                 break;
             }
             
-            // Small delay between deletions
-            try { page.waitForTimeout(250); } catch (Throwable ignored) { }
+            // Wait for UI to update before next iteration
+            try { page.waitForTimeout(1000); } catch (Throwable ignored) { }
         }
         
         logger.info("Bookmark cleanup completed. Total bookmarks deleted: {}", deletedCount);
