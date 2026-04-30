@@ -37,10 +37,6 @@ public class CreatorLegalPages extends BasePage {
     }
 
     // ---------- Locators ----------
-    private Locator settingsIcon() {
-        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("settings"));
-    }
-
     private Locator termsAndConditionsOfSaleMenu() {
         return page.getByText("Terms and conditions of sale");
     }

@@ -2,8 +2,6 @@ package pages.fan;
 
 import pages.common.BasePage;
 
-import java.util.regex.Pattern;
-
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;

@@ -19,8 +19,6 @@ public class CreatorAutomaticMessagePage extends BasePage {
     private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
     private static final int POLLING_WAIT = 250;         // Polling intervals
     private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits
-    private static final int LONG_TIMEOUT = 5000;        // Long waits for uploads
     private static final int UPLOAD_TIMEOUT = 25000;     // Upload completion timeout
 
     private static final String SETTINGS_URL_PART = "/common/setting";

@@ -21,7 +21,6 @@ public class CreatorPublicationPage extends BasePage {
     private static final int NAVIGATION_WAIT = 100;      // Navigation delays
     private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
     private static final int CLICK_RETRY_DELAY = 200;    // Standard click retry
-    private static final int PAGE_TRANSITION = 250;      // Page transition delays
     private static final int POST_ACTION_WAIT = 300;     // Post-action wait
     private static final int LONG_TIMEOUT = 10000;       // Long waits (increased from 5000)
     private static final int POST_CLICK_TIMEOUT = 6000;  // Post entry click timeout

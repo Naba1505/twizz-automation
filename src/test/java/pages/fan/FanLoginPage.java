@@ -16,7 +16,6 @@ public class FanLoginPage extends BasePage {
     // Timeout constants (in milliseconds) - Standardized values (optimized)
     private static final int VISIBILITY_TIMEOUT = 3000;    // Element visibility timeout
     private static final int LOGIN_TIMEOUT = 10000;       // Home icon wait after login
-    private static final int NAVIGATION_TIMEOUT = 5000;   // Page navigation timeout
 
     private final String usernamePlaceholder = "Email address or username";
     private final String passwordPlaceholder = "Password";

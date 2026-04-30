@@ -17,10 +17,8 @@ public class FanMyCreatorsPage extends BasePage {
     
     // Timeout constants (in milliseconds) - Standardized values (optimized)
     private static final int SCROLL_WAIT = 300;           // Wait between scroll actions
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
     private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
     private static final int LOAD_WAIT = 2000;            // Wait for page to load
-    private static final int DETAIL_VIEW_WAIT = 1500;     // Wait for detail view to load
     
     // Scroll configuration constants
     private static final int MAX_SCROLL_ATTEMPTS = 10;     // Maximum scroll attempts

@@ -21,8 +21,6 @@ public class CreatorScriptsPage extends BasePage {
     // Timeout constants (in milliseconds) - Standardized values (optimized)
     // Reduced from SHORT_TIMEOUT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
     private static final int POLLING_WAIT = 200;         // Polling intervals
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 20000ms)
 
     public CreatorScriptsPage(Page page) {
         super(page);

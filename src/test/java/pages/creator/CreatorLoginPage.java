@@ -12,9 +12,6 @@ import utils.ConfigReader;
 
 public class CreatorLoginPage extends BasePage {
 
-    // Timeout constants (in milliseconds) - Standardized values
-    private static final int NAVIGATION_WAIT = 100; // Navigation delays
-
     private final String usernamePlaceholder = "Email address or username";
     private final String passwordPlaceholder = "Password";
     private final String connectButtonName = "Connect";
@@ -122,7 +119,7 @@ public class CreatorLoginPage extends BasePage {
             page.waitForTimeout(200); // Wait after click
             user.fill(""); // Clear first
             page.waitForTimeout(100);
-            user.type(username, new Locator.TypeOptions().setDelay(50)); // Type with 50ms delay between keys
+            user.pressSequentially(username, new Locator.PressSequentiallyOptions().setDelay(50)); // Type with 50ms delay between keys
         } catch (Throwable t) {
             logger.warn("Username fill failed, using fallback: {}", t.getMessage());
             fillByPlaceholder(usernamePlaceholder, username);
@@ -134,7 +131,7 @@ public class CreatorLoginPage extends BasePage {
             page.waitForTimeout(200); // Wait after click
             pass.fill(""); // Clear first
             page.waitForTimeout(100);
-            pass.type(password, new Locator.TypeOptions().setDelay(50)); // Type with 50ms delay between keys
+            pass.pressSequentially(password, new Locator.PressSequentiallyOptions().setDelay(50)); // Type with 50ms delay between keys
         } catch (Throwable t) {
             logger.warn("Password fill failed, using fallback: {}", t.getMessage());
             fillByPlaceholder(passwordPlaceholder, password);

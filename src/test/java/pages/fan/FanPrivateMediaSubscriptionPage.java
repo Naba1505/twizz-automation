@@ -77,7 +77,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
     }
 
-    private Locator twizzMessagesIcon() {
+    Locator twizzMessagesIcon() {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Twizz messages"));
     }
 

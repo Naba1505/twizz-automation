@@ -49,7 +49,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe"));
     }
 
-    private Locator freeSubscriptionText() {
+    Locator freeSubscriptionText() {
         return page.getByText("Subscription is free when");
     }
 
@@ -81,11 +81,11 @@ public class FanFreeSubscriptionPage extends BasePage {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
     }
 
-    private Locator collectionText() {
+    Locator collectionText() {
         return page.getByText("Collection", new Page.GetByTextOptions().setExact(true));
     }
 
-    private Locator backIcon() {
+    Locator backIcon() {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("back"));
     }
 

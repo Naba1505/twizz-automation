@@ -74,19 +74,19 @@ public class FanMessagingPage extends BasePage {
     }
     
     // Manual payment fields
-    private Locator cardNumberInput() {
+    Locator cardNumberInput() {
         return page.getByPlaceholder("Card number");
     }
     
-    private Locator expiryDateInput() {
+    Locator expiryDateInput() {
         return page.getByPlaceholder("MM / YY");
     }
     
-    private Locator cvvInput() {
+    Locator cvvInput() {
         return page.getByPlaceholder("CVV");
     }
     
-    private Locator cardholderNameInput() {
+    Locator cardholderNameInput() {
         return page.getByPlaceholder("Cardholder name");
     }
 
