@@ -27,7 +27,6 @@ public class CreatorLivePage extends BasePage {
     private static final int POST_ACTION_WAIT = 300;     // Post-action wait
     private static final int SHORT_TIMEOUT = 2000;       // Short waits
     private static final int MEDIUM_TIMEOUT = 3000;      // Medium waits
-    private static final int LONG_TIMEOUT = 5000;        // Long waits
     private static final int EDIT_TIMEOUT = 8000;    // Edit button wait timeout
 
     // UI strings
@@ -328,72 +327,149 @@ public class CreatorLivePage extends BasePage {
             logger.info("Requested past date; clamped to today: {}", when.toLocalDate());
         }
 
-        // Open the date picker panel
-        Locator dateField = page.getByPlaceholder(DATE_PLACEHOLDER);
-        dateField.first().click();
-
-        // Ensure the dropdown/panel is visible
-        Locator panel = visibleDatePanel();
-        waitVisible(panel, LONG_TIMEOUT);
-
-        // 1) Select Year using header button, then the year cell
         String yearStr = String.valueOf(when.getYear());
-        Locator yearBtn = panel.locator(".ant-picker-year-btn");
-        if (yearBtn.count() > 0) {
-            clickWithRetry(yearBtn.first(), 2, BUTTON_RETRY_DELAY);
-            Locator yearCell = page.locator(".ant-picker-year-panel").getByText(yearStr, new Locator.GetByTextOptions().setExact(true));
-            if (yearCell.count() == 0) {
-                // fallback within the panel
-                yearCell = panel.getByText(yearStr, new Locator.GetByTextOptions().setExact(true));
-            }
-            if (yearCell.count() > 0) {
-                clickWithRetry(yearCell.first(), 2, BUTTON_RETRY_DELAY);
-                logger.info("Picked year {}", yearStr);
-            } else {
-                logger.warn("Could not locate target year {}", yearStr);
-            }
-        }
-
-        // 2) Select Month using header button, then the month cell (e.g., "Aug")
-        String monStr = when.format(DateTimeFormatter.ofPattern("MMM"));
-        Locator monthBtn = panel.locator(".ant-picker-month-btn");
-        if (monthBtn.count() > 0) {
-            clickWithRetry(monthBtn.first(), 2, BUTTON_RETRY_DELAY);
-            Locator monthCell = page.locator(".ant-picker-month-panel").getByText(monStr, new Locator.GetByTextOptions().setExact(true));
-            if (monthCell.count() == 0) {
-                monthCell = panel.getByText(monStr, new Locator.GetByTextOptions().setExact(true));
-            }
-            if (monthCell.count() > 0) {
-                clickWithRetry(monthCell.first(), 2, BUTTON_RETRY_DELAY);
-                logger.info("Picked month {}", monStr);
-            } else {
-                logger.warn("Could not locate target month {}", monStr);
-            }
-        }
-
-        // 3) Click a non-disabled in-view day cell matching the target day
+        String[] monthNames = {"January", "February", "March", "April", "May", "June", 
+                               "July", "August", "September", "October", "November", "December"};
+        String monthName = monthNames[when.getMonthValue() - 1];
         String dayText = String.valueOf(when.getDayOfMonth());
-        Locator dayCell = panel.locator("td.ant-picker-cell-in-view:not(.ant-picker-cell-disabled) .ant-picker-cell-inner")
-                .getByText(dayText, new Locator.GetByTextOptions().setExact(true));
-        if (dayCell.count() == 0) {
-            // Fallback: look globally within any open picker dropdown
-            dayCell = page.locator(".ant-picker-dropdown td.ant-picker-cell-in-view:not(.ant-picker-cell-disabled) .ant-picker-cell-inner")
-                    .getByText(dayText, new Locator.GetByTextOptions().setExact(true));
-        }
-        if (dayCell.count() > 0) {
-            clickWithRetry(dayCell.first(), 2, BUTTON_RETRY_DELAY);
-            logger.info("Picked date day {}", dayText);
-        } else {
-            logger.warn("Could not find enabled day cell for {}", dayText);
-        }
-    }
 
-    private Locator visibleDatePanel() {
-        // Ant Design renders a dropdown; ensure we target the visible panel
-        Locator dropdown = page.locator(".ant-picker-dropdown:visible .ant-picker-panel");
-        if (dropdown.count() > 0) return dropdown.first();
-        Locator panel = page.locator(".ant-picker-panel");
-        return panel.count() > 0 ? panel.first() : page.locator("body");
+        // Open the date picker with retry
+        boolean pickerOpened = false;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                Locator dateField = page.getByPlaceholder(DATE_PLACEHOLDER);
+                dateField.first().click();
+                logger.info("Clicked date picker (attempt {})", attempt);
+                page.waitForTimeout(POST_ACTION_WAIT);
+                
+                // Verify calendar modal appeared
+                if (page.locator(".calendar-modal-overlay").isVisible()) {
+                    pickerOpened = true;
+                    logger.info("Calendar modal opened successfully");
+                    break;
+                }
+            } catch (Exception e) {
+                logger.warn("Attempt {} to open date picker failed: {}", attempt, e.getMessage());
+                page.waitForTimeout(POST_ACTION_WAIT);
+            }
+        }
+
+        if (!pickerOpened) {
+            logger.warn("Failed to open calendar modal after 3 attempts");
+            return;
+        }
+
+        // Select year - click on year header to open year selector, then select target year
+        try {
+            Locator yearHeader = page.locator(".calendar-header-text.clickable").filter(new Locator.FilterOptions().setHasText(Pattern.compile("\\d{4}")));
+            if (WaitUtils.waitForVisible(yearHeader, SHORT_TIMEOUT)) {
+                yearHeader.first().click();
+                logger.info("Clicked year header to open year selector");
+                page.waitForTimeout(POST_ACTION_WAIT);
+                
+                // Select target year using .year-selector-item to avoid strict mode violation
+                Locator yearOption = page.locator(".year-selector-item").filter(new Locator.FilterOptions().setHasText(yearStr));
+                if (WaitUtils.waitForVisible(yearOption, SHORT_TIMEOUT)) {
+                    yearOption.click();
+                    logger.info("Selected year: {}", yearStr);
+                    page.waitForTimeout(POST_ACTION_WAIT);
+                } else {
+                    logger.warn("Year option not visible: {}", yearStr);
+                }
+            } else {
+                logger.warn("Year header not visible");
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to select year: {}", e.getMessage());
+            return;
+        }
+
+        // Select month - click on month header to open month selector, then select target month
+        try {
+            // Click month header (first clickable header text after year selection)
+            Locator monthHeader = page.locator(".calendar-header-text.clickable").first();
+            if (WaitUtils.waitForVisible(monthHeader, SHORT_TIMEOUT)) {
+                monthHeader.click();
+                logger.info("Clicked month header to open month selector");
+                page.waitForTimeout(POST_ACTION_WAIT);
+                
+                // Select target month from month selector
+                Locator monthOption = page.locator(".month-selector-item").filter(new Locator.FilterOptions().setHasText(monthName));
+                if (WaitUtils.waitForVisible(monthOption, SHORT_TIMEOUT)) {
+                    monthOption.click();
+                    logger.info("Selected month: {}", monthName);
+                    page.waitForTimeout(POST_ACTION_WAIT);
+                } else {
+                    logger.warn("Month option not visible: {}", monthName);
+                }
+            } else {
+                logger.warn("Month header not visible");
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to select month: {}", e.getMessage());
+            return;
+        }
+
+        // Select day with retry
+        boolean daySelected = false;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                Locator dayOption = page.locator(".calendar-day").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^" + dayText + "$")));
+                if (dayOption.count() == 0) {
+                    // Fallback to getByText with exact match
+                    dayOption = page.getByText(dayText, new Page.GetByTextOptions().setExact(true));
+                }
+                
+                if (WaitUtils.waitForVisible(dayOption, SHORT_TIMEOUT)) {
+                    dayOption.first().click();
+                    logger.info("Selected day: {} (attempt {})", dayText, attempt);
+                    page.waitForTimeout(POST_ACTION_WAIT);
+                    daySelected = true;
+                    break;
+                }
+            } catch (Exception e) {
+                logger.warn("Attempt {} to select day failed: {}", attempt, e.getMessage());
+                page.waitForTimeout(BUTTON_RETRY_DELAY);
+            }
+        }
+
+        if (!daySelected) {
+            logger.warn("Failed to select day after 3 attempts");
+            return;
+        }
+
+        // Click Confirm button with retry
+        boolean confirmed = false;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                Locator confirmBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
+                if (WaitUtils.waitForVisible(confirmBtn, SHORT_TIMEOUT)) {
+                    confirmBtn.click();
+                    logger.info("Clicked Confirm button (attempt {})", attempt);
+                    page.waitForTimeout(POST_ACTION_WAIT);
+                    
+                    // Verify calendar modal closed
+                    if (!page.locator(".calendar-modal-overlay").isVisible()) {
+                        confirmed = true;
+                        logger.info("Calendar modal closed successfully");
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Attempt {} to click Confirm failed: {}", attempt, e.getMessage());
+                page.waitForTimeout(BUTTON_RETRY_DELAY);
+            }
+        }
+
+        if (!confirmed) {
+            logger.warn("Failed to confirm date selection, attempting to close modal with Escape");
+            try {
+                page.keyboard().press("Escape");
+                page.waitForTimeout(POST_ACTION_WAIT);
+            } catch (Exception ignored) {}
+        }
+
+        logger.info("Date picked: {}-{}-{}", yearStr, monthName, dayText);
     }
 
     @Step("Pick time for {when}")

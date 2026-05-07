@@ -18,7 +18,6 @@ public class CreatorRegistrationPage extends BasePage {
     private static final int PAGE_TRANSITION = 250;      // Page transition delays
     private static final int STABILIZATION_WAIT = 500;   // UI stabilization
     private static final int SHORT_TIMEOUT = 2000;       // Short waits
-    private static final int MEDIUM_TIMEOUT = 3000;      // Medium waits
     private static final int LONG_TIMEOUT = 5000;        // Long waits
     private static final int FILE_INPUT_DEADLINE = 5000; // For file input polling deadline
 
@@ -27,7 +26,7 @@ public class CreatorRegistrationPage extends BasePage {
     private final String usernameInput = "[placeholder='User name']";
     private final String firstNameInput = "[placeholder='First name']";
     private final String lastNameInput = "input[name=\"lastName\"]";
-    private final String datePicker = "[placeholder='Date of birth']";
+    private final String datePicker = "input.datePicker.darkDatePickerSignup";
     private final String emailInput = "[placeholder='Email address']";
     private final String passwordInput = "[placeholder='Password']";
     private final String phoneNumberInput = "[placeholder='Number']";
@@ -80,142 +79,165 @@ public class CreatorRegistrationPage extends BasePage {
         String month = dateParts[1];
         String year = dateParts[2];
 
-        // Map numeric month to German month name (as per Codegen)
-        int monthIndex = Integer.parseInt(month) - 1; // 0-based index for AntD month grid
+        // Map month number to month name
+        String[] monthNames = {"January", "February", "March", "April", "May", "June", 
+                               "July", "August", "September", "October", "November", "December"};
+        int monthNum = Integer.parseInt(month);
+        String monthName = monthNames[monthNum - 1];
         String dayText = String.valueOf(Integer.parseInt(day)); // normalize no leading zero
 
-        page.locator(datePicker).click();
-        logger.info("Clicked date picker");
-
-        // Wait for visible picker
-        Locator picker = page.locator(".ant-picker-dropdown:visible");
-        if (!WaitUtils.waitForVisible(picker, LONG_TIMEOUT)) {
-            logger.warn("Date picker dropdown did not become visible; attempting typing fallback");
-            typeDobFallback(day, month, year);
-            return;
-        }
-
-        // Move to year panel using AntD header buttons (locale-agnostic)
-        Locator yearBtn = picker.locator(".ant-picker-year-btn");
-        if (yearBtn.count() > 0) {
-            yearBtn.first().click();
-            page.waitForTimeout(POLLING_WAIT);
-            // Some versions need a second click to move to decade view
-            if (picker.locator(".ant-picker-year-panel").count() == 0) {
-                yearBtn.first().click();
-                page.waitForTimeout(POLLING_WAIT);
-            }
-        } else {
-            // Fallback to header view buttons
-            Locator headerViewBtn = picker.locator(".ant-picker-header-view button");
-            int toggleGuard = 0;
-            while (picker.locator(".ant-picker-year-panel").count() == 0 && toggleGuard++ < 3) {
-                if (headerViewBtn.count() > 0) headerViewBtn.first().click();
-                page.waitForTimeout(POLLING_WAIT);
-            }
-        }
-
-        // If year panel still not visible quickly, fall back to typing to avoid flakiness
-        if (picker.locator(".ant-picker-year-panel").count() == 0) {
-            logger.warn("Year panel not detected; using typing fallback for DOB");
-            typeDobFallback(day, month, year);
-            return;
-        }
-        if (!WaitUtils.waitForVisible(picker.locator(".ant-picker-year-panel"), SHORT_TIMEOUT)) {
-            logger.warn("Year panel not visible after toggle; using typing fallback for DOB");
-            typeDobFallback(day, month, year);
-            return;
-        }
-
-        // Navigate decades until target year is within the visible range
-        int targetYear = Integer.parseInt(year);
-        int navGuard = 0;
-        while (navGuard++ < 24) { // up to ~24 decade moves
-            Locator yCells = picker.locator(".ant-picker-year-panel .ant-picker-cell .ant-picker-cell-inner");
-            if (yCells.count() == 0) break;
-            String firstTxt = yCells.first().innerText().replaceAll("[^0-9]", "");
-            String lastTxt = yCells.nth(yCells.count() - 1).innerText().replaceAll("[^0-9]", "");
+        // Click date picker with retry
+        boolean pickerOpened = false;
+        for (int attempt = 1; attempt <= 3; attempt++) {
             try {
-                int minY = Integer.parseInt(firstTxt);
-                int maxY = Integer.parseInt(lastTxt);
-                if (targetYear >= minY && targetYear <= maxY) {
-                    break; // target in view
+                page.locator(datePicker).click();
+                logger.info("Clicked date picker (attempt {})", attempt);
+                page.waitForTimeout(STABILIZATION_WAIT);
+                
+                // Verify calendar modal appeared
+                if (page.locator(".calendar-modal-overlay").isVisible()) {
+                    pickerOpened = true;
+                    logger.info("Calendar modal opened successfully");
+                    break;
                 }
-                if (targetYear < minY) {
-                    Locator prev = picker.locator(".ant-picker-header-super-prev-btn");
-                    if (prev.count() > 0) { prev.first().click(); page.waitForTimeout(POLLING_WAIT); } else { break; }
+            } catch (Exception e) {
+                logger.warn("Attempt {} to open date picker failed: {}", attempt, e.getMessage());
+                page.waitForTimeout(STABILIZATION_WAIT);
+            }
+        }
+
+        if (!pickerOpened) {
+            logger.warn("Failed to open calendar modal after 3 attempts, using typing fallback");
+            typeDobFallback(day, month, year);
+            return;
+        }
+
+        // Select year - click on year header to open year selector, then select target year
+        try {
+            // Wait for year selector to be visible
+            Locator yearHeader = page.locator(".calendar-header-text.clickable").filter(new Locator.FilterOptions().setHasText(Pattern.compile("\\d{4}")));
+            if (WaitUtils.waitForVisible(yearHeader, SHORT_TIMEOUT)) {
+                yearHeader.first().click();
+                logger.info("Clicked year header to open year selector");
+                page.waitForTimeout(STABILIZATION_WAIT);
+                
+                // Select target year
+                Locator yearOption = page.getByText(year, new Page.GetByTextOptions().setExact(true));
+                if (WaitUtils.waitForVisible(yearOption, SHORT_TIMEOUT)) {
+                    yearOption.click();
+                    logger.info("Selected year: {}", year);
+                    page.waitForTimeout(STABILIZATION_WAIT);
                 } else {
-                    Locator next = picker.locator(".ant-picker-header-super-next-btn");
-                    if (next.count() > 0) { next.first().click(); page.waitForTimeout(POLLING_WAIT); } else { break; }
+                    throw new Exception("Year option not visible: " + year);
                 }
-            } catch (Exception ignored) { break; }
+            } else {
+                throw new Exception("Year header not visible");
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to select year: {}, attempting fallback", e.getMessage());
+            typeDobFallback(day, month, year);
+            return;
         }
 
-        // Select desired year (click enabled cell)
-        Locator yearCell = picker.locator(".ant-picker-year-panel .ant-picker-cell:not(.ant-picker-cell-disabled) .ant-picker-cell-inner").filter(new Locator.FilterOptions().setHasText(year));
-        WaitUtils.waitForVisible(yearCell, MEDIUM_TIMEOUT);
-        yearCell.first().click();
-        logger.info("Selected year: {}", year);
-
-        // Wait for month panel and select month by index (locale-agnostic)
-        WaitUtils.waitForVisible(picker.locator(".ant-picker-month-panel"), MEDIUM_TIMEOUT);
-        Locator monthCells = picker.locator(".ant-picker-month-panel .ant-picker-cell:not(.ant-picker-cell-disabled)");
-        if (monthCells.count() >= monthIndex + 1) {
-            monthCells.nth(monthIndex).locator(".ant-picker-cell-inner").click();
-            logger.info("Selected month index: {}", monthIndex + 1);
-        } else {
-            logger.warn("Month cells not sufficient ({}), expected index {}. Falling back to first month.", monthCells.count(), monthIndex);
-            monthCells.first().locator(".ant-picker-cell-inner").click();
+        // Select month - click on month header to open month selector, then select target month
+        try {
+            // Click month header (first clickable header text after year selection)
+            Locator monthHeader = page.locator(".calendar-header-text.clickable").first();
+            if (WaitUtils.waitForVisible(monthHeader, SHORT_TIMEOUT)) {
+                monthHeader.click();
+                logger.info("Clicked month header to open month selector");
+                page.waitForTimeout(STABILIZATION_WAIT);
+                
+                // Select target month from month selector
+                Locator monthOption = page.locator(".month-selector-item").filter(new Locator.FilterOptions().setHasText(monthName));
+                if (WaitUtils.waitForVisible(monthOption, SHORT_TIMEOUT)) {
+                    monthOption.click();
+                    logger.info("Selected month: {}", monthName);
+                    page.waitForTimeout(STABILIZATION_WAIT);
+                } else {
+                    throw new Exception("Month option not visible: " + monthName);
+                }
+            } else {
+                throw new Exception("Month header not visible");
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to select month: {}, attempting fallback", e.getMessage());
+            typeDobFallback(day, month, year);
+            return;
         }
 
-        // Wait for date panel and select day (enabled cell only)
-        WaitUtils.waitForVisible(picker.locator(".ant-picker-date-panel"), MEDIUM_TIMEOUT);
-        Locator dayCell = picker.locator(".ant-picker-date-panel .ant-picker-cell-in-view:not(.ant-picker-cell-disabled) .ant-picker-cell-inner").filter(new Locator.FilterOptions().setHasText(dayText));
-        WaitUtils.waitForVisible(dayCell, MEDIUM_TIMEOUT);
-        dayCell.first().click();
-        logger.info("Selected day: {}", dayText);
-
-        // Close picker robustly and verify input is populated
-        try {
-            page.keyboard().press("Escape");
-            page.waitForTimeout(POLLING_WAIT);
-        } catch (Exception ignored) {}
-        if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
-            page.getByRole(AriaRole.MAIN).click();
-        }
-        // Wait until dropdown is hidden (best-effort)
-        try {
-            Locator visible = page.locator(".ant-picker-dropdown:visible");
-            if (visible.count() > 0) {
-                visible.first().waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.HIDDEN).setTimeout(SHORT_TIMEOUT));
-            }
-        } catch (Exception ignored) {}
-
-        // Ensure the date input has a value, otherwise fallback to typing
-        try {
-            Locator input = page.locator(datePicker).first();
-            String v = input.inputValue();
-            if (v == null || v.isEmpty()) {
-                logger.warn("Picker selection did not populate DOB field; using typing fallback");
-                typeDobFallback(day, month, year);
-            }
-        } catch (Exception ignored) {}
-        logger.info("Closed date picker");
-
-        // Verify picker closed and input populated; fallback if not
-        try {
-            boolean closed = page.locator(".ant-picker-dropdown:visible").count() == 0;
-            boolean hasValue = !page.locator(datePicker).first().inputValue().isEmpty();
-            if (!closed || !hasValue) {
-                logger.warn("Picker not closed or value empty -> using typing fallback");
-                typeDobFallback(day, month, year);
-            }
-            // Move focus away from date input to avoid reopening the dropdown
+        // Select day with retry
+        boolean daySelected = false;
+        for (int attempt = 1; attempt <= 3; attempt++) {
             try {
-                page.keyboard().press("Tab");
+                Locator dayOption = page.locator(".calendar-day").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^" + dayText + "$")));
+                if (dayOption.count() == 0) {
+                    // Fallback to getByText with exact match
+                    dayOption = page.getByText(dayText, new Page.GetByTextOptions().setExact(true));
+                }
+                
+                if (WaitUtils.waitForVisible(dayOption, SHORT_TIMEOUT)) {
+                    dayOption.first().click();
+                    logger.info("Selected day: {} (attempt {})", dayText, attempt);
+                    page.waitForTimeout(STABILIZATION_WAIT);
+                    daySelected = true;
+                    break;
+                }
+            } catch (Exception e) {
+                logger.warn("Attempt {} to select day failed: {}", attempt, e.getMessage());
                 page.waitForTimeout(POLLING_WAIT);
+            }
+        }
+
+        if (!daySelected) {
+            logger.warn("Failed to select day after 3 attempts, using typing fallback");
+            typeDobFallback(day, month, year);
+            return;
+        }
+
+        // Click Confirm button with retry
+        boolean confirmed = false;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                Locator confirmBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
+                if (WaitUtils.waitForVisible(confirmBtn, SHORT_TIMEOUT)) {
+                    confirmBtn.click();
+                    logger.info("Clicked Confirm button (attempt {})", attempt);
+                    page.waitForTimeout(STABILIZATION_WAIT);
+                    
+                    // Verify calendar modal closed
+                    if (!page.locator(".calendar-modal-overlay").isVisible()) {
+                        confirmed = true;
+                        logger.info("Calendar modal closed successfully");
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Attempt {} to click Confirm failed: {}", attempt, e.getMessage());
+                page.waitForTimeout(POLLING_WAIT);
+            }
+        }
+
+        if (!confirmed) {
+            logger.warn("Failed to confirm date selection, attempting to close modal with Escape");
+            try {
+                page.keyboard().press("Escape");
+                page.waitForTimeout(STABILIZATION_WAIT);
             } catch (Exception ignored) {}
-        } catch (Exception ignored) {}
+        }
+
+        // Verify date input is populated
+        try {
+            String inputValue = page.locator(datePicker).first().inputValue();
+            if (inputValue == null || inputValue.isEmpty()) {
+                logger.warn("Date input is empty after selection, using typing fallback");
+                typeDobFallback(day, month, year);
+            } else {
+                logger.info("Date of birth selected successfully: {}-{}-{} (input value: {})", day, month, year, inputValue);
+            }
+        } catch (Exception e) {
+            logger.warn("Could not verify date input value: {}", e.getMessage());
+        }
     }
 
     private void typeDobFallback(String day, String month, String year) {
