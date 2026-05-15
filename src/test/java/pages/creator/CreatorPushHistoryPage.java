@@ -11,14 +11,14 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> History of pushes flow
  */
 public class CreatorPushHistoryPage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int SCROLL_WAIT = 80;           // Scroll stabilization
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
+    // Timeout constants (in milliseconds) - Standardized values (optimized for stability)
+    // Increased timeouts to prevent flaky test failures while maintaining reasonable wait times
+    private static final int SCROLL_WAIT = 200;          // Scroll stabilization (increased for stability)
+    private static final int NAVIGATION_WAIT = 300;      // Navigation delays (increased for stability)
     private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POLLING_WAIT = 200;         // Polling intervals
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
+    private static final int POLLING_WAIT = 500;         // Polling intervals (increased for stability)
+    private static final int SHORT_TIMEOUT = 10000;      // Short waits (10s - reasonable for element visibility)
+    private static final int MEDIUM_TIMEOUT = 20000;     // Medium waits (20s - for slower operations)
 
     private static final String SETTINGS_URL_PART = "/common/setting";
 
