@@ -310,18 +310,48 @@ The full suite runs in the following order (via `testng.xml`):
 
 ### Key Technical Features
 
+- **Configuration validation** — Automatic validation of all properties at startup with clear error messages
 - **Dual browser context** — Fan + Creator isolation for messaging and live event tests
 - **3DS payment handling** — SecurionPay test gateway integration with resilient selectors
 - **FileChooser / input[type="file"]** — No native OS dialog popups during media uploads
 - **ThreadLocal browsers** — Safe parallel execution via `BrowserFactory`
 - **Automatic retry** — Configurable via `RetryAnalyzer` (default: 2 retries)
 - **Allure step annotations** — Every page object method is annotated for trace-level reporting
+- **Environment properties** — Auto-generated environment details in Allure reports
 
 ---
 
 ## Configuration
 
-All settings live in `src/main/resources/config.properties`. Key entries:
+All settings live in `src/main/resources/config.properties`.
+
+### Configuration Validation
+
+The framework automatically validates all configuration properties at startup:
+- **Environment** must be `dev`, `stage`, or `prod`
+- **Browser** must be valid (chrome, firefox, webkit, etc.)
+- **Timeouts** must be positive integers
+- **URLs** must be well-formed and start with http:// or https://
+- **Booleans** must be `true` or `false`
+- **Viewport** dimensions must be in reasonable ranges
+
+If validation fails, you'll get a clear error message showing exactly what's wrong:
+```
+═══════════════════════════════════════════════════════════════
+  CONFIGURATION VALIDATION FAILED
+═══════════════════════════════════════════════════════════════
+
+Found 2 error(s) in config.properties:
+
+1. Property 'environment' has invalid value 'staging'. Must be one of: [dev, stage, prod]
+2. Property 'timeout.default' must be a positive integer (> 0), found: -5000
+
+Please fix these errors in src/main/resources/config.properties
+and try again.
+═══════════════════════════════════════════════════════════════
+```
+
+### Key Configuration Properties
 
 ### Environment
 

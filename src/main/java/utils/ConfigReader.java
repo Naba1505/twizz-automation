@@ -37,6 +37,9 @@ public class ConfigReader {
         // Assign to final static variables
         properties = tempProperties;
         ENVIRONMENT = tempEnv;
+        
+        // Validate configuration properties
+        ConfigValidator.validate();
     }
 
     public static String getLandingPageUrl() {
