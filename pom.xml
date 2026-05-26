@@ -84,6 +84,10 @@
                   <suiteXmlFiles>
                     <suiteXmlFile>${surefire.suiteXmlFiles}</suiteXmlFile>
                   </suiteXmlFiles>
+                  <!-- Configure Allure results directory -->
+                  <systemPropertyVariables>
+                    <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                  </systemPropertyVariables>
                 </configuration>
               </plugin>
             <!-- Allure Maven Plugin -->

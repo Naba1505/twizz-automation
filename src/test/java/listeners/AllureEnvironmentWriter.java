@@ -68,7 +68,9 @@ public class AllureEnvironmentWriter implements IExecutionListener {
                 ConfigReader.getProperty("viewport.height", "720"));
 
             // Create allure-results directory if it doesn't exist
-            Path allureResultsDir = Paths.get("target/allure-results");
+            // Use system property if set, otherwise default to target/allure-results
+            String allureResultsPath = System.getProperty("allure.results.directory", "target/allure-results");
+            Path allureResultsDir = Paths.get(allureResultsPath);
             if (!Files.exists(allureResultsDir)) {
                 Files.createDirectories(allureResultsDir);
                 logger.info("Created allure-results directory: {}", allureResultsDir);
