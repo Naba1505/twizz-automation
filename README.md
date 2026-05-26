@@ -208,15 +208,32 @@ allure generate -c -o target/allure-report target/allure-results
 allure open target/allure-report
 ```
 
+> **Note**: Always use `target/allure-results` (not root-level `allure-results/`). The `target/` directory is automatically cleaned by `mvn clean`.
+
 ### Report Contents
 
 | Artifact | When Captured |
 |----------|---------------|
+| **Environment Properties** | Always (auto-generated at suite start) |
 | Screenshot (PNG) | On failure (always) |
 | Page HTML | On failure |
 | Playwright Trace (ZIP) | On failure (open at [trace.playwright.dev](https://trace.playwright.dev)) |
 | Screenshot on success | Configurable via `screenshot.on.success` |
 | Trace on success | Configurable via `trace.export.on.success` |
+
+### Environment Information
+
+The Allure report automatically includes environment details via `AllureEnvironmentWriter` listener:
+- Environment (dev/stage/prod)
+- Browser type and settings
+- Java version and OS
+- Playwright and TestNG versions
+- Viewport size and timeouts
+- Test executed by (automatically uses system username)
+
+This information appears in the Allure report header under the **Environment** section.
+
+> **Note**: The "Test Executed By" field automatically uses your system username. To override, set `-Dauthor="Your Name"` or uncomment `author` in `config.properties`.
 
 ---
 
@@ -244,6 +261,9 @@ twizz-automation/
 │
 └── src/test/
     ├── java/
+    │   ├── listeners/
+    │   │   └── AllureEnvironmentWriter.java  # Auto-generates environment.properties
+    │   │
     │   ├── pages/
     │   │   ├── common/                 # BasePage, BaseTestClass, LandingPage
     │   │   ├── creator/                # 30+ Creator page objects
@@ -401,9 +421,10 @@ Both pipelines use **JDK 21 Temurin** and produce **Allure reports** as build ar
 ### Housekeeping
 
 Git ignores common transient artifacts:
-- `allure-results/`, `traces/`, `screenshots/`, `playwright-report/`, `test-output/`
+- `target/` (includes `allure-results/`, compiled classes, etc.)
+- `traces/`, `screenshots/`, `playwright-report/`, `test-output/`
 
-You can safely delete contents of these folders locally before pushing.
+**Clean everything**: Run `mvn clean` to remove all generated files including test results.
 
 ---
 

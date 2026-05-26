@@ -2,6 +2,7 @@
 <suite name="Twizz Automation Suite" parallel="false" thread-count="1" verbose="1" preserve-order="true">
     <listeners>
         <listener class-name="utils.AnnotationTransformer"/>
+        <listener class-name="listeners.AllureEnvironmentWriter"/>
     </listeners>
 
     <!-- Common Tests -->

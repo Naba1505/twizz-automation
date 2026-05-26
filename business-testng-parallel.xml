@@ -2,6 +2,7 @@
 <suite name="Twizz Business Automation Suite (Parallel)" parallel="classes" thread-count="4" verbose="1" preserve-order="true">
     <listeners>
         <listener class-name="utils.AnnotationTransformer"/>
+        <listener class-name="listeners.AllureEnvironmentWriter"/>
     </listeners>
 
     <!-- Business Common Tests -->

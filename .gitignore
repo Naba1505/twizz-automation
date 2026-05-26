@@ -6,8 +6,8 @@ target/
 ### IntelliJ IDEA ###
 .idea/
 
-# Allure results
-allure-results/
+# Allure results (now in target/allure-results, already covered by target/)
+# allure-results/
 
 # Playwright traces and screenshots (configurable via config.properties)
 traces/
