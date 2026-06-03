@@ -21,13 +21,7 @@ import utils.WaitUtils;
 
 public class CreatorLivePage extends BasePage {
 
-    // Timeout constants (in milliseconds) - Standardized values
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POST_ACTION_WAIT = 300;     // Post-action wait
-    private static final int SHORT_TIMEOUT = 2000;       // Short waits
-    private static final int MEDIUM_TIMEOUT = 3000;      // Medium waits
-    private static final int EDIT_TIMEOUT = 8000;    // Edit button wait timeout
+    // All timeouts now use ConfigReader for consistency
 
     // UI strings
     private static final String CONVERSION_TOOLS_TEXT = "Vos meilleurs outils de conversion";
@@ -59,7 +53,7 @@ public class CreatorLivePage extends BasePage {
     public void openPlusMenu() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plusImg, ConfigReader.getVisibilityTimeout());
-        clickWithRetry(plusImg, 2, POST_ACTION_WAIT);
+        clickWithRetry(plusImg, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
         handleConversionPromptIfPresent();
         logger.info("Opened plus menu");
     }
@@ -112,7 +106,7 @@ public class CreatorLivePage extends BasePage {
     public void enableChatEveryoneIfPresent() {
         Locator chatBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ACCESS_EVERYONE));
         if (chatBtn.count() > 0) {
-            clickWithRetry(chatBtn.first(), 2, BUTTON_RETRY_DELAY);
+            clickWithRetry(chatBtn.first(), 2, ConfigReader.getElementRetryDelay());
             logger.info("Enabled chat with Everyone");
         }
     }
@@ -121,7 +115,7 @@ public class CreatorLivePage extends BasePage {
     public void enableChatSubscribersIfPresent() {
         Locator chatBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ACCESS_SUBSCRIBERS));
         if (chatBtn.count() > 0) {
-            clickWithRetry(chatBtn.first(), 2, BUTTON_RETRY_DELAY);
+            clickWithRetry(chatBtn.first(), 2, ConfigReader.getElementRetryDelay());
             logger.info("Enabled chat with Subscribers");
         }
     }
@@ -167,7 +161,7 @@ public class CreatorLivePage extends BasePage {
         if (editBtn.count() > 0) {
             try {
                 waitVisible(editBtn.first(), ConfigReader.getShortTimeout());
-                clickWithRetry(editBtn.first(), 2, BUTTON_RETRY_DELAY);
+                clickWithRetry(editBtn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked Edit via BUTTON locator");
                 return;
             } catch (Exception ignored) {}
@@ -177,8 +171,8 @@ public class CreatorLivePage extends BasePage {
         Locator editLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(EDIT_BTN));
         if (editLink.count() > 0) {
             try {
-                waitVisible(editLink.first(), EDIT_TIMEOUT);
-                clickWithRetry(editLink.first(), 2, BUTTON_RETRY_DELAY);
+                waitVisible(editLink.first(), ConfigReader.getMediumTimeout());
+                clickWithRetry(editLink.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked Edit via LINK locator");
                 return;
             } catch (Exception ignored) {}
@@ -188,8 +182,8 @@ public class CreatorLivePage extends BasePage {
         try {
             Locator menuItem = page.getByRole(AriaRole.MENUITEM, new Page.GetByRoleOptions().setName(EDIT_BTN));
             if (menuItem.count() > 0) {
-                waitVisible(menuItem.first(), EDIT_TIMEOUT);
-                clickWithRetry(menuItem.first(), 2, BUTTON_RETRY_DELAY);
+                waitVisible(menuItem.first(), ConfigReader.getMediumTimeout());
+                clickWithRetry(menuItem.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked Edit via MENUITEM locator");
                 return;
             }
@@ -200,7 +194,7 @@ public class CreatorLivePage extends BasePage {
             Locator popup = page.locator(".ant-dropdown:visible, .ant-popover:visible, .ant-modal:visible, body");
             Locator editTxt = popup.getByText(EDIT_BTN, new Locator.GetByTextOptions().setExact(true));
             if (editTxt.count() > 0) {
-                clickWithRetry(editTxt.first(), 2, BUTTON_RETRY_DELAY);
+                clickWithRetry(editTxt.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked Edit via visible text fallback");
                 return;
             }
@@ -210,7 +204,7 @@ public class CreatorLivePage extends BasePage {
         try {
             Locator anyEdit = page.getByText(EDIT_BTN, new Page.GetByTextOptions().setExact(true));
             if (anyEdit.count() > 0 && anyEdit.first().isVisible()) {
-                clickWithRetry(anyEdit.first(), 2, BUTTON_RETRY_DELAY);
+                clickWithRetry(anyEdit.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked Edit via global text fallback");
                 return;
             }
@@ -231,7 +225,7 @@ public class CreatorLivePage extends BasePage {
     public void clickDeleteEvent() {
         Locator del = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(DELETE_EVENT_BTN));
         waitVisible(del.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(del.first(), 2, BUTTON_RETRY_DELAY);
+        clickWithRetry(del.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
         logger.info("Clicked Delete event");
     }
 
@@ -242,7 +236,7 @@ public class CreatorLivePage extends BasePage {
         waitVisible(confirmTxt.first(), ConfigReader.getShortTimeout());
         // Click Yes delete
         Locator yes = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(YES_DELETE_BTN));
-        clickWithRetry(yes.first(), 2, BUTTON_RETRY_DELAY);
+        clickWithRetry(yes.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
         logger.info("Confirmed delete");
     }
 
@@ -307,8 +301,10 @@ public class CreatorLivePage extends BasePage {
         while (System.currentTimeMillis() < deadline) {
             try {
                 if (reg.first().isEnabled()) return;
-            } catch (Exception ignored) { }
-            page.waitForTimeout(NAVIGATION_WAIT);
+            } catch (Exception e) {
+                logger.debug("Register button enabled check failed: {}", e.getMessage());
+            }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         throw new RuntimeException("Register button did not become enabled within timeout");
     }
@@ -340,7 +336,7 @@ public class CreatorLivePage extends BasePage {
                 Locator dateField = page.getByPlaceholder(DATE_PLACEHOLDER);
                 dateField.first().click();
                 logger.info("Clicked date picker (attempt {})", attempt);
-                page.waitForTimeout(POST_ACTION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 
                 // Verify calendar modal appeared
                 if (page.locator(".calendar-modal-overlay").isVisible()) {
@@ -350,7 +346,7 @@ public class CreatorLivePage extends BasePage {
                 }
             } catch (Exception e) {
                 logger.warn("Attempt {} to open date picker failed: {}", attempt, e.getMessage());
-                page.waitForTimeout(POST_ACTION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
         }
 
@@ -362,17 +358,17 @@ public class CreatorLivePage extends BasePage {
         // Select year - click on year header to open year selector, then select target year
         try {
             Locator yearHeader = page.locator(".calendar-header-text.clickable").filter(new Locator.FilterOptions().setHasText(Pattern.compile("\\d{4}")));
-            if (WaitUtils.waitForVisible(yearHeader, SHORT_TIMEOUT)) {
+            if (WaitUtils.waitForVisible(yearHeader, ConfigReader.getShortTimeout())) {
                 yearHeader.first().click();
                 logger.info("Clicked year header to open year selector");
-                page.waitForTimeout(POST_ACTION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 
                 // Select target year using .year-selector-item to avoid strict mode violation
                 Locator yearOption = page.locator(".year-selector-item").filter(new Locator.FilterOptions().setHasText(yearStr));
-                if (WaitUtils.waitForVisible(yearOption, SHORT_TIMEOUT)) {
+                if (WaitUtils.waitForVisible(yearOption, ConfigReader.getShortTimeout())) {
                     yearOption.click();
                     logger.info("Selected year: {}", yearStr);
-                    page.waitForTimeout(POST_ACTION_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 } else {
                     logger.warn("Year option not visible: {}", yearStr);
                 }
@@ -388,17 +384,17 @@ public class CreatorLivePage extends BasePage {
         try {
             // Click month header (first clickable header text after year selection)
             Locator monthHeader = page.locator(".calendar-header-text.clickable").first();
-            if (WaitUtils.waitForVisible(monthHeader, SHORT_TIMEOUT)) {
+            if (WaitUtils.waitForVisible(monthHeader, ConfigReader.getShortTimeout())) {
                 monthHeader.click();
                 logger.info("Clicked month header to open month selector");
-                page.waitForTimeout(POST_ACTION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 
                 // Select target month from month selector
                 Locator monthOption = page.locator(".month-selector-item").filter(new Locator.FilterOptions().setHasText(monthName));
-                if (WaitUtils.waitForVisible(monthOption, SHORT_TIMEOUT)) {
+                if (WaitUtils.waitForVisible(monthOption, ConfigReader.getShortTimeout())) {
                     monthOption.click();
                     logger.info("Selected month: {}", monthName);
-                    page.waitForTimeout(POST_ACTION_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 } else {
                     logger.warn("Month option not visible: {}", monthName);
                 }
@@ -420,16 +416,16 @@ public class CreatorLivePage extends BasePage {
                     dayOption = page.getByText(dayText, new Page.GetByTextOptions().setExact(true));
                 }
                 
-                if (WaitUtils.waitForVisible(dayOption, SHORT_TIMEOUT)) {
+                if (WaitUtils.waitForVisible(dayOption, ConfigReader.getShortTimeout())) {
                     dayOption.first().click();
                     logger.info("Selected day: {} (attempt {})", dayText, attempt);
-                    page.waitForTimeout(POST_ACTION_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     daySelected = true;
                     break;
                 }
             } catch (Exception e) {
                 logger.warn("Attempt {} to select day failed: {}", attempt, e.getMessage());
-                page.waitForTimeout(BUTTON_RETRY_DELAY);
+                page.waitForTimeout(ConfigReader.getElementRetryDelay());
             }
         }
 
@@ -443,10 +439,10 @@ public class CreatorLivePage extends BasePage {
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
                 Locator confirmBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
-                if (WaitUtils.waitForVisible(confirmBtn, SHORT_TIMEOUT)) {
+                if (WaitUtils.waitForVisible(confirmBtn, ConfigReader.getShortTimeout())) {
                     confirmBtn.click();
                     logger.info("Clicked Confirm button (attempt {})", attempt);
-                    page.waitForTimeout(POST_ACTION_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     
                     // Verify calendar modal closed
                     if (!page.locator(".calendar-modal-overlay").isVisible()) {
@@ -457,7 +453,7 @@ public class CreatorLivePage extends BasePage {
                 }
             } catch (Exception e) {
                 logger.warn("Attempt {} to click Confirm failed: {}", attempt, e.getMessage());
-                page.waitForTimeout(BUTTON_RETRY_DELAY);
+                page.waitForTimeout(ConfigReader.getElementRetryDelay());
             }
         }
 
@@ -465,7 +461,7 @@ public class CreatorLivePage extends BasePage {
             logger.warn("Failed to confirm date selection, attempting to close modal with Escape");
             try {
                 page.keyboard().press("Escape");
-                page.waitForTimeout(POST_ACTION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             } catch (Exception ignored) {}
         }
 
@@ -491,7 +487,7 @@ public class CreatorLivePage extends BasePage {
         // If a date dropdown is still open, close it to avoid overlay blocking time dropdown
         if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
             try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
-            page.waitForTimeout(NAVIGATION_WAIT);
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
 
         // Try opening the time select near the Date field (robust against rc_select_* changes)
@@ -519,7 +515,7 @@ public class CreatorLivePage extends BasePage {
         }
 
         // Wait for dropdown to become visible
-        WaitUtils.waitForDropdownVisible(page, MEDIUM_TIMEOUT);
+        WaitUtils.waitForDropdownVisible(page, ConfigReader.getMediumTimeout());
 
         // Try to pick time within the visible dropdown by role/name or text/title (12h, 12h AM/PM, then 24h)
         Locator dropdown = page.locator(".ant-select-dropdown:visible").first();
@@ -543,8 +539,8 @@ public class CreatorLivePage extends BasePage {
 
         if (opt.count() > 0) {
             // ensure visible
-            WaitUtils.waitForVisible(opt.first(), SHORT_TIMEOUT);
-            clickWithRetry(opt.first(), 2, BUTTON_RETRY_DELAY);
+            WaitUtils.waitForVisible(opt.first(), ConfigReader.getShortTimeout());
+            clickWithRetry(opt.first(), 2, ConfigReader.getElementRetryDelay());
             logger.info("Picked time {}", opt.first().innerText());
             return;
         }
@@ -596,7 +592,7 @@ public class CreatorLivePage extends BasePage {
         Locator dateDropdown = page.locator(".ant-picker-dropdown:visible");
         if (dateDropdown.count() > 0) {
             try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
-            page.waitForTimeout(NAVIGATION_WAIT);
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         // If time dropdown still not visible, explicitly click the time selector again
         if (visibleDropdown.count() == 0) {
@@ -611,7 +607,7 @@ public class CreatorLivePage extends BasePage {
             } catch (Exception ignored) {}
         }
         // Wait for dropdown to appear
-        WaitUtils.waitForDropdownVisible(page, MEDIUM_TIMEOUT);
+        WaitUtils.waitForDropdownVisible(page, ConfigReader.getMediumTimeout());
         // Re-resolve visible dropdown after potential state changes
         visibleDropdown = page.locator(".ant-select-dropdown:visible");
 
@@ -666,8 +662,8 @@ public class CreatorLivePage extends BasePage {
             }
             if (opt.count() > 0) {
                 try { opt.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                WaitUtils.waitForVisible(opt.first(), SHORT_TIMEOUT);
-                clickWithRetry(opt.first(), 2, BUTTON_RETRY_DELAY);
+                WaitUtils.waitForVisible(opt.first(), ConfigReader.getShortTimeout());
+                clickWithRetry(opt.first(), 2, ConfigReader.getElementRetryDelay());
                 logger.info("Picked fallback time {}", t);
                 return;
             }
@@ -689,7 +685,7 @@ public class CreatorLivePage extends BasePage {
                 input.first().fill("");
                 input.first().fill(candidate);
                 page.keyboard().press("Enter");
-                page.waitForTimeout(NAVIGATION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 logger.info("Final fallback: typed time '{}' and pressed Enter", candidate);
                 return;
             } catch (Exception e) {

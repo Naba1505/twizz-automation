@@ -3,23 +3,23 @@ package tests.creator;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 import pages.creator.CreatorLivePage;
-
-import java.nio.file.Path;
-import java.time.LocalDateTime;
+import testdata.LiveEventData;
 import utils.DateTimeUtils;
-import utils.TestAssets;
 
+/**
+ * Tests creator live event scheduling with different access and pricing configurations.
+ * Uses LiveEventData for test data generation.
+ */
 @Epic("Creator")
 @Feature("Live")
 public class CreatorLiveTest extends BaseCreatorTest {
 
-    // Smart common cleanup: after each test, attempt to delete any scheduled live if present
     @AfterMethod(alwaysRun = true)
     public void cleanUpScheduledLive() {
-        // This is safe: it internally checks presence and returns false if nothing to delete
         CreatorLivePage live = new CreatorLivePage(page);
         live.tryDeleteLatestLiveEvent();
     }
@@ -27,44 +27,46 @@ public class CreatorLiveTest extends BaseCreatorTest {
     @Story("Create scheduled live event")
     @Test(priority = 1, description = "Creator schedules a live with price and description")
     public void creatorCanScheduleLive() {
+        LiveEventData data = LiveEventData.everyoneWithFixedPrice();
         CreatorLivePage live = new CreatorLivePage(page);
+        
         live.openPlusMenu();
         live.navigateToLive();
-
-        LocalDateTime when = DateTimeUtils.futureAtDaysHour(1, 3, 0);
-        Path coverage = TestAssets.imageOrNull("Live A.jpg");
-
         live.setAccessEveryone();
-        live.setPriceEuro(15);
+        live.setPriceEuro(data.priceEuro);
         live.enableChatEveryoneIfPresent();
         live.chooseSchedule();
-        live.pickDate(when);
-        String[] timeCandidates = DateTimeUtils.futureTimeCandidates(when);
+        live.pickDate(data.scheduledTime);
+        String[] timeCandidates = DateTimeUtils.futureTimeCandidates(data.scheduledTime);
         live.pickTimeCandidates(timeCandidates);
-        live.uploadCoverage(coverage);
-        live.setDescription("Test");
+        live.uploadCoverage(data.coverageImage);
+        live.setDescription(data.description);
         live.submitAndVerify();
+        
+        Assert.assertTrue(live.isLiveLogoVisibleOnProfile(), 
+            "Live logo should be visible on profile after scheduling");
     }
 
     @Story("Create scheduled live event for Subscribers with custom price")
     @Test(priority = 2, description = "Creator schedules a live for Subscribers with custom price and chat")
     public void creatorCanScheduleLiveForSubscribersCustomPrice() {
+        LiveEventData data = LiveEventData.subscribersWithCustomPrice();
         CreatorLivePage live = new CreatorLivePage(page);
+        
         live.openPlusMenu();
         live.navigateToLive();
-
-        LocalDateTime when = DateTimeUtils.futureAtDaysHour(1, 3, 0);
-        Path coverage = TestAssets.imageOrNull("Live D.jpg");
-
         live.setAccessSubscribers();
-        live.setCustomPriceEuro("5");
+        live.setCustomPriceEuro(data.customPrice);
         live.enableChatSubscribersIfPresent();
         live.chooseSchedule();
-        live.pickDate(when);
-        String[] timeCandidates = DateTimeUtils.futureTimeCandidates(when);
+        live.pickDate(data.scheduledTime);
+        String[] timeCandidates = DateTimeUtils.futureTimeCandidates(data.scheduledTime);
         live.pickTimeCandidates(timeCandidates);
-        live.uploadCoverage(coverage);
-        live.setDescription("Test - subscribers");
+        live.uploadCoverage(data.coverageImage);
+        live.setDescription(data.description);
         live.submitAndVerify();
+        
+        Assert.assertTrue(live.isLiveLogoVisibleOnProfile(), 
+            "Live logo should be visible on profile after scheduling");
     }
 }
