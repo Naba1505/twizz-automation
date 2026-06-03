@@ -51,8 +51,8 @@ public class LandingPage extends BasePage {
             .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
             .setTimeout(ConfigReader.getVisibilityTimeout()));
         
-        // Small stabilization wait to ensure button is fully interactive
-        page.waitForTimeout(300);
+        // Use configurable animation timeout instead of hardcoded value
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         
         page.click(loginButton);
         
