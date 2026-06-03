@@ -37,7 +37,7 @@ public class CreatorLoginPage extends BasePage {
             } catch (Exception e) {
                 if (i == maxRetries - 1) throw e;
                 logger.warn("Navigation attempt {} failed, retrying...", i + 1);
-                page.waitForTimeout(2000);
+                page.waitForTimeout(ConfigReader.getRetryDelay());
             }
         }
     }
@@ -49,7 +49,7 @@ public class CreatorLoginPage extends BasePage {
         try {
             page.context().clearCookies();
             page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-            page.waitForTimeout(1000);
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
             logger.info("Cleared session and reloaded page for clean state");
         } catch (Exception e) {
             logger.warn("Failed to clear session/refresh: {}", e.getMessage());
@@ -92,7 +92,9 @@ public class CreatorLoginPage extends BasePage {
                 logger.info("Already logged in; skipping credential entry");
                 return;
             }
-        } catch (Throwable ignored) {}
+        } catch (Exception e) {
+            logger.debug("Already logged in check failed: {}", e.getMessage());
+        }
 
         // Fill credentials with robust waits to prevent race conditions
         Locator user = page.getByPlaceholder(usernamePlaceholder);
@@ -111,42 +113,39 @@ public class CreatorLoginPage extends BasePage {
             .setTimeout(ConfigReader.getVisibilityTimeout()));
         
         // Small stabilization wait to ensure fields are fully interactive
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         
         // Fill username with proper clearing and slower typing
         try {
             user.click();
-            page.waitForTimeout(200); // Wait after click
             user.fill(""); // Clear first
-            page.waitForTimeout(100);
             user.pressSequentially(username, new Locator.PressSequentiallyOptions().setDelay(50)); // Type with 50ms delay between keys
-        } catch (Throwable t) {
-            logger.warn("Username fill failed, using fallback: {}", t.getMessage());
+        } catch (Exception e) {
+            logger.warn("Username fill failed, using fallback: {}", e.getMessage());
             fillByPlaceholder(usernamePlaceholder, username);
         }
         
         // Fill password with proper clearing and slower typing
         try {
             pass.click();
-            page.waitForTimeout(200); // Wait after click
             pass.fill(""); // Clear first
-            page.waitForTimeout(100);
             pass.pressSequentially(password, new Locator.PressSequentiallyOptions().setDelay(50)); // Type with 50ms delay between keys
-        } catch (Throwable t) {
-            logger.warn("Password fill failed, using fallback: {}", t.getMessage());
+        } catch (Exception e) {
+            logger.warn("Password fill failed, using fallback: {}", e.getMessage());
             fillByPlaceholder(passwordPlaceholder, password);
         }
         
         // Final stabilization before clicking connect
-        page.waitForTimeout(300);
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
 
         // Click Connect with robust wait and retry
         Locator connect = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true));
         waitVisible(connect, ConfigReader.getVisibilityTimeout());
-        try { 
-            clickWithRetry(connect, 2, 500); // Increased retries and delay
-        } catch (Throwable ignored) { 
-            connect.click(); 
+        try {
+            clickWithRetry(connect, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+        } catch (Exception e) {
+            logger.warn("Click with retry failed, trying direct click: {}", e.getMessage());
+            connect.click();
         }
 
         // Wait for post-login page to fully load with multiple strategies
@@ -182,7 +181,7 @@ public class CreatorLoginPage extends BasePage {
         }
         
         // Additional stabilization wait to ensure page is fully settled
-        page.waitForTimeout(1000);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         
         logger.info("Clicked Connect; post-login UI visible: {}", visible);
     }

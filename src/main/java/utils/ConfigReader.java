@@ -242,6 +242,13 @@ public class ConfigReader {
         return Integer.parseInt(getProperty("element.retry.delay", "200"));
     }
 
+    /**
+     * Delay between navigation retry attempts (2000ms)
+     */
+    public static int getRetryDelay() {
+        return Integer.parseInt(getProperty("retry.delay.ms", "2000"));
+    }
+
     // ===== Twizz Business App URLs =====
 
     /**
