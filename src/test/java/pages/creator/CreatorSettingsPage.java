@@ -24,12 +24,7 @@ public class CreatorSettingsPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorSettingsPage.class);
     private static final int LONG_WAIT = ConfigReader.getMediumTimeout(); // for heavy pages/uploads
     
-    // Timeout constants (in milliseconds) - Standardized values
-    private static final int POLLING_WAIT = 50;          // Quick polling operations
-    private static final int CLICK_RETRY_DELAY = 200;    // Standard click retry
-    private static final int PAGE_TRANSITION = 250;      // Page transition delays
-    private static final int POST_ACTION_WAIT = 300;     // Post-action wait
-    private static final int STABILIZATION_WAIT = 500;   // UI stabilization
+    // All timeouts now use ConfigReader for consistency
     private static final int GUARD_LIMIT = 100;          // Loop guard limit
 
     public CreatorSettingsPage(Page page) {
@@ -52,7 +47,7 @@ public class CreatorSettingsPage extends BasePage {
                 log.info("Queued items reached target {} (now={})", target, now);
                 return;
             }
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
         }
         int finalCount = getQueuedMediaItems().count();
         log.warn("Queued items did not reach target {} within {} ms (final={})", target, timeoutMs, finalCount);
@@ -84,7 +79,7 @@ public class CreatorSettingsPage extends BasePage {
             
             // Wait for page to load and check for Settings indicators
             page.waitForLoadState();
-            try { Thread.sleep(1000); } catch (InterruptedException ignored) {} // Brief pause for navigation
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); } // Brief pause for navigation
             
             // Check if we're on Settings page by looking for Settings elements
             try {
@@ -107,7 +102,7 @@ public class CreatorSettingsPage extends BasePage {
             log.warn("Settings page not detected, trying direct navigation");
             page.navigate(SETTINGS_URL);
             page.waitForLoadState();
-            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
             
             // Final verification
             String finalUrl = page.url();
@@ -132,7 +127,7 @@ public class CreatorSettingsPage extends BasePage {
             
             // Wait for page to load
             page.waitForLoadState();
-            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
             
             // Check if we're on Quick Files page by looking for Quick Files elements
             try {
@@ -155,7 +150,7 @@ public class CreatorSettingsPage extends BasePage {
             log.warn("Quick Files page not detected, trying direct navigation");
             page.navigate(QUICK_LINK_URL);
             page.waitForLoadState();
-            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
             
             // Final verification
             String finalUrl = page.url();
@@ -208,7 +203,7 @@ public class CreatorSettingsPage extends BasePage {
                 try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
                 try { target.hover(); } catch (Exception ignored) {}
                 try {
-                    clickWithRetry(target, 2, POST_ACTION_WAIT);
+                    clickWithRetry(target, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 } catch (RuntimeException primary) {
                     // force click as fallback
                     try { target.click(new Locator.ClickOptions().setForce(true)); }
@@ -227,13 +222,13 @@ public class CreatorSettingsPage extends BasePage {
             }
 
             // brief settle for DOM update
-            try { page.waitForTimeout(CLICK_RETRY_DELAY); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Click retry delay failed: {}", e.getMessage()); }
             // Wait for the number of trash icons to decrease
             long end = System.currentTimeMillis() + DEFAULT_WAIT;
             while (System.currentTimeMillis() < end) {
                 int now = getTrashIcons().count();
                 if (now < count) break;
-                try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
             }
 
             guard++;
@@ -279,12 +274,12 @@ public class CreatorSettingsPage extends BasePage {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
                 if (btn.count() > 0 && btn.first().isVisible()) {
                     try {
-                        clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
+                        clickWithRetry(btn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                         return true;
                     } catch (Exception ignored) {}
                 }
             }
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
         }
         return false;
     }
@@ -295,7 +290,7 @@ public class CreatorSettingsPage extends BasePage {
         while (System.currentTimeMillis() < end) {
             if (getTrashIcons().count() > 0) return;
             if (getAlbumCards().count() > 0) return;
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
         }
     }
 
@@ -327,7 +322,7 @@ public class CreatorSettingsPage extends BasePage {
                 Locator target = trash.first();
                 try { target.hover(); } catch (Exception ignored) {}
                 try {
-                    clickWithRetry(target, 2, CLICK_RETRY_DELAY);
+                    clickWithRetry(target, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 } catch (Exception e) {
                     try { target.click(new Locator.ClickOptions().setForce(true)); } catch (Exception ignored) { continue; }
                 }
@@ -341,7 +336,7 @@ public class CreatorSettingsPage extends BasePage {
                     if (getTrashIcons().count() < total || getAlbumCards().count() < total) {
                         return true;
                     }
-                    try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
                 }
                 return true; // best effort
             }
@@ -356,16 +351,16 @@ public class CreatorSettingsPage extends BasePage {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
         if (plusImg.count() > 0) {
             log.info("Found plus as IMG (count={}), clicking", plusImg.count());
-            clickWithRetry(plusImg.first(), 2, STABILIZATION_WAIT);
+            clickWithRetry(plusImg.first(), ConfigReader.getElementRetryMax(), ConfigReader.getAnimationTimeout());
         } else {
             Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
             log.info("IMG not found; trying BUTTON (count={})", plusBtn.count());
-            clickWithRetry(plusBtn.first(), 2, STABILIZATION_WAIT);
+            clickWithRetry(plusBtn.first(), 2, ConfigReader.getAnimationTimeout());
         }
         
         // Wait for page to load and check for album creation indicators
         page.waitForLoadState();
-        try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
         
         // Check if we're on album creation page by looking for key elements
         try {
@@ -384,7 +379,7 @@ public class CreatorSettingsPage extends BasePage {
                     log.warn("Album creation page not detected, trying direct navigation");
                     page.navigate(CREATE_NEW_ALBUM_URL);
                     page.waitForLoadState();
-                    try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
                     String finalUrl = page.url();
                     log.info("Final URL after direct navigation: {}", finalUrl);
                     if (!finalUrl.contains("album")) {
@@ -404,10 +399,10 @@ public class CreatorSettingsPage extends BasePage {
                 waitVisible(typeTitle.first(), DEFAULT_WAIT);
                 Locator photosAndVideos = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Photos & videos"));
                 waitVisible(photosAndVideos.first(), DEFAULT_WAIT);
-                clickWithRetry(photosAndVideos.first(), 2, POST_ACTION_WAIT);
+                clickWithRetry(photosAndVideos.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
                 waitVisible(continueBtn.first(), DEFAULT_WAIT);
-                clickWithRetry(continueBtn.first(), 2, POST_ACTION_WAIT);
+                clickWithRetry(continueBtn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
             }
         } catch (RuntimeException e) {
             log.info("Type selection screen not present or skipped: {}", e.getMessage());
@@ -426,7 +421,7 @@ public class CreatorSettingsPage extends BasePage {
         if (createBtn.count() > 0 && createBtn.first().isVisible()) {
             log.info("Clicking 'Create' button");
             try { createBtn.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            clickWithRetry(createBtn.first(), 2, PAGE_TRANSITION);
+            clickWithRetry(createBtn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
         } else {
             log.info("'Create' not visible; trying 'Continue' button");
             Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
@@ -436,7 +431,7 @@ public class CreatorSettingsPage extends BasePage {
             }
             waitVisible(continueBtn.first(), DEFAULT_WAIT);
             try { continueBtn.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            clickWithRetry(continueBtn.first(), 2, PAGE_TRANSITION);
+            clickWithRetry(continueBtn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
         }
         // After create, we should be on add media screen
         Locator mediaText = getByTextExact(MEDIA_TEXT);
@@ -596,7 +591,7 @@ public class CreatorSettingsPage extends BasePage {
                     int before = getQueuedMediaItems().count();
                     current.setInputFiles(new Path[]{f});
                     // brief settle; real UIs usually queue the file instantly
-                    try { page.waitForTimeout(POST_ACTION_WAIT); } catch (Exception ignored) {}
+                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Post action wait failed: {}", e.getMessage()); }
                     waitForQueuedItemsIncrement(before, 1, DEFAULT_WAIT);
                 } catch (RuntimeException e) {
                     log.warn("Failed sequential upload for {}: {}", f.getFileName(), e.getMessage());
@@ -625,13 +620,13 @@ public class CreatorSettingsPage extends BasePage {
         Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
         if (plusBtn.count() > 0) {
             log.info("Revealing file input via BUTTON plus");
-            clickWithRetry(plusBtn.first(), 2, STABILIZATION_WAIT);
+            clickWithRetry(plusBtn.first(), 2, ConfigReader.getAnimationTimeout());
             return;
         }
         Locator anyPlus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
         if (anyPlus.count() > 0) {
             log.info("Revealing file input via IMG plus");
-            clickWithRetry(anyPlus.first(), 2, STABILIZATION_WAIT);
+            clickWithRetry(anyPlus.first(), 2, ConfigReader.getAnimationTimeout());
         } else {
             log.info("No explicit plus trigger found; proceeding to search inputs");
         }
@@ -717,14 +712,14 @@ public class CreatorSettingsPage extends BasePage {
             Locator tab = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
             if (tab.count() > 0) {
                 log.info("Switching to '{}' tab", name);
-                clickWithRetry(tab.first(), 2, POST_ACTION_WAIT);
+                clickWithRetry(tab.first(), 2, ConfigReader.getElementRetryDelay());
                 return true;
             }
             // Fallback: plain text tab
             Locator textTab = page.getByText(name);
             if (textTab.count() > 0) {
                 log.info("Switching to '{}' section via text", name);
-                clickWithRetry(textTab.first(), 2, POST_ACTION_WAIT);
+                clickWithRetry(textTab.first(), 2, ConfigReader.getElementRetryDelay());
                 return true;
             }
         }
@@ -813,7 +808,7 @@ public class CreatorSettingsPage extends BasePage {
                 return;
             }
             try {
-                clickWithRetry(back, 2, POST_ACTION_WAIT);
+                clickWithRetry(back, 2, ConfigReader.getElementRetryDelay());
                 page.waitForLoadState();
             } catch (RuntimeException e) {
                 log.info("Back navigation failed on iteration {}: {}", i + 1, e.getMessage());
@@ -903,14 +898,14 @@ public class CreatorSettingsPage extends BasePage {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
         if (plusImg.count() > 0) {
             log.info("Found plus as IMG (count={}), clicking", plusImg.count());
-            clickWithRetry(plusImg.first(), 2, POST_ACTION_WAIT);
+            clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
         } else {
             Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
             if (plusBtn.count() == 0) {
                 throw new IllegalStateException("Plus trigger not found for creating audio album");
             }
             log.info("IMG plus not found; clicking BUTTON plus (count={})", plusBtn.count());
-            clickWithRetry(plusBtn.first(), 2, POST_ACTION_WAIT);
+            clickWithRetry(plusBtn.first(), 2, ConfigReader.getElementRetryDelay());
         }
 
         // Ensure we are on the type selection / new album screen
@@ -921,10 +916,10 @@ public class CreatorSettingsPage extends BasePage {
         // Select Audios type and continue
         Locator audiosBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Audios"));
         waitVisible(audiosBtn.first(), DEFAULT_WAIT);
-        clickWithRetry(audiosBtn.first(), 2, POST_ACTION_WAIT);
+        clickWithRetry(audiosBtn.first(), 2, ConfigReader.getElementRetryDelay());
         Locator continueBtnType = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
         waitVisible(continueBtnType.first(), DEFAULT_WAIT);
-        clickWithRetry(continueBtnType.first(), 2, POST_ACTION_WAIT);
+        clickWithRetry(continueBtnType.first(), 2, ConfigReader.getElementRetryDelay());
 
         // Album name screen
         Locator nameTitle = page.getByText("Give your album a name");
@@ -937,7 +932,7 @@ public class CreatorSettingsPage extends BasePage {
 
         Locator continueBtnName = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
         waitVisible(continueBtnName.first(), DEFAULT_WAIT);
-        clickWithRetry(continueBtnName.first(), 2, POST_ACTION_WAIT);
+        clickWithRetry(continueBtnName.first(), 2, ConfigReader.getElementRetryDelay());
 
         // Audio import screen
         Locator importMsg = page.getByText("Import or record an audio by");
@@ -997,14 +992,14 @@ public class CreatorSettingsPage extends BasePage {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
         if (plusImg.count() > 0) {
             log.info("Found plus as IMG (count={}), clicking", plusImg.count());
-            clickWithRetry(plusImg.first(), 2, POST_ACTION_WAIT);
+            clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
         } else {
             Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
             if (plusBtn.count() == 0) {
                 throw new IllegalStateException("Plus trigger not found for creating audio recording album");
             }
             log.info("IMG plus not found; clicking BUTTON plus (count={})", plusBtn.count());
-            clickWithRetry(plusBtn.first(), 2, POST_ACTION_WAIT);
+            clickWithRetry(plusBtn.first(), 2, ConfigReader.getElementRetryDelay());
         }
 
         // Ensure we are on the type selection / new album screen
@@ -1015,10 +1010,10 @@ public class CreatorSettingsPage extends BasePage {
         // Select Audios type and continue
         Locator audiosBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Audios"));
         waitVisible(audiosBtn.first(), DEFAULT_WAIT);
-        clickWithRetry(audiosBtn.first(), 2, POST_ACTION_WAIT);
+        clickWithRetry(audiosBtn.first(), 2, ConfigReader.getElementRetryDelay());
         Locator continueBtnType = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
         waitVisible(continueBtnType.first(), DEFAULT_WAIT);
-        clickWithRetry(continueBtnType.first(), 2, POST_ACTION_WAIT);
+        clickWithRetry(continueBtnType.first(), 2, ConfigReader.getElementRetryDelay());
 
         // Album name screen
         Locator nameTitle = page.getByText("Give your album a name");
@@ -1031,7 +1026,7 @@ public class CreatorSettingsPage extends BasePage {
 
         Locator continueBtnName = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
         waitVisible(continueBtnName.first(), DEFAULT_WAIT);
-        clickWithRetry(continueBtnName.first(), 2, POST_ACTION_WAIT);
+        clickWithRetry(continueBtnName.first(), 2, ConfigReader.getElementRetryDelay());
 
         // Audio record screen
         Locator importMsg = page.getByText("Import or record an audio by");
@@ -1039,7 +1034,7 @@ public class CreatorSettingsPage extends BasePage {
 
         Locator recordAudioBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Record an audio"));
         waitVisible(recordAudioBtn.first(), DEFAULT_WAIT);
-        clickWithRetry(recordAudioBtn.first(), 1, CLICK_RETRY_DELAY);
+        clickWithRetry(recordAudioBtn.first(), 1, ConfigReader.getElementRetryDelay());
 
         // Ensure default title visible and then rename recording
         Locator untitled = page.getByText("Untitled");
@@ -1047,7 +1042,7 @@ public class CreatorSettingsPage extends BasePage {
 
         Locator editIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("edit"));
         waitVisible(editIcon.first(), DEFAULT_WAIT);
-        clickWithRetry(editIcon.first(), 1, CLICK_RETRY_DELAY);
+        clickWithRetry(editIcon.first(), 1, ConfigReader.getElementRetryDelay());
 
         Locator recordingTextbox = page.getByRole(AriaRole.TEXTBOX);
         waitVisible(recordingTextbox.first(), DEFAULT_WAIT);
@@ -1057,7 +1052,7 @@ public class CreatorSettingsPage extends BasePage {
         // Start recording
         Locator startRecording = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Start Recording"));
         waitVisible(startRecording.first(), DEFAULT_WAIT);
-        clickWithRetry(startRecording.first(), 1, CLICK_RETRY_DELAY);
+        clickWithRetry(startRecording.first(), 1, ConfigReader.getElementRetryDelay());
 
         Locator waveform = page.locator(".audio-wave-visualization");
         waitVisible(waveform.first(), DEFAULT_WAIT);

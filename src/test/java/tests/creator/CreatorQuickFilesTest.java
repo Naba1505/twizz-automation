@@ -2,116 +2,112 @@ package tests.creator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.creator.CreatorSettingsPage;
+import testdata.QuickFilesData;
 import utils.ConfigReader;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
+/**
+ * Tests creator Quick Files album creation with different media types.
+ * Uses QuickFilesData for test data generation.
+ */
 public class CreatorQuickFilesTest extends BaseCreatorTest {
     private static final Logger logger = LoggerFactory.getLogger(CreatorQuickFilesTest.class);
-    private static final int POST_CONFIRM_PAUSE_MS = ConfigReader.getShortTimeout() / 10; // 1000ms
 
     private void confirmAndNavigateBack(CreatorSettingsPage settings) {
         settings.confirmUploadAndStay();
         try {
-            page.waitForTimeout(POST_CONFIRM_PAUSE_MS);
-        } catch (Exception ignored) {
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        } catch (Exception e) {
+            logger.debug("UI settle wait failed: {}", e.getMessage());
         }
         settings.navigateBackToProfile(2);
     }
 
     @Test(priority = 1, description = "Create Quick Files album with videos only")
     public void creatorCreatesQuickAlbum_VideosOnly() {
+        QuickFilesData data = QuickFilesData.videosOnly();
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
-        String albumName = settings.createQuickAlbum("videoalbum_");
+        
+        String albumName = settings.createQuickAlbum(data.albumPrefix);
         logger.info("Created album: {}", albumName);
+        Assert.assertNotNull(albumName, "Album name should not be null");
+        Assert.assertTrue(albumName.startsWith(data.albumPrefix), "Album name should start with prefix");
 
-        List<Path> videos = List.of(
-                Paths.get("src/test/resources/Videos/QuickVideoA.mp4"),
-                Paths.get("src/test/resources/Videos/QuickVideoB.mp4"),
-                Paths.get("src/test/resources/Videos/QuickVideoC.mp4")
-        );
-
-        settings.addMediaFiles(videos);
+        settings.addMediaFiles(data.files);
         confirmAndNavigateBack(settings);
     }
 
     @Test(priority = 2, description = "Create Quick Files album with images only")
     public void creatorCreatesQuickAlbum_ImagesOnly() {
+        QuickFilesData data = QuickFilesData.imagesOnly();
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
-        String albumName = settings.createQuickAlbum("imagealbum_");
+        
+        String albumName = settings.createQuickAlbum(data.albumPrefix);
         logger.info("Created album: {}", albumName);
+        Assert.assertNotNull(albumName, "Album name should not be null");
+        Assert.assertTrue(albumName.startsWith(data.albumPrefix), "Album name should start with prefix");
 
-        List<Path> images = List.of(
-                Paths.get("src/test/resources/Images/QuickImageA.jpg"),
-                Paths.get("src/test/resources/Images/QuickImageB.jpg"),
-                Paths.get("src/test/resources/Images/QuickImageC.jpg")
-        );
-
-        settings.addMediaFiles(images);
+        settings.addMediaFiles(data.files);
         confirmAndNavigateBack(settings);
     }
 
     @Test(priority = 3, description = "Create Quick Files album with both videos and images")
     public void creatorCreatesQuickAlbum_MixedMedia() {
+        QuickFilesData data = QuickFilesData.mixedMedia();
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
-        String albumName = settings.createQuickAlbum("mixalbum_");
+        
+        String albumName = settings.createQuickAlbum(data.albumPrefix);
         logger.info("Created album: {}", albumName);
+        Assert.assertNotNull(albumName, "Album name should not be null");
+        Assert.assertTrue(albumName.startsWith(data.albumPrefix), "Album name should start with prefix");
 
-        List<Path> mixed = List.of(
-                Paths.get("src/test/resources/Videos/QuickVideoA.mp4"),
-                Paths.get("src/test/resources/Videos/QuickVideoB.mp4"),
-                Paths.get("src/test/resources/Videos/QuickVideoC.mp4"),
-                Paths.get("src/test/resources/Images/QuickImageA.jpg"),
-                Paths.get("src/test/resources/Images/QuickImageB.jpg"),
-                Paths.get("src/test/resources/Images/QuickImageC.jpg")
-        );
-
-        settings.addMediaFiles(mixed);
+        settings.addMediaFiles(data.files);
         confirmAndNavigateBack(settings);
     }
 
     @Test(priority = 4, description = "Create Quick Files album with audio only")
     public void creatorCreatesQuickAlbum_AudioOnly() {
+        QuickFilesData data = QuickFilesData.audioFile();
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
 
-        // Config-driven prefix and audio file path with safe defaults
-        String prefix = ConfigReader.getProperty("quickfiles.audio.prefix", "audioalbum_");
-        String audioPathProp = ConfigReader.getProperty("quickfiles.audio.path", "src/test/resources/Audios/A5.mp3");
-        Path audioPath = Paths.get(audioPathProp);
-
-        String albumName = settings.createAudioAlbum(prefix, audioPath);
+        String albumName = settings.createAudioAlbum(data.albumPrefix, data.files.get(0));
         logger.info("Created audio album: {}", albumName);
+        Assert.assertNotNull(albumName, "Album name should not be null");
+        Assert.assertTrue(albumName.startsWith(data.albumPrefix), "Album name should start with prefix");
 
         try {
-            page.waitForTimeout(POST_CONFIRM_PAUSE_MS);
-        } catch (Exception ignored) {
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        } catch (Exception e) {
+            logger.debug("UI settle wait failed: {}", e.getMessage());
         }
         settings.navigateBackToProfile(2);
     }
 
     @Test(priority = 5, description = "Create Quick Files album with recorded audio")
     public void creatorCreatesQuickAlbum_AudioRecording() {
+        QuickFilesData data = QuickFilesData.audioRecording();
         CreatorSettingsPage settings = new CreatorSettingsPage(page);
 
-        String albumPrefix = ConfigReader.getProperty("quickfiles.audio.record.albumPrefix", "audioalbum_");
         String recordingNameBase = ConfigReader.getProperty("quickfiles.audio.record.namePrefix", "audioRecord");
         long durationMs;
         try {
             durationMs = Long.parseLong(ConfigReader.getProperty("quickfiles.audio.record.durationMs", "10000"));
         } catch (NumberFormatException e) {
+            logger.warn("Invalid duration config, using default: {}", e.getMessage());
             durationMs = 10000L;
         }
 
-        String albumName = settings.createAudioAlbumByRecording(albumPrefix, recordingNameBase, durationMs);
+        String albumName = settings.createAudioAlbumByRecording(data.albumPrefix, recordingNameBase, durationMs);
         logger.info("Created audio recording album: {}", albumName);
+        Assert.assertNotNull(albumName, "Album name should not be null");
+        Assert.assertTrue(albumName.startsWith(data.albumPrefix), "Album name should start with prefix");
 
         try {
-            page.waitForTimeout(POST_CONFIRM_PAUSE_MS);
-        } catch (Exception ignored) {
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        } catch (Exception e) {
+            logger.debug("UI settle wait failed: {}", e.getMessage());
         }
         settings.navigateBackToProfile(2);
     }
