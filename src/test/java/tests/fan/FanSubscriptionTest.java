@@ -6,8 +6,8 @@ import org.testng.annotations.Test;
 
 import pages.fan.FanSubscriptionPage;
 import utils.ConfigReader;
+import utils.TestDataManager;
 import tests.admin.AdminApproveCreatorTest;
-import tests.creator.CreatorRegistrationTest;
 
 public class FanSubscriptionTest extends BaseFanTest {
 
@@ -26,18 +26,8 @@ public class FanSubscriptionTest extends BaseFanTest {
             } catch (IOException | RuntimeException ignored) {}
         }
         if (candidate == null || candidate.isBlank()) {
-            // Fallback 2: try freshly created username from registration flow (same JVM run)
-            candidate = CreatorRegistrationTest.createdUsername;
-        }
-        if (candidate == null || candidate.isBlank()) {
-            // Fallback 3: read from created-username.txt (persisted by registration test)
-            try {
-                java.nio.file.Path p = java.nio.file.Paths.get("target", "created-username.txt");
-                if (java.nio.file.Files.exists(p)) {
-                    String fileVal = java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8).trim();
-                    if (!fileVal.isBlank()) { candidate = fileVal; }
-                }
-            } catch (IOException | RuntimeException ignored) {}
+            // Fallback 2: try freshly created username from registration flow (TestDataManager handles file fallback)
+            candidate = TestDataManager.getCreatorUsername();
         }
         if (candidate == null || candidate.isBlank()) {
             // Final fallback: configured username

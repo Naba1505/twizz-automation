@@ -149,55 +149,41 @@ public class ConfigReader {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
-    // ===== Centralized Timeout Constants =====
+    // ===== Centralized Timeout Constants (cached for performance) =====
+    private static final int DEFAULT_TIMEOUT = Integer.parseInt(getProperty("timeout.default", "60000"));
+    private static final int SHORT_TIMEOUT = Integer.parseInt(getProperty("timeout.short", "10000"));
+    private static final int MEDIUM_TIMEOUT = Integer.parseInt(getProperty("timeout.medium", "30000"));
+    private static final int LONG_TIMEOUT = Integer.parseInt(getProperty("timeout.long", "120000"));
+    private static final int NAVIGATION_TIMEOUT = Integer.parseInt(getProperty("timeout.navigation", "60000"));
+    private static final int VISIBILITY_TIMEOUT = Integer.parseInt(getProperty("timeout.visibility", "20000"));
+    private static final int ANIMATION_TIMEOUT = Integer.parseInt(getProperty("timeout.animation", "500"));
 
-    /**
-     * Default timeout for most operations (60 seconds)
-     */
     public static int getDefaultTimeout() {
-        return Integer.parseInt(getProperty("timeout.default", "60000"));
+        return DEFAULT_TIMEOUT;
     }
 
-    /**
-     * Short timeout for quick checks (10 seconds)
-     */
     public static int getShortTimeout() {
-        return Integer.parseInt(getProperty("timeout.short", "10000"));
+        return SHORT_TIMEOUT;
     }
 
-    /**
-     * Medium timeout for moderate waits like toasts, confirmations (30 seconds)
-     */
     public static int getMediumTimeout() {
-        return Integer.parseInt(getProperty("timeout.medium", "30000"));
+        return MEDIUM_TIMEOUT;
     }
 
-    /**
-     * Long timeout for slow operations like uploads (120 seconds)
-     */
     public static int getLongTimeout() {
-        return Integer.parseInt(getProperty("timeout.long", "120000"));
+        return LONG_TIMEOUT;
     }
 
-    /**
-     * Navigation timeout (60 seconds)
-     */
     public static int getNavigationTimeout() {
-        return Integer.parseInt(getProperty("timeout.navigation", "60000"));
+        return NAVIGATION_TIMEOUT;
     }
 
-    /**
-     * Element visibility wait timeout (20 seconds)
-     */
     public static int getVisibilityTimeout() {
-        return Integer.parseInt(getProperty("timeout.visibility", "20000"));
+        return VISIBILITY_TIMEOUT;
     }
 
-    /**
-     * Animation timeout for UI transitions (500ms)
-     */
     public static int getAnimationTimeout() {
-        return Integer.parseInt(getProperty("timeout.animation", "500"));
+        return ANIMATION_TIMEOUT;
     }
 
     /**

@@ -13,7 +13,7 @@ import pages.admin.AdminCreatorApprovalPage;
 import pages.common.BaseTestClass;
 import utils.BrowserFactory;
 import utils.ConfigReader;
-import tests.creator.CreatorRegistrationTest;
+import utils.TestDataManager;
 
 public class AdminApproveCreatorTest extends BaseTestClass {
     private static final Logger log = LoggerFactory.getLogger(AdminApproveCreatorTest.class);
@@ -54,20 +54,8 @@ public class AdminApproveCreatorTest extends BaseTestClass {
         admin.loginWithConfig();
         admin.openCreatorsAll();
 
-        // Prefer the in-memory username from the registration test; else try file fallback
-        String candidate = CreatorRegistrationTest.createdUsername;
-        if (candidate == null || candidate.isBlank()) {
-            try {
-                java.nio.file.Path p = java.nio.file.Paths.get("target", "created-username.txt");
-                if (java.nio.file.Files.exists(p)) {
-                    String fileVal = java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8).trim();
-                    if (!fileVal.isBlank()) {
-                        candidate = fileVal;
-                    }
-                }
-            } catch (IOException ignored) {
-            }
-        }
+        // Get username from TestDataManager (handles both memory and file fallback)
+        String candidate = TestDataManager.getCreatorUsername();
         // If still null, let the page resolve via config to keep behavior consistent
         String resolvedUsername = admin.resolveUsername(candidate);
         if (resolvedUsername == null || resolvedUsername.isBlank()) {

@@ -8,6 +8,7 @@ import com.microsoft.playwright.options.AriaRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
+import utils.TestDataManager;
 
 public class AdminCreatorApprovalPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(AdminCreatorApprovalPage.class);
@@ -113,25 +114,10 @@ public class AdminCreatorApprovalPage extends BasePage {
     public String resolveUsername(String provided) {
         String resolved = provided;
         if (resolved == null || resolved.isBlank()) {
-            try {
-                resolved = tests.creator.CreatorRegistrationTest.createdUsername;
-            } catch (Throwable ignored) {
-                resolved = null;
-            }
+            // Try TestDataManager first (handles both memory and file fallback)
+            resolved = TestDataManager.getCreatorUsername();
             if (resolved == null || resolved.isBlank()) {
                 resolved = ConfigReader.getProperty("approval.username", "");
-            }
-            if (resolved == null || resolved.isBlank()) {
-                try {
-                    java.nio.file.Path p = java.nio.file.Paths.get("target", "created-username.txt");
-                    if (java.nio.file.Files.exists(p)) {
-                        String fileVal = java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8).trim();
-                        if (!fileVal.isBlank()) {
-                            resolved = fileVal;
-                        }
-                    }
-                } catch (Throwable ignored) {
-                }
             }
         }
         return resolved;
@@ -141,7 +127,7 @@ public class AdminCreatorApprovalPage extends BasePage {
         String toUse = resolveUsername(username);
         log.info("Searching creator by username: {}", toUse);
         if (toUse == null || toUse.isBlank()) {
-            throw new RuntimeException("No creator username available. Ensure CreatorRegistrationTest.createdUsername is set or set approval.username in config.properties.");
+            throw new RuntimeException("No creator username available. Run CreatorRegistrationTest first or set approval.username in config.properties.");
         }
         
         // Try multiple locator strategies for search field
