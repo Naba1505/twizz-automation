@@ -8,67 +8,53 @@ import org.slf4j.LoggerFactory;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
 import pages.creator.CreatorCollectionPage;
+import testdata.CollectionData;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
+/**
+ * Tests creator Collection creation with different media types and configurations.
+ * Uses CollectionData for test data generation.
+ */
 @Epic("Creator")
 @Feature("Collection")
 public class CreatorCollectionTest extends BaseCreatorTest {
     private static final Logger logger = LoggerFactory.getLogger(CreatorCollectionTest.class);
-
-    private Path resourcePath(String first, String... more) {
-        String projectDir = System.getProperty("user.dir");
-        // Build path safely: base (projectDir) resolved with subpath(first, more)
-        return Paths.get(projectDir).resolve(Paths.get(first, more));
-    }
+    private static final String PROJECT_DIR = System.getProperty("user.dir");
 
     @Story("Create collection by adding files from my device (  image + video)")
     @Test(priority = 1, description = "Creator creates a collection with an image and a video from device uploads")
     public void creatorCanCreateCollectionFromMyDevice() {
+        CollectionData data = CollectionData.fromMyDevice();
         CreatorCollectionPage coll = new CreatorCollectionPage(page);
 
-        // 1) Open plus and navigate to Collection (dismiss any overlays first)
         logger.info("[DeviceFlow] Opening plus menu and navigating to Collection");
         coll.openPlusMenu();
         coll.navigateToCollection();
 
-        // 2) Fill title and Create
         logger.info("[DeviceFlow] Filling title and clicking Create");
-        coll.fillCollectionTitle("collection");
+        coll.fillCollectionTitle(data.titlePrefix);
         coll.clickCreate();
 
-        // 3) Add first media: Image
-        Path img = resourcePath("src", "test", "resources", "Images", "CollectionImageA.jpg");
-        if (!Files.exists(img)) {
-            throw new SkipException("Missing test asset: " + img);
+        // Add media files
+        for (int i = 0; i < data.mediaPaths.size(); i++) {
+            Path mediaPath = data.getMediaPath(i, PROJECT_DIR);
+            if (!Files.exists(mediaPath)) {
+                throw new SkipException("Missing test asset: " + mediaPath);
+            }
+            logger.info("[DeviceFlow] Adding media {}/{}: {}", i + 1, data.mediaPaths.size(), mediaPath.getFileName());
+            coll.clickAddMediaPlus();
+            coll.chooseMyDevice();
+            coll.uploadMediaFromDevice(mediaPath);
+            coll.ensureAddMediaScreenAndDefaults();
+            coll.clickNext();
         }
-        logger.info("[DeviceFlow] Adding first image: {}", img.getFileName());
-        coll.clickAddMediaPlus();
-        coll.chooseMyDevice();
-        coll.uploadMediaFromDevice(img);
-        coll.ensureAddMediaScreenAndDefaults();
-        coll.clickNext();
 
-        // 4) Add second media: Video
-        Path vid = resourcePath("src", "test", "resources", "Videos", "CollectionVideoA.mp4");
-        if (!Files.exists(vid)) {
-            throw new SkipException("Missing test asset: " + vid);
-        }
-        logger.info("[DeviceFlow] Adding second video: {}", vid.getFileName());
-        coll.clickAddMediaPlus();
-        coll.chooseMyDevice();
-        coll.uploadMediaFromDevice(vid);
-        coll.ensureAddMediaScreenAndDefaults();
-        coll.clickNext();
+        logger.info("[DeviceFlow] Filling description and setting price {}€", data.priceEuro);
+        coll.fillDescription(data.description);
+        coll.setPriceEuro(data.priceEuro);
 
-        // 5) Description and price
-        logger.info("[DeviceFlow] Filling description and setting price 15€");
-        coll.fillDescription("X_Description");
-        coll.setPriceEuro(15);
-
-        // 6) Validate and wait for upload completion message to appear and disappear
         logger.info("[DeviceFlow] Validating collection and waiting for upload to finish");
         coll.validateCollection();
         coll.waitForUploadFinish();
@@ -82,50 +68,38 @@ public class CreatorCollectionTest extends BaseCreatorTest {
     @Story("Create collection with blurred toggle disabled explicitly")
     @Test(priority = 2, description = "Creator disables blurred media toggle and creates a collection (image + video)")
     public void creatorCanCreateCollectionBlurDisabled() {
+        CollectionData data = CollectionData.blurDisabled();
         CreatorCollectionPage coll = new CreatorCollectionPage(page);
 
-        // 1) Open plus and navigate to Collection
         logger.info("[BlurOff] Opening plus menu and navigating to Collection");
         coll.openPlusMenu();
         coll.navigateToCollection();
 
-        // 2) Fill title and Create
         logger.info("[BlurOff] Filling title and clicking Create");
-        coll.fillCollectionTitle("collection_blur_off");
+        coll.fillCollectionTitle(data.titlePrefix);
         coll.clickCreate();
 
-        // 3) Add first media: Image (reuse A to stabilize uploads)
-        Path img = resourcePath("src", "test", "resources", "Images", "CollectionImageA.jpg");
-        if (!Files.exists(img)) {
-            throw new SkipException("Missing test asset: " + img);
+        // Add media files with blur disabled
+        for (int i = 0; i < data.mediaPaths.size(); i++) {
+            Path mediaPath = data.getMediaPath(i, PROJECT_DIR);
+            if (!Files.exists(mediaPath)) {
+                throw new SkipException("Missing test asset: " + mediaPath);
+            }
+            logger.info("[BlurOff] Adding media {}/{} and disabling blur: {}", i + 1, data.mediaPaths.size(), mediaPath.getFileName());
+            coll.clickAddMediaPlus();
+            coll.chooseMyDevice();
+            coll.uploadMediaFromDevice(mediaPath);
+            coll.ensureAddMediaScreenAndDefaults();
+            if (!data.blurEnabled) {
+                coll.disableBlurredSwitch();
+            }
+            coll.clickNext();
         }
-        logger.info("[BlurOff] Adding image and disabling blur: {}", img.getFileName());
-        coll.clickAddMediaPlus();
-        coll.chooseMyDevice();
-        coll.uploadMediaFromDevice(img);
-        coll.ensureAddMediaScreenAndDefaults();
-        coll.disableBlurredSwitch();
-        coll.clickNext();
 
-        // 4) Add second media: Video (reuse A to stabilize uploads)
-        Path vid = resourcePath("src", "test", "resources", "Videos", "CollectionVideoA.mp4");
-        if (!Files.exists(vid)) {
-            throw new SkipException("Missing test asset: " + vid);
-        }
-        logger.info("[BlurOff] Adding video and disabling blur: {}", vid.getFileName());
-        coll.clickAddMediaPlus();
-        coll.chooseMyDevice();
-        coll.uploadMediaFromDevice(vid);
-        coll.ensureAddMediaScreenAndDefaults();
-        coll.disableBlurredSwitch();
-        coll.clickNext();
+        logger.info("[BlurOff] Filling description and setting price {}€", data.priceEuro);
+        coll.fillDescription(data.description);
+        coll.setPriceEuro(data.priceEuro);
 
-        // 5) Description and price
-        logger.info("[BlurOff] Filling description and setting price 15€");
-        coll.fillDescription("X_Description");
-        coll.setPriceEuro(15);
-
-        // 6) Validate and wait
         logger.info("[BlurOff] Validating collection and waiting for upload to finish");
         coll.validateCollection();
         coll.waitForUploadFinish();
@@ -139,48 +113,39 @@ public class CreatorCollectionTest extends BaseCreatorTest {
     @Story("Create collection with custom price via spinner")
     @Test(priority = 3, description = "Creator sets custom price using spinner to 5€ (image + video)")
     public void creatorCanCreateCollectionWithCustomPrice() {
+        CollectionData data = CollectionData.customPrice();
         CreatorCollectionPage coll = new CreatorCollectionPage(page);
 
-        // 1) Open plus and navigate to Collection
         logger.info("[CustomPrice] Opening plus menu and navigating to Collection");
         coll.openPlusMenu();
         coll.navigateToCollection();
 
-        // 2) Fill title and Create
         logger.info("[CustomPrice] Filling title and clicking Create");
-        coll.fillCollectionTitle("collection_custom_price");
+        coll.fillCollectionTitle(data.titlePrefix);
         coll.clickCreate();
 
-        // 3) Add first media: Image (reuse A to stabilize uploads)
-        Path img = resourcePath("src", "test", "resources", "Images", "CollectionImageA.jpg");
-        if (!Files.exists(img)) {
-            throw new SkipException("Missing test asset: " + img);
+        // Add media files
+        for (int i = 0; i < data.mediaPaths.size(); i++) {
+            Path mediaPath = data.getMediaPath(i, PROJECT_DIR);
+            if (!Files.exists(mediaPath)) {
+                throw new SkipException("Missing test asset: " + mediaPath);
+            }
+            logger.info("[CustomPrice] Adding media {}/{}: {}", i + 1, data.mediaPaths.size(), mediaPath.getFileName());
+            coll.clickAddMediaPlus();
+            coll.chooseMyDevice();
+            coll.uploadMediaFromDevice(mediaPath);
+            coll.ensureAddMediaScreenAndDefaults();
+            coll.clickNext();
         }
-        logger.info("[CustomPrice] Adding image: {}", img.getFileName());
-        coll.clickAddMediaPlus();
-        coll.chooseMyDevice();
-        coll.uploadMediaFromDevice(img);
-        coll.ensureAddMediaScreenAndDefaults();
-        coll.clickNext();
 
-        // 4) Add second media: Video (reuse A to stabilize uploads)
-        Path vid = resourcePath("src", "test", "resources", "Videos", "CollectionVideoA.mp4");
-        if (!Files.exists(vid)) {
-            throw new SkipException("Missing test asset: " + vid);
+        logger.info("[CustomPrice] Filling description and setting custom price {}€ via spinner", data.priceEuro);
+        coll.fillDescription(data.description);
+        if (data.useCustomPrice) {
+            coll.setCustomPriceEuro(data.priceEuro);
+        } else {
+            coll.setPriceEuro(data.priceEuro);
         }
-        logger.info("[CustomPrice] Adding video: {}", vid.getFileName());
-        coll.clickAddMediaPlus();
-        coll.chooseMyDevice();
-        coll.uploadMediaFromDevice(vid);
-        coll.ensureAddMediaScreenAndDefaults();
-        coll.clickNext();
 
-        // 5) Description and custom price
-        logger.info("[CustomPrice] Filling description and setting custom price 5€ via spinner");
-        coll.fillDescription("X_Description");
-        coll.setCustomPriceEuro(5);
-
-        // 6) Validate and wait (extend timeout to 5 minutes for this test)
         logger.info("[CustomPrice] Validating collection and waiting for upload to finish (up to 5 minutes)");
         coll.validateCollection();
         coll.waitForUploadFinish(300000);
@@ -194,26 +159,22 @@ public class CreatorCollectionTest extends BaseCreatorTest {
     @Story("Create collection by using Quick Files album to add media")
     @Test(priority = 4, description = "Creator creates a collection using Quick Files album and validates creation")
     public void creatorCanCreateCollectionUsingQuickFilesAlbum() {
+        CollectionData data = CollectionData.fromQuickFiles();
         CreatorCollectionPage coll = new CreatorCollectionPage(page);
 
-        // 1) Open plus and navigate to Collection
         logger.info("[QuickFiles] Opening plus menu and navigating to Collection");
         coll.openPlusMenu();
-        // Dismiss potential 'I understand' dialog if shown
         coll.clickIUnderstandIfPresent();
         coll.navigateToCollection();
 
-        // 2) Fill title and Create (timestamped)
         logger.info("[QuickFiles] Filling title and clicking Create");
-        coll.fillCollectionTitle("CollectionQuickFile");
+        coll.fillCollectionTitle(data.titlePrefix);
         coll.clickCreate();
 
-        // 3) Add media via Quick Files
         logger.info("[QuickFiles] Opening Add Media and choosing Quick Files");
         coll.clickAddMediaPlus();
         coll.chooseQuickFiles();
 
-        // 4) Select an album (prefer names starting with videoalbum_/imagealbum_/mixalbum_)
         logger.info("[QuickFiles] Selecting a Quick Files album");
         try {
             coll.selectQuickFilesAlbumWithFallback();
@@ -221,22 +182,17 @@ public class CreatorCollectionTest extends BaseCreatorTest {
             throw new SkipException("No Quick Files album found; skipping Quick Files test");
         }
 
-        // 5) Select a few media covers
         logger.info("[QuickFiles] Selecting up to 3 media items from album");
         coll.selectUpToNCovers(3);
 
-        // 6) Confirm selection and proceed
         logger.info("[QuickFiles] Confirm selection and proceed");
         coll.clickSelectInQuickFiles();
-        // Next through steps (thumbnail, options, summary)
         coll.proceedNextSteps(3);
 
-        // 7) Description and price
-        logger.info("[QuickFiles] Filling description and setting price 15€");
-        coll.fillDescription("Description");
-        coll.setPriceEuro(15);
+        logger.info("[QuickFiles] Filling description and setting price {}€", data.priceEuro);
+        coll.fillDescription(data.description);
+        coll.setPriceEuro(data.priceEuro);
 
-        // 8) Validate and wait for completion
         logger.info("[QuickFiles] Validating collection and waiting for upload to finish");
         coll.validateCollection();
         coll.waitForUploadFinish();
