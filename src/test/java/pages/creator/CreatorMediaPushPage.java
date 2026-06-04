@@ -17,14 +17,7 @@ import org.testng.SkipException;
 
 public class CreatorMediaPushPage extends BasePage {
 
-    // Timeout constants (in milliseconds) - Standardized values
-    private static final int POLLING_WAIT = 50;          // Quick polling operations
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int CLICK_RETRY_DELAY = 200;    // Standard click retry
-    private static final int STABILIZATION_WAIT = 500;   // UI stabilization
-    private static final int LONG_TIMEOUT = 5000;        // Long waits
-    private static final int EXTENDED_TIMEOUT = 10000;   // Extended operations
+    // All timeouts now use ConfigReader for consistency
 
     // Visible texts / placeholders
     private static final String WHAT_DO_YOU_WANT = "What do you want to do?";
@@ -57,20 +50,20 @@ public class CreatorMediaPushPage extends BasePage {
                     .setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (RuntimeException firstAttempt) {
             logger.warn("'plus' icon not visible within visibility timeout; retrying with long timeout (post-login lag)");
-            try { page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Exception ignored) {}
+            try { page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Exception e) { logger.debug("Network idle wait failed: {}", e.getMessage()); }
             plusImg.first().waitFor(new Locator.WaitForOptions()
                     .setState(WaitForSelectorState.VISIBLE)
                     .setTimeout(ConfigReader.getLongTimeout()));
         }
 
         // Small stabilization to ensure icon is clickable
-        page.waitForTimeout(300);
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
 
         Locator svg = plusImg.locator("svg");
         if (svg.count() > 0 && svg.first().isVisible()) {
-            clickWithRetry(svg.first(), 2, CLICK_RETRY_DELAY);
+            clickWithRetry(svg.first(), 2, ConfigReader.getElementRetryDelay());
         } else {
-            clickWithRetry(plusImg.first(), 2, CLICK_RETRY_DELAY);
+            clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
         }
     }
 
@@ -78,19 +71,19 @@ public class CreatorMediaPushPage extends BasePage {
     public void ensureOptionsPopup() {
         // Proactively dismiss blocking dialog if present
         clickIUnderstandIfPresent();
-        waitVisible(page.getByText(WHAT_DO_YOU_WANT).first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(page.getByText(WHAT_DO_YOU_WANT).first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Dismiss 'I understand' dialog if present")
     public void clickIUnderstandIfPresent() {
         long start = System.currentTimeMillis();
-        long timeoutMs = LONG_TIMEOUT;
+        long timeoutMs = ConfigReader.getShortTimeout();
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
                 // Try role-based first
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I understand"));
                 if (btn.count() > 0 && btn.first().isVisible()) {
-                    clickWithRetry(btn.first(), 2, CLICK_RETRY_DELAY);
+                    clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay());
                     return;
                 }
                 // Fallbacks: case/selector variants
@@ -102,12 +95,12 @@ public class CreatorMediaPushPage extends BasePage {
                 for (String s : sel) {
                     Locator cand = s.startsWith("//") ? page.locator("xpath=" + s) : page.locator(s);
                     if (cand.count() > 0 && cand.first().isVisible()) {
-                        clickWithRetry(cand.first(), 2, CLICK_RETRY_DELAY);
+                        clickWithRetry(cand.first(), 2, ConfigReader.getElementRetryDelay());
                         return;
                     }
                 }
-            } catch (Exception ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Exception in clickIUnderstandIfPresent: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation timeout wait failed: {}", e.getMessage()); }
         }
     }
 
@@ -115,7 +108,7 @@ public class CreatorMediaPushPage extends BasePage {
     public void chooseMediaPush() {
         Locator mp = page.getByText(MEDIA_PUSH);
         waitVisible(mp.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(mp.first(), 2, CLICK_RETRY_DELAY);
+        clickWithRetry(mp.first(), 2, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Ensure Media Push segments screen visible")
@@ -124,7 +117,7 @@ public class CreatorMediaPushPage extends BasePage {
         // is blocking it. If so, skip the test (environmental, not a product bug) instead
         // of failing with an opaque timeout.
         try {
-            waitVisible(page.getByText(SELECT_SEGMENTS).first(), ConfigReader.getVisibilityTimeout());
+            waitVisible(page.getByText(SELECT_SEGMENTS).first(), ConfigReader.getShortTimeout());
         } catch (RuntimeException timeout) {
             if (isInterestedRateLimitPopupVisible()) {
                 logger.info("Segments screen blocked by Interested rate-limit popup; skipping test (expected stage behavior)");
@@ -133,7 +126,7 @@ public class CreatorMediaPushPage extends BasePage {
             throw timeout;
         }
         // Wait for UI to stabilize after screen load
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Exception ignored) {}
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle timeout wait failed: {}", e.getMessage()); }
     }
 
     @Step("Select Subscribers segment")
@@ -157,7 +150,7 @@ public class CreatorMediaPushPage extends BasePage {
                 if (locator.count() > 0) {
                     logger.info("Found Subscribers element with count: {}", locator.count());
                     waitVisible(locator.first(), ConfigReader.getMediumTimeout()); // Use longer timeout
-                    clickWithRetry(locator.first(), 3, CLICK_RETRY_DELAY);
+                    clickWithRetry(locator.first(), 3, ConfigReader.getElementRetryDelay());
                     found = true;
                     break;
                 }
@@ -174,7 +167,7 @@ public class CreatorMediaPushPage extends BasePage {
                 Locator fallback = page.locator("*:text-is-matching('subscriber', 'i')");
                 if (fallback.count() > 0) {
                     logger.info("Found Subscribers via case-insensitive search");
-                    clickWithRetry(fallback.first(), 2, CLICK_RETRY_DELAY);
+                    clickWithRetry(fallback.first(), 2, ConfigReader.getElementRetryDelay());
                     found = true;
                 }
             } catch (Exception e) {
@@ -206,7 +199,7 @@ public class CreatorMediaPushPage extends BasePage {
             if (seg.count() > 0 && safeIsVisible(seg.first())) {
                 // Try normal click first with short timeout
                 try {
-                    seg.first().click(new Locator.ClickOptions().setTimeout(LONG_TIMEOUT));
+                    seg.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getMediumTimeout()));
                     interestedSelected = true;
                     logger.info("Interested segment selected successfully");
                 } catch (Exception e) {
@@ -261,7 +254,7 @@ public class CreatorMediaPushPage extends BasePage {
         // Use label text as in codegen: "Former Subscriber1"
         Locator seg = page.locator("label").filter(new Locator.FilterOptions().setHasText("Former Subscriber1"));
         waitVisible(seg.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(seg.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(seg.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Click Create to proceed from segments")
@@ -271,7 +264,7 @@ public class CreatorMediaPushPage extends BasePage {
         
         // Wait for button to be enabled (segment selection may delay this)
         // If button doesn't become enabled, ensure at least Subscribers is selected
-        long deadline = System.currentTimeMillis() + 5000; // 5 second check
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         boolean enabled = false;
         while (System.currentTimeMillis() < deadline) {
             try {
@@ -279,8 +272,8 @@ public class CreatorMediaPushPage extends BasePage {
                     enabled = true;
                     break;
                 }
-            } catch (Exception ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Exception checking button enabled state: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation timeout wait failed: {}", e.getMessage()); }
         }
         
         // If still not enabled, try selecting Subscribers as fallback
@@ -289,24 +282,24 @@ public class CreatorMediaPushPage extends BasePage {
             try {
                 selectSubscribersSegment();
                 // Wait again for button to be enabled
-                deadline = System.currentTimeMillis() + 5000;
+                deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
                 while (System.currentTimeMillis() < deadline) {
                     try {
                         if (create.first().isEnabled()) break;
-                    } catch (Exception ignored) {}
-                    try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+                    } catch (Exception e) { logger.debug("Exception checking button enabled state in fallback: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation timeout wait failed: {}", e.getMessage()); }
                 }
             } catch (Exception e) {
                 logger.warn("Failed to select Subscribers as fallback: {}", e.getMessage());
             }
         }
         
-        clickWithRetry(create.first(), 3, CLICK_RETRY_DELAY);
+        clickWithRetry(create.first(), 3, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Ensure Add Push Media screen visible")
     public void ensureAddPushMediaScreen() {
-        waitVisible(page.getByText(ADD_MEDIA_HINT).first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(page.getByText(ADD_MEDIA_HINT).first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click PLUS to add media")
@@ -316,7 +309,7 @@ public class CreatorMediaPushPage extends BasePage {
             plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         }
         waitVisible(plus.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(plus.first(), 2, CLICK_RETRY_DELAY);
+        clickWithRetry(plus.first(), 2, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Ensure Importation dialog visible")
@@ -381,7 +374,7 @@ public class CreatorMediaPushPage extends BasePage {
     public void chooseQuickFiles() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
         waitVisible(btn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(btn.first(), 2, 200);
+        clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Select a Quick Files album by known prefixes or fallback to first available")
@@ -392,18 +385,18 @@ public class CreatorMediaPushPage extends BasePage {
                 new Page.GetByRoleOptions().setName(Pattern.compile("^icon\\s+mixalbum", Pattern.CASE_INSENSITIVE)));
 
         long start = System.currentTimeMillis();
-        long timeoutMs = EXTENDED_TIMEOUT;
+        long timeoutMs = ConfigReader.getLongTimeout();
 
         // Poll for the mixalbum button first
         while (mixAlbumBtn.count() == 0 && System.currentTimeMillis() - start < timeoutMs) {
-            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation timeout wait failed: {}", e.getMessage()); }
         }
 
         if (mixAlbumBtn.count() > 0) {
             Locator target = mixAlbumBtn.first();
             waitVisible(target, ConfigReader.getShortTimeout());
-            try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            clickWithRetry(target, 1, BUTTON_RETRY_DELAY);
+            try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll into view failed: {}", e.getMessage()); }
+            clickWithRetry(target, 1, ConfigReader.getElementRetryDelay());
             return;
         }
 
@@ -411,14 +404,14 @@ public class CreatorMediaPushPage extends BasePage {
         Locator albums = page.locator("div.qf-row-title");
         start = System.currentTimeMillis();
         while (albums.count() == 0 && System.currentTimeMillis() - start < timeoutMs) {
-            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation timeout wait failed: {}", e.getMessage()); }
         }
 
         if (albums.count() > 0) {
             waitVisible(albums.first(), ConfigReader.getShortTimeout());
             Locator firstAlbum = albums.first();
-            try { firstAlbum.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            clickWithRetry(firstAlbum, 1, BUTTON_RETRY_DELAY);
+            try { firstAlbum.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("First album scroll into view failed: {}", e.getMessage()); }
+            clickWithRetry(firstAlbum, 1, ConfigReader.getElementRetryDelay());
             return;
         }
 
@@ -426,7 +419,7 @@ public class CreatorMediaPushPage extends BasePage {
         Locator anyAlbum = page.locator("[role=row], .ant-list-item, .album, .list-item");
         if (anyAlbum.count() > 0) {
             waitVisible(anyAlbum.first(), ConfigReader.getShortTimeout());
-            clickWithRetry(anyAlbum.first(), 1, BUTTON_RETRY_DELAY);
+            clickWithRetry(anyAlbum.first(), 1, ConfigReader.getElementRetryDelay());
             return;
         }
 
@@ -472,14 +465,14 @@ public class CreatorMediaPushPage extends BasePage {
         for (int i = 0; i < total && picked < need; i++) {
             Locator thumb = covers.nth(i);
             try {
-                try { thumb.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                try { thumb.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Thumb scroll into view failed: {}", e.getMessage()); }
                 if (!safeIsVisible(thumb)) {
                     continue;
                 }
-                clickWithRetry(thumb, 1, NAVIGATION_WAIT);
-                page.waitForTimeout(POLLING_WAIT);
+                clickWithRetry(thumb, 1, ConfigReader.getElementRetryDelay());
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 picked++;
-            } catch (Exception ignored) { }
+            } catch (Exception e) { logger.debug("Exception in confirmQuickFilesSelection: {}", e.getMessage()); }
         }
         if (picked == 0) {
             throw new RuntimeException("Quick Files album selection did not click any media items (picked=0)");
@@ -496,10 +489,10 @@ public class CreatorMediaPushPage extends BasePage {
                 new Page.GetByRoleOptions().setName(selectPattern));
 
         long start = System.currentTimeMillis();
-        long timeoutMs = 8_000;
+        long timeoutMs = ConfigReader.getMediumTimeout();
         // Poll for the role-based button a short while to handle dialog render delay
         while (confirm.count() == 0 && System.currentTimeMillis() - start < timeoutMs) {
-            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation timeout wait failed: {}", e.getMessage()); }
         }
 
         // Fallback 1: explicit confirm button class used by some Quick Files UIs
@@ -536,21 +529,21 @@ public class CreatorMediaPushPage extends BasePage {
             String disabled = btn.getAttribute("disabled");
             String ariaDisabled = btn.getAttribute("aria-disabled");
             String text = "";
-            try { text = btn.innerText(); } catch (Exception ignored) {}
+            try { text = btn.innerText(); } catch (Exception e) { logger.debug("Failed to get button text: {}", e.getMessage()); }
             if (disabled != null || "true".equalsIgnoreCase(ariaDisabled)) {
                 throw new RuntimeException("[MediaPushQuickFiles] Quick Files confirm button is disabled ('" + text + "'); media selection count is likely 0. Check album items and selection logic.");
             }
         } catch (RuntimeException e) {
             throw e;
-        } catch (Exception ignored) { }
+        } catch (Exception e) { logger.debug("Exception in confirmQuickFilesSelection: {}", e.getMessage()); }
 
         try {
-            waitVisible(btn, LONG_TIMEOUT);
-        } catch (Exception ignored) {}
+            waitVisible(btn, ConfigReader.getMediumTimeout());
+        } catch (Exception e) { logger.debug("Exception waiting for button visibility: {}", e.getMessage()); }
         try {
             btn.scrollIntoViewIfNeeded();
-        } catch (Exception ignored) {}
-        clickWithRetry(btn, 1, BUTTON_RETRY_DELAY);
+        } catch (Exception e) { logger.debug("Exception scrolling button into view: {}", e.getMessage()); }
+        clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Proceed through Next steps {times} times")
@@ -559,7 +552,7 @@ public class CreatorMediaPushPage extends BasePage {
         for (int i = 0; i < t; i++) {
             try {
                 clickNext();
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Exception in proceedNextSteps: {}", e.getMessage()); }
         }
     }
 
@@ -601,16 +594,16 @@ public class CreatorMediaPushPage extends BasePage {
         }
         
         // Additional stabilization for UI to update after upload
-        page.waitForTimeout(1500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
 
         // After setting files, dismiss the Importation bottom sheet if a Cancel
         // button is present so it does not block subsequent steps.
         try {
             Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
             if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
-                clickWithRetry(cancel.first(), 1, BUTTON_RETRY_DELAY);
+                clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Exception in uploadMediaFromDevice: {}", e.getMessage()); }
     }
 
     @Step("Ensure blur toggle is enabled by default")
@@ -622,7 +615,7 @@ public class CreatorMediaPushPage extends BasePage {
             if (!"true".equalsIgnoreCase(checked)) {
                 logger.warn("Blurred media switch not enabled by default (aria-checked={})", checked);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Exception in ensureBlurToggleEnabled: {}", e.getMessage()); }
     }
 
     @Step("Disable blur toggle if currently enabled")
@@ -632,11 +625,11 @@ public class CreatorMediaPushPage extends BasePage {
         try {
             String checked = sw.getAttribute("aria-checked");
             if ("true".equalsIgnoreCase(checked)) {
-                clickWithRetry(sw, 1, BUTTON_RETRY_DELAY);
+                clickWithRetry(sw, 1, ConfigReader.getElementRetryDelay());
             }
         } catch (Exception e) {
             // Fallback: attempt click once
-            clickWithRetry(sw, 1, BUTTON_RETRY_DELAY);
+            clickWithRetry(sw, 1, ConfigReader.getElementRetryDelay());
         }
     }
 
@@ -663,7 +656,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
         
         // Additional stabilization wait for UI to settle
-        page.waitForTimeout(1000);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         
         // Try multiple selector strategies for Next button
         Locator[] nextLocators = {
@@ -690,14 +683,14 @@ public class CreatorMediaPushPage extends BasePage {
                     while (System.currentTimeMillis() < deadline) {
                         try {
                             if (locator.first().isEnabled()) break;
-                        } catch (Exception ignored) {}
-                        try { page.waitForTimeout(POLLING_WAIT); } catch (Exception ignored) {}
+                        } catch (Exception e) { logger.debug("Exception checking Next button enabled state: {}", e.getMessage()); }
+                        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation timeout wait failed: {}", e.getMessage()); }
                     }
                     
                     // Additional small wait to ensure button is fully interactive
-                    page.waitForTimeout(300);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     
-                    clickWithRetry(locator.first(), 3, CLICK_RETRY_DELAY);
+                    clickWithRetry(locator.first(), 3, ConfigReader.getElementRetryDelay());
                     clicked = true;
                     break;
                 }
@@ -736,7 +729,7 @@ public class CreatorMediaPushPage extends BasePage {
             try {
                 if (locator.count() > 0) {
                     logger.info("Found message textbox with count: {}", locator.count());
-                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                    waitVisible(locator.first(), ConfigReader.getShortTimeout());
                     found = true;
                     break;
                 }
@@ -803,7 +796,7 @@ public class CreatorMediaPushPage extends BasePage {
         String regex = "^" + euros + "€$";
         Locator label = page.locator("label").filter(new Locator.FilterOptions().setHasText(Pattern.compile(regex)));
         waitVisible(label.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(label.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(label.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Ensure add promotion toggle is disabled by default")
@@ -817,7 +810,7 @@ public class CreatorMediaPushPage extends BasePage {
                     logger.warn("Add promotion toggle appears enabled by default");
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Exception in ensureAddPromotionDisabled: {}", e.getMessage()); }
     }
 
     @Step("Enable add promotion toggle")
@@ -834,10 +827,10 @@ public class CreatorMediaPushPage extends BasePage {
         try {
             String checked = target.getAttribute("aria-checked");
             if (!"true".equalsIgnoreCase(checked)) {
-                clickWithRetry(target, 1, BUTTON_RETRY_DELAY);
+                clickWithRetry(target, 1, ConfigReader.getElementRetryDelay());
             }
         } catch (Exception e) {
-            clickWithRetry(target, 1, BUTTON_RETRY_DELAY);
+            clickWithRetry(target, 1, ConfigReader.getElementRetryDelay());
         }
     }
 
@@ -850,7 +843,7 @@ public class CreatorMediaPushPage extends BasePage {
     public void openDiscountPercentField() {
         Locator percentSpan = page.locator("span").filter(new Locator.FilterOptions().setHasText(Pattern.compile("%")));
         waitVisible(percentSpan.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(percentSpan.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(percentSpan.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Fill discount percent: {percent}%")
@@ -870,14 +863,14 @@ public class CreatorMediaPushPage extends BasePage {
     public void selectValidityUnlimited() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("Unlimited"));
         waitVisible(lbl.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(lbl.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(lbl.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Open euro discount field")
     public void openEuroDiscountField() {
         Locator euroSpan = page.locator("span").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^€$")));
         waitVisible(euroSpan.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(euroSpan.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(euroSpan.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Fill euro discount amount: {amount}€")
@@ -892,14 +885,14 @@ public class CreatorMediaPushPage extends BasePage {
     public void selectValidity7Days() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("7 days"));
         waitVisible(lbl.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(lbl.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(lbl.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Open custom price field (0.00 €)")
     public void openCustomPriceField() {
         Locator zeroPrice = page.getByText("0.00 €");
         waitVisible(zeroPrice.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(zeroPrice.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(zeroPrice.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Fill custom price euros: {amount}€")
@@ -913,7 +906,7 @@ public class CreatorMediaPushPage extends BasePage {
     public void selectPriceFree() {
         Locator lbl = page.locator("label").filter(new Locator.FilterOptions().setHasText("Free"));
         waitVisible(lbl.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(lbl.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(lbl.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Click 'Propose push media'")
@@ -935,7 +928,7 @@ public class CreatorMediaPushPage extends BasePage {
         } catch (Exception e) {
             logger.warn("[MediaPush] 'Propose push media' button not visible within timeout; attempting click anyway", e);
         }
-        clickWithRetry(first, 2, CLICK_RETRY_DELAY);
+        clickWithRetry(first, 2, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Optionally wait for uploading message if it appears")
@@ -944,9 +937,9 @@ public class CreatorMediaPushPage extends BasePage {
             Locator msg = page.getByText(UPLOADING_MSG);
             if (msg.count() > 0) {
                 // small visibility wait, then allow dismiss naturally
-                waitVisible(msg.first(), LONG_TIMEOUT);
+                waitVisible(msg.first(), ConfigReader.getMediumTimeout());
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Exception in waitForUploadingMessageIfFast: {}", e.getMessage()); }
     }
 
     @Step("Assert landed on Messaging screen")

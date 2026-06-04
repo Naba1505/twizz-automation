@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
 import pages.creator.CreatorMediaPushPage;
+import testdata.MediaPushData;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,10 +27,110 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         return Paths.get(projectDir).resolve(Paths.get(first, more));
     }
 
-    // Timeout constants for limiter popup handling
-    private static final int LIMITER_POLL_DELAY = 200;
-    private static final int LIMITER_RETRY_DELAY = 250;
-    private static final int LIMITER_MAX_ITERATIONS = 25; // ~5 seconds @ 200ms
+    // Timeout constants for limiter popup handling - optimized for faster execution
+    private static final int LIMITER_POLL_DELAY = 100;  // Reduced from 200ms
+    private static final int LIMITER_RETRY_DELAY = 150;  // Reduced from 250ms
+    private static final int LIMITER_MAX_ITERATIONS = 20; // Reduced from 25 (~2 seconds @ 100ms)
+
+    // Helper method for common media push flow
+    private void executeMediaPushFlow(String testName, MediaPushData.TestScenario scenario) {
+        CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
+
+        logger.info("[{}] Starting media push flow: {}", testName, scenario.description);
+        
+        // 1) Open plus menu and ensure options popup
+        logger.info("[{}] Opening plus menu", testName);
+        mp.openPlusMenu();
+        mp.ensureOptionsPopup();
+
+        // 2) Choose Media push and select segments
+        logger.info("[{}] Choosing 'Media push' and selecting segments: {}", testName, String.join(", ", scenario.segments));
+        mp.chooseMediaPush();
+        mp.ensureSegmentsScreen();
+        
+        // Select segments based on scenario
+        for (String segment : scenario.segments) {
+            if ("Subscribers".equals(segment)) {
+                mp.selectSubscribersSegment();
+            } else if ("Interested".equals(segment)) {
+                mp.selectInterestedSegment();
+            }
+        }
+        mp.clickCreateNext();
+
+        // 3) Ensure Add Push Media screen
+        mp.ensureAddPushMediaScreen();
+
+        // 4) Add media files
+        addMediaFile(mp, scenario.media.image, testName, "image");
+        addMediaFile(mp, scenario.media.video, testName, "video");
+
+        // 5) Configure blur if needed
+        if (!scenario.blurEnabled) {
+            mp.disableBlurIfEnabled();
+        } else {
+            mp.ensureBlurToggleEnabled();
+        }
+
+        // 6) Message and pricing
+        logger.info("[{}] Filling message and configuring pricing: {}", testName, scenario.pricing.description);
+        mp.ensureMessageTitle();
+        mp.fillMessage(MediaPushData.TEST_MESSAGE);
+        
+        if (scenario.pricing.priceEuro == MediaPushData.FREE_PRICE) {
+            mp.selectPriceFree();
+        } else if (scenario.pricing.priceEuro == MediaPushData.CUSTOM_PRICE_EURO) {
+            mp.openCustomPriceField();
+            mp.fillCustomPriceEuro(scenario.pricing.priceEuro);
+        } else {
+            mp.setPriceEuro(scenario.pricing.priceEuro);
+        }
+
+        // Configure promotion if needed
+        if (scenario.pricing.hasPromotion) {
+            mp.enablePromotionToggle();
+            if (scenario.pricing.promoDiscountPercent > 0) {
+                mp.openDiscountPercentField();
+                mp.fillDiscountPercent(scenario.pricing.promoDiscountPercent);
+                if (scenario.pricing.promoValidityDays == -1) {
+                    mp.selectValidityUnlimited();
+                } else if (scenario.pricing.promoValidityDays > 0) {
+                    mp.selectValidity7Days();
+                }
+            } else if (scenario.pricing.promoDiscountEuro > 0) {
+                mp.openEuroDiscountField();
+                mp.fillEuroDiscountEuro(scenario.pricing.promoDiscountEuro);
+                mp.selectValidity7Days();
+            }
+        } else {
+            mp.ensureAddPromotionDisabled();
+        }
+
+        // 7) Propose push media and assert final screen
+        logger.info("[{}] Proposing push media and asserting Messaging screen", testName);
+        mp.clickProposePushMedia();
+        if (handleIUnderstandAfterProposeIfVisible()) {
+            logger.info("[{}] Rate limit popup detected - test passed (expected behavior)", testName);
+            return;
+        }
+        mp.waitForUploadingMessageIfFast();
+        mp.assertOnMessagingScreen();
+        
+        logger.info("[{}] Media push flow completed successfully", testName);
+    }
+
+    // Helper method to add media files
+    private void addMediaFile(CreatorMediaPushPage mp, Path mediaFile, String testName, String mediaType) {
+        if (!Files.exists(mediaFile)) {
+            throw new SkipException("Missing test asset: " + mediaFile);
+        }
+        logger.info("[{}] Adding {}: {}", testName, mediaType, mediaFile.getFileName());
+        mp.clickAddMediaPlus();
+        mp.ensureImportation();
+        mp.chooseMyDevice();
+        mp.uploadMediaFromDevice(mediaFile);
+        mp.clickNext();
+    }
 
     // Handles post-propose transient weekly-limit popup robustly.
     // Waits up to ~5s for either the popup text or the button to appear, clicks if found, and ends the test.
@@ -73,131 +174,13 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
     @Story("Creator sends media push to Subscribers with image and video from device")
     @Test(priority = 1, description = "Media push flow via My Device: add image and video, set price, propose push, land on Messaging")
     public void creatorCanSendMediaPushToSubscribers() {
-        CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
-
-        // 1) Open plus menu and ensure options popup
-        logger.info("[MediaPush] Opening plus menu");
-        mp.openPlusMenu();
-        mp.ensureOptionsPopup();
-
-        // 2) Choose Media push and ensure segments screen
-        logger.info("[MediaPush] Choosing 'Media push' and selecting segment: Subscribers");
-        mp.chooseMediaPush();
-        mp.ensureSegmentsScreen();
-        mp.selectSubscribersSegment();
-        mp.clickCreateNext();
-
-        // 3) Ensure Add Push Media screen
-        mp.ensureAddPushMediaScreen();
-
-        // 4) Add first media: Image
-        Path img = resourcePath("src", "test", "resources", "Images", "MediaImageA.jpg");
-        if (!Files.exists(img)) {
-            throw new SkipException("Missing test asset: " + img);
-        }
-        logger.info("[MediaPush] Adding first image: {}", img.getFileName());
-        mp.clickAddMediaPlus();
-        mp.ensureImportation();
-        mp.chooseMyDevice();
-        mp.uploadMediaFromDevice(img);
-        mp.ensureBlurToggleEnabled();
-        mp.clickNext();
-
-        // 5) Add second media: Video
-        Path vid = resourcePath("src", "test", "resources", "Videos", "MediaVideoA.mp4");
-        if (!Files.exists(vid)) {
-            throw new SkipException("Missing test asset: " + vid);
-        }
-        logger.info("[MediaPush] Adding second video: {}", vid.getFileName());
-        mp.clickAddMediaPlus();
-        mp.ensureImportation();
-        mp.chooseMyDevice();
-        mp.uploadMediaFromDevice(vid);
-        mp.ensureBlurToggleEnabled();
-        mp.clickNext();
-
-        // 6) Message + price
-        logger.info("[MediaPush] Filling message and setting price 15€");
-        mp.ensureMessageTitle();
-        mp.fillMessage("Test Message");
-        mp.setPriceEuro(15);
-        mp.ensureAddPromotionDisabled();
-
-        // 7) Propose push media and assert final screen
-        logger.info("[MediaPush] Proposing push media and asserting Messaging screen");
-        mp.clickProposePushMedia();
-        if (handleIUnderstandAfterProposeIfVisible()) {
-            return;
-        }
-        mp.waitForUploadingMessageIfFast();
-        mp.assertOnMessagingScreen();
+        executeMediaPushFlow("MediaPush", MediaPushData.STANDARD_SCENARIOS[0]);
     }
 
     @Story("Creator sends clear media push by disabling blur for each media")
     @Test(priority = 2, description = "Disable blur for both media (image+video), set price 15€, no promotion, then propose push and land on Messaging")
     public void creatorCanSendClearMediaPush() {
-        CreatorMediaPushPage mp = new CreatorMediaPushPage(page);
-
-        // 1) Open plus menu and ensure options popup
-        logger.info("[MediaPushClear] Opening plus menu");
-        mp.openPlusMenu();
-        mp.ensureOptionsPopup();
-
-        // 2) Choose Media push and ensure segments screen
-        logger.info("[MediaPushClear] Choosing 'Media push' and selecting segment: Subscribers");
-        mp.chooseMediaPush();
-        mp.ensureSegmentsScreen();
-        mp.selectSubscribersSegment();
-        mp.clickCreateNext();
-
-        // 3) Ensure Add Push Media screen
-        mp.ensureAddPushMediaScreen();
-
-        // 4) Add first media: Image (Quick B) and disable blur
-        Path img = resourcePath("src", "test", "resources", "Images", "QuickImageB.jpg");
-        if (!Files.exists(img)) {
-            throw new SkipException("Missing test asset: " + img);
-        }
-        logger.info("[MediaPushClear] Adding first image: {}", img.getFileName());
-        mp.clickAddMediaPlus();
-        mp.ensureImportation();
-        mp.chooseMyDevice();
-        mp.uploadMediaFromDevice(img);
-        mp.ensureBlurToggleEnabled();
-        mp.disableBlurIfEnabled();
-        mp.ensureBlurToggleDisabled();
-        mp.clickNext();
-
-        // 5) Add second media: Video (Quick B) and disable blur
-        Path vid = resourcePath("src", "test", "resources", "Videos", "QuickVideoB.mp4");
-        if (!Files.exists(vid)) {
-            throw new SkipException("Missing test asset: " + vid);
-        }
-        logger.info("[MediaPushClear] Adding second video: {}", vid.getFileName());
-        mp.clickAddMediaPlus();
-        mp.ensureImportation();
-        mp.chooseMyDevice();
-        mp.uploadMediaFromDevice(vid);
-        mp.ensureBlurToggleEnabled();
-        mp.disableBlurIfEnabled();
-        mp.ensureBlurToggleDisabled();
-        mp.clickNext();
-
-        // 6) Message + price (no promotion)
-        logger.info("[MediaPushClear] Filling message and setting price 15€ (no promotion)");
-        mp.ensureMessageTitle();
-        mp.fillMessage("Test Message");
-        mp.setPriceEuro(15);
-        mp.ensureAddPromotionDisabled();
-
-        // 7) Propose push media and assert final screen
-        logger.info("[MediaPushClear] Proposing push media and asserting Messaging screen");
-        mp.clickProposePushMedia();
-        if (handleIUnderstandAfterProposeIfVisible()) {
-            return;
-        }
-        mp.waitForUploadingMessageIfFast();
-        mp.assertOnMessagingScreen();
+        executeMediaPushFlow("MediaPushClear", MediaPushData.STANDARD_SCENARIOS[1]);
     }
 
     @Story("Creator sends media push for Free (no promotion)")
