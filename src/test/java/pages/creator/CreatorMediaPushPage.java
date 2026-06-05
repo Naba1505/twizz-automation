@@ -149,7 +149,7 @@ public class CreatorMediaPushPage extends BasePage {
                 logger.debug("Trying locator strategy for Subscribers");
                 if (locator.count() > 0) {
                     logger.info("Found Subscribers element with count: {}", locator.count());
-                    waitVisible(locator.first(), ConfigReader.getMediumTimeout()); // Use longer timeout
+                    waitVisible(locator.first(), ConfigReader.getShortTimeout());
                     clickWithRetry(locator.first(), 3, ConfigReader.getElementRetryDelay());
                     found = true;
                     break;
@@ -199,7 +199,7 @@ public class CreatorMediaPushPage extends BasePage {
             if (seg.count() > 0 && safeIsVisible(seg.first())) {
                 // Try normal click first with short timeout
                 try {
-                    seg.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getMediumTimeout()));
+                    seg.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
                     interestedSelected = true;
                     logger.info("Interested segment selected successfully");
                 } catch (Exception e) {
@@ -260,11 +260,11 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Click Create to proceed from segments")
     public void clickCreateNext() {
         Locator create = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BTN));
-        waitVisible(create.first(), ConfigReader.getVisibilityTimeout());
+        waitVisible(create.first(), ConfigReader.getShortTimeout());
         
         // Wait for button to be enabled (segment selection may delay this)
         // If button doesn't become enabled, ensure at least Subscribers is selected
-        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+        long deadline = System.currentTimeMillis() + ConfigReader.getShortTimeout();
         boolean enabled = false;
         while (System.currentTimeMillis() < deadline) {
             try {
@@ -282,7 +282,7 @@ public class CreatorMediaPushPage extends BasePage {
             try {
                 selectSubscribersSegment();
                 // Wait again for button to be enabled
-                deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+                deadline = System.currentTimeMillis() + ConfigReader.getShortTimeout();
                 while (System.currentTimeMillis() < deadline) {
                     try {
                         if (create.first().isEnabled()) break;
@@ -335,7 +335,7 @@ public class CreatorMediaPushPage extends BasePage {
             try {
                 if (locator.count() > 0) {
                     logger.info("Found Importation dialog with count: {}", locator.count());
-                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
+                    waitVisible(locator.first(), ConfigReader.getShortTimeout());
                     found = true;
                     break;
                 }
@@ -650,24 +650,31 @@ public class CreatorMediaPushPage extends BasePage {
         // Wait for page to stabilize after media upload/processing
         try {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE, 
-                new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getShortTimeout()));
+                new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout()));
         } catch (Exception e) {
             logger.debug("Network idle timeout, continuing with button search");
         }
         
         // Additional stabilization wait for UI to settle
         page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+
+        // Poll until the primary Next button locator appears in DOM (device uploads can be slow)
+        Locator primaryNext = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
+        long pollDeadline = System.currentTimeMillis() + ConfigReader.getLongTimeout();
+        while (primaryNext.count() == 0 && System.currentTimeMillis() < pollDeadline) {
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
+        }
+        logger.info("Next button DOM poll done; count={}", primaryNext.count());
         
         // Try multiple selector strategies for Next button
         Locator[] nextLocators = {
-            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")),
+            primaryNext,
             page.getByText("Next"),
             page.getByText("Next", new Page.GetByTextOptions().setExact(false)),
             page.locator("button:has-text('Next')"),
             page.locator(".ant-btn:has-text('Next')"),
             page.locator("[type='button']:has-text('Next')"),
-            page.locator("button[type='submit']:has-text('Next')"),
-            page.locator("*:has-text('Next')") // Fallback
+            page.locator("button[type='submit']:has-text('Next')")
         };
         
         boolean clicked = false;
@@ -675,11 +682,10 @@ public class CreatorMediaPushPage extends BasePage {
             try {
                 if (locator.count() > 0) {
                     logger.info("Found Next button with count: {}", locator.count());
-                    // Use full visibility timeout instead of medium
-                    waitVisible(locator.first(), ConfigReader.getVisibilityTimeout());
+                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
                     
                     // Wait for button to be enabled (media upload processing may delay this)
-                    long deadline = System.currentTimeMillis() + ConfigReader.getVisibilityTimeout();
+                    long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
                     while (System.currentTimeMillis() < deadline) {
                         try {
                             if (locator.first().isEnabled()) break;
@@ -729,7 +735,7 @@ public class CreatorMediaPushPage extends BasePage {
             try {
                 if (locator.count() > 0) {
                     logger.info("Found message textbox with count: {}", locator.count());
-                    waitVisible(locator.first(), ConfigReader.getShortTimeout());
+                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
                     found = true;
                     break;
                 }
@@ -924,7 +930,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
         Locator first = btn.first();
         try {
-            waitVisible(first, ConfigReader.getVisibilityTimeout());
+            waitVisible(first, ConfigReader.getShortTimeout());
         } catch (Exception e) {
             logger.warn("[MediaPush] 'Propose push media' button not visible within timeout; attempting click anyway", e);
         }
@@ -937,7 +943,7 @@ public class CreatorMediaPushPage extends BasePage {
             Locator msg = page.getByText(UPLOADING_MSG);
             if (msg.count() > 0) {
                 // small visibility wait, then allow dismiss naturally
-                waitVisible(msg.first(), ConfigReader.getMediumTimeout());
+                waitVisible(msg.first(), ConfigReader.getShortTimeout());
             }
         } catch (Exception e) { logger.debug("Exception in waitForUploadingMessageIfFast: {}", e.getMessage()); }
     }
