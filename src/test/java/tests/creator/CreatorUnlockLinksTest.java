@@ -37,7 +37,6 @@ public class CreatorUnlockLinksTest extends BaseCreatorTest {
         logger.info("[UnlockImage] Opening plus menu and navigating to Unlock");
         ul.openPlusMenu();
         ul.ensureOptionsPopup();
-        ul.clickIUnderstandIfPresent();
         ul.chooseUnlock();
         ul.ensureUnlockScreen();
 
@@ -76,7 +75,6 @@ public class CreatorUnlockLinksTest extends BaseCreatorTest {
         logger.info("[UnlockVideo] Opening plus menu and navigating to Unlock");
         ul.openPlusMenu();
         ul.ensureOptionsPopup();
-        ul.clickIUnderstandIfPresent();
         ul.chooseUnlock();
         ul.ensureUnlockScreen();
 
