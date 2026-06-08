@@ -2,6 +2,7 @@ package tests.creator;
 
 import org.testng.annotations.Test;
 import pages.creator.CreatorProfilePage;
+import utils.ConfigReader;
 
 public class CreatorProfileTest extends BaseCreatorTest {
 
@@ -60,7 +61,7 @@ public class CreatorProfileTest extends BaseCreatorTest {
 
         // Submit and confirm
         profile.clickRegisterUpdate();
-        profile.waitForProfileUpdatedToastSoft(8000);
+        profile.waitForProfileUpdatedToastSoft(ConfigReader.getMediumTimeout());
     }
 
     @Test(priority = 4, description = "Creator verifies Share Profile options (whatsapp, twitter, telegram, message, copy, cancel)")
