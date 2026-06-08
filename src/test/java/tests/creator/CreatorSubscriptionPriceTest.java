@@ -3,6 +3,7 @@ package tests.creator;
 import com.microsoft.playwright.options.AriaRole;
 import org.testng.annotations.Test;
 import pages.creator.CreatorMonetizationPage;
+import utils.ConfigReader;
 
 public class CreatorSubscriptionPriceTest extends BaseCreatorTest {
 
@@ -46,7 +47,7 @@ public class CreatorSubscriptionPriceTest extends BaseCreatorTest {
         monetization.assertQuarterlyOfferVisible();
 
         // Wait for page to settle
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { /* settle wait */ }
 
         // Get the quarterly toggle (switch index 1)
         var quarterlySwitch = page.getByRole(AriaRole.SWITCH).nth(1);
@@ -59,7 +60,7 @@ public class CreatorSubscriptionPriceTest extends BaseCreatorTest {
             // Quarterly is already disabled - enable it first, save, then disable
             // Enable quarterly
             quarterlySwitch.click();
-            try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { /* animation wait */ }
             
             // Set a price (required when enabling)
             monetization.setQuarterlyPrice("5");
@@ -69,22 +70,22 @@ public class CreatorSubscriptionPriceTest extends BaseCreatorTest {
             monetization.waitForMonetizationUpdatedToast();
             
             // Navigate back to profile first using browser back or back arrow
-            try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { /* settle wait */ }
             try {
                 var backArrow = page.getByRole(AriaRole.IMG, new com.microsoft.playwright.Page.GetByRoleOptions().setName("arrow left"));
                 if (backArrow.count() > 0 && backArrow.first().isVisible()) {
                     backArrow.first().click();
-                    try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { /* animation wait */ }
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { /* back navigation failed, continue */ }
             // Go back again to profile
-            try { page.goBack(); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+            try { page.goBack(); } catch (Throwable e) { /* navigation failed, continue */ }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { /* settle wait */ }
             
             // Re-open subscription price screen
             monetization.openSubscriptionPriceFromProfile();
             monetization.assertQuarterlyOfferVisible();
-            try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { /* settle wait */ }
             
             // Re-get the switch reference
             quarterlySwitch = page.getByRole(AriaRole.SWITCH).nth(1);
@@ -92,7 +93,7 @@ public class CreatorSubscriptionPriceTest extends BaseCreatorTest {
         
         // Now disable quarterly toggle
         quarterlySwitch.click();
-        try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { /* animation wait */ }
 
         // Click Continue to save using page object method (has wait logic)
         monetization.clickContinue();
