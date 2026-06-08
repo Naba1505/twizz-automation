@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -12,16 +13,11 @@ import org.slf4j.LoggerFactory;
 public class CreatorPromotionsPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorPromotionsPage.class);
 
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int SCROLL_WAIT = 80;           // Scroll stabilization
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POLLING_WAIT = 200;         // Polling intervals
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
-    private static final int LONG_TIMEOUT = 8000;        // Long waits for deletion/copy
-    private static final int PAGE_LOAD_WAIT = 1500;      // Page load stabilization
+    // Promotions page uses intentionally SHORT timeouts (1-8s) because UI elements load quickly
+    // Do NOT use ConfigReader defaults (10-120s) - they would make tests 10-15x slower
+    private static final int SHORT_TIMEOUT = 1000;   // 1s - Menu items, buttons, inputs
+    private static final int MEDIUM_TIMEOUT = 2000;  // 2s - Toast messages, selectors
+    private static final int LONG_TIMEOUT = 8000;    // 8s - Copy buttons, deletion polling
 
     // URLs and texts
     private static final String SETTINGS_URL_PART = "/common/setting";
@@ -117,9 +113,9 @@ public class CreatorPromotionsPage extends BasePage {
         try {
             try {
                 page.mouse().wheel(0, 200);
-                page.waitForTimeout(SCROLL_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 page.mouse().wheel(0, -200);
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { log.debug("Wheel failed: {}", e.getMessage()); }
             return automationSpans().count();
         } catch (Throwable t) {
             log.warn("Failed to count AUTOMATION promos: {}", t.getMessage());
@@ -130,23 +126,23 @@ public class CreatorPromotionsPage extends BasePage {
     private void nudgeLazyLoad() {
         try {
             page.mouse().wheel(0, 600);
-            page.waitForTimeout(NAVIGATION_WAIT);
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
             page.mouse().wheel(0, -600);
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { log.debug("Wheel failed: {}", e.getMessage()); }
     }
 
     private void scrollToEndAndBack() {
         try {
-            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); }
-            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, -800); page.waitForTimeout(SCROLL_WAIT); }
-        } catch (Throwable ignored) {}
+            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getElementRetryDelay()); }
+            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); }
+        } catch (Throwable e) { log.debug("Scroll failed: {}", e.getMessage()); }
     }
 
     // ----------- Steps -----------
     @Step("Open Settings from profile")
     public void openSettingsFromProfile() {
         waitVisible(settingsIcon(), SHORT_TIMEOUT);
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         // Ensure URL contains /common/setting
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
@@ -166,7 +162,7 @@ public class CreatorPromotionsPage extends BasePage {
                 nudgeLazyLoad();
 
                 int beforeCount;
-                try { beforeCount = automationSpans().count(); } catch (Throwable ignored) { beforeCount = 0; }
+                try { beforeCount = automationSpans().count(); } catch (Throwable e) { beforeCount = 0; log.debug("Count failed: {}", e.getMessage()); }
                 if (beforeCount <= 0) {
                     log.info("All 'AUTOMATION' promo codes are deleted (none remaining)");
                     break;
@@ -175,22 +171,22 @@ public class CreatorPromotionsPage extends BasePage {
                 // Delete the first visible row - click to open promo details
                 Locator row = automationSpans().first();
                 waitVisible(row, SHORT_TIMEOUT);
-                try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                try { row.scrollIntoViewIfNeeded(); } catch (Throwable e) { log.debug("Scroll failed: {}", e.getMessage()); }
                 log.info("Deleting an 'AUTOMATION' promo; remaining before delete: {}", beforeCount);
-                clickWithRetry(row, 1, NAVIGATION_WAIT);
-                page.waitForTimeout(BUTTON_RETRY_DELAY);
+                clickWithRetry(row, 1, ConfigReader.getElementRetryDelay());
+                page.waitForTimeout(ConfigReader.getElementRetryDelay());
 
                 // Click Delete button inside promo details (if present)
                 try {
                     if (deletePromoButton().isVisible()) {
-                        clickWithRetry(deletePromoButton(), 1, NAVIGATION_WAIT);
-                        page.waitForTimeout(POLLING_WAIT);
+                        clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
+                        page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { log.debug("Delete button check failed: {}", e.getMessage()); }
 
                 // Confirm delete
                 waitVisible(yesDeleteButton(), SHORT_TIMEOUT);
-                clickWithRetry(yesDeleteButton(), 1, NAVIGATION_WAIT);
+                clickWithRetry(yesDeleteButton(), 1, ConfigReader.getElementRetryDelay());
 
                 // Wait for the count to decrease or the row to detach
                 long startWait = System.currentTimeMillis();
@@ -199,20 +195,20 @@ public class CreatorPromotionsPage extends BasePage {
                     try {
                         int now = automationSpans().count();
                         if (now < beforeCount) { countDecreased = true; break; }
-                    } catch (Throwable ignored) {}
-                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+                    } catch (Throwable e) { log.debug("Count failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
                 }
 
                 // Determine if this was the last deletion
                 int afterCount;
-                try { afterCount = automationSpans().count(); } catch (Throwable ignored) { afterCount = 0; }
+                try { afterCount = automationSpans().count(); } catch (Throwable e) { afterCount = 0; log.debug("Count failed: {}", e.getMessage()); }
                 boolean isLast = afterCount == 0;
 
                 if (isLast) {
                     // Last deletion: try to observe and close the success toast, but do not fail if not seen
                     try {
                         waitVisible(deleteSuccessToast(), LONG_TIMEOUT);
-                        try { clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
+                        try { clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable e) { log.debug("Click failed: {}", e.getMessage()); }
                     } catch (Throwable t) {
                         log.warn("Last deletion did not surface success toast within timeout; proceeding without failure");
                     }
@@ -220,9 +216,9 @@ public class CreatorPromotionsPage extends BasePage {
                     // Intermediate deletion: close toast if it appears; do not assert
                     try {
                         waitVisible(deleteSuccessToast(), MEDIUM_TIMEOUT);
-                        try { clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
-                    } catch (Throwable ignored) {
-                        // toast did not appear; proceed
+                        try { clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable e) { log.debug("Click failed: {}", e.getMessage()); }
+                    } catch (Throwable e) {
+                        log.debug("Toast wait failed: {}", e.getMessage());
                     }
                 }
 
@@ -233,7 +229,7 @@ public class CreatorPromotionsPage extends BasePage {
                 }
 
                 // Small pause before next iteration
-                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
             }
 
             // Validation pass: if any still remain, attempt deeper scroll and re-open promo page, then delete again
@@ -241,54 +237,54 @@ public class CreatorPromotionsPage extends BasePage {
             if (remaining > 0) {
                 log.warn("Validation: {} 'AUTOMATION' promos still visible after first pass; attempting second pass", remaining);
                 scrollToEndAndBack();
-                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
                 // Re-open promo menu to refresh view
                 try {
-                    clickWithRetry(promoMenuItem(), 1, BUTTON_RETRY_DELAY);
+                    clickWithRetry(promoMenuItem(), 1, ConfigReader.getElementRetryDelay());
                     waitVisible(promoTitleExact(), SHORT_TIMEOUT);
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { log.debug("Re-open menu failed: {}", e.getMessage()); }
 
                 // Secondary loop with smaller safety bound
                 int safety2 = 0;
                 while (safety2++ < 30) {
                     nudgeLazyLoad();
                     int before;
-                    try { before = automationSpans().count(); } catch (Throwable ignored) { before = 0; }
+                    try { before = automationSpans().count(); } catch (Throwable e) { before = 0; log.debug("Count failed: {}", e.getMessage()); }
                     if (before <= 0) break;
 
                     Locator row = automationSpans().first();
                     waitVisible(row, SHORT_TIMEOUT);
-                    try { row.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                    clickWithRetry(row, 1, NAVIGATION_WAIT);
-                    page.waitForTimeout(BUTTON_RETRY_DELAY);
+                    try { row.scrollIntoViewIfNeeded(); } catch (Throwable e) { log.debug("Scroll failed: {}", e.getMessage()); }
+                    clickWithRetry(row, 1, ConfigReader.getElementRetryDelay());
+                    page.waitForTimeout(ConfigReader.getElementRetryDelay());
 
                     // Click Delete button inside promo details (if present)
                     try {
                         if (deletePromoButton().isVisible()) {
-                            clickWithRetry(deletePromoButton(), 1, NAVIGATION_WAIT);
-                            page.waitForTimeout(POLLING_WAIT);
+                            clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
+                            page.waitForTimeout(ConfigReader.getAnimationTimeout());
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { log.debug("Delete button check failed: {}", e.getMessage()); }
 
                     waitVisible(yesDeleteButton(), SHORT_TIMEOUT);
-                    clickWithRetry(yesDeleteButton(), 1, NAVIGATION_WAIT);
+                    clickWithRetry(yesDeleteButton(), 1, ConfigReader.getElementRetryDelay());
 
                     // Toast handling: only assert when it becomes last
                     int after;
                     long startCheck = System.currentTimeMillis();
                     while (System.currentTimeMillis() - startCheck < LONG_TIMEOUT) {
-                        try { after = automationSpans().count(); } catch (Throwable ignored) { after = 0; }
+                        try { after = automationSpans().count(); } catch (Throwable e) { after = 0; log.debug("Count failed: {}", e.getMessage()); }
                         if (after < before) break;
-                        try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+                        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
                     }
-                    try { after = automationSpans().count(); } catch (Throwable ignored) { after = 0; }
+                    try { after = automationSpans().count(); } catch (Throwable e) { after = 0; log.debug("Count failed: {}", e.getMessage()); }
                     boolean lastNow = after == 0;
                     if (lastNow) {
-                        try { waitVisible(deleteSuccessToast(), LONG_TIMEOUT); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
+                        try { waitVisible(deleteSuccessToast(), LONG_TIMEOUT); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable e) { log.debug("Toast handling failed: {}", e.getMessage()); }
                     } else {
-                        try { waitVisible(deleteSuccessToast(), MEDIUM_TIMEOUT); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable ignored) {}
+                        try { waitVisible(deleteSuccessToast(), MEDIUM_TIMEOUT); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable e) { log.debug("Toast handling failed: {}", e.getMessage()); }
                     }
-                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
                 }
 
                 int finalRemain = getAutomationPromoCount();
@@ -307,12 +303,12 @@ public class CreatorPromotionsPage extends BasePage {
     public void openPromoCodeScreen() {
         // Scroll into view and click
         waitVisible(promoMenuItem(), SHORT_TIMEOUT);
-        try { promoMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(promoMenuItem(), 1, BUTTON_RETRY_DELAY);
+        try { promoMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { log.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(promoMenuItem(), 1, ConfigReader.getElementRetryDelay());
         // Verify Promotions page title exact
         waitVisible(promoTitleExact(), SHORT_TIMEOUT);
         // Wait for page to fully load
-        page.waitForTimeout(PAGE_LOAD_WAIT);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         // Wait for promo items to render
         try {
             page.waitForSelector("span.creatorCodePromoName", new Page.WaitForSelectorOptions().setTimeout(MEDIUM_TIMEOUT));
@@ -322,14 +318,14 @@ public class CreatorPromotionsPage extends BasePage {
         }
         // Log count of automation promos
         int count = 0;
-        try { count = automationSpans().count(); } catch (Throwable ignored) {}
+        try { count = automationSpans().count(); } catch (Throwable e) { log.debug("Count failed: {}", e.getMessage()); }
         log.info("Found {} AUTOMATION promo codes on screen", count);
     }
 
     @Step("Click 'Create a promo code' button")
     public void clickCreatePromoCode() {
         waitVisible(createPromoButton(), SHORT_TIMEOUT);
-        clickWithRetry(createPromoButton(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(createPromoButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Fill promo code: {code}")
@@ -353,29 +349,29 @@ public class CreatorPromotionsPage extends BasePage {
     @Step("Select 'Subscription' and 'Unlimited' options")
     public void selectSubscriptionUnlimited() {
         waitVisible(subscriptionLabel(), SHORT_TIMEOUT);
-        clickWithRetry(subscriptionLabel(), 1, NAVIGATION_WAIT);
+        clickWithRetry(subscriptionLabel(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(unlimitedLabel(), SHORT_TIMEOUT);
-        clickWithRetry(unlimitedLabel(), 1, NAVIGATION_WAIT);
+        clickWithRetry(unlimitedLabel(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Select applicability: {applicabilityText}")
     public void selectApplicability(String applicabilityText) {
         Locator opt = page.locator("label").filter(new Locator.FilterOptions().setHasText(applicabilityText));
         waitVisible(opt, SHORT_TIMEOUT);
-        clickWithRetry(opt, 1, NAVIGATION_WAIT);
+        clickWithRetry(opt, 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Select validity: {validityText}")
     public void selectValidity(String validityText) {
         Locator opt = page.locator("label").filter(new Locator.FilterOptions().setHasText(validityText));
         waitVisible(opt, SHORT_TIMEOUT);
-        clickWithRetry(opt, 1, NAVIGATION_WAIT);
+        clickWithRetry(opt, 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Click Create to submit promo")
     public void submitCreate() {
         waitVisible(createButton(), SHORT_TIMEOUT);
-        clickWithRetry(createButton(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(createButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert promo created toasts visible")
@@ -384,18 +380,18 @@ public class CreatorPromotionsPage extends BasePage {
         // Try to wait for min price toast but don't fail if it doesn't appear
         try {
             waitVisible(minPriceToast(), MEDIUM_TIMEOUT);
-            try { clickWithRetry(minPriceToast(), 0, 0); } catch (Throwable ignored) {}
+            try { clickWithRetry(minPriceToast(), 0, 0); } catch (Throwable e) { log.debug("Click failed: {}", e.getMessage()); }
         } catch (Throwable e) {
             log.info("Min price toast did not appear: {}", e.getMessage());
         }
         // Try dismiss or click to clear toast to keep UI clean for next steps
-        try { clickWithRetry(promoCreatedToast(), 0, 0); } catch (Throwable ignored) {}
+        try { clickWithRetry(promoCreatedToast(), 0, 0); } catch (Throwable e) { log.debug("Click failed: {}", e.getMessage()); }
     }
 
     @Step("Assert promo created success toast visible")
     public void assertPromoCreatedSuccessOnly() {
         waitVisible(promoCreatedToast(), MEDIUM_TIMEOUT);
-        try { clickWithRetry(promoCreatedToast(), 0, 0); } catch (Throwable ignored) {}
+        try { clickWithRetry(promoCreatedToast(), 0, 0); } catch (Throwable e) { log.debug("Click failed: {}", e.getMessage()); }
     }
 
     @Step("Click all visible 'Copy' buttons and assert copy toast only for the last click")
@@ -408,21 +404,21 @@ public class CreatorPromotionsPage extends BasePage {
                 if (automationSpans().count() > 0) {
                     waitVisible(automationSpans().first(), SHORT_TIMEOUT);
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { log.debug("Promo rows check failed: {}", e.getMessage()); }
             // Poll for copy elements to appear, with gentle scroll nudges
             Locator copies = copySpans();
             int count = 0;
             long start = System.currentTimeMillis();
             long timeoutMs = LONG_TIMEOUT;
             while (System.currentTimeMillis() - start < timeoutMs) {
-                try { count = copies.count(); } catch (Throwable ignored) { count = 0; }
+                try { count = copies.count(); } catch (Throwable e) { count = 0; log.debug("Count failed: {}", e.getMessage()); }
                 if (count > 0) break;
                 try {
                     // Nudge scroll to trigger lazy-loaded content
                     page.mouse().wheel(0, 600);
-                    page.waitForTimeout(POLLING_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     page.mouse().wheel(0, -600);
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { log.debug("Wheel failed: {}", e.getMessage()); }
             }
             if (count <= 0) {
                 log.warn("No 'Copy' buttons found on Promotions page after waiting");
@@ -433,14 +429,14 @@ public class CreatorPromotionsPage extends BasePage {
                 // Refetch each iteration to avoid stale indexes after DOM updates
                 Locator btn = copies.nth(i);
                 waitVisible(btn, SHORT_TIMEOUT);
-                try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                try { btn.scrollIntoViewIfNeeded(); } catch (Throwable e) { log.debug("Scroll failed: {}", e.getMessage()); }
                 log.info("Clicking 'Copy' element index {} (will assert toast only for last index: {})", i, count - 1);
-                clickWithRetry(btn, 1, NAVIGATION_WAIT);
+                clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
                 if (i == count - 1) {
                     // For the last click, try to observe and close the toast, but do not fail if not seen
                     try {
                         waitVisible(copySuccessToast(), LONG_TIMEOUT);
-                        try { clickWithRetry(copySuccessToast(), 0, 0); } catch (Throwable ignored) {}
+                        try { clickWithRetry(copySuccessToast(), 0, 0); } catch (Throwable e) { log.debug("Click failed: {}", e.getMessage()); }
                     } catch (Throwable t) {
                         log.warn("Last 'Copy' click did not surface the success toast within timeout; proceeding without failure");
                     }
@@ -448,13 +444,13 @@ public class CreatorPromotionsPage extends BasePage {
                     // For intermediate clicks, if a toast appears, close it without asserting
                     try {
                         waitVisible(copySuccessToast(), MEDIUM_TIMEOUT);
-                        try { clickWithRetry(copySuccessToast(), 0, 0); } catch (Throwable ignored) {}
-                    } catch (Throwable ignored) {
-                        // toast did not appear within short timeout; proceed
+                        try { clickWithRetry(copySuccessToast(), 0, 0); } catch (Throwable e) { log.debug("Click failed: {}", e.getMessage()); }
+                    } catch (Throwable e) {
+                        log.debug("Toast wait failed: {}", e.getMessage());
                     }
                 }
                 // small pause to avoid any overlap before next iteration
-                try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
             }
         } catch (Throwable t) {
             log.error("Unexpected error during clicking all 'Copy' elements; proceeding without failing test: {}", t.getMessage());
