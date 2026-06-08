@@ -2,6 +2,7 @@ package tests.creator;
 
 import org.testng.annotations.Test;
 import pages.creator.CreatorMessagingPage;
+import utils.ConfigReader;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,9 +34,9 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(media);
         // Wait until upload spinner disappears before asserting accepted
-        msg.waitForUploadSpinnerToDisappear(15_000);
+        msg.waitForUploadSpinnerToDisappear(ConfigReader.getMediumTimeout());
         // Assert accepted badge appears for sent media (allow longer post-processing)
-        msg.assertAcceptedBadgeVisible(60_000);
+        msg.assertAcceptedBadgeVisible(ConfigReader.getLongTimeout());
     }
 
     @Test(priority = 3, description = "Creator sends a video media message from Messaging using Importation -> My Device")
@@ -51,7 +52,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(video);
         // Video can take longer; wait a longer time window for spinner to disappear
-        msg.waitForUploadSpinnerToDisappear(60_000);
+        msg.waitForUploadSpinnerToDisappear(ConfigReader.getLongTimeout());
         // Assert accepted badge appears for sent media
         msg.assertAcceptedBadgeVisible();
     }
@@ -70,10 +71,10 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.selectMediaFromQuickFilesAlbum("icon mixalbum_251119_134546", 6);
 
         // Allow any post-selection processing/spinners to settle
-        msg.waitForUploadSpinnerToDisappear(30_000);
+        msg.waitForUploadSpinnerToDisappear(ConfigReader.getMediumTimeout());
 
         // Success criteria: back on conversation screen, input visible
-        msg.assertConversationInputVisible(30_000);
+        msg.assertConversationInputVisible(ConfigReader.getMediumTimeout());
     }
 
     @Test(priority = 5, description = "Creator sends a Private media message (image + video) via My Device")
@@ -92,17 +93,17 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(img);
-        msg.waitForUploadSpinnerToDisappear(60_000);
+        msg.waitForUploadSpinnerToDisappear(ConfigReader.getLongTimeout());
         msg.ensureBlurToggleEnabled();
         msg.clickNextStrict();
-        msg.waitForSecondAddIcon(5_000);
+        msg.waitForSecondAddIcon(ConfigReader.getShortTimeout());
 
         // Add second media (Video A)
         msg.clickPrivateMediaAddPlus();
         msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(vid);
-        msg.waitForUploadSpinnerToDisappear(60_000);
+        msg.waitForUploadSpinnerToDisappear(ConfigReader.getLongTimeout());
         msg.clickNextStrict();
 
         // Proceed to message step, fill and set price
@@ -116,8 +117,8 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
         // Validate success via toast or fallback to conversation input visible
-        try { msg.waitForMediaSentToast(15_000); }
-        catch (Throwable ignored) { msg.assertConversationInputVisible(60_000); }
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); }
+        catch (Throwable ignored) { msg.assertConversationInputVisible(ConfigReader.getLongTimeout()); }
     }
 
     @Test(priority = 6, description = "Creator sends a Private media message with promotion (10€, validity Unlimited)")
@@ -135,7 +136,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.ensureImportationVisible();
         msg.chooseMyDeviceForMedia();
         msg.uploadMessageMedia(img);
-        msg.waitForUploadSpinnerToDisappear(60_000);
+        msg.waitForUploadSpinnerToDisappear(ConfigReader.getLongTimeout());
         msg.ensureBlurToggleEnabled();
         msg.clickNextStrict();
 
@@ -154,10 +155,10 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
 
         // Ensure we land back on the conversation screen
-        msg.assertConversationInputVisible(60_000);
+        msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
     }
 
     @Test(priority = 7, description = "Creator sends a Private media message with promotion (5% discount, validity 7 days)")
@@ -193,10 +194,10 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
 
         // Ensure we land back on the conversation screen
-        msg.assertConversationInputVisible(60_000);
+        msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
     }
 
     @Test(priority = 8, description = "Creator sends a Private media message for Free (image + video) via My Device")
@@ -217,7 +218,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.uploadMessageMedia(img);
         msg.ensureBlurToggleEnabled();
         msg.clickNextStrict();
-        msg.waitForSecondAddIcon(5_000);
+        msg.waitForSecondAddIcon(ConfigReader.getShortTimeout());
 
         // Add second media (video)
         msg.clickPrivateMediaAddPlus();
@@ -234,10 +235,10 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
 
         // Ensure we land back on the conversation screen
-        msg.assertConversationInputVisible(60_000);
+        msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
     }
 
     @Test(priority = 9, description = "Creator sends a Free Private media message with unblurred media")
@@ -268,10 +269,10 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
 
         // Ensure we land back on the conversation screen
-        msg.assertConversationInputVisible(60_000);
+        msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
     }
 
     @Test(priority = 10, description = "Creator sends a Private media message using Quick Files (multi-select)")
@@ -287,7 +288,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.ensureImportationVisible();
         msg.chooseQuickFilesForMedia();
         msg.selectMediaFromQuickFilesAlbum("icon mixalbum_251119_134546", 6);
-        msg.waitForUploadSpinnerToDisappear(60_000);
+        msg.waitForUploadSpinnerToDisappear(ConfigReader.getLongTimeout());
 
         // Click Next 6 times (once per selected file) to advance through each media item
         for (int i = 0; i < 6; i++) {
@@ -303,11 +304,11 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media and wait for success
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        msg.waitForUploadingBannerToDisappear(60_000);
-        try { msg.waitForMediaSentToast(15_000); } catch (Throwable ignored) {}
+        msg.waitForUploadingBannerToDisappear(ConfigReader.getLongTimeout());
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
 
         // Ensure we land back on the conversation screen
-        msg.assertConversationInputVisible(60_000);
+        msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
     }
 
 
@@ -325,7 +326,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.assertPrivateGalleryScreen();
 
         // Wait for items to load, then scroll bottom and back to top
-        msg.waitForPrivateGalleryItems(15_000);
+        msg.waitForPrivateGalleryItems(ConfigReader.getShortTimeout());
         msg.scrollPrivateGalleryToBottomThenTop();
 
         // Preview any item and close preview
