@@ -10,12 +10,11 @@ import io.qameta.allure.Step;
 
 public class CreatorFormationPage extends BasePage {
 
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
-    private static final int LONG_TIMEOUT = 4000;        // Long waits for settings icon
+    // Formation page uses intentionally SHORT timeouts (1-4s) because help topics load instantly
+    // Do NOT use ConfigReader defaults (10-120s) - they would make tests 10-30x slower
+    private static final int SHORT_TIMEOUT = 1000;   // 1s - Formation tiles, topic titles
+    private static final int MEDIUM_TIMEOUT = 2000; // 2s - URL waits, navigation
+    private static final int LONG_TIMEOUT = 4000;     // 4s - Settings icon (may need polling)
 
     public CreatorFormationPage(Page page) {
         super(page);
@@ -37,8 +36,8 @@ public class CreatorFormationPage extends BasePage {
             try {
                 if (cand != null && cand.count() > 0) {
                     waitVisible(cand.first(), LONG_TIMEOUT);
-                    try { cand.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                    clickWithRetry(cand.first(), 1, NAVIGATION_WAIT);
+                    try { cand.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+                    clickWithRetry(cand.first(), 1, ConfigReader.getElementRetryDelay());
                     clicked = true;
                     break;
                 }
@@ -72,7 +71,7 @@ public class CreatorFormationPage extends BasePage {
             formation = page.locator("a[href*='/creator/formation']");
         }
         waitVisible(formation.first(), SHORT_TIMEOUT);
-        clickWithRetry(formation.first(), 1, NAVIGATION_WAIT);
+        clickWithRetry(formation.first(), 1, ConfigReader.getElementRetryDelay());
         // Ensure formation screen is actually loaded
         assertOnFormationScreen();
     }
@@ -102,8 +101,8 @@ public class CreatorFormationPage extends BasePage {
             }
         }
         waitVisible(tile.first(), SHORT_TIMEOUT);
-        try { tile.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(tile.first(), 1, NAVIGATION_WAIT);
+        try { tile.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(tile.first(), 1, ConfigReader.getElementRetryDelay());
         // After navigation, assert topic title
         assertTopicTitle(title.equals("Presentation Video") ? "Presentation Videos" : title);
     }
@@ -126,7 +125,7 @@ public class CreatorFormationPage extends BasePage {
         Locator q = page.getByText("Do you have any other questions?");
         try {
             waitVisible(q.first(), LONG_TIMEOUT);
-            try { q.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            try { q.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         } catch (Throwable t) {
             logger.warn("Questions footer not found quickly; continuing. Title assertions will validate page.");
         }
@@ -136,14 +135,14 @@ public class CreatorFormationPage extends BasePage {
     public void scrollToTopicTitle(String exactTitle) {
         Locator heading = getByTextExact(exactTitle);
         waitVisible(heading.first(), SHORT_TIMEOUT);
-        try { heading.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { heading.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
     }
 
     @Step("Navigate back (topic -> formation) via back icon")
     public void backToFormationFromTopic() {
         Locator back = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("back"));
         waitVisible(back.first(), SHORT_TIMEOUT);
-        clickWithRetry(back.first(), 1, NAVIGATION_WAIT);
+        clickWithRetry(back.first(), 1, ConfigReader.getElementRetryDelay());
         // Ensure we returned to Formation
         assertOnFormationUrl();
     }
@@ -157,7 +156,7 @@ public class CreatorFormationPage extends BasePage {
     public void backToSettingsFromFormation() {
         Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
         waitVisible(arrowLeft.first(), SHORT_TIMEOUT);
-        clickWithRetry(arrowLeft.first(), 1, NAVIGATION_WAIT);
+        clickWithRetry(arrowLeft.first(), 1, ConfigReader.getElementRetryDelay());
         assertOnSettingsUrl();
     }
 }
