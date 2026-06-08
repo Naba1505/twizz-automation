@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -24,14 +25,7 @@ public class CreatorRevenuesPage extends BasePage {
     private static final String SELECTOR_FILTER_DROPDOWN_CONTAINER = "div.ant-dropdown.css-ixblex.ant-dropdown-placement-topLeft";
     private static final String SELECTOR_FILTER_DROPDOWN_UL = SELECTOR_FILTER_DROPDOWN_CONTAINER + " ul";
 
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int SCROLL_WAIT = 75;           // Scroll stabilization
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int CLICK_RETRY_DELAY = 200;    // Standard click retry
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 60000ms)
+    // All timeout values now use centralized ConfigReader methods for consistency
 
     public CreatorRevenuesPage(Page page) {
         super(page);
@@ -85,40 +79,40 @@ public class CreatorRevenuesPage extends BasePage {
     @Step("Open Revenues from dashboard")
     public void openRevenues() {
         logger.info("[Revenues] Waiting for Revenues icon to be visible");
-        waitVisible(revenuesIcon(), SHORT_TIMEOUT);
+        waitVisible(revenuesIcon(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Clicking Revenues icon");
-        clickWithRetry(revenuesIcon(), 1, CLICK_RETRY_DELAY);
+        clickWithRetry(revenuesIcon(), 1, ConfigReader.getElementRetryDelay());
         logger.info("[Revenues] Waiting for Revenues title to confirm navigation");
-        waitVisible(revenuesTitle(), MEDIUM_TIMEOUT);
+        waitVisible(revenuesTitle(), ConfigReader.getMediumTimeout());
         logger.info("[Revenues] Landed on Revenues screen");
     }
 
     @Step("Assert Revenues screen elements are visible")
     public void assertRevenuesScreen() {
         logger.info("[Revenues] Asserting screen elements: title, currency logo, validated & waiting price blocks");
-        waitVisible(revenuesTitle(), SHORT_TIMEOUT);
-        waitVisible(currencyImg(), SHORT_TIMEOUT);
-        waitVisible(validatedPrice(), SHORT_TIMEOUT);
-        waitVisible(waitingPrice(), SHORT_TIMEOUT);
+        waitVisible(revenuesTitle(), ConfigReader.getShortTimeout());
+        waitVisible(currencyImg(), ConfigReader.getShortTimeout());
+        waitVisible(validatedPrice(), ConfigReader.getShortTimeout());
+        waitVisible(waitingPrice(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Revenues screen elements are visible");
     }
 
     @Step("Check Validated info popover")
     public void checkValidatedInfo() {
         logger.info("[Revenues] Opening Validated info popover");
-        clickWithRetry(validatedInfoIcon(), 1, CLICK_RETRY_DELAY);
-        waitVisible(validatedInfoText(), SHORT_TIMEOUT);
+        clickWithRetry(validatedInfoIcon(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(validatedInfoText(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Validated info text is visible; closing popover");
-        clickWithRetry(infoCloseButton(), 1, CLICK_RETRY_DELAY);
+        clickWithRetry(infoCloseButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Check Waiting for validation info popover")
     public void checkWaitingInfo() {
         logger.info("[Revenues] Opening Waiting for validation info popover");
-        clickWithRetry(waitingInfoIcon(), 1, CLICK_RETRY_DELAY);
-        waitVisible(waitingInfoText(), SHORT_TIMEOUT);
+        clickWithRetry(waitingInfoIcon(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(waitingInfoText(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Waiting info text is visible; closing popover");
-        clickWithRetry(infoCloseButton(), 1, CLICK_RETRY_DELAY);
+        clickWithRetry(infoCloseButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     // =========================
@@ -140,8 +134,8 @@ public class CreatorRevenuesPage extends BasePage {
     @Step("Select 'Today' tab and verify chart basics")
     public void viewToday() {
         logger.info("[Revenues] Selecting Today tab");
-        waitVisible(tabByText("Today"), SHORT_TIMEOUT);
-        clickWithRetry(tabByText("Today"), 1, BUTTON_RETRY_DELAY);
+        waitVisible(tabByText("Today"), ConfigReader.getShortTimeout());
+        clickWithRetry(tabByText("Today"), 1, ConfigReader.getElementRetryDelay());
         assertChartVisible();
         assertChartTitle("Total of the day");
         ensureReceiptInBankAccountVisibleAndClick();
@@ -151,8 +145,8 @@ public class CreatorRevenuesPage extends BasePage {
     @Step("Select 'This week' tab and verify chart basics")
     public void viewThisWeek() {
         logger.info("[Revenues] Selecting This week tab");
-        waitVisible(tabByText("This week"), SHORT_TIMEOUT);
-        clickWithRetry(tabByText("This week"), 1, BUTTON_RETRY_DELAY);
+        waitVisible(tabByText("This week"), ConfigReader.getShortTimeout());
+        clickWithRetry(tabByText("This week"), 1, ConfigReader.getElementRetryDelay());
         assertChartVisible();
         assertChartTitle("Total of the week");
         ensureReceiptInBankAccountVisibleAndClick();
@@ -162,8 +156,8 @@ public class CreatorRevenuesPage extends BasePage {
     @Step("Select 'This month' tab and verify chart basics")
     public void viewThisMonth() {
         logger.info("[Revenues] Selecting This month tab");
-        waitVisible(tabByText("This month"), SHORT_TIMEOUT);
-        clickWithRetry(tabByText("This month"), 1, BUTTON_RETRY_DELAY);
+        waitVisible(tabByText("This month"), ConfigReader.getShortTimeout());
+        clickWithRetry(tabByText("This month"), 1, ConfigReader.getElementRetryDelay());
         assertChartVisible();
         assertChartTitle("Total of the month");
         ensureReceiptInBankAccountVisibleAndClick();
@@ -173,8 +167,8 @@ public class CreatorRevenuesPage extends BasePage {
     @Step("Select 'All' tab and verify chart basics")
     public void viewAll() {
         logger.info("[Revenues] Selecting All tab");
-        waitVisible(tabByText("All"), SHORT_TIMEOUT);
-        clickWithRetry(tabByText("All"), 1, BUTTON_RETRY_DELAY);
+        waitVisible(tabByText("All"), ConfigReader.getShortTimeout());
+        clickWithRetry(tabByText("All"), 1, ConfigReader.getElementRetryDelay());
         assertChartVisible();
         assertChartTitle("Total since the creation");
         ensureReceiptInBankAccountVisibleAndClick();
@@ -183,21 +177,21 @@ public class CreatorRevenuesPage extends BasePage {
 
     @Step("Assert chart container is visible")
     public void assertChartVisible() {
-        waitVisible(chartContainer(), SHORT_TIMEOUT);
+        waitVisible(chartContainer(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Chart container visible");
     }
 
     @Step("Assert chart title text: {title}")
     public void assertChartTitle(String title) {
-        waitVisible(page.getByText(title), SHORT_TIMEOUT);
+        waitVisible(page.getByText(title), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Chart title visible: {}", title);
     }
 
     @Step("Ensure 'Receipt in your bank account' appears and click it")
     public void ensureReceiptInBankAccountVisibleAndClick() {
         Locator txt = page.getByText("Receipt in your bank account");
-        waitVisible(txt, SHORT_TIMEOUT);
-        clickWithRetry(txt, 1, BUTTON_RETRY_DELAY);
+        waitVisible(txt, ConfigReader.getShortTimeout());
+        clickWithRetry(txt, 1, ConfigReader.getElementRetryDelay());
         logger.info("[Revenues] Clicked 'Receipt in your bank account'");
     }
 
@@ -205,9 +199,9 @@ public class CreatorRevenuesPage extends BasePage {
     public void assertTwoPricesVisible() {
         Locator prices = chartPriceTexts();
         // Wait briefly until at least two appear
-        long end = System.currentTimeMillis() + SHORT_TIMEOUT;
+        long end = System.currentTimeMillis() + ConfigReader.getShortTimeout();
         while (System.currentTimeMillis() < end && prices.count() < 2) {
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         int count = prices.count();
         logger.info("[Revenues] Chart price text count: {}", count);
@@ -215,8 +209,8 @@ public class CreatorRevenuesPage extends BasePage {
             throw new AssertionError("Expected 2 price texts on chart, found: " + count);
         }
         // Ensure first two are visible
-        waitVisible(prices.nth(0), SHORT_TIMEOUT);
-        waitVisible(prices.nth(1), SHORT_TIMEOUT);
+        waitVisible(prices.nth(0), ConfigReader.getShortTimeout());
+        waitVisible(prices.nth(1), ConfigReader.getShortTimeout());
     }
 
     // =========================
@@ -264,10 +258,10 @@ public class CreatorRevenuesPage extends BasePage {
         for (int i = 0; i < tries; i++) {
             try {
                 if (target.first().isVisible()) return;
-            } catch (Exception ignored) {}
-            try { target.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            try { page.mouse().wheel(0, deltaY); } catch (Exception ignored) {}
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Visibility check failed: {}", e.getMessage()); }
+            try { target.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, deltaY); } catch (Exception e) { logger.debug("Wheel failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
     }
 
@@ -276,18 +270,18 @@ public class CreatorRevenuesPage extends BasePage {
         Locator title = lastReportTitle();
         // Attempt multiple scrolls until the title is visible
         scrollIntoViewWithAttempts(title, 10, 800);
-        waitVisible(title, MEDIUM_TIMEOUT);
+        waitVisible(title, ConfigReader.getMediumTimeout());
         // Ensure the content container under last report is visible
-        waitVisible(lastReportContent(), SHORT_TIMEOUT);
+        waitVisible(lastReportContent(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] 'Last report' title and content visible");
     }
 
     @Step("Open report type change dropdown")
     public void openChangeDropdown() {
-        waitVisible(changeIcon(), SHORT_TIMEOUT);
-        clickWithRetry(changeIcon(), 1, NAVIGATION_WAIT);
+        waitVisible(changeIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIcon(), 1, ConfigReader.getElementRetryDelay());
         // Wait for the UL dropdown menu to appear
-        waitVisible(dropdownMenu(), SHORT_TIMEOUT);
+        waitVisible(dropdownMenu(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Change dropdown opened");
     }
 
@@ -298,30 +292,30 @@ public class CreatorRevenuesPage extends BasePage {
             openChangeDropdown();
         }
         Locator item = dropdownItemByText(type);
-        waitVisible(item.first(), SHORT_TIMEOUT);
-        clickWithRetry(item.first(), 1, NAVIGATION_WAIT);
+        waitVisible(item.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(item.first(), 1, ConfigReader.getElementRetryDelay());
         // After selection, dropdown typically closes; re-validate content still visible
-        waitVisible(lastReportContent(), SHORT_TIMEOUT);
+        waitVisible(lastReportContent(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Selected report type: {} and content visible", type);
     }
 
     @Step("Open Filter dropdown")
     public void openFilterDropdown() {
         // Ensure we are in the Last report area where Filter resides
-        try { scrollToLastReportAndEnsureContent(); } catch (Exception ignored) {}
+        try { scrollToLastReportAndEnsureContent(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
 
         Locator filter = getFilterActivator();
         // Try to bring it into view and click
-        try { filter.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-        waitVisible(filter.first(), SHORT_TIMEOUT);
+        try { filter.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        waitVisible(filter.first(), ConfigReader.getShortTimeout());
         try {
-            clickWithRetry(filter.first(), 1, NAVIGATION_WAIT);
+            clickWithRetry(filter.first(), 1, ConfigReader.getElementRetryDelay());
         } catch (RuntimeException e) {
             // Fallback: force click if overlapped
-            try { filter.first().click(new Locator.ClickOptions().setForce(true)); } catch (Exception ignored) { throw e; }
+            try { filter.first().click(new Locator.ClickOptions().setForce(true)); } catch (Exception ex) { logger.debug("Force click failed: {}", ex.getMessage()); throw e; }
         }
         // Wait for the specific filter dropdown
-        waitVisible(filterDropdownMenu(), SHORT_TIMEOUT);
+        waitVisible(filterDropdownMenu(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Filter dropdown opened");
     }
 
@@ -333,18 +327,18 @@ public class CreatorRevenuesPage extends BasePage {
                 openFilterDropdown();
                 return;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Filter check failed: {}", e.getMessage()); }
         // Fallback: use change icon (XPath) to reveal the list
-        try { scrollToLastReportAndEnsureContent(); } catch (Exception ignored) {}
+        try { scrollToLastReportAndEnsureContent(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         Locator change = changeIconByXPath();
         if (change.count() == 0 || !change.first().isVisible()) {
             // try role-based as secondary
             change = changeIcon();
         }
-        waitVisible(change.first(), SHORT_TIMEOUT);
-        try { change.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-        clickWithRetry(change.first(), 1, NAVIGATION_WAIT);
-        waitVisible(filterDropdownMenu(), SHORT_TIMEOUT);
+        waitVisible(change.first(), ConfigReader.getShortTimeout());
+        try { change.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(change.first(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(filterDropdownMenu(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Opened dropdown via change icon");
     }
 
@@ -396,10 +390,10 @@ public class CreatorRevenuesPage extends BasePage {
                 throw new RuntimeException("Filter option not found: " + label);
             }
             Locator target = opt.first();
-            try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            waitVisible(target, SHORT_TIMEOUT);
-            clickWithRetry(target, 1, NAVIGATION_WAIT);
-            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Exception ignored) {}
+            try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+            waitVisible(target, ConfigReader.getShortTimeout());
+            clickWithRetry(target, 1, ConfigReader.getElementRetryDelay());
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         logger.info("[Revenues] Iterated filter options in requested order");
     }
@@ -409,10 +403,10 @@ public class CreatorRevenuesPage extends BasePage {
         Locator title = revenuesTitle();
         int guard = 0;
         while (!safeIsVisible(title) && guard++ < 20) {
-            try { page.mouse().wheel(0, -800); } catch (Exception ignored) {}
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Exception ignored) {}
+            try { page.mouse().wheel(0, -800); } catch (Exception e) { logger.debug("Wheel failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        waitVisible(title, SHORT_TIMEOUT);
+        waitVisible(title, ConfigReader.getShortTimeout());
         logger.info("[Revenues] Scrolled to top; 'Revenues' title visible");
     }
 
@@ -429,26 +423,26 @@ public class CreatorRevenuesPage extends BasePage {
             throw new RuntimeException("Could not locate Mensuel div for Last report change dropdown");
         }
         Locator mensuelTarget = mensuelDiv.nth(Math.min(5, mensuelDiv.count() - 1));
-        try { mensuelTarget.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-        waitVisible(mensuelTarget, SHORT_TIMEOUT);
-        clickWithRetry(mensuelTarget, 1, BUTTON_RETRY_DELAY);
+        try { mensuelTarget.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        waitVisible(mensuelTarget, ConfigReader.getShortTimeout());
+        clickWithRetry(mensuelTarget, 1, ConfigReader.getElementRetryDelay());
 
         // 2a) Then click Daily -> Journalier -> Monthly -> Mensuel -> Detailed, as per codegen
         logger.info("[Revenues] Selecting 'Daily' then 'Journalier' from Change dropdown");
-        waitVisible(page.getByText("Daily"), SHORT_TIMEOUT);
-        clickWithRetry(page.getByText("Daily"), 1, NAVIGATION_WAIT);
-        waitVisible(page.getByText("Journalier"), SHORT_TIMEOUT);
-        clickWithRetry(page.getByText("Journalier"), 1, NAVIGATION_WAIT);
+        waitVisible(page.getByText("Daily"), ConfigReader.getShortTimeout());
+        clickWithRetry(page.getByText("Daily"), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(page.getByText("Journalier"), ConfigReader.getShortTimeout());
+        clickWithRetry(page.getByText("Journalier"), 1, ConfigReader.getElementRetryDelay());
 
         logger.info("[Revenues] Selecting 'Monthly' then 'Mensuel' from Change dropdown");
-        waitVisible(page.getByText("Monthly"), SHORT_TIMEOUT);
-        clickWithRetry(page.getByText("Monthly"), 1, NAVIGATION_WAIT);
-        waitVisible(page.getByText("Mensuel"), SHORT_TIMEOUT);
-        clickWithRetry(page.getByText("Mensuel"), 1, NAVIGATION_WAIT);
+        waitVisible(page.getByText("Monthly"), ConfigReader.getShortTimeout());
+        clickWithRetry(page.getByText("Monthly"), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(page.getByText("Mensuel"), ConfigReader.getShortTimeout());
+        clickWithRetry(page.getByText("Mensuel"), 1, ConfigReader.getElementRetryDelay());
 
         logger.info("[Revenues] Selecting 'Detailed' from Change dropdown");
-        waitVisible(page.getByText("Detailed"), SHORT_TIMEOUT);
-        clickWithRetry(page.getByText("Detailed"), 1, NAVIGATION_WAIT);
+        waitVisible(page.getByText("Detailed"), ConfigReader.getShortTimeout());
+        clickWithRetry(page.getByText("Detailed"), 1, ConfigReader.getElementRetryDelay());
 
         // Ensure 'Filter' / Last report section is back in view after interactions
         scrollToLastReportAndEnsureContent();
@@ -462,71 +456,71 @@ public class CreatorRevenuesPage extends BasePage {
             throw new RuntimeException("Filter activator div not found in Last report section");
         }
         Locator filterActivator = filterDiv.first();
-        try { filterActivator.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-        waitVisible(filterActivator, SHORT_TIMEOUT);
-        clickWithRetry(filterActivator, 1, BUTTON_RETRY_DELAY);
+        try { filterActivator.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        waitVisible(filterActivator, ConfigReader.getShortTimeout());
+        clickWithRetry(filterActivator, 1, ConfigReader.getElementRetryDelay());
 
         // First, in the menu, click All
         logger.info("[Revenues] Selecting 'All' from Filter menu");
         Locator menu = page.getByRole(AriaRole.MENU);
-        waitVisible(menu.first(), SHORT_TIMEOUT);
+        waitVisible(menu.first(), ConfigReader.getShortTimeout());
         Locator allOpt = menu.first().getByText("All");
-        waitVisible(allOpt.first(), SHORT_TIMEOUT);
-        clickWithRetry(allOpt.first(), 1, NAVIGATION_WAIT);
+        waitVisible(allOpt.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(allOpt.first(), 1, ConfigReader.getElementRetryDelay());
 
         // Click Filter again and then 'Monthly subscription'
         logger.info("[Revenues] Selecting 'Monthly subscription' using Filter button");
-        waitVisible(page.getByText("Filter"), SHORT_TIMEOUT);
-        clickWithRetry(page.getByText("Filter"), 1, NAVIGATION_WAIT);
+        waitVisible(page.getByText("Filter"), ConfigReader.getShortTimeout());
+        clickWithRetry(page.getByText("Filter"), 1, ConfigReader.getElementRetryDelay());
         Locator monthlySub = page.getByText("Monthly subscription", new Page.GetByTextOptions().setExact(true));
-        waitVisible(monthlySub, SHORT_TIMEOUT);
-        clickWithRetry(monthlySub, 1, NAVIGATION_WAIT);
+        waitVisible(monthlySub, ConfigReader.getShortTimeout());
+        clickWithRetry(monthlySub, 1, ConfigReader.getElementRetryDelay());
 
         // Use .ant-dropdown-trigger first() to select Stream then Collection
         logger.info("[Revenues] Selecting 'Stream' then 'Collection' using ant-dropdown-trigger");
         Locator trigger = page.locator(".ant-dropdown-trigger").first();
-        waitVisible(trigger, SHORT_TIMEOUT);
-        clickWithRetry(trigger, 1, NAVIGATION_WAIT);
+        waitVisible(trigger, ConfigReader.getShortTimeout());
+        clickWithRetry(trigger, 1, ConfigReader.getElementRetryDelay());
         Locator streamOpt = page.getByText("Stream");
-        waitVisible(streamOpt, SHORT_TIMEOUT);
-        clickWithRetry(streamOpt, 1, NAVIGATION_WAIT);
+        waitVisible(streamOpt, ConfigReader.getShortTimeout());
+        clickWithRetry(streamOpt, 1, ConfigReader.getElementRetryDelay());
 
         trigger = page.locator(".ant-dropdown-trigger").first();
-        waitVisible(trigger, SHORT_TIMEOUT);
-        clickWithRetry(trigger, 1, NAVIGATION_WAIT);
+        waitVisible(trigger, ConfigReader.getShortTimeout());
+        clickWithRetry(trigger, 1, ConfigReader.getElementRetryDelay());
         Locator collectionOpt = page.getByText("Collection");
-        waitVisible(collectionOpt, SHORT_TIMEOUT);
-        clickWithRetry(collectionOpt, 1, NAVIGATION_WAIT);
+        waitVisible(collectionOpt, ConfigReader.getShortTimeout());
+        clickWithRetry(collectionOpt, 1, ConfigReader.getElementRetryDelay());
 
         // Now use change icon to iterate Medias push, Private medias, Live, Decrypt
         logger.info("[Revenues] Selecting 'Medias push' via change icon");
         Locator changeIconImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("change"));
-        waitVisible(changeIconImg.first(), SHORT_TIMEOUT);
-        clickWithRetry(changeIconImg.first(), 1, NAVIGATION_WAIT);
+        waitVisible(changeIconImg.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIconImg.first(), 1, ConfigReader.getElementRetryDelay());
         Locator mediasPush = page.getByText("Medias push");
-        waitVisible(mediasPush, SHORT_TIMEOUT);
-        clickWithRetry(mediasPush, 1, NAVIGATION_WAIT);
+        waitVisible(mediasPush, ConfigReader.getShortTimeout());
+        clickWithRetry(mediasPush, 1, ConfigReader.getElementRetryDelay());
 
         logger.info("[Revenues] Selecting 'Private medias' via change icon");
-        waitVisible(changeIconImg.first(), SHORT_TIMEOUT);
-        clickWithRetry(changeIconImg.first(), 1, NAVIGATION_WAIT);
+        waitVisible(changeIconImg.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIconImg.first(), 1, ConfigReader.getElementRetryDelay());
         Locator privateMedias = page.getByText("Private medias");
-        waitVisible(privateMedias, SHORT_TIMEOUT);
-        clickWithRetry(privateMedias, 1, NAVIGATION_WAIT);
+        waitVisible(privateMedias, ConfigReader.getShortTimeout());
+        clickWithRetry(privateMedias, 1, ConfigReader.getElementRetryDelay());
 
         logger.info("[Revenues] Selecting 'Live' via change icon");
-        waitVisible(changeIconImg.first(), SHORT_TIMEOUT);
-        clickWithRetry(changeIconImg.first(), 1, NAVIGATION_WAIT);
+        waitVisible(changeIconImg.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIconImg.first(), 1, ConfigReader.getElementRetryDelay());
         Locator liveOpt = page.getByText("Live");
-        waitVisible(liveOpt, SHORT_TIMEOUT);
-        clickWithRetry(liveOpt, 1, NAVIGATION_WAIT);
+        waitVisible(liveOpt, ConfigReader.getShortTimeout());
+        clickWithRetry(liveOpt, 1, ConfigReader.getElementRetryDelay());
 
         logger.info("[Revenues] Selecting 'Decrypt' via change icon");
-        waitVisible(changeIconImg.first(), SHORT_TIMEOUT);
-        clickWithRetry(changeIconImg.first(), 1, NAVIGATION_WAIT);
+        waitVisible(changeIconImg.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIconImg.first(), 1, ConfigReader.getElementRetryDelay());
         Locator decryptOpt = page.getByText("Decrypt");
-        waitVisible(decryptOpt, SHORT_TIMEOUT);
-        clickWithRetry(decryptOpt, 1, NAVIGATION_WAIT);
+        waitVisible(decryptOpt, ConfigReader.getShortTimeout());
+        clickWithRetry(decryptOpt, 1, ConfigReader.getElementRetryDelay());
 
         // 4) After completing filter interactions, scroll to top and assert Revenues visible
         scrollToTopUntilRevenuesVisible();
