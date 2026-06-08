@@ -621,9 +621,9 @@ public class CreatorLivePage extends BasePage {
                 opt = page.locator("#root").getByText(t, new Locator.GetByTextOptions().setExact(true));
             }
             if (opt.count() > 0) {
-                try { opt.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                WaitUtils.waitForVisible(opt.first(), 2000);
-                clickWithRetry(opt.first(), 2, 200);
+                try { opt.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
+                WaitUtils.waitForVisible(opt.first(), ConfigReader.getShortTimeout());
+                clickWithRetry(opt.first(), 2, ConfigReader.getElementRetryDelay());
                 logger.info("Picked time {}", t);
                 return;
             }
@@ -639,7 +639,7 @@ public class CreatorLivePage extends BasePage {
                     page.keyboard().press("Enter");
                     logger.info("Typed time {} and pressed Enter", t);
                     return;
-                } catch (Exception ignored) {}
+                } catch (Exception e) { logger.debug("Time typing fallback failed: {}", e.getMessage()); }
             }
         }
 
@@ -890,7 +890,7 @@ public class CreatorLivePage extends BasePage {
     private void clickIUnderstandIfPresent() {
         Locator understand = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(I_UNDERSTAND_BTN));
         if (understand.count() > 0 && understand.first().isVisible()) {
-            clickWithRetry(understand.first(), 2, 200);
+            clickWithRetry(understand.first(), 2, ConfigReader.getElementRetryDelay());
         }
     }
 
@@ -898,8 +898,8 @@ public class CreatorLivePage extends BasePage {
         Locator liveExact = page.getByText(LIVE_TEXT, new Page.GetByTextOptions().setExact(true));
         // Wait briefly for it to be attached/visible, then click with retry
         waitVisible(liveExact.first(), ConfigReader.getShortTimeout());
-        try { liveExact.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-        clickWithRetry(liveExact.first(), 3, 250);
+        try { liveExact.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
+        clickWithRetry(liveExact.first(), 3, ConfigReader.getElementRetryDelay());
     }
 }
 

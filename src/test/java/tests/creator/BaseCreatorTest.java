@@ -24,7 +24,7 @@ public class BaseCreatorTest extends BaseTestClass {
                 .setTimeout(ConfigReader.getShortTimeout()));
         } catch (Exception e) {
             // If URL wait fails, give a small stabilization wait
-            page.waitForTimeout(2000);
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         }
         
         CreatorLoginPage loginPage = new CreatorLoginPage(page);

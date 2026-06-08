@@ -13,13 +13,6 @@ import java.util.regex.Pattern;
 
 public class CreatorRegistrationPage extends BasePage {
 
-    // Timeout constants (in milliseconds) - Standardized values
-    private static final int POLLING_WAIT = 50;          // Quick polling operations
-    private static final int PAGE_TRANSITION = 250;      // Page transition delays
-    private static final int STABILIZATION_WAIT = 500;   // UI stabilization
-    private static final int SHORT_TIMEOUT = 2000;       // Short waits
-    private static final int LONG_TIMEOUT = 5000;        // Long waits
-    private static final int FILE_INPUT_DEADLINE = 5000; // For file input polling deadline
 
     // First Page Locators
     private final String nameInput = "input[name=\"name\"]";
@@ -92,7 +85,7 @@ public class CreatorRegistrationPage extends BasePage {
             try {
                 page.locator(datePicker).click();
                 logger.info("Clicked date picker (attempt {})", attempt);
-                page.waitForTimeout(STABILIZATION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 
                 // Verify calendar modal appeared
                 if (page.locator(".calendar-modal-overlay").isVisible()) {
@@ -102,7 +95,7 @@ public class CreatorRegistrationPage extends BasePage {
                 }
             } catch (Exception e) {
                 logger.warn("Attempt {} to open date picker failed: {}", attempt, e.getMessage());
-                page.waitForTimeout(STABILIZATION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
         }
 
@@ -116,17 +109,17 @@ public class CreatorRegistrationPage extends BasePage {
         try {
             // Wait for year selector to be visible
             Locator yearHeader = page.locator(".calendar-header-text.clickable").filter(new Locator.FilterOptions().setHasText(Pattern.compile("\\d{4}")));
-            if (WaitUtils.waitForVisible(yearHeader, SHORT_TIMEOUT)) {
+            if (WaitUtils.waitForVisible(yearHeader, ConfigReader.getShortTimeout())) {
                 yearHeader.first().click();
                 logger.info("Clicked year header to open year selector");
-                page.waitForTimeout(STABILIZATION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 
                 // Select target year
                 Locator yearOption = page.getByText(year, new Page.GetByTextOptions().setExact(true));
-                if (WaitUtils.waitForVisible(yearOption, SHORT_TIMEOUT)) {
+                if (WaitUtils.waitForVisible(yearOption, ConfigReader.getShortTimeout())) {
                     yearOption.click();
                     logger.info("Selected year: {}", year);
-                    page.waitForTimeout(STABILIZATION_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 } else {
                     throw new Exception("Year option not visible: " + year);
                 }
@@ -143,17 +136,17 @@ public class CreatorRegistrationPage extends BasePage {
         try {
             // Click month header (first clickable header text after year selection)
             Locator monthHeader = page.locator(".calendar-header-text.clickable").first();
-            if (WaitUtils.waitForVisible(monthHeader, SHORT_TIMEOUT)) {
+            if (WaitUtils.waitForVisible(monthHeader, ConfigReader.getShortTimeout())) {
                 monthHeader.click();
                 logger.info("Clicked month header to open month selector");
-                page.waitForTimeout(STABILIZATION_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 
                 // Select target month from month selector
                 Locator monthOption = page.locator(".month-selector-item").filter(new Locator.FilterOptions().setHasText(monthName));
-                if (WaitUtils.waitForVisible(monthOption, SHORT_TIMEOUT)) {
+                if (WaitUtils.waitForVisible(monthOption, ConfigReader.getShortTimeout())) {
                     monthOption.click();
                     logger.info("Selected month: {}", monthName);
-                    page.waitForTimeout(STABILIZATION_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 } else {
                     throw new Exception("Month option not visible: " + monthName);
                 }
@@ -176,16 +169,16 @@ public class CreatorRegistrationPage extends BasePage {
                     dayOption = page.getByText(dayText, new Page.GetByTextOptions().setExact(true));
                 }
                 
-                if (WaitUtils.waitForVisible(dayOption, SHORT_TIMEOUT)) {
+                if (WaitUtils.waitForVisible(dayOption, ConfigReader.getShortTimeout())) {
                     dayOption.first().click();
                     logger.info("Selected day: {} (attempt {})", dayText, attempt);
-                    page.waitForTimeout(STABILIZATION_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     daySelected = true;
                     break;
                 }
             } catch (Exception e) {
                 logger.warn("Attempt {} to select day failed: {}", attempt, e.getMessage());
-                page.waitForTimeout(POLLING_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
         }
 
@@ -200,10 +193,10 @@ public class CreatorRegistrationPage extends BasePage {
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
                 Locator confirmBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
-                if (WaitUtils.waitForVisible(confirmBtn, SHORT_TIMEOUT)) {
+                if (WaitUtils.waitForVisible(confirmBtn, ConfigReader.getShortTimeout())) {
                     confirmBtn.click();
                     logger.info("Clicked Confirm button (attempt {})", attempt);
-                    page.waitForTimeout(STABILIZATION_WAIT);
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     
                     // Verify calendar modal closed
                     if (!page.locator(".calendar-modal-overlay").isVisible()) {
@@ -214,7 +207,7 @@ public class CreatorRegistrationPage extends BasePage {
                 }
             } catch (Exception e) {
                 logger.warn("Attempt {} to click Confirm failed: {}", attempt, e.getMessage());
-                page.waitForTimeout(POLLING_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
         }
 
@@ -222,8 +215,8 @@ public class CreatorRegistrationPage extends BasePage {
             logger.warn("Failed to confirm date selection, attempting to close modal with Escape");
             try {
                 page.keyboard().press("Escape");
-                page.waitForTimeout(STABILIZATION_WAIT);
-            } catch (Exception ignored) {}
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            } catch (Exception e) { logger.debug("Escape key press failed: {}", e.getMessage()); }
         }
 
         // Verify date input is populated
@@ -258,7 +251,7 @@ public class CreatorRegistrationPage extends BasePage {
                 input.fill("");
                 input.fill(fmt);
                 input.press("Enter");
-                page.waitForTimeout(POLLING_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 String v = input.inputValue();
                 logger.info("DOB typing attempt '{}' -> '{}'", fmt, v);
                 if (v != null && !v.isEmpty()) {
@@ -268,7 +261,7 @@ public class CreatorRegistrationPage extends BasePage {
                     }
                     return;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("DOB typing fallback attempt failed: {}", e.getMessage()); }
         }
         logger.warn("DOB typing fallback did not populate value; proceeding with flow");
     }
@@ -309,12 +302,12 @@ public class CreatorRegistrationPage extends BasePage {
             Locator dd = page.locator(".ant-picker-dropdown:visible");
             if (dd.count() > 0) {
                 page.keyboard().press("Escape");
-                page.waitForTimeout(POLLING_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
             emailLoc.fill(email);
         } catch (Exception e) {
             logger.warn("Email fill encountered overlay; retrying after blur: {}", e.getMessage());
-            try { page.evaluate("() => document.activeElement && document.activeElement.blur() "); } catch (Exception ignored) {}
+            try { page.evaluate("() => document.activeElement && document.activeElement.blur() "); } catch (Exception ex) { logger.debug("Blur evaluation failed: {}", ex.getMessage()); }
             page.locator(emailInput).first().click();
             page.locator(emailInput).first().fill(email);
         }
@@ -353,9 +346,9 @@ public class CreatorRegistrationPage extends BasePage {
                     .setTimeout(ConfigReader.getVisibilityTimeout()));
             
             // Wait for button to be enabled if it's currently disabled
-            long deadline = System.currentTimeMillis() + SHORT_TIMEOUT;
+            long deadline = System.currentTimeMillis() + ConfigReader.getShortTimeout();
             while (!regButton.isEnabled() && System.currentTimeMillis() < deadline) {
-                page.waitForTimeout(POLLING_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
             
             if (!regButton.isEnabled()) {
@@ -371,7 +364,7 @@ public class CreatorRegistrationPage extends BasePage {
         try {
             page.waitForLoadState();
             // Small breathing time to allow UI render if needed
-            page.waitForTimeout(PAGE_TRANSITION);
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         } catch (Exception e) {
             logger.warn("Post-submit load wait timed out or not applicable: {}", e.getMessage());
         }
@@ -388,7 +381,7 @@ public class CreatorRegistrationPage extends BasePage {
             logger.warn("Exact header not immediately visible: {}. Trying fallback...", primary.getMessage());
             try {
                 Locator headingRole = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(secondPageHeader));
-                headingRole.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                headingRole.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                 logger.info("Second page visibility via heading role: true");
                 return true;
             } catch (Exception fallback) {
@@ -396,7 +389,7 @@ public class CreatorRegistrationPage extends BasePage {
                 // Final fallback: wait for a known option label to appear (e.g., 'Model')
                 try {
                     Locator optionModel = page.getByText("Model", new Page.GetByTextOptions().setExact(true));
-                    optionModel.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                    optionModel.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                     logger.info("Second page visibility via known option label: true");
                     return true;
                 } catch (Exception last) {
@@ -420,7 +413,7 @@ public class CreatorRegistrationPage extends BasePage {
         // Wait for transition to third page
         try {
             page.waitForLoadState();
-            page.waitForTimeout(PAGE_TRANSITION);
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         } catch (Exception e) {
             logger.warn("Post second-page submit wait encountered issue: {}", e.getMessage());
         }
@@ -438,7 +431,7 @@ public class CreatorRegistrationPage extends BasePage {
             // Fallback 1: heading role
             try {
                 Locator headingRole = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(thirdPageHeader));
-                headingRole.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                headingRole.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                 logger.info("Third page visibility via heading role: true");
                 return true;
             } catch (Exception fallback1) {
@@ -446,14 +439,14 @@ public class CreatorRegistrationPage extends BasePage {
                 // Fallback 2: check for price input
                 try {
                     Locator price = page.locator(priceInput).first();
-                    price.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                    price.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                     logger.info("Third page visibility via price input: true");
                     return true;
                 } catch (Exception fallback2) {
                     // Fallback 3: check for subscription toggle
                     try {
                         Locator toggle = page.locator(subscriptionToggle);
-                        toggle.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                        toggle.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                         logger.info("Third page visibility via subscription toggle: true");
                         return true;
                     } catch (Exception last) {
@@ -476,7 +469,7 @@ public class CreatorRegistrationPage extends BasePage {
         // Wait for transition to fourth page
         try {
             page.waitForLoadState();
-            page.waitForTimeout(PAGE_TRANSITION);
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         } catch (Exception e) {
             logger.warn("Post third-page submit wait encountered issue: {}", e.getMessage());
         }
@@ -494,7 +487,7 @@ public class CreatorRegistrationPage extends BasePage {
             // Fallback 1: heading role
             try {
                 Locator headingRole = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(fourthPageHeader));
-                headingRole.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                headingRole.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                 logger.info("Fourth page visibility via heading role: true");
                 return true;
             } catch (Exception fallback1) {
@@ -502,14 +495,14 @@ public class CreatorRegistrationPage extends BasePage {
                 // Fallback 2: known option label
                 try {
                     Locator option = page.getByText(privateIndividualOption, new Page.GetByTextOptions().setExact(true));
-                    option.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                    option.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                     logger.info("Fourth page visibility via known option label: true");
                     return true;
                 } catch (Exception fallback2) {
                     // Fallback 3: Continue button on page
                     try {
                         Locator cont = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue").setExact(true));
-                        cont.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                        cont.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                         logger.info("Fourth page visibility via Continue button: true");
                         return true;
                     } catch (Exception last) {
@@ -541,7 +534,7 @@ public class CreatorRegistrationPage extends BasePage {
         // Wait for transition to fifth page
         try {
             page.waitForLoadState();
-            page.waitForTimeout(PAGE_TRANSITION);
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         } catch (Exception e) {
             logger.warn("Post fourth-page submit wait encountered issue: {}", e.getMessage());
         }
@@ -559,7 +552,7 @@ public class CreatorRegistrationPage extends BasePage {
             // Fallback 1: heading role
             try {
                 Locator headingRole = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(fifthPageHeader));
-                headingRole.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                headingRole.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                 logger.info("Fifth page visibility via heading role: true");
                 return true;
             } catch (Exception fallback1) {
@@ -567,14 +560,14 @@ public class CreatorRegistrationPage extends BasePage {
                 // Fallback 2: presence of first upload image placeholder
                 try {
                     Locator firstImg = page.locator(firstImageUploadButton);
-                    firstImg.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                    firstImg.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                     logger.info("Fifth page visibility via first upload image: true");
                     return true;
                 } catch (Exception fallback2) {
                     // Fallback 3: FINISH button visible
                     try {
                         Locator finish = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("FINISH").setExact(true));
-                        finish.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(LONG_TIMEOUT));
+                        finish.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getMediumTimeout()));
                         logger.info("Fifth page visibility via FINISH button: true");
                         return true;
                     } catch (Exception last) {
@@ -588,14 +581,14 @@ public class CreatorRegistrationPage extends BasePage {
 
     public void uploadDocuments(String identityFilePath, String selfieFilePath) {
         // Brief stabilization before file upload
-        page.waitForTimeout(STABILIZATION_WAIT);
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
 
         // Drive the underlying Ant Upload file inputs directly to avoid native OS dialogs.
         Locator inputs = page.locator(".ant-upload input[type='file']");
 
-        long deadline = System.currentTimeMillis() + FILE_INPUT_DEADLINE;
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (inputs.count() < 2 && System.currentTimeMillis() < deadline) {
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
         }
 
         int count = inputs.count();
