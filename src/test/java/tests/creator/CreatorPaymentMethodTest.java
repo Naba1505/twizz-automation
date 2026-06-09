@@ -83,7 +83,7 @@ public class CreatorPaymentMethodTest extends BaseCreatorTest {
         pmPage.assertOnPaymentCardScreen();
         pmPage.deleteCurrentCard();
         // Wait 5 seconds after deleting to allow UI/state to settle
-        try { page.waitForTimeout(5000); } catch (Exception ignored) {}
+        try { page.waitForTimeout(5000); } catch (Exception e) { log.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Test(priority = 4, description = "Verify Payment Method - Switch deposit durations")

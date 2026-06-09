@@ -150,7 +150,7 @@ public class CreatorPaymentMethodPage extends BasePage {
     @Step("Open Payment method screen")
     public void openPaymentMethodScreen() {
         waitVisible(paymentMethodMenu(), utils.ConfigReader.getVisibilityTimeout());
-        try { paymentMethodMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { paymentMethodMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(paymentMethodMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(paymentMethodTitle(), utils.ConfigReader.getShortTimeout());
     }
@@ -176,7 +176,7 @@ public class CreatorPaymentMethodPage extends BasePage {
         ibanTextbox().fill(iban == null ? "" : iban);
 
         // Country selection: open and filter then choose exact
-        try { countrySearchInput().click(); } catch (Throwable ignored) {}
+        try { countrySearchInput().click(); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
         try {
             waitVisible(countrySearchInput(), utils.ConfigReader.getShortTimeout());
             countrySearchInput().fill(countryQuery == null ? "" : countryQuery);
@@ -254,42 +254,42 @@ public class CreatorPaymentMethodPage extends BasePage {
     @Step("Switch deposit to Every 7 days and confirm")
     public void switchDepositEvery7DaysAndConfirm() {
         waitVisible(depositEvery7Days(), utils.ConfigReader.getShortTimeout());
-        try { depositEvery7Days().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { depositEvery7Days().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(depositEvery7Days(), 1, BUTTON_RETRY_DELAY);
         waitVisible(confirmTextContains("you will receive a payment every 7 days."), utils.ConfigReader.getShortTimeout());
         waitVisible(confirmButton(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(confirmButton(), 1, BUTTON_RETRY_DELAY);
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Switch deposit to On pause and confirm")
     public void switchDepositOnPauseAndConfirm() {
         waitVisible(depositOnPause(), utils.ConfigReader.getShortTimeout());
-        try { depositOnPause().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { depositOnPause().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(depositOnPause(), 1, BUTTON_RETRY_DELAY);
         waitVisible(confirmTextContains("payments will be paused."), utils.ConfigReader.getShortTimeout());
         waitVisible(confirmButton(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(confirmButton(), 1, BUTTON_RETRY_DELAY);
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Switch deposit to Every 30 days and confirm")
     public void switchDepositEvery30DaysAndConfirm() {
         waitVisible(depositEvery30Days(), utils.ConfigReader.getShortTimeout());
-        try { depositEvery30Days().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { depositEvery30Days().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(depositEvery30Days(), 1, BUTTON_RETRY_DELAY);
         waitVisible(confirmTextContains("you will receive a payment every 30 days."), utils.ConfigReader.getShortTimeout());
         waitVisible(confirmButton(), utils.ConfigReader.getShortTimeout());
         clickWithRetry(confirmButton(), 1, BUTTON_RETRY_DELAY);
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Navigate back to profile if needed")
     public void navigateBackToProfile() {
         for (int i = 0; i < 3; i++) {
             if (safeIsVisible(profilePlusIcon())) return;
-            try { clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+            try { clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         if (!safeIsVisible(profilePlusIcon())) {
             logger.warn("Profile marker (plus icon) not visible after navigating back from payment method");
