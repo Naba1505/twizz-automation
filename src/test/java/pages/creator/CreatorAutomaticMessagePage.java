@@ -183,10 +183,10 @@ public class CreatorAutomaticMessagePage extends BasePage {
             for (String label : labels) {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
                 if (btn.count() > 0 && btn.first().isVisible()) {
-                    try { clickWithRetry(btn.first(), 1, BUTTON_RETRY_DELAY); return true; } catch (Throwable ignored) {}
+                    try { clickWithRetry(btn.first(), 1, BUTTON_RETRY_DELAY); return true; } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
                 }
             }
-            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         return false;
     }
@@ -202,7 +202,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
     @Step("Open Automatic Message screen")
     public void openAutomaticMessage() {
         waitVisible(automaticMessageMenu(), utils.ConfigReader.getShortTimeout());
-        try { automaticMessageMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { automaticMessageMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(automaticMessageMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(automationTitle(), utils.ConfigReader.getShortTimeout());
     }
@@ -296,7 +296,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
             if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
                 clickWithRetry(cancel.first(), 1, BUTTON_RETRY_DELAY);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Cancel click failed: {}", e.getMessage()); }
     }
 
     @Step("Click Next in auto message flow")
@@ -326,24 +326,24 @@ public class CreatorAutomaticMessagePage extends BasePage {
     @Step("Enable promotion toggle and fill discount: {discount}")
     public void enablePromotionAndFillDiscount(String discount) {
         // Give UI a brief moment after price selection to enable the toggle
-        try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         Locator promoSwitch = anySwitch();
         waitVisible(promoSwitch, utils.ConfigReader.getShortTimeout());
-        try { promoSwitch.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { promoSwitch.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         // Try regular click first
-        try { clickWithRetry(promoSwitch, 1, BUTTON_RETRY_DELAY); } catch (Throwable ignored) { }
+        try { clickWithRetry(promoSwitch, 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
         boolean checked = false;
-        try { checked = promoSwitch.isChecked(); } catch (Throwable ignored) {}
+        try { checked = promoSwitch.isChecked(); } catch (Throwable e) { logger.debug("Checked check failed: {}", e.getMessage()); }
         if (!checked) {
             // Try a force click as fallback (overlays/z-index issues)
-            try { promoSwitch.click(new Locator.ClickOptions().setForce(true)); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
-            try { checked = promoSwitch.isChecked(); } catch (Throwable ignored) {}
+            try { promoSwitch.click(new Locator.ClickOptions().setForce(true)); } catch (Throwable e) { logger.debug("Force click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { checked = promoSwitch.isChecked(); } catch (Throwable e) { logger.debug("Checked check failed: {}", e.getMessage()); }
         }
         if (!checked) {
             // As last resort, try focusing and pressing Space
-            try { promoSwitch.focus(); page.keyboard().press("Space"); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { promoSwitch.focus(); page.keyboard().press("Space"); } catch (Throwable e) { logger.debug("Keyboard action failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         // Proceed to discount field
         waitVisible(discountTextboxSecond(), utils.ConfigReader.getShortTimeout());
@@ -360,12 +360,12 @@ public class CreatorAutomaticMessagePage extends BasePage {
             boolean uploadingVisible = safeIsVisible(uploadStayMessage());
             boolean mainVisible = safeIsVisible(mainBannerRole());
             boolean alertsVisible = false;
-            try { alertsVisible = genericAlerts().count() > 0 && genericAlerts().isVisible(); } catch (Throwable ignored) {}
+            try { alertsVisible = genericAlerts().count() > 0 && genericAlerts().isVisible(); } catch (Throwable e) { logger.debug("Alert check failed: {}", e.getMessage()); }
             if (!uploadingVisible && !mainVisible && !alertsVisible) break;
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         // Allow network to settle if supported by current page state
-        try { page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(utils.ConfigReader.getMediumTimeout())); } catch (Throwable ignored) {}
+        try { page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(utils.ConfigReader.getMediumTimeout())); } catch (Throwable e) { logger.debug("Network idle wait failed: {}", e.getMessage()); }
         // Finally, wait for the Modify button to be visible again
         try {
             waitVisible(modifyButtonVisibleAgain(), utils.ConfigReader.getMediumTimeout());
@@ -375,22 +375,22 @@ public class CreatorAutomaticMessagePage extends BasePage {
                 if (modalOrDrawerMasks().count() > 0 && modalOrDrawerMasks().isVisible()) {
                     // Click the mask to dismiss
                     clickWithRetry(modalOrDrawerMasks().first(), 1, NAVIGATION_WAIT);
-                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Mask dismiss failed: {}", e.getMessage()); }
             try {
                 if (genericAlerts().count() > 0 && genericAlerts().isVisible()) {
                     // Try clicking the alert container to dismiss
                     clickWithRetry(genericAlerts().first(), 1, NAVIGATION_WAIT);
-                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Alert dismiss failed: {}", e.getMessage()); }
             // Last resort (mirrors codegen): attempt a generic div nth(4) click guardedly
             try {
                 Locator genericDiv = page.locator("div").nth(4);
                 clickWithRetry(genericDiv, 1, NAVIGATION_WAIT);
-                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
-            } catch (Throwable ignored) {}
+                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            } catch (Throwable e) { logger.debug("Generic div click failed: {}", e.getMessage()); }
             // Re-wait for Modify
             waitVisible(modifyButtonVisibleAgain(), UPLOAD_TIMEOUT);
         }
@@ -404,8 +404,8 @@ public class CreatorAutomaticMessagePage extends BasePage {
                 // Send ESC as a generic dismiss action
                 page.keyboard().press("Escape");
             }
-        } catch (Throwable ignored) {}
-        try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Banner close failed: {}", e.getMessage()); }
+        try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         // Ensure Modify still visible
         waitVisible(modifyButtonVisibleAgain(), SHORT_TIMEOUT);
     }
@@ -416,8 +416,8 @@ public class CreatorAutomaticMessagePage extends BasePage {
         boolean checked = firstSwitchToggle().isChecked();
         if (!checked) {
             // Try to enable if not
-            try { clickWithRetry(firstSwitchToggle(), 1, BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+            try { clickWithRetry(firstSwitchToggle(), 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             checked = firstSwitchToggle().isChecked();
         }
         if (!checked) {
@@ -441,45 +441,45 @@ public class CreatorAutomaticMessagePage extends BasePage {
         int guard = 0;
         while (true) {
             int mediaBefore = 0;
-            try { mediaBefore = editorMediaItems().count(); } catch (Throwable ignored) {}
+            try { mediaBefore = editorMediaItems().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
             if (mediaBefore <= 0) {
                 // As a fallback, if no explicit media found, still attempt based on delete buttons presence
-                int delCount = 0; try { delCount = deleteButtons().count(); } catch (Throwable ignored) {}
+                int delCount = 0; try { delCount = deleteButtons().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
                 if (delCount <= 0) break; // nothing to delete
             }
 
-            int delButtons = 0; try { delButtons = deleteButtons().count(); } catch (Throwable ignored) {}
+            int delButtons = 0; try { delButtons = deleteButtons().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
             if (delButtons <= 0) break;
             int idx = Math.max(0, delButtons - 1);
             try {
                 Locator target = deleteButtons().nth(idx);
-                try { target.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                try { target.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
                 clickWithRetry(target, 1, BUTTON_RETRY_DELAY);
             } catch (Throwable e) {
                 // Try the first as fallback
-                try { clickWithRetry(deleteButtons().first(), 1, BUTTON_RETRY_DELAY); } catch (Throwable ignored) { break; }
+                try { clickWithRetry(deleteButtons().first(), 1, BUTTON_RETRY_DELAY); } catch (Throwable e2) { logger.debug("Click failed: {}", e2.getMessage()); break; }
             }
 
             // Confirm if a confirmation dialog appears
-            try { clickAnyConfirmDeleteInline(); } catch (Throwable ignored) {}
+            try { clickAnyConfirmDeleteInline(); } catch (Throwable e) { logger.debug("Confirm delete failed: {}", e.getMessage()); }
 
             // Wait for media count to decrease or delete button count to decrease
             long end = System.currentTimeMillis() + SHORT_TIMEOUT;
             while (System.currentTimeMillis() < end) {
                 int mediaNow = 0; int delNow = 0;
-                try { mediaNow = editorMediaItems().count(); } catch (Throwable ignored) {}
-                try { delNow = deleteButtons().count(); } catch (Throwable ignored) {}
+                try { mediaNow = editorMediaItems().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
+                try { delNow = deleteButtons().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
                 if ((mediaBefore > 0 && mediaNow < mediaBefore) || (delNow < delButtons)) { break; }
-                try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
             // Small settle
-            try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             guard++; if (guard > 100) break;
             // If not decreased, attempt one more confirm then continue loop
         }
         // Final assertion: no media items in editor
         int remaining = 0;
-        try { remaining = editorMediaItems().count(); } catch (Throwable ignored) {}
+        try { remaining = editorMediaItems().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
         if (remaining > 0) {
             throw new AssertionError("Not all media were deleted from the editor; remaining items: " + remaining);
         }
@@ -496,16 +496,16 @@ public class CreatorAutomaticMessagePage extends BasePage {
     public void disableAllFirstFourToggles() {
         Locator toggles = switchesAll();
         int total = 0;
-        try { total = toggles.count(); } catch (Throwable ignored) {}
+        try { total = toggles.count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
         int limit = Math.min(4, total);
         for (int i = 0; i < limit; i++) {
             Locator t = toggles.nth(i);
-            try { waitVisible(t, SHORT_TIMEOUT); } catch (Throwable ignored) {}
+            try { waitVisible(t, SHORT_TIMEOUT); } catch (Throwable e) { logger.debug("Wait visible failed: {}", e.getMessage()); }
             boolean isOn = false;
-            try { isOn = t.isChecked(); } catch (Throwable ignored) {}
+            try { isOn = t.isChecked(); } catch (Throwable e) { logger.debug("Checked check failed: {}", e.getMessage()); }
             if (isOn) {
-                try { clickWithRetry(t, 1, BUTTON_RETRY_DELAY); } catch (Throwable ignored) { }
-                try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
+                try { clickWithRetry(t, 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
         }
     }

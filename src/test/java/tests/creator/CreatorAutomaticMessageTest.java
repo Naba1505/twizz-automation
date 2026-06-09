@@ -32,7 +32,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.clickNext();
         amPage.fillMessageAndSetPrice(message);
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(1500); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(1500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Test(priority = 2, description = "Verify Automatic Message - Renew subscriber modify with free price")
@@ -60,9 +60,9 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.clickSaveOnly();
 
         // Wait briefly for upload; then ensure 'Automation' title is visible again
-        try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(2000); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
         amPage.assertAutomationTitleVisible();
-        try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
     }
 
         @Test(priority = 3, description = "Verify Automatic Message - Unsubscribe modify with free price")
@@ -91,9 +91,9 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.clickSaveOnly();
 
         // Wait some time for upload and ensure Automation title is visible again
-        try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(2000); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
         amPage.assertAutomationTitleVisible();
-        try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
     }
 
         @Test(priority = 4, description = "Verify Automatic Message - Re-subscription modify with 15€ and promotion")
@@ -123,9 +123,9 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.clickSaveOnly();
 
         // Wait some time for upload and ensure Automation title is visible again
-        try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(2000); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
         amPage.assertAutomationTitleVisible();
-        try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
     }
 
         @Test(priority = 5, description = "Verify Automatic Message - Delete added media and disable all messages")
@@ -147,32 +147,32 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.deleteAllVisibleMedia();
         amPage.clearMessageToSpace();
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(800); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(800); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
 
         // 2) Second Modify (Renew subscriber)
         amPage.clickModifySecond();
         amPage.deleteAllVisibleMedia();
         amPage.clearMessageToSpace();
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(800); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(800); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
 
         // 3) Third Modify (Unsubscribe)
         amPage.clickModifyThird();
         amPage.deleteAllVisibleMedia();
         amPage.clearMessageToSpace();
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(800); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(800); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
 
         // 4) Fourth Modify (Re-subscription)
         amPage.clickModifyFourth();
         amPage.deleteAllVisibleMedia();
         amPage.clearMessageToSpace();
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(800); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(800); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
 
         // Finally, disable all enabled toggles
         amPage.assertAutomationTitleVisible();
         amPage.disableAllFirstFourToggles();
-        try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
     }
 }
