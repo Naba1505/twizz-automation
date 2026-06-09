@@ -75,7 +75,7 @@ public class FanDiscoverPage extends BasePage {
                 logger.warn("Feed {} not confirmed visible: {}", i, e.toString());
             }
         }
-        try { page.mouse().wheel(0, 1200); } catch (Exception ignored) {}
+        try { page.mouse().wheel(0, 1200); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         return seen;
     }
 
@@ -94,7 +94,7 @@ public class FanDiscoverPage extends BasePage {
                 for (int b = 0; b < btnCount; b++) {
                     Locator btn = muteButtons.nth(b);
                     if (safeIsVisible(btn)) {
-                        try { btn.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                        try { btn.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
                         clickWithRetry(btn, 1, UI_UPDATE_WAIT);
                         toggled++;
                         break;
@@ -115,7 +115,7 @@ public class FanDiscoverPage extends BasePage {
                 page.mouse().wheel(0, -SCROLL_UP_LARGE);
                 page.waitForTimeout(SCROLL_WAIT);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
     }
 
     @Step("Open a random visible Discover profile from a feed")
@@ -125,8 +125,8 @@ public class FanDiscoverPage extends BasePage {
         Locator profileText = page.getByText("Discover profile");
         int attempts = 0;
         while ((profileText.count() == 0 || !safeIsVisible(profileText.first())) && attempts++ < PROFILE_SCROLL_ATTEMPTS) {
-            try { page.mouse().wheel(0, SCROLL_DOWN_LARGE); } catch (Exception ignored) {}
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Exception ignored) {}
+            try { page.mouse().wheel(0, SCROLL_DOWN_LARGE); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
             profileText = page.getByText("Discover profile");
         }
 
@@ -135,7 +135,7 @@ public class FanDiscoverPage extends BasePage {
         }
 
         Locator target = profileText.first();
-        try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+        try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(target, 2, UI_UPDATE_WAIT);
     }
 
