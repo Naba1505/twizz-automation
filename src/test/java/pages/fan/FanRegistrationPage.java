@@ -54,8 +54,8 @@ public class FanRegistrationPage extends BasePage {
         try {
             page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("eye-invisible")).locator("svg").click();
             logger.info("Clicked password visibility toggle (eye-invisible)");
-        } catch (Exception ignore) {
-            logger.info("Password eye-invisible toggle not clickable/visible, continuing");
+        } catch (Exception e) {
+            logger.debug("Password eye-invisible toggle not clickable/visible: {}", e.getMessage());
         }
     }
 
