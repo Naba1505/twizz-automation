@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -11,14 +12,9 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> History of pushes flow
  */
 public class CreatorPushHistoryPage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized for stability)
-    // Increased timeouts to prevent flaky test failures while maintaining reasonable wait times
-    private static final int SCROLL_WAIT = 200;          // Scroll stabilization (increased for stability)
-    private static final int NAVIGATION_WAIT = 300;      // Navigation delays (increased for stability)
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POLLING_WAIT = 500;         // Polling intervals (increased for stability)
-    private static final int SHORT_TIMEOUT = 10000;      // Short waits (10s - reasonable for element visibility)
-    private static final int MEDIUM_TIMEOUT = 20000;     // Medium waits (20s - for slower operations)
+    // Push History page uses optimized short timeouts for fast-loading UI elements
+    private static final int SHORT_TIMEOUT = 2000;       // 2s - Fast UI elements (settings, menus)
+    private static final int MEDIUM_TIMEOUT = 8000;      // 8s - History items, performance screen
 
     private static final String SETTINGS_URL_PART = "/common/setting";
 
@@ -76,7 +72,7 @@ public class CreatorPushHistoryPage extends BasePage {
     @Step("Open Settings from profile (Push History)")
     public void openSettingsFromProfile() {
         waitVisible(settingsIcon(), SHORT_TIMEOUT);
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
@@ -86,32 +82,32 @@ public class CreatorPushHistoryPage extends BasePage {
     @Step("Open 'History of pushes' screen")
     public void openHistoryOfPushes() {
         waitVisible(historyOfPushesMenu(), SHORT_TIMEOUT);
-        try { historyOfPushesMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(historyOfPushesMenu(), 1, BUTTON_RETRY_DELAY);
+        try { historyOfPushesMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(historyOfPushesMenu(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(historyMediaPushTitle(), SHORT_TIMEOUT);
     }
 
     @Step("Open last media push entry from the list")
     public void openLastMediaPushEntry() {
         // Nudge the list to ensure items render
-        try { anyHistoryItems().first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { anyHistoryItems().first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         // Scroll to bottom by repeated wheel to surface last item
         for (int i = 0; i < 8; i++) {
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
         Locator last = lastHistoryClickable();
         waitVisible(last.first(), SHORT_TIMEOUT);
-        try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(last.first(), 1, BUTTON_RETRY_DELAY);
+        try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(last.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Open first media push entry from the list")
     public void openFirstMediaPushEntry() {
         // Scroll to top first to ensure first item is interactable
-        for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) {} }
+        for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
         waitVisible(firstHistoryRow(), SHORT_TIMEOUT);
-        try { firstHistoryRow().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(firstHistoryRow(), 1, BUTTON_RETRY_DELAY);
+        try { firstHistoryRow().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(firstHistoryRow(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert Performance screen is visible")
@@ -122,15 +118,15 @@ public class CreatorPushHistoryPage extends BasePage {
     @Step("Navigate back via arrow left")
     public void clickBackArrow() {
         waitVisible(backArrow(), SHORT_TIMEOUT);
-        clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Navigate back to profile screen")
     public void navigateBackToProfile() {
         // Click back until we see a reliable profile marker (plus icon)
         for (int i = 0; i < 3; i++) {
-            try { clickBackArrow(); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+            try { clickBackArrow(); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
             if (safeIsVisible(plusImg)) {
                 return;
