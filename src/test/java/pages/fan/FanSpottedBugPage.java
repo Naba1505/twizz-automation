@@ -89,7 +89,7 @@ public class FanSpottedBugPage extends BasePage {
                     // Try to ensure we're on a stable page
                     try {
                         page.waitForLoadState();
-                    } catch (Exception ignored) {}
+                    } catch (Exception e2) { logger.debug("Wait for load state failed: {}", e2.getMessage()); }
                 } else {
                     // Last attempt failed, re-throw the exception
                     throw new RuntimeException("Failed to click Settings icon after " + maxRetries + " attempts", e);
