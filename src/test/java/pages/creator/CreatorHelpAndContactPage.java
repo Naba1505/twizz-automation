@@ -66,7 +66,7 @@ public class CreatorHelpAndContactPage extends BasePage {
     @Step("Open 'Help and contact' screen")
     public void openHelpAndContact() {
         waitVisible(helpAndContactMenu(), MEDIUM_TIMEOUT);
-        try { helpAndContactMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { helpAndContactMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(helpAndContactMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(helpAndContactTitle(), SHORT_TIMEOUT);
     }
