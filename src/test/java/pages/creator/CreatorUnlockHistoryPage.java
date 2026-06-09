@@ -84,7 +84,7 @@ public class CreatorUnlockHistoryPage extends BasePage {
     @Step("Open 'Unlock history' screen")
     public void openUnlockHistory() {
         waitVisible(unlockHistoryMenu(), SHORT_TIMEOUT);
-        try { unlockHistoryMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { unlockHistoryMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(unlockHistoryMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(unlockLinksTitle(), SHORT_TIMEOUT);
     }
@@ -92,19 +92,19 @@ public class CreatorUnlockHistoryPage extends BasePage {
     @Step("Open last unlock entry from the list")
     public void openLastUnlockEntry() {
         // Nudge list and scroll to bottom to surface last item
-        try { anyUnlockItems().first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        for (int i = 0; i < 8; i++) { try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {} }
+        try { anyUnlockItems().first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        for (int i = 0; i < 8; i++) { try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
         Locator last = lastUnlockClickable();
         waitVisible(last.first(), SHORT_TIMEOUT);
-        try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(last.first(), 1, BUTTON_RETRY_DELAY);
     }
 
     @Step("Open first unlock entry from the list")
     public void openFirstUnlockEntry() {
-        for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) {} }
+        for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
         waitVisible(firstUnlockRow(), MEDIUM_TIMEOUT);
-        try { firstUnlockRow().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { firstUnlockRow().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(firstUnlockRow(), 1, BUTTON_RETRY_DELAY);
     }
 
@@ -122,8 +122,8 @@ public class CreatorUnlockHistoryPage extends BasePage {
     @Step("Navigate back to profile screen")
     public void navigateBackToProfile() {
         for (int i = 0; i < 5; i++) {
-            try { clickBackArrow(); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+            try { clickBackArrow(); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
             if (safeIsVisible(plusImg)) {
                 return;
