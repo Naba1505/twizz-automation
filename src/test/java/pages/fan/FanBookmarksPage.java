@@ -484,8 +484,8 @@ public class FanBookmarksPage extends BasePage {
             } catch (Throwable e) {
                 logger.warn("Failed during unbookmark iteration: {}", e.getMessage());
                 // Try to recover by going back
-                try { page.goBack(); } catch (Throwable ignored) { }
-                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                try { page.goBack(); } catch (Throwable e2) { logger.debug("Go back failed: {}", e2.getMessage()); }
+                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e2) { logger.debug("Wait failed: {}", e2.getMessage()); }
             }
         }
         
@@ -555,8 +555,8 @@ public class FanBookmarksPage extends BasePage {
                 }
             } catch (Throwable e) {
                 logger.warn("Failed during unbookmark iteration: {}", e.getMessage());
-                try { page.goBack(); } catch (Throwable ignored) { }
-                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                try { page.goBack(); } catch (Throwable e2) { logger.debug("Go back failed: {}", e2.getMessage()); }
+                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e2) { logger.debug("Wait failed: {}", e2.getMessage()); }
             }
         }
         
