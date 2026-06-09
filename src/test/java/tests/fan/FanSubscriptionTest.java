@@ -2,6 +2,8 @@ package tests.fan;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import pages.fan.FanSubscriptionPage;
@@ -10,6 +12,7 @@ import utils.TestDataManager;
 import tests.admin.AdminApproveCreatorTest;
 
 public class FanSubscriptionTest extends BaseFanTest {
+    private static final Logger logger = LoggerFactory.getLogger(FanSubscriptionTest.class);
 
     @Test(priority = 1, description = "Fan subscribes to a creator from search with 3DS flow")
     public void fanCanSubscribeToCreator() {
@@ -23,7 +26,9 @@ public class FanSubscriptionTest extends BaseFanTest {
                     String fileVal = java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8).trim();
                     if (!fileVal.isBlank()) { candidate = fileVal; }
                 }
-            } catch (IOException | RuntimeException ignored) {}
+            } catch (IOException | RuntimeException e) {
+                logger.debug("Failed to read approved username file: {}", e.getMessage());
+            }
         }
         if (candidate == null || candidate.isBlank()) {
             // Fallback 2: try freshly created username from registration flow (TestDataManager handles file fallback)

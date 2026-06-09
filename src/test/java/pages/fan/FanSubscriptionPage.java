@@ -71,27 +71,27 @@ public class FanSubscriptionPage extends BasePage {
                     logger.debug("[Fan][Subscribe] Profile page detected via URL");
                     return; // Exit method immediately when profile is found
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
             try {
                 Locator subBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe - without obligation"));
                 if (subBtn.count() > 0 && safeIsVisible(subBtn.first())) {
                     logger.debug("[Fan][Subscribe] Subscribe button found");
                     return; // Exit method immediately when subscribe button is found
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Subscribe button check failed: {}", e.getMessage()); }
             try {
                 Locator altBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe"));
                 if (altBtn.count() > 0 && safeIsVisible(altBtn.first())) {
                     logger.debug("[Fan][Subscribe] Alternative subscribe button found");
                     return; // Exit method immediately when alternative subscribe button is found
                 }
-            } catch (Throwable ignored) {}
-            try { page.waitForTimeout(250); } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Alternative subscribe button check failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(250); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         
         // Additional wait for page to fully settle
         logger.info("[Fan][Subscribe] Profile loaded, waiting for page to settle");
-        try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(2000); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Start subscription flow")
@@ -252,23 +252,23 @@ public class FanSubscriptionPage extends BasePage {
         try {
             for (com.microsoft.playwright.Frame fr : page.frames()) {
                 String u = "";
-                try { u = fr.url(); } catch (Throwable ignored) {}
+                try { u = fr.url(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 if (u.contains("securionpay") || u.contains("payment") || u.contains("iframe")) {
                     try {
                         Locator number = fr.getByPlaceholder("1234 1234 1234");
                         if (number.count() > 0) { number.first().click(); number.first().fill(cardNumber); }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     try {
                         Locator exp = fr.getByPlaceholder("MM/YY");
                         if (exp.count() > 0) { exp.first().click(); exp.first().fill(expiry); }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     try {
                         Locator cvcField = fr.getByPlaceholder("CVC");
                         if (cvcField.count() > 0) { cvcField.first().click(); cvcField.first().fill(cvc); }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
     }
 
     @Step("Select country if required")
@@ -280,7 +280,7 @@ public class FanSubscriptionPage extends BasePage {
             if (countryBlock.count() > 0) {
                 countryBlock.nth(5).click(new Locator.ClickOptions().setModifiers(Arrays.asList(KeyboardModifier.CONTROL)));
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
     }
 
     @Step("Confirm payment and complete 3DS test flow")
@@ -294,12 +294,12 @@ public class FanSubscriptionPage extends BasePage {
             boolean clicked = false;
             try {
                 waitVisible(confirmBtn, 8_000);
-                try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
                 // Try a bounded-time click first to avoid 60s default timeouts
                 try {
                     threeDSPage = appPage.context().waitForPage(() -> {
                         try { confirmBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); }
-                        catch (Throwable e) { /* swallow to attempt retry below */ }
+                        catch (Throwable e) { logger.debug("Click attempt failed: {}", e.getMessage()); }
                     });
                     clicked = true;
                 } catch (Throwable e1) {
@@ -316,12 +316,12 @@ public class FanSubscriptionPage extends BasePage {
                 for (String name : alt) {
                     Locator altBtn = appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
                     if (altBtn.count() > 0 && safeIsVisible(altBtn.first())) {
-                        try { altBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                        try { altBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { threeDSPage = appPage.context().waitForPage(() -> {
-                            try { altBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); } catch (Throwable ignored) {}
+                            try { altBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         }); }
                         catch (Throwable e) {
-                            try { altBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); } catch (Throwable ignored) {}
+                            try { altBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); } catch (Throwable e2) { logger.debug("Operation failed: {}", e2.getMessage()); }
                         }
                         clicked = true;
                         logger.debug("[Fan][Subscribe] Successfully clicked 3DS button");
@@ -333,13 +333,13 @@ public class FanSubscriptionPage extends BasePage {
                     try {
                         Locator anyBtn = appPage.locator("button:visible").first();
                         if (safeIsVisible(anyBtn)) {
-                            try { anyBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                            try { anyBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                             try { 
                                 anyBtn.first().click(new Locator.ClickOptions().setTimeout(3000)); 
                                 logger.debug("[Fan][Subscribe] Clicked fallback button");
-                            } catch (Throwable ignored) {}
+                            } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
             }
 
@@ -354,17 +354,17 @@ public class FanSubscriptionPage extends BasePage {
                                 logger.info("[Fan][Subscribe] Found 3DS page with URL: {}", url);
                                 break; 
                             } 
-                        } catch (Throwable ignored) {}
+                        } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     }
                     if (threeDSPage != null) break;
-                    try { appPage.waitForTimeout(THREEDS_POPUP_WAIT); } catch (Throwable ignored) {}
+                    try { appPage.waitForTimeout(THREEDS_POPUP_WAIT); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
             }
 
             if (threeDSPage != null) {
-                try { if (!threeDSPage.isClosed()) threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED); } catch (Throwable ignored) {}
-                try { if (!threeDSPage.isClosed()) threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Throwable ignored) {}
-                try { if (!threeDSPage.isClosed()) clickWithRetry(threeDSPage.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("SecurionPay")), 1, UI_UPDATE_WAIT); } catch (Throwable ignored) {}
+                try { if (!threeDSPage.isClosed()) threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                try { if (!threeDSPage.isClosed()) threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                try { if (!threeDSPage.isClosed()) clickWithRetry(threeDSPage.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("SecurionPay")), 1, UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 
                 // Try direct JavaScript submit immediately for .btn.btn-success
                 try {
@@ -379,81 +379,81 @@ public class FanSubscriptionPage extends BasePage {
                 // Retry Submit with multiple strategies
                 boolean submitted = false;
                 for (int i = 0; i < 3 && !submitted; i++) {
-                    try { if (threeDSPage.isClosed()) break; } catch (Throwable ignored) {}
+                    try { if (threeDSPage.isClosed()) break; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     try {
                         Locator byRole = threeDSPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"));
                         if (!threeDSPage.isClosed() && byRole.count() > 0 && safeIsVisible(byRole.first())) {
-                            try { byRole.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                            try { byRole.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable ignored) {}
-                            try { byRole.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable ignored) {}
+                            try { byRole.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { byRole.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { byRole.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     try {
                         Locator xpathSubmit = threeDSPage.locator("xpath=//div//input[@value='Submit']");
                         if (!threeDSPage.isClosed() && xpathSubmit.count() > 0 && safeIsVisible(xpathSubmit.first())) {
-                            try { xpathSubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                            try { xpathSubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable ignored) {}
-                            try { xpathSubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable ignored) {}
+                            try { xpathSubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { xpathSubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { xpathSubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     try {
                         Locator buttonText = threeDSPage.locator("button:has-text('Submit')");
                         if (!threeDSPage.isClosed() && buttonText.count() > 0 && safeIsVisible(buttonText.first())) {
-                            try { buttonText.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                            try { buttonText.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable ignored) {}
-                            try { buttonText.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable ignored) {}
+                            try { buttonText.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { buttonText.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { buttonText.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     try {
                         Locator anySubmit = threeDSPage.locator("#submit, [data-testid='submit'], [name='submit']").first();
                         if (!threeDSPage.isClosed() && anySubmit.count() > 0 && safeIsVisible(anySubmit)) {
-                            try { anySubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                            try { anySubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable ignored) {}
-                            try { anySubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable ignored) {}
+                            try { anySubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { anySubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { anySubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     // Try CSS selector for submit button
                     try {
                         Locator cssSubmit = threeDSPage.locator(".btn.btn-success");
                         if (!threeDSPage.isClosed() && cssSubmit.count() > 0 && safeIsVisible(cssSubmit.first())) {
                             logger.info("[Fan][Subscribe] Found submit button with .btn.btn-success class");
-                            try { cssSubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                            try { cssSubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable ignored) {}
-                            try { cssSubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable ignored) {}
+                            try { cssSubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { cssSubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                            try { cssSubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         }
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     // Scan frames inside the 3DS page
                     try {
                         for (com.microsoft.playwright.Frame fr : threeDSPage.frames()) {
                             String u = "";
-                            try { u = fr.url(); } catch (Throwable ignored) {}
+                            try { u = fr.url(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                             if (u.toLowerCase().contains("securionpay") || u.toLowerCase().contains("dev.shift4.com")) {
                                 try {
                                     Locator frBtn = fr.getByRole(AriaRole.BUTTON, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("Submit"));
                                     if (frBtn.count() > 0) { frBtn.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; break; }
-                                } catch (Throwable ignored) {}
+                                } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                                 try {
                                     Locator frInput = fr.locator("input[type='submit'], input[value='Submit']");
                                     if (frInput.count() > 0) { frInput.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; break; }
-                                } catch (Throwable ignored) {}
+                                } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                                 try {
                                     Locator frCss = fr.locator(".btn.btn-success");
                                     if (frCss.count() > 0) { frCss.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; break; }
-                                } catch (Throwable ignored) {}
+                                } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                             }
                         }
-                    } catch (Throwable ignored) {}
-                    try { if (!threeDSPage.isClosed()) threeDSPage.waitForTimeout(THREEDS_RETRY_WAIT); } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                    try { if (!threeDSPage.isClosed()) threeDSPage.waitForTimeout(THREEDS_RETRY_WAIT); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
                 // As a last resort, try submitting first form
                 if (!submitted && !threeDSPage.isClosed()) {
                     try { 
                         threeDSPage.evaluate("() => { const f = document.querySelector('form'); if (f) { if (f.requestSubmit) f.requestSubmit(); else f.submit(); } }"); 
                         logger.debug("[Fan][Subscribe] Submitted form via JavaScript");
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
                 // Wait for confirmation text
-                try { if (!threeDSPage.isClosed()) threeDSPage.waitForSelector("text=Payment confirmed!", new Page.WaitForSelectorOptions().setTimeout(VISIBILITY_TIMEOUT)); } catch (Throwable ignored) {}
+                try { if (!threeDSPage.isClosed()) threeDSPage.waitForSelector("text=Payment confirmed!", new Page.WaitForSelectorOptions().setTimeout(VISIBILITY_TIMEOUT)); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 // Some flows show an extra confirmation button
                 try {
                     if (!threeDSPage.isClosed()) {
@@ -462,34 +462,34 @@ public class FanSubscriptionPage extends BasePage {
                             clickWithRetry(okBtn.first(), 1, UI_UPDATE_WAIT);
                         }
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 // Close 3DS page only if there is another app page present
                 try {
                     if (!threeDSPage.isClosed()) {
                         int openPages = appPage.context().pages().size();
                         if (openPages > 1) { threeDSPage.close(); }
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
             } else {
                 // Try iframe path
                 com.microsoft.playwright.Frame threeDSFrame = null;
                 for (com.microsoft.playwright.Frame fr : appPage.frames()) {
-                    try { if (fr.url() != null && fr.url().toLowerCase().contains("securionpay")) { threeDSFrame = fr; break; } } catch (Throwable ignored) {}
+                    try { if (fr.url() != null && fr.url().toLowerCase().contains("securionpay")) { threeDSFrame = fr; break; } } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
                 if (threeDSFrame != null) {
-                    try { clickWithRetry(threeDSFrame.getByRole(AriaRole.IMG, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("SecurionPay")), 1, UI_UPDATE_WAIT); } catch (Throwable ignored) {}
-                    try { clickWithRetry(threeDSFrame.getByRole(AriaRole.BUTTON, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("Submit")), 1, UI_UPDATE_WAIT); } catch (Throwable ignored) {}
+                    try { clickWithRetry(threeDSFrame.getByRole(AriaRole.IMG, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("SecurionPay")), 1, UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                    try { clickWithRetry(threeDSFrame.getByRole(AriaRole.BUTTON, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("Submit")), 1, UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     // XPath-based fallback inside frame
                     try {
                         Locator xpathSubmit = threeDSFrame.locator("xpath=//div//input[@value='Submit']");
                         if (xpathSubmit.count() > 0) { clickWithRetry(xpathSubmit.first(), 1, UI_UPDATE_WAIT); }
-                    } catch (Throwable ignored) {}
-                    try { threeDSFrame.waitForSelector("text=Payment confirmed!", new com.microsoft.playwright.Frame.WaitForSelectorOptions().setTimeout(VISIBILITY_TIMEOUT)); } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                    try { threeDSFrame.waitForSelector("text=Payment confirmed!", new com.microsoft.playwright.Frame.WaitForSelectorOptions().setTimeout(VISIBILITY_TIMEOUT)); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     // Extra confirmation path
                     try {
                         Locator okBtn = threeDSFrame.getByRole(AriaRole.BUTTON, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("Everything is OK"));
                         if (okBtn.count() > 0) clickWithRetry(okBtn.first(), 1, UI_UPDATE_WAIT);
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 } else {
                     logger.warn("[Fan][Subscribe] Could not locate 3DS page or iframe; flow may auto-approve or be skipped");
                 }
@@ -499,11 +499,11 @@ public class FanSubscriptionPage extends BasePage {
             try {
                 Page active = null;
                 for (Page p : appPage.context().pages()) {
-                    try { if (p.url() != null && p.url().contains("twizz.app")) { active = p; break; } } catch (Throwable ignored) {}
+                    try { if (p.url() != null && p.url().contains("twizz.app")) { active = p; break; } } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
                 if (active == null) { active = appPage; }
-                try { active.bringToFront(); } catch (Throwable ignored) {}
-            } catch (Throwable ignored) {}
+                try { active.bringToFront(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+            } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
 
         } catch (Throwable e) {
             logger.warn("[Fan][Subscribe] 3DS flow handling error: {}", e.getMessage());
@@ -536,14 +536,14 @@ public class FanSubscriptionPage extends BasePage {
                             logger.info("[Fan][Subscribe] Payment confirmation dismissed");
                             break;
                         }
-                    } catch (Throwable ignored) {}
-                    try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(500); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
                 
                 // Give the profile page a moment to fully load
-                try { page.waitForTimeout(2000); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(2000); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
         
         // Now check for Subscriber button on creator profile
         logger.info("[Fan][Subscribe] Checking for 'Subscriber' button on profile");
@@ -555,7 +555,7 @@ public class FanSubscriptionPage extends BasePage {
                     logger.info("[Fan][Subscribe] Subscriber button found - subscription verified successfully!");
                     return;
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
             try {
                 // Some UIs show plain text or a different label (Subscribed/Unsubscribe)
                 if (page.getByText("Subscriber").count() > 0 ||
@@ -564,8 +564,8 @@ public class FanSubscriptionPage extends BasePage {
                     logger.info("[Fan][Subscribe] Subscription status confirmed via text/button");
                     return;
                 }
-            } catch (Throwable ignored) {}
-            try { page.waitForTimeout(500); } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(500); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
         }
         
         logger.warn("[Fan][Subscribe] Subscriber button not found within timeout, but payment was confirmed");
