@@ -40,7 +40,8 @@ public class AdminApproveCreatorTest extends BaseTestClass {
                         .setSnapshots(true)
                         .setSources(true));
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.debug("Trace setup failed: {}", e.getMessage());
         }
         // No navigation here; admin test handles its own navigation to admin domain
     }
@@ -76,7 +77,9 @@ public class AdminApproveCreatorTest extends BaseTestClass {
             java.nio.file.Files.createDirectories(out.getParent());
             java.nio.file.Files.writeString(out, approvedUsername, java.nio.charset.StandardCharsets.UTF_8);
             log.info("Persisted approved username to {}", out);
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            log.debug("Failed to persist approved username: {}", e.getMessage());
+        }
         log.info("Creator '{}' approved successfully via admin dashboard", resolvedUsername);
     }
 }

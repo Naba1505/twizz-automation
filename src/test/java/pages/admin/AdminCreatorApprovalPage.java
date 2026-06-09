@@ -176,7 +176,9 @@ public class AdminCreatorApprovalPage extends BasePage {
         try { 
             searchField.press("Enter"); 
             page.waitForTimeout(1000); // Wait for search to process
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.debug("Search trigger failed: {}", e.getMessage());
+        }
         
         log.info("Search completed for username: {}", toUse);
     }
