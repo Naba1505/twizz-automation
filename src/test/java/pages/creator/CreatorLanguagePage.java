@@ -82,7 +82,7 @@ public class CreatorLanguagePage extends BasePage {
     @Step("Open Language screen")
     public void openLanguageScreen() {
         waitVisible(languageMenu(), SHORT_TIMEOUT);
-        try { languageMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { languageMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(languageMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(languageTitleEnglish(), SHORT_TIMEOUT);
     }
@@ -114,14 +114,14 @@ public class CreatorLanguagePage extends BasePage {
             try {
                 waitVisible(backArrow(), SHORT_TIMEOUT);
                 clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY);
-            } catch (Throwable ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         if (!safeIsVisible(profilePlusIcon())) {
             // Attempt additional back clicks if needed
             for (int i = 0; i < 2 && !safeIsVisible(profilePlusIcon()); i++) {
-                try { clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY); } catch (Throwable ignored) {}
-                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+                try { clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
         }
     }
