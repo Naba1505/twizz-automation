@@ -79,7 +79,7 @@ public class CreatorFreeSubscriptionPage extends BasePage {
         Locator profileSettings = profileSettingsText();
         try {
             profileSettings.scrollIntoViewIfNeeded();
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         waitVisible(profileSettings, SHORT_TIMEOUT);
         clickWithRetry(profileSettings, 1, BUTTON_RETRY_DELAY);
         logger.info("[FreeSubscription] Clicked 'Profile settings'");
@@ -176,7 +176,7 @@ public class CreatorFreeSubscriptionPage extends BasePage {
         Locator btn = registerButton();
         try {
             btn.scrollIntoViewIfNeeded();
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         waitVisible(btn, SHORT_TIMEOUT);
         clickWithRetry(btn, 1, BUTTON_RETRY_DELAY);
         logger.info("[FreeSubscription] Clicked 'Register' button");
@@ -187,6 +187,6 @@ public class CreatorFreeSubscriptionPage extends BasePage {
         waitVisible(updatedPersonalInfoToast(), MEDIUM_TIMEOUT);
         logger.info("[FreeSubscription] 'Updated Personal Information' success toast visible");
         // Dismiss toast if clickable
-        try { clickWithRetry(updatedPersonalInfoToast(), 0, 0); } catch (Throwable ignored) {}
+        try { clickWithRetry(updatedPersonalInfoToast(), 0, 0); } catch (Throwable e) { logger.debug("Toast dismiss failed: {}", e.getMessage()); }
     }
 }
