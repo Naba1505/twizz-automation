@@ -49,7 +49,7 @@ public class CreatorLogoutPage extends BasePage {
     @Step("Click 'Disconnect' to logout")
     public void clickDisconnect() {
         waitVisible(disconnectMenu(), MEDIUM_TIMEOUT);
-        try { disconnectMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { disconnectMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(disconnectMenu(), 1, BUTTON_RETRY_DELAY);
     }
 
