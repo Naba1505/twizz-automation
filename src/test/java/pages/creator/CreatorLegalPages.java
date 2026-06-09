@@ -106,7 +106,7 @@ public class CreatorLegalPages extends BasePage {
                     // Try to make it visible if hidden
                     try {
                         locator.first().scrollIntoViewIfNeeded();
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
                     
                     // Force click if regular click doesn't work
                     try {
@@ -157,7 +157,7 @@ public class CreatorLegalPages extends BasePage {
     @Step("Open Terms and conditions of sale")
     public void openTermsAndConditionsOfSale() {
         waitVisible(termsAndConditionsOfSaleMenu(), SHORT_TIMEOUT);
-        try { termsAndConditionsOfSaleMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { termsAndConditionsOfSaleMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(termsAndConditionsOfSaleMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(saleTitleExact(), SHORT_TIMEOUT);
     }
@@ -176,13 +176,13 @@ public class CreatorLegalPages extends BasePage {
         // Scroll down until bottom snippet is visible
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(saleBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
         waitVisible(saleBottomSnippet(), SHORT_TIMEOUT);
         // Scroll back up until title is visible again
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(saleTitleExact())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
         waitVisible(saleTitleExact(), SHORT_TIMEOUT);
     }
@@ -190,7 +190,7 @@ public class CreatorLegalPages extends BasePage {
     @Step("Open Community regulations")
     public void openCommunityRegulations() {
         waitVisible(communityRegulationsMenu(), SHORT_TIMEOUT);
-        try { communityRegulationsMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { communityRegulationsMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(communityRegulationsMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(communityTitleExact(), SHORT_TIMEOUT);
     }
@@ -208,12 +208,12 @@ public class CreatorLegalPages extends BasePage {
     public void scrollDownToCommunityBottomAndBackToTitle() {
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(communityBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
         waitVisible(communityBottomSnippet(), SHORT_TIMEOUT);
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(communityTitleExact())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
         waitVisible(communityTitleExact(), SHORT_TIMEOUT);
     }
@@ -221,7 +221,7 @@ public class CreatorLegalPages extends BasePage {
     @Step("Open Content Policy")
     public void openContentPolicy() {
         waitVisible(contentPolicyMenu(), SHORT_TIMEOUT);
-        try { contentPolicyMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { contentPolicyMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(contentPolicyMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(contentPolicyTitle(), MEDIUM_TIMEOUT);
     }
@@ -235,12 +235,12 @@ public class CreatorLegalPages extends BasePage {
     public void scrollDownToContentPolicyBottomAndBackToTitle() {
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(contentPolicyBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
         waitVisible(contentPolicyBottomSnippet(), SHORT_TIMEOUT);
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(contentPolicyTitle())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
         waitVisible(contentPolicyTitle(), MEDIUM_TIMEOUT);
     }
