@@ -87,7 +87,7 @@ public class FanMyCreatorsPage extends BasePage {
     @Step("Check if any creators are listed")
     public boolean hasCreatorsListed() {
         logger.info("Checking if any creators are listed");
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         Locator arrowRight = page.getByRole(AriaRole.IMG, 
                 new Page.GetByRoleOptions().setName("arrow right"));
@@ -105,7 +105,7 @@ public class FanMyCreatorsPage extends BasePage {
         waitVisible(arrowRight, DEFAULT_WAIT);
         arrowRight.click();
         
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked on first creator arrow");
     }
 
@@ -138,7 +138,7 @@ public class FanMyCreatorsPage extends BasePage {
                 break;
             }
             page.mouse().wheel(0, scrollStep);
-            try { page.waitForTimeout(waitBetween); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(waitBetween); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         
         // Try to click if visible, but don't fail if not found
@@ -176,7 +176,7 @@ public class FanMyCreatorsPage extends BasePage {
             
             // Scroll down
             page.mouse().wheel(0, scrollStep);
-            try { page.waitForTimeout(waitBetween); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(waitBetween); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             
             // Check if we've reached the bottom (no new avatars appearing)
             int newLastIndex = lastVisibleIndex;
@@ -208,7 +208,7 @@ public class FanMyCreatorsPage extends BasePage {
         // First, scroll all the way to the top
         for (int i = 0; i < maxScrollAttempts; i++) {
             page.mouse().wheel(0, -scrollStep);
-            try { page.waitForTimeout(waitBetween); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(waitBetween); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("Scroll up attempt {}", i + 1);
         }
         
@@ -255,7 +255,7 @@ public class FanMyCreatorsPage extends BasePage {
     @Step("Pause to view details")
     public void pauseToViewDetails(int milliseconds) {
         logger.info("Pausing for {} ms to view details", milliseconds);
-        try { page.waitForTimeout(milliseconds); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(milliseconds); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 }
 
