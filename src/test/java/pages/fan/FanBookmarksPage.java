@@ -38,7 +38,7 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Scrolling to ensure feeds are visible");
         for (int i = 0; i < 5; i++) {
             page.mouse().wheel(0, SCROLL_DOWN_MEDIUM);
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
     }
 
@@ -53,7 +53,7 @@ public class FanBookmarksPage extends BasePage {
         int maxScrollAttempts = 10;
         for (int i = 0; i < maxScrollAttempts && bookmarkIcons.count() <= index; i++) {
             page.mouse().wheel(0, SCROLL_DOWN_LARGE);
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             bookmarkIcons = page.getByRole(AriaRole.IMG, 
                     new Page.GetByRoleOptions().setName("bookmark"));
         }
@@ -71,7 +71,7 @@ public class FanBookmarksPage extends BasePage {
             }
             
             logger.info("Clicked bookmark icon at index {}", index);
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         } else {
             throw new RuntimeException("Could not find bookmark icon at index " + index);
         }
@@ -88,7 +88,7 @@ public class FanBookmarksPage extends BasePage {
         scrollToTop();
         
         // Wait for page to stabilize
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         int bookmarked = 0;
         
@@ -108,13 +108,13 @@ public class FanBookmarksPage extends BasePage {
                     // Click the bookmark icon at index i (0, 1, 2 for first 3)
                     Locator target = bookmarkIcons.nth(i);
                     target.scrollIntoViewIfNeeded();
-                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     target.click(new Locator.ClickOptions().setForce(true));
                     bookmarked++;
                     logger.info("Bookmarked feed #{} at index {}", bookmarked, i);
                     
                     // Wait for UI to update
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     
                     // Verify the click worked by checking bookmarkFill count increased
                     int currentFillCount = page.getByRole(AriaRole.IMG, 
@@ -127,7 +127,7 @@ public class FanBookmarksPage extends BasePage {
             } else {
                 logger.warn("No more unbookmarked icons available, scrolling down");
                 page.mouse().wheel(0, SCROLL_DOWN_LARGE);
-                try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 i--; // Retry this iteration after scrolling
                 if (i < -5) break; // Safety limit
             }
@@ -135,7 +135,7 @@ public class FanBookmarksPage extends BasePage {
         
         // Scroll to top and verify bookmarkFill icons count
         scrollToTop();
-        try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         Locator bookmarkFillIcons = page.getByRole(AriaRole.IMG, 
                 new Page.GetByRoleOptions().setName("bookmarkFill"));
@@ -167,7 +167,7 @@ public class FanBookmarksPage extends BasePage {
                 boolean isHighlighted = alt != null && alt.contains("Fill");
                 logger.info("Bookmark at index {} alt='{}', highlighted: {}", index, alt, isHighlighted);
                 return isHighlighted;
-            } catch (Throwable ignored) { }
+            } catch (Throwable e) { logger.debug("Get attribute failed: {}", e.getMessage()); }
         }
         
         return false;
@@ -179,7 +179,7 @@ public class FanBookmarksPage extends BasePage {
         
         // Scroll to top first to ensure we can see all bookmarked feeds
         scrollToTop();
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Wait and retry for bookmarkFill icons to appear (UI may take time to update)
         int maxRetries = 5;
@@ -200,11 +200,11 @@ public class FanBookmarksPage extends BasePage {
             
             // Scroll down slightly to load more content and wait
             page.mouse().wheel(0, SCROLL_DOWN_SMALL);
-            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             
             // Scroll back up
             scrollToTop();
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         
         logger.warn("Expected {} highlighted bookmarks but found {} after {} retries", count, highlightedCount, maxRetries);
@@ -228,7 +228,7 @@ public class FanBookmarksPage extends BasePage {
         
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
         
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked Settings icon");
     }
 
@@ -240,7 +240,7 @@ public class FanBookmarksPage extends BasePage {
         waitVisible(bookmarksTile.first(), DEFAULT_WAIT);
         clickWithRetry(bookmarksTile.first(), 1, UI_UPDATE_WAIT);
         
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked Bookmarks tile");
     }
 
@@ -276,7 +276,7 @@ public class FanBookmarksPage extends BasePage {
             Locator targetFeed = watermarkedFeeds.nth(index);
             waitVisible(targetFeed, DEFAULT_WAIT);
             clickWithRetry(targetFeed, 1, UI_UPDATE_WAIT);
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("Clicked watermarked feed at index {}", index);
         } else {
             throw new RuntimeException("Could not find watermarked feed at index " + index + 
@@ -306,7 +306,7 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Verifying {} bookmarked feeds are displayed", expectedCount);
         
         // Wait for page to load
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Retry logic to handle timing issues
         int maxRetries = 5;
@@ -325,7 +325,7 @@ public class FanBookmarksPage extends BasePage {
             
             // Scroll down to load more content
             page.mouse().wheel(0, SCROLL_DOWN_SMALL);
-            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         
         logger.warn("Bookmark count mismatch: expected {} but found {} after {} retries", expectedCount, feedCount, maxRetries);
@@ -377,7 +377,7 @@ public class FanBookmarksPage extends BasePage {
             }
             
             logger.info("Clicked to unbookmark at index {}", index);
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         } else {
             throw new RuntimeException("Could not find bookmarkFill icon at index " + index);
         }
@@ -404,7 +404,7 @@ public class FanBookmarksPage extends BasePage {
                 bookmarkFillIcons.first().click(new Locator.ClickOptions().setForce(true));
                 unbookmarkedCount++;
                 logger.info("Unbookmarked feed #{}", unbookmarkedCount);
-                try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             } catch (Throwable e) {
                 logger.warn("Failed to unbookmark: {}", e.getMessage());
                 break;
@@ -434,7 +434,7 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Unbookmarking all feeds from bookmarks screen");
         
         // Wait for page to fully load
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         int unbookmarked = 0;
         int maxAttempts = 20; // Safety limit
@@ -454,10 +454,10 @@ public class FanBookmarksPage extends BasePage {
                 // Click on first watermarked feed to enter detail view
                 Locator watermarked = watermarkedList.first();
                 watermarked.scrollIntoViewIfNeeded();
-                try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 watermarked.click(new Locator.ClickOptions().setForce(true));
                 logger.info("Clicked on watermarked feed");
-                try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 
                 // Now find and click the bookmarkFill icon to unbookmark
                 Locator bookmarkFill = page.locator("img[alt='bookmarkFill']").first();
@@ -466,26 +466,26 @@ public class FanBookmarksPage extends BasePage {
                 
                 if (fillCount > 0) {
                     bookmarkFill.scrollIntoViewIfNeeded();
-                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     bookmarkFill.click(new Locator.ClickOptions().setForce(true));
                     unbookmarked++;
                     logger.info("Unbookmarked feed #{}", unbookmarked);
-                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     
                     // Navigate back to bookmarks list after unbookmarking
                     page.goBack();
                     logger.info("Navigated back to bookmarks list");
-                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 } else {
                     logger.warn("No bookmarkFill icon found after clicking watermarked feed, going back");
                     page.goBack();
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
             } catch (Throwable e) {
                 logger.warn("Failed during unbookmark iteration: {}", e.getMessage());
                 // Try to recover by going back
                 try { page.goBack(); } catch (Throwable ignored) { }
-                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
         }
         
@@ -494,7 +494,7 @@ public class FanBookmarksPage extends BasePage {
 
     @Step("Get count of watermarked feeds on bookmarks screen")
     public int getWatermarkedFeedsCount() {
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         Locator watermarked = page.locator("img[alt='watermarked']");
         int count = watermarked.count();
         logger.info("Found {} watermarked feeds on bookmarks screen", count);
@@ -506,7 +506,7 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Unbookmarking {} feeds from bookmarks screen", count);
         
         // Wait for page to fully load
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         int unbookmarked = 0;
         int maxAttempts = count + 5; // Allow some extra attempts
@@ -526,10 +526,10 @@ public class FanBookmarksPage extends BasePage {
                 // Click on first watermarked feed to enter detail view
                 Locator watermarked = watermarkedList.first();
                 watermarked.scrollIntoViewIfNeeded();
-                try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 watermarked.click(new Locator.ClickOptions().setForce(true));
                 logger.info("Clicked on watermarked feed");
-                try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 
                 // Now find and click the bookmarkFill icon to unbookmark
                 Locator bookmarkFill = page.locator("img[alt='bookmarkFill']").first();
@@ -538,25 +538,25 @@ public class FanBookmarksPage extends BasePage {
                 
                 if (fillCount > 0) {
                     bookmarkFill.scrollIntoViewIfNeeded();
-                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     bookmarkFill.click(new Locator.ClickOptions().setForce(true));
                     unbookmarked++;
                     logger.info("Unbookmarked feed #{}", unbookmarked);
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     
                     // Navigate back to bookmarks list after unbookmarking
                     page.goBack();
                     logger.info("Navigated back to bookmarks list");
-                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 } else {
                     logger.warn("No bookmarkFill icon found after clicking watermarked feed, going back");
                     page.goBack();
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
             } catch (Throwable e) {
                 logger.warn("Failed during unbookmark iteration: {}", e.getMessage());
                 try { page.goBack(); } catch (Throwable ignored) { }
-                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
         }
         
@@ -573,7 +573,7 @@ public class FanBookmarksPage extends BasePage {
         waitVisible(arrowLeft.first(), DEFAULT_WAIT);
         clickWithRetry(arrowLeft.first(), 1, UI_UPDATE_WAIT);
         
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked arrow left");
     }
 
@@ -581,7 +581,7 @@ public class FanBookmarksPage extends BasePage {
     public void hardRefreshBrowser() {
         logger.info("Hard refreshing browser");
         page.reload(new Page.ReloadOptions().setWaitUntil(com.microsoft.playwright.options.WaitUntilState.LOAD));
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Browser refreshed");
     }
 
@@ -590,7 +590,7 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Verifying 'No bookmarks found!' text is displayed");
         
         // Wait for page to load
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Retry logic to handle timing issues
         int maxRetries = 5;
@@ -610,7 +610,7 @@ public class FanBookmarksPage extends BasePage {
             }
             
             logger.info("Retry {}: Still checking for empty bookmarks state...", retry + 1);
-            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         
         // Final check
@@ -641,7 +641,7 @@ public class FanBookmarksPage extends BasePage {
             }
         }
         
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Scroll to top of feed")
@@ -649,7 +649,7 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Scrolling to top of feed");
         for (int i = 0; i < 10; i++) {
             page.mouse().wheel(0, -SCROLL_UP_LARGE);
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
     }
 }
