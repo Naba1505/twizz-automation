@@ -55,7 +55,7 @@ public class CreatorClearSearchPage extends BasePage {
         waitVisible(searchField, SHORT_TIMEOUT);
         clickWithRetry(searchField, 1, POLLING_WAIT);
         
-        try { page.waitForTimeout(BRIEF_WAIT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(BRIEF_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked on search field");
     }
 
@@ -73,7 +73,7 @@ public class CreatorClearSearchPage extends BasePage {
     @Step("Get count of recent search items")
     public int getRecentSearchCount() {
         // Wait for search interface to fully load
-        try { page.waitForTimeout(SHORT_TIMEOUT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(SHORT_TIMEOUT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Use exact codegen locator: page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Remove"))
         Locator removeIcons = page.getByRole(AriaRole.IMG, 
@@ -106,7 +106,7 @@ public class CreatorClearSearchPage extends BasePage {
             firstRemove.click();
             
             // Wait for UI to update
-            try { page.waitForTimeout(SHORT_TIMEOUT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(SHORT_TIMEOUT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             
             logger.info("Removed one recent search item");
             return true;
@@ -143,7 +143,7 @@ public class CreatorClearSearchPage extends BasePage {
             }
             
             // Wait between removals
-            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         
         logger.info("Total recent searches cleared: {}", removedCount);
@@ -155,7 +155,7 @@ public class CreatorClearSearchPage extends BasePage {
         logger.info("Verifying all recent searches are cleared");
         
         // Wait a bit for UI to update
-        try { page.waitForTimeout(SHORT_TIMEOUT); } catch (Throwable ignored) { }
+        try { page.waitForTimeout(SHORT_TIMEOUT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         int remainingCount = getRecentSearchCount();
         boolean allCleared = remainingCount == 0;
