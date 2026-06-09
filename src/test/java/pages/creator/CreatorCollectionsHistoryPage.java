@@ -76,7 +76,7 @@ public class CreatorCollectionsHistoryPage extends BasePage {
     @Step("Open 'History of collections' screen")
     public void openHistoryOfCollections() {
         waitVisible(historyOfCollectionsMenu(), utils.ConfigReader.getVisibilityTimeout());
-        try { historyOfCollectionsMenu().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { historyOfCollectionsMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(historyOfCollectionsMenu(), 1, BUTTON_RETRY_DELAY);
         waitVisible(collectionsTitle(), utils.ConfigReader.getShortTimeout());
     }
@@ -87,7 +87,7 @@ public class CreatorCollectionsHistoryPage extends BasePage {
         Locator collectionIcon = firstCollectionIcon();
         try {
             waitVisible(collectionIcon, utils.ConfigReader.getVisibilityTimeout());
-            try { collectionIcon.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            try { collectionIcon.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
             clickWithRetry(collectionIcon, 1, BUTTON_RETRY_DELAY);
         } catch (Exception e) {
             logger.warn("No collections found in history - this is acceptable if user hasn't created any collections yet");
@@ -98,7 +98,7 @@ public class CreatorCollectionsHistoryPage extends BasePage {
     @Step("Assert Details screen is visible and wait briefly")
     public void assertDetailsVisibleAndWait() {
         waitVisible(detailsTitle(), utils.ConfigReader.getVisibilityTimeout());
-        try { page.waitForTimeout(BRIEF_WAIT); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(BRIEF_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Navigate back to profile (three back clicks)")
@@ -107,8 +107,8 @@ public class CreatorCollectionsHistoryPage extends BasePage {
             try {
                 waitVisible(backArrow(), utils.ConfigReader.getShortTimeout());
                 clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY);
-            } catch (Throwable ignored) {}
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             if (safeIsVisible(profilePlusIcon())) return;
         }
         if (!safeIsVisible(profilePlusIcon())) {
