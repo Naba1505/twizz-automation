@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -16,11 +17,6 @@ import org.slf4j.LoggerFactory;
 public class FanTermsAndPoliciesPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanTermsAndPoliciesPage.class);
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
-    private static final int STABILIZATION_WAIT = 500;    // Wait for page to stabilize
 
     public FanTermsAndPoliciesPage(Page page) {
         super(page);
@@ -84,22 +80,22 @@ public class FanTermsAndPoliciesPage extends BasePage {
 
     @Step("Click Settings icon")
     public void clickSettingsIcon() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(settingsIcon(), 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Clicked Settings icon");
     }
 
     @Step("Assert on Settings screen by viewing title")
     public void assertOnSettingsScreen() {
-        waitVisible(settingsTitle(), DEFAULT_WAIT);
+        waitVisible(settingsTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][TermsAndPolicies] On Settings screen - title visible");
     }
 
     @Step("Click back arrow to navigate back")
     public void clickBackArrow() {
-        waitVisible(backArrow(), DEFAULT_WAIT);
-        clickWithRetry(backArrow(), 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT);
+        waitVisible(backArrow(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(backArrow(), 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Clicked back arrow");
     }
 
@@ -118,15 +114,15 @@ public class FanTermsAndPoliciesPage extends BasePage {
     @Step("Click Terms and conditions of sale menu item")
     public void clickTermsAndConditions() {
         Locator menuItem = termsAndConditionsMenuItem();
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
+        clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Clicked 'Terms and conditions of sale' menu item");
     }
 
     @Step("Assert on Terms and Conditions screen by viewing title")
     public void assertOnTermsAndConditionsScreen() {
-        waitVisible(termsAndConditionsTitle(), DEFAULT_WAIT);
+        waitVisible(termsAndConditionsTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][TermsAndPolicies] On Terms and Conditions screen - title visible");
     }
 
@@ -134,8 +130,8 @@ public class FanTermsAndPoliciesPage extends BasePage {
     public void scrollToEndOfTermsAndConditions() {
         Locator endText = termsAndConditionsEndText();
         endText.scrollIntoViewIfNeeded();
-        waitVisible(endText, DEFAULT_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT);
+        waitVisible(endText, ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Terms and Conditions");
     }
 
@@ -143,8 +139,8 @@ public class FanTermsAndPoliciesPage extends BasePage {
     public void scrollToTopOfTermsAndConditions() {
         Locator title = termsAndConditionsTitle();
         title.scrollIntoViewIfNeeded();
-        waitVisible(title, DEFAULT_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT);
+        waitVisible(title, ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Terms and Conditions");
     }
 
@@ -167,15 +163,15 @@ public class FanTermsAndPoliciesPage extends BasePage {
     @Step("Click Community regulations menu item")
     public void clickCommunityRegulations() {
         Locator menuItem = communityRegulationsMenuItem();
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
+        clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Clicked 'Community regulations' menu item");
     }
 
     @Step("Assert on Community Regulations screen by viewing title")
     public void assertOnCommunityRegulationsScreen() {
-        waitVisible(communityRegulationsTitle(), DEFAULT_WAIT);
+        waitVisible(communityRegulationsTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][TermsAndPolicies] On Community Regulations screen - title visible");
     }
 
@@ -183,8 +179,8 @@ public class FanTermsAndPoliciesPage extends BasePage {
     public void scrollToEndOfCommunityRegulations() {
         Locator endText = communityRegulationsEndText();
         endText.scrollIntoViewIfNeeded();
-        waitVisible(endText, DEFAULT_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT);
+        waitVisible(endText, ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Community Regulations");
     }
 
@@ -192,8 +188,8 @@ public class FanTermsAndPoliciesPage extends BasePage {
     public void scrollToTopOfCommunityRegulations() {
         Locator title = communityRegulationsTitle();
         title.scrollIntoViewIfNeeded();
-        waitVisible(title, DEFAULT_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT);
+        waitVisible(title, ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Community Regulations");
     }
 
@@ -216,15 +212,15 @@ public class FanTermsAndPoliciesPage extends BasePage {
     @Step("Click Content Policy menu item")
     public void clickContentPolicy() {
         Locator menuItem = contentPolicyMenuItem();
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
+        clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Clicked 'Content Policy' menu item");
     }
 
     @Step("Assert on Content Policy screen by viewing title")
     public void assertOnContentPolicyScreen() {
-        waitVisible(contentPolicyTitle(), DEFAULT_WAIT);
+        waitVisible(contentPolicyTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][TermsAndPolicies] On Content Policy screen - title visible");
     }
 
@@ -232,8 +228,8 @@ public class FanTermsAndPoliciesPage extends BasePage {
     public void scrollToEndOfContentPolicy() {
         Locator endText = contentPolicyEndText();
         endText.scrollIntoViewIfNeeded();
-        waitVisible(endText, DEFAULT_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT);
+        waitVisible(endText, ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Content Policy");
     }
 
@@ -241,8 +237,8 @@ public class FanTermsAndPoliciesPage extends BasePage {
     public void scrollToTopOfContentPolicy() {
         Locator title = contentPolicyTitle();
         title.scrollIntoViewIfNeeded();
-        waitVisible(title, DEFAULT_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT);
+        waitVisible(title, ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Content Policy");
     }
 
