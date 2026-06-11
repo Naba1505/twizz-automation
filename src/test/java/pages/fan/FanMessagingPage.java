@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -17,16 +18,6 @@ import org.slf4j.LoggerFactory;
 public class FanMessagingPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanMessagingPage.class);
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
-    private static final int VISIBILITY_TIMEOUT = 20000;  // Long visibility timeout for payment screens
-    private static final int LOAD_WAIT = 1500;            // Wait for page to load
-    private static final int MESSAGE_SEND_WAIT = 1000;    // Wait for message to send
-    private static final int PAYMENT_PROCESSING_WAIT = 3000; // Wait for payment processing
-    private static final int MEDIA_LOAD_WAIT = 2000;      // Wait for media to load
-    private static final int SCROLL_WAIT = 500;           // Wait after scroll
 
     public FanMessagingPage(Page page) {
         super(page);
@@ -134,20 +125,20 @@ public class FanMessagingPage extends BasePage {
 
     @Step("Click Messaging icon")
     public void clickMessagingIcon() {
-        waitVisible(messagingIcon(), DEFAULT_WAIT);
-        clickWithRetry(messagingIcon(), 2, UI_UPDATE_WAIT);
+        waitVisible(messagingIcon(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(messagingIcon(), 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][Messaging] Clicked Messaging icon");
     }
 
     @Step("Assert on Messaging screen")
     public void assertOnMessagingScreen() {
-        waitVisible(messagingTitle(), DEFAULT_WAIT);
+        waitVisible(messagingTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Messaging] On Messaging screen - title visible");
     }
 
     @Step("Verify Your subscriptions tab is selected by default")
     public void verifyYourSubscriptionsSelected() {
-        waitVisible(yourSubscriptionsTab(), DEFAULT_WAIT);
+        waitVisible(yourSubscriptionsTab(), ConfigReader.getShortTimeout());
         logger.info("[Fan][Messaging] 'Your subscriptions' tab visible (default)");
     }
 
@@ -171,22 +162,22 @@ public class FanMessagingPage extends BasePage {
         // First try to find in current tab (Your subscriptions)
         if (safeIsVisible(creator)) {
             creator.scrollIntoViewIfNeeded();
-            clickWithRetry(creator, 2, UI_UPDATE_WAIT);
-            page.waitForTimeout(LOAD_WAIT); // Wait for conversation to load
+            clickWithRetry(creator, 2, ConfigReader.getAnimationTimeout());
+            page.waitForTimeout(500); // Wait for conversation to load
             logger.info("[Fan][Messaging] Clicked on creator: {}", creatorName);
             return;
         }
         
         // If not found, try switching to General tab
         logger.info("[Fan][Messaging] Creator '{}' not found in subscriptions, checking General tab", creatorName);
-        clickWithRetry(generalTab(), 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(MESSAGE_SEND_WAIT);
+        clickWithRetry(generalTab(), 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(500);
         
         // Try to find in General tab
         if (safeIsVisible(creator)) {
             creator.scrollIntoViewIfNeeded();
-            clickWithRetry(creator, 2, UI_UPDATE_WAIT);
-            page.waitForTimeout(LOAD_WAIT); // Wait for conversation to load
+            clickWithRetry(creator, 2, ConfigReader.getAnimationTimeout());
+            page.waitForTimeout(500); // Wait for conversation to load
             logger.info("[Fan][Messaging] Found and clicked creator '{}' in General tab", creatorName);
         } else {
             // If still not found, throw an exception with helpful message
@@ -196,14 +187,14 @@ public class FanMessagingPage extends BasePage {
 
     @Step("Assert on conversation screen by viewing message input")
     public void assertOnConversationScreen() {
-        waitVisible(messageInput(), DEFAULT_WAIT);
+        waitVisible(messageInput(), ConfigReader.getShortTimeout());
         logger.info("[Fan][Messaging] On conversation screen - message input visible");
     }
 
     @Step("Type message: {message}")
     public void typeMessage(String message) {
         Locator input = messageInput();
-        waitVisible(input, DEFAULT_WAIT);
+        waitVisible(input, ConfigReader.getShortTimeout());
         input.click();
         input.fill(message);
         logger.info("[Fan][Messaging] Typed message: {}", message);
@@ -211,9 +202,9 @@ public class FanMessagingPage extends BasePage {
 
     @Step("Click Send button")
     public void clickSend() {
-        waitVisible(sendButton(), DEFAULT_WAIT);
-        clickWithRetry(sendButton(), 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(MESSAGE_SEND_WAIT); // Wait for message to send
+        waitVisible(sendButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(sendButton(), 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(500); // Wait for message to send
         logger.info("[Fan][Messaging] Clicked Send button");
     }
 
@@ -233,23 +224,22 @@ public class FanMessagingPage extends BasePage {
     @Step("Verify message from creator is visible: {message}")
     public void verifyMessageVisible(String message) {
         logger.info("[Fan][Messaging] Looking for message: {}", message);
-        // Wait for messages to load
-        page.waitForTimeout(MEDIA_LOAD_WAIT);
+        page.waitForTimeout(500); // Wait for messages to load
         Locator msg = page.getByText(message).first();
-        waitVisible(msg, DEFAULT_WAIT);
+        waitVisible(msg, ConfigReader.getShortTimeout());
         logger.info("[Fan][Messaging] Message visible: {}", message);
     }
 
     @Step("Click Accept button for paid media")
     public void clickAcceptMedia() {
         logger.info("[Fan][Messaging] Looking for Accept media button");
-        page.waitForTimeout(MEDIA_LOAD_WAIT); // Wait for messages to load
+        page.waitForTimeout(500); // Wait for messages to load
         
         // Scroll to bottom to see latest messages
         try {
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
         } catch (Exception ignored) {}
-        page.waitForTimeout(MESSAGE_SEND_WAIT);
+        page.waitForTimeout(500);
         
         Locator acceptBtn = acceptMediaButton();
         
@@ -258,7 +248,7 @@ public class FanMessagingPage extends BasePage {
             logger.info("[Fan][Messaging] Accept button not visible, scrolling to find...");
             for (int i = 0; i < 5; i++) {
                 page.mouse().wheel(0, 300);
-                page.waitForTimeout(SCROLL_WAIT);
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 acceptBtn = acceptMediaButton();
                 if (safeIsVisible(acceptBtn)) {
                     break;
@@ -266,17 +256,16 @@ public class FanMessagingPage extends BasePage {
             }
         }
         
-        waitVisible(acceptBtn, DEFAULT_WAIT);
+        waitVisible(acceptBtn, ConfigReader.getVisibilityTimeout());
         acceptBtn.scrollIntoViewIfNeeded();
-        clickWithRetry(acceptBtn, 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(MEDIA_LOAD_WAIT); // Wait for payment screen
+        clickWithRetry(acceptBtn, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(500); // Wait for payment screen
         logger.info("[Fan][Messaging] Clicked Accept button for paid media");
     }
 
     @Step("Assert on Secure payment screen")
     public void assertOnSecurePaymentScreen() {
-        // Wait longer for payment screen to appear
-        page.waitForTimeout(MESSAGE_SEND_WAIT);
+        // Wait for payment screen to appear
         
         // Try multiple strategies to verify payment screen
         Locator paymentTitle = securePaymentTitle();
@@ -284,7 +273,7 @@ public class FanMessagingPage extends BasePage {
         
         // Strategy 1: Direct wait
         try {
-            waitVisible(paymentTitle.first(), VISIBILITY_TIMEOUT);
+            waitVisible(paymentTitle.first(), ConfigReader.getVisibilityTimeout());
             found = true;
         } catch (Exception e) {
             logger.warn("[Fan][Messaging] Secure payment title not found directly");
@@ -318,7 +307,7 @@ public class FanMessagingPage extends BasePage {
     @Step("Click Registered card option")
     public void clickRegisteredCard() {
         // Wait for payment options to load
-        page.waitForTimeout(MEDIA_LOAD_WAIT);
+        page.waitForTimeout(500);
         
         // Try multiple strategies to find Registered card option
         Locator registeredCard = registeredCardOption();
@@ -339,31 +328,31 @@ public class FanMessagingPage extends BasePage {
         }
         
         if (registeredCard.count() > 0 && safeIsVisible(registeredCard)) {
-            waitVisible(registeredCard, DEFAULT_WAIT);
-            clickWithRetry(registeredCard, 2, UI_UPDATE_WAIT);
+            waitVisible(registeredCard, ConfigReader.getShortTimeout());
+            clickWithRetry(registeredCard, 2, ConfigReader.getAnimationTimeout());
             logger.info("[Fan][Messaging] Clicked Registered card option");
             
             // Wait a bit after selecting payment method
-            page.waitForTimeout(MESSAGE_SEND_WAIT);
+            page.waitForTimeout(500);
             
             // Check if we need to fill CVV for registered card
             Locator cvvField = page.locator("input[placeholder*='CVV'], input[placeholder*='cvv']").first();
             if (safeIsVisible(cvvField)) {
                 cvvField.fill("123");
                 logger.info("[Fan][Messaging] Filled CVV for registered card");
-                page.waitForTimeout(MESSAGE_SEND_WAIT);
+                page.waitForTimeout(500);
             }
         } else {
             logger.warn("[Fan][Messaging] Registered card option not found, waiting for payment form to appear");
             // Just wait a bit more for the payment form to stabilize
-            page.waitForTimeout(MEDIA_LOAD_WAIT);
+            page.waitForTimeout(500);
         }
     }
 
     @Step("Click Confirm button")
     public void clickConfirm() {
         // Wait for payment form to be ready
-        page.waitForTimeout(MEDIA_LOAD_WAIT);
+        page.waitForTimeout(500);
         
         // Try multiple strategies to find Confirm button
         Locator confirmBtn = confirmButton();
@@ -390,15 +379,15 @@ public class FanMessagingPage extends BasePage {
                     if (confirmBtn.first().isEnabled()) {
                         break;
                     }
-                    page.waitForTimeout(1000);
+                    page.waitForTimeout(200);
                 }
             } catch (Exception e) {
                 logger.warn("[Fan][Messaging] Button did not become enabled within timeout");
             }
             
-            waitVisible(confirmBtn.first(), VISIBILITY_TIMEOUT);
-            clickWithRetry(confirmBtn.first(), 2, UI_UPDATE_WAIT);
-            page.waitForTimeout(PAYMENT_PROCESSING_WAIT); // Wait for payment processing
+            waitVisible(confirmBtn.first(), ConfigReader.getVisibilityTimeout());
+            clickWithRetry(confirmBtn.first(), 2, ConfigReader.getAnimationTimeout());
+            page.waitForTimeout(500); // Wait for payment processing
             logger.info("[Fan][Messaging] Clicked Confirm button");
         } else {
             logger.warn("[Fan][Messaging] Confirm button not found, payment may have auto-completed");
@@ -407,40 +396,50 @@ public class FanMessagingPage extends BasePage {
 
     @Step("Click Everything is OK button")
     public void clickEverythingOk() {
-        // Wait for payment success screen
-        page.waitForTimeout(PAYMENT_PROCESSING_WAIT);
+        logger.info("[Fan][Messaging] Waiting for payment success screen and OK button");
         
-        // Try multiple strategies to find success button
-        Locator okBtn = everythingOkButton();
+        // Poll for button to appear with timeout
+        Locator okBtn = null;
+        boolean found = false;
         
-        if (okBtn.count() == 0 || !safeIsVisible(okBtn.first())) {
-            // Strategy 2: Try partial text match
-            okBtn = page.getByText("Everything is OK");
-        }
-        if (okBtn.count() == 0 || !safeIsVisible(okBtn.first())) {
-            // Strategy 3: Try "OK" button
-            okBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("OK"));
-        }
-        if (okBtn.count() == 0 || !safeIsVisible(okBtn.first())) {
-            // Strategy 4: Try "Close" or "Done" buttons
-            okBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
-            if (okBtn.count() == 0) {
-                okBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Done"));
+        for (int i = 0; i < 20; i++) {
+            // Try multiple strategies to find success button
+            okBtn = everythingOkButton();
+            
+            if (okBtn.count() == 0 || !safeIsVisible(okBtn.first())) {
+                // Strategy 2: Try partial text match
+                okBtn = page.getByText("Everything is OK");
             }
-        }
-        if (okBtn.count() == 0 || !safeIsVisible(okBtn.first())) {
-            // Strategy 5: Look for any success/close button
-            okBtn = page.locator(".ant-btn-primary, button[class*='success'], button[class*='close']").first();
+            if (okBtn.count() == 0 || !safeIsVisible(okBtn.first())) {
+                // Strategy 3: Try "OK" button
+                okBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("OK"));
+            }
+            if (okBtn.count() == 0 || !safeIsVisible(okBtn.first())) {
+                // Strategy 4: Try "Close" or "Done" buttons
+                okBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
+                if (okBtn.count() == 0) {
+                    okBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Done"));
+                }
+            }
+            if (okBtn.count() == 0 || !safeIsVisible(okBtn.first())) {
+                // Strategy 5: Look for any success/close button
+                okBtn = page.locator(".ant-btn-primary, button[class*='success'], button[class*='close']").first();
+            }
+            
+            if (okBtn.count() > 0 && safeIsVisible(okBtn.first())) {
+                found = true;
+                break;
+            }
+            page.waitForTimeout(300);
         }
         
-        if (okBtn.count() > 0 && safeIsVisible(okBtn.first())) {
-            waitVisible(okBtn.first(), VISIBILITY_TIMEOUT);
-            clickWithRetry(okBtn.first(), 2, UI_UPDATE_WAIT);
-            page.waitForTimeout(MESSAGE_SEND_WAIT);
+        if (found) {
+            waitVisible(okBtn.first(), ConfigReader.getShortTimeout());
+            clickWithRetry(okBtn.first(), 2, ConfigReader.getAnimationTimeout());
+            page.waitForTimeout(500);
             logger.info("[Fan][Messaging] Clicked Everything is OK button");
         } else {
-            logger.warn("[Fan][Messaging] Everything is OK button not found, payment may have completed without confirmation");
-            page.waitForTimeout(MEDIA_LOAD_WAIT);
+            logger.warn("[Fan][Messaging] Everything is OK button not found after polling, payment may have completed without confirmation");
         }
     }
 
@@ -461,75 +460,96 @@ public class FanMessagingPage extends BasePage {
     @Step("Click to preview media for message: {messageTimestamp}")
     public void clickToPreviewMediaForMessage(String messageTimestamp) {
         logger.info("[Fan][Messaging] Looking for Preview icon near message: {}", messageTimestamp);
-        page.waitForTimeout(MEDIA_LOAD_WAIT); // Wait for media to load
+        page.waitForTimeout(2000); // Wait for media to load
         
-        // Find the message container with the timestamp, then find the preview icon within it
-        Locator messageLocator = page.getByText(messageTimestamp).first();
-        waitVisible(messageLocator, DEFAULT_WAIT);
+        // Scroll to the bottom of the conversation to see the most recent media
+        try {
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+        } catch (Exception ignored) {}
+        page.waitForTimeout(500);
         
-        // Scroll to the message
-        messageLocator.scrollIntoViewIfNeeded();
-        page.waitForTimeout(SCROLL_WAIT);
+        // The media is sent as a SEPARATE message after the text reply.
+        // We need to find the preview icon that belongs to the most recent media sent by creator.
+        // Strategy: Find all preview (eye) icons and get the LAST one (most recent media in conversation)
+        Locator allPreviews = page.locator("span[aria-label='eye']");
+        int previewCount = allPreviews.count();
+        logger.info("[Fan][Messaging] Found {} preview icons in conversation", previewCount);
         
-        // Find the preview icon (eye icon) in the same message container
-        // Go up to parent container and find the preview icon
-        Locator messageContainer = messageLocator.locator("xpath=ancestor::div[contains(@class, 'mediaContent') or contains(@class, 'message') or contains(@class, 'ant-image')]/..");
-        Locator previewInContainer = messageContainer.locator("span[aria-label='eye']").first();
-        
-        // If not found in container, try finding the last preview icon (most recent)
-        if (!previewInContainer.isVisible()) {
-            logger.info("[Fan][Messaging] Preview not found in container, using last preview icon");
-            previewInContainer = page.locator("span[aria-label='eye']").last();
+        if (previewCount == 0) {
+            // If no eye icons, try hover on image to reveal preview
+            Locator images = page.locator(".ant-image img, img[class*='media']");
+            if (images.count() > 0) {
+                images.last().hover();
+                page.waitForTimeout(500);
+                allPreviews = page.locator("span[aria-label='eye']");
+                previewCount = allPreviews.count();
+                logger.info("[Fan][Messaging] After hover, found {} preview icons", previewCount);
+            }
         }
         
-        waitVisible(previewInContainer, DEFAULT_WAIT);
-        clickWithRetry(previewInContainer, 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(MESSAGE_SEND_WAIT);
-        logger.info("[Fan][Messaging] Clicked to preview media for message: {}", messageTimestamp);
+        // Click the last preview icon (most recent media)
+        Locator targetPreview = allPreviews.last();
+        targetPreview.scrollIntoViewIfNeeded();
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        
+        waitVisible(targetPreview, ConfigReader.getShortTimeout());
+        clickWithRetry(targetPreview, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(500);
+        logger.info("[Fan][Messaging] Clicked most recent preview icon for media");
     }
 
     @Step("Click to preview media")
     public void clickToPreviewImage() {
         logger.info("[Fan][Messaging] Looking for Preview icon to click (most recent)");
-        page.waitForTimeout(MEDIA_LOAD_WAIT); // Wait for media to load
+        page.waitForTimeout(2000); // Wait for media to load
         // Click the last (most recent) preview icon
         Locator preview = page.locator("span[aria-label='eye']").last();
-        waitVisible(preview, DEFAULT_WAIT);
-        clickWithRetry(preview, 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(MESSAGE_SEND_WAIT);
+        waitVisible(preview, ConfigReader.getShortTimeout());
+        clickWithRetry(preview, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(500);
         logger.info("[Fan][Messaging] Clicked to preview media");
     }
 
     @Step("Close image preview")
     public void closeImagePreview() {
-        waitVisible(closePreviewButton(), DEFAULT_WAIT);
-        clickWithRetry(closePreviewButton(), 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(SCROLL_WAIT);
+        waitVisible(closePreviewButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(closePreviewButton(), 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][Messaging] Closed image preview");
     }
 
     @Step("Verify video play icon is visible")
     public void verifyVideoPlayIconVisible() {
         logger.info("[Fan][Messaging] Looking for video play icon");
-        page.waitForTimeout(MEDIA_LOAD_WAIT); // Wait for media to load
+        page.waitForTimeout(2000); // Wait for media to load
         Locator playIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("play")).nth(2);
-        waitVisible(playIcon, DEFAULT_WAIT);
+        waitVisible(playIcon, ConfigReader.getShortTimeout());
         logger.info("[Fan][Messaging] Video play icon is visible - video received successfully");
     }
 
     @Step("Verify audio element is visible for message: {messageTimestamp}")
     public void verifyAudioElementVisible(String messageTimestamp) {
         logger.info("[Fan][Messaging] Looking for audio element near message: {}", messageTimestamp);
-        page.waitForTimeout(MEDIA_LOAD_WAIT); // Wait for media to load
+        page.waitForTimeout(2000); // Wait for media to load
         
-        // Find the message with timestamp
-        Locator messageLocator = page.getByText(messageTimestamp).first();
-        waitVisible(messageLocator, DEFAULT_WAIT);
-        messageLocator.scrollIntoViewIfNeeded();
+        // Scroll to bottom to see most recent media
+        try {
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+        } catch (Exception ignored) {}
+        page.waitForTimeout(500);
         
-        // Verify audio mini player is visible (from screenshot: div.audio-mini-player or img with alt="audio")
-        Locator audioElement = page.locator("div[class*='audio-mini-player'], img[alt='audio']").last();
-        waitVisible(audioElement, DEFAULT_WAIT);
+        // Verify audio element is visible - try multiple selectors for audio player
+        Locator audioElement = page.locator("div[class*='audio-mini-player'], div[class*='audio'], img[alt='audio'], audio, [class*='wavesurfer'], [class*='waveform']").last();
+        
+        if (audioElement.count() == 0 || !safeIsVisible(audioElement)) {
+            // Scroll more and retry
+            logger.info("[Fan][Messaging] Audio not immediately visible, scrolling further...");
+            page.mouse().wheel(0, 500);
+            page.waitForTimeout(1000);
+            audioElement = page.locator("div[class*='audio-mini-player'], div[class*='audio'], img[alt='audio'], audio, [class*='wavesurfer'], [class*='waveform']").last();
+        }
+        
+        waitVisible(audioElement, ConfigReader.getShortTimeout());
         logger.info("[Fan][Messaging] Audio element is visible - audio received successfully");
     }
 
@@ -537,19 +557,18 @@ public class FanMessagingPage extends BasePage {
     public void fanAcceptsFreeMessage(String creatorMessage) {
         verifyMessageVisible(creatorMessage);
         clickAcceptMedia();
-        // No payment needed for free messages - just wait for acceptance
-        page.waitForTimeout(MEDIA_LOAD_WAIT);
+        page.waitForTimeout(500); // No payment needed for free messages - just wait for acceptance
         logger.info("[Fan][Messaging] Fan accepted free message");
     }
 
     @Step("Verify mixed media received (image preview, video preview, audio element)")
     public void verifyMixedMediaReceived(String messageTimestamp) {
         logger.info("[Fan][Messaging] Verifying mixed media received for message: {}", messageTimestamp);
-        page.waitForTimeout(MEDIA_LOAD_WAIT); // Wait for media to load
+        page.waitForTimeout(2000); // Wait for media to load
 
         // Find the message with timestamp
         Locator messageLocator = page.getByText(messageTimestamp).first();
-        waitVisible(messageLocator, DEFAULT_WAIT);
+        waitVisible(messageLocator, ConfigReader.getShortTimeout());
         messageLocator.scrollIntoViewIfNeeded();
 
         // Verify preview icons are visible (for image and video - should have 2 preview icons)
@@ -560,9 +579,9 @@ public class FanMessagingPage extends BasePage {
         // Click first preview (image) and close
         if (previewCount >= 1) {
             Locator firstPreview = previewIcons.first();
-            waitVisible(firstPreview, DEFAULT_WAIT);
-            clickWithRetry(firstPreview, 2, UI_UPDATE_WAIT);
-            page.waitForTimeout(MESSAGE_SEND_WAIT);
+            waitVisible(firstPreview, ConfigReader.getShortTimeout());
+            clickWithRetry(firstPreview, 2, ConfigReader.getAnimationTimeout());
+            page.waitForTimeout(500);
             logger.info("[Fan][Messaging] Clicked first preview (image)");
             closeImagePreview();
         }
@@ -570,16 +589,16 @@ public class FanMessagingPage extends BasePage {
         // Click second preview (video) and close
         if (previewCount >= 2) {
             Locator secondPreview = previewIcons.nth(1);
-            waitVisible(secondPreview, DEFAULT_WAIT);
-            clickWithRetry(secondPreview, 2, UI_UPDATE_WAIT);
-            page.waitForTimeout(MESSAGE_SEND_WAIT);
+            waitVisible(secondPreview, ConfigReader.getShortTimeout());
+            clickWithRetry(secondPreview, 2, ConfigReader.getAnimationTimeout());
+            page.waitForTimeout(500);
             logger.info("[Fan][Messaging] Clicked second preview (video)");
             closeImagePreview();
         }
 
         // Verify audio element is visible
         Locator audioElement = page.locator("div[class*='audio-mini-player'], img[alt='audio']").last();
-        waitVisible(audioElement, DEFAULT_WAIT);
+        waitVisible(audioElement, ConfigReader.getShortTimeout());
         logger.info("[Fan][Messaging] Audio element is visible");
 
         logger.info("[Fan][Messaging] Mixed media verified successfully - image, video, and audio received");

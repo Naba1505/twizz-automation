@@ -1784,7 +1784,7 @@ public class CreatorMessagingPage extends BasePage {
     public void clickOnFanConversation(String fanName) {
         logger.info("[Messaging] Looking for fan conversation: {}", fanName);
         // Wait for conversation list to load
-        page.waitForTimeout(ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(1000);
         
         Locator fan = null;
         boolean found = false;
@@ -1806,7 +1806,7 @@ public class CreatorMessagingPage extends BasePage {
             Locator toDeliverTab = page.getByText("To Deliver");
             if (toDeliverTab.count() > 0 && safeIsVisible(toDeliverTab.first())) {
                 clickWithRetry(toDeliverTab.first(), 2, ConfigReader.getElementRetryDelay());
-                page.waitForTimeout(ConfigReader.getMediumTimeout()); // Wait for tab content to load
+                page.waitForTimeout(1000); // Wait for tab content to load
                 logger.info("[Messaging] Switched to 'To Deliver' tab");
                 
                 found = tryFindFanInCurrentTab(fanName);
@@ -1865,7 +1865,7 @@ public class CreatorMessagingPage extends BasePage {
         
         fan.scrollIntoViewIfNeeded();
         clickWithRetry(fan, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getVisibilityTimeout()); // Wait for conversation to load
+        page.waitForTimeout(2000); // Wait for conversation to load
         
         // Wait for conversation screen to be ready - try multiple indicators
         boolean conversationLoaded = false;
@@ -1897,7 +1897,7 @@ public class CreatorMessagingPage extends BasePage {
         
         // Strategy 4: Wait a bit more and check for any conversation content
         if (!conversationLoaded) {
-            page.waitForTimeout(ConfigReader.getMediumTimeout());
+            page.waitForTimeout(2000);
             // Check if we're on a conversation screen by looking for message-related elements
             Locator conversationArea = page.locator("[class*='message'], [class*='chat'], [class*='conversation']").first();
             if (conversationArea.count() > 0) {
@@ -1917,7 +1917,7 @@ public class CreatorMessagingPage extends BasePage {
     public void verifyMessageVisible(String message) {
         logger.info("[Messaging] Looking for message: {}", message);
         // Wait a bit for messages to load
-        page.waitForTimeout(ConfigReader.getMediumTimeout());
+        page.waitForTimeout(500);
         Locator msg = page.getByText(message).first();
         waitVisible(msg, DEFAULT_WAIT);
         logger.info("[Messaging] Message visible: {}", message);
@@ -1928,13 +1928,13 @@ public class CreatorMessagingPage extends BasePage {
         logger.info("[Messaging] Looking for Accept button near message: {}", message);
         
         // Wait for conversation to load
-        page.waitForTimeout(ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(500);
         
         // Scroll to bottom to see latest messages
         try {
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
         } catch (Exception ignored) {}
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         
         // Try to find the message, with scrolling if needed
         Locator messageLocator = page.getByText(message).first();
@@ -1961,7 +1961,7 @@ public class CreatorMessagingPage extends BasePage {
         
         for (int poll = 0; poll < maxPollAttempts && (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)); poll++) {
             if (poll > 0) {
-                page.waitForTimeout(ConfigReader.getShortTimeout()); // Wait 1 second between attempts
+                page.waitForTimeout(200); // Wait between attempts
             }
             
             // Strategy 1: Find Accept button in the same message container as the message text
@@ -2012,7 +2012,7 @@ public class CreatorMessagingPage extends BasePage {
         
         waitVisible(acceptBtn, DEFAULT_WAIT);
         clickWithRetry(acceptBtn, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked Accept button for message: {}", message);
     }
 
@@ -2021,7 +2021,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator acceptBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept")).first();
         waitVisible(acceptBtn, DEFAULT_WAIT);
         clickWithRetry(acceptBtn, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked Accept button");
     }
 
@@ -2093,11 +2093,11 @@ public class CreatorMessagingPage extends BasePage {
                 break;
             }
             logger.info("[Messaging] Send button still disabled, waiting... ({}s)", i + 1);
-            page.waitForTimeout(ConfigReader.getShortTimeout());
+            page.waitForTimeout(200);
         }
         
         clickWithRetry(sendBtn, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getMediumTimeout()); // Wait for message to send
+        page.waitForTimeout(500); // Wait for message to send
         logger.info("[Messaging] Clicked Send button");
     }
 
@@ -2106,7 +2106,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator toDeliver = page.getByText("To Deliver");
         waitVisible(toDeliver, DEFAULT_WAIT);
         clickWithRetry(toDeliver, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked 'To Deliver' tab");
     }
 
@@ -2121,7 +2121,7 @@ public class CreatorMessagingPage extends BasePage {
         }
         waitVisible(plus, DEFAULT_WAIT);
         clickWithRetry(plus, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked plus icon to add media");
     }
 
@@ -2151,29 +2151,66 @@ public class CreatorMessagingPage extends BasePage {
         clickPlusIconForMedia();
         verifyImportationPopup();
         
-        // Wait for file input to be available (it may take time after popup opens)
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        // Wait for file input to be available
+        page.waitForTimeout(500);
         
-        // First try to find file input directly with retry
+        // Find hidden file input with retry
         Locator fileInput = null;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
             fileInput = page.locator("input[type='file']");
             if (fileInput.count() > 0) {
                 break;
             }
-            page.waitForTimeout(ConfigReader.getShortTimeout());
+            page.waitForTimeout(300);
         }
         
         if (fileInput != null && fileInput.count() > 0) {
             logger.info("[Messaging] Using existing input[type=file] to upload: {}", filePath.getFileName());
             fileInput.first().setInputFiles(filePath);
             logger.info("[Messaging] File selected: {}", filePath.getFileName());
-            page.waitForTimeout(ConfigReader.getMediumTimeout());
+            
+            // Wait for upload percentage to reach 100%
+            boolean uploadComplete = false;
+            for (int i = 0; i < 120; i++) {
+                // Check for percentage text like "100%" or progress indicator
+                Locator percentText = page.locator("[class*='percent'], [class*='progress'], [class*='upload']").first();
+                if (percentText.count() > 0 && safeIsVisible(percentText)) {
+                    String text = "";
+                    try { text = percentText.textContent(); } catch (Exception ignored) {}
+                    if (text.contains("100")) {
+                        logger.info("[Messaging] Upload reached 100% after {}s", i);
+                        uploadComplete = true;
+                        break;
+                    }
+                    if (i % 10 == 0) {
+                        logger.info("[Messaging] Upload progress: {} ({}s)", text.trim(), i);
+                    }
+                }
+                
+                // Also check if Send button became enabled (upload done)
+                Locator sendBtn = page.locator(".sendMediaButton, button.sendMediaButton");
+                if (sendBtn.count() > 0 && safeIsVisible(sendBtn.first())) {
+                    String disabled = sendBtn.first().getAttribute("disabled");
+                    if (disabled == null) {
+                        logger.info("[Messaging] Upload complete - Send button enabled after {}s", i);
+                        uploadComplete = true;
+                        break;
+                    }
+                }
+                
+                if (i % 10 == 0 && i > 0 && !uploadComplete) {
+                    logger.info("[Messaging] Waiting for media upload to complete... ({}s)", i);
+                }
+                page.waitForTimeout(1000);
+            }
+            if (!uploadComplete) {
+                logger.warn("[Messaging] Upload may not be complete after 120s, proceeding anyway");
+            }
             logger.info("[Messaging] Media file attached: {}", filePath.getFileName());
             return;
         }
         
-        // No file input found - use FileChooser to intercept OS dialog
+        // Fallback: FileChooser via My Device button
         logger.info("[Messaging] No file input found, using FileChooser with My Device button");
         try {
             Locator myDevice = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
@@ -2187,7 +2224,7 @@ public class CreatorMessagingPage extends BasePage {
                 try {
                     Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
                     if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
-                        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+                        page.waitForTimeout(500);
                         clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
                     }
                 } catch (Exception ignored) {}
@@ -2206,24 +2243,33 @@ public class CreatorMessagingPage extends BasePage {
     public void waitForMediaSendComplete() {
         logger.info("[Messaging] Waiting for media upload/send to complete...");
         
-        // Wait for any upload spinner/progress indicator to disappear
-        // Common patterns: .ant-spin, .loading, progress bar, etc.
-        Locator spinner = page.locator(".ant-spin, .ant-spin-spinning, [class*='loading'], [class*='progress']").first();
+        // Count existing "Delivered" texts before - we need to wait for a NEW one
+        int initialDeliveredCount = page.getByText("Delivered").count();
+        logger.info("[Messaging] Initial 'Delivered' count: {}", initialDeliveredCount);
         
-        // Wait for spinner to disappear (if it exists) - video uploads take longer
-        int maxWaitSeconds = 60; // Max wait for video upload after Send
-        int waited = 0;
-        while (spinner.isVisible() && waited < maxWaitSeconds) {
-            page.waitForTimeout(ConfigReader.getShortTimeout());
-            waited++;
-            if (waited % 5 == 0) {
-                logger.info("[Messaging] Upload/send in progress... {}s", waited);
+        // Poll until a new "Delivered" text appears (count increases)
+        int maxWaitSeconds = 90;
+        boolean delivered = false;
+        for (int i = 0; i < maxWaitSeconds; i++) {
+            int currentCount = page.getByText("Delivered").count();
+            if (currentCount > initialDeliveredCount) {
+                delivered = true;
+                logger.info("[Messaging] New 'Delivered' appeared after {}s (count: {} -> {})", i, initialDeliveredCount, currentCount);
+                break;
             }
+            if (i % 10 == 0 && i > 0) {
+                logger.info("[Messaging] Waiting for media delivery... ({}s, delivered count: {})", i, currentCount);
+            }
+            page.waitForTimeout(1000);
         }
         
-        // Additional wait to ensure upload is fully processed
-        page.waitForTimeout(ConfigReader.getMediumTimeout());
-        logger.info("[Messaging] Media upload/send completed after {}s", waited);
+        if (!delivered) {
+            logger.warn("[Messaging] New 'Delivered' text not seen after {}s, proceeding anyway", maxWaitSeconds);
+        }
+        
+        // Additional wait to ensure delivery propagates to fan side
+        page.waitForTimeout(3000);
+        logger.info("[Messaging] Media upload/send completed - delivery confirmed");
     }
 
     @Step("Click Send button for media")
@@ -2239,11 +2285,11 @@ public class CreatorMessagingPage extends BasePage {
                 if (cancelBtn.count() > 0 && safeIsVisible(cancelBtn.first())) {
                     cancelBtn.first().click();
                     logger.info("[Messaging] Clicked Cancel to dismiss Importation modal");
-                    page.waitForTimeout(ConfigReader.getShortTimeout());
+                    page.waitForTimeout(500);
                 } else {
                     page.keyboard().press("Escape");
                     logger.info("[Messaging] Pressed Escape to dismiss Importation modal");
-                    page.waitForTimeout(ConfigReader.getShortTimeout());
+                    page.waitForTimeout(500);
                 }
             } catch (Exception ignored) {}
         }
@@ -2269,8 +2315,8 @@ public class CreatorMessagingPage extends BasePage {
         // Wait for button to be visible
         waitVisible(sendBtn.first(), DEFAULT_WAIT);
         
-        // Wait for button to be enabled (not disabled) - media needs to upload first
-        int maxWait = 30; // Increased wait for media upload
+        // Wait for button to be enabled (not disabled) - media should already be processed from uploadMediaFile
+        int maxWait = 30; // Max 30s fallback
         for (int i = 0; i < maxWait; i++) {
             String disabled = sendBtn.first().getAttribute("disabled");
             if (disabled == null) {
@@ -2278,9 +2324,9 @@ public class CreatorMessagingPage extends BasePage {
                 break;
             }
             if (i % 5 == 0) {
-                logger.info("[Messaging] Send button for media still disabled, waiting for upload... ({}s)", i + 1);
+                logger.info("[Messaging] Send button for media still disabled, waiting... ({}s)", i);
             }
-            page.waitForTimeout(ConfigReader.getShortTimeout());
+            page.waitForTimeout(1000);
         }
         
         clickWithRetry(sendBtn.first(), 2, ConfigReader.getElementRetryDelay());
@@ -2314,7 +2360,7 @@ public class CreatorMessagingPage extends BasePage {
         // Strategy 3: Just wait a bit and assume success if no error
         if (!delivered) {
             logger.warn("[Messaging] Could not verify Delivered text, assuming success after wait");
-            page.waitForTimeout(ConfigReader.getMediumTimeout());
+            page.waitForTimeout(500);
         }
     }
 
@@ -2329,8 +2375,8 @@ public class CreatorMessagingPage extends BasePage {
         setPrice(price);
         typeReplyMessage(replyMessage);
         clickSendButton();
-        // Wait for message to be sent - just wait for the dialog to close and message to appear
-        page.waitForTimeout(ConfigReader.getMediumTimeout());
+        // Wait for message to be sent and appear in conversation
+        page.waitForTimeout(2000);
         // Verify reply message is visible in conversation (use first() to get any occurrence)
         Locator replyMsg = page.getByText(replyMessage).first();
         waitVisible(replyMsg, DEFAULT_WAIT);
@@ -2348,8 +2394,8 @@ public class CreatorMessagingPage extends BasePage {
         setCustomPrice(customAmount);
         typeReplyMessage(replyMessage);
         clickSendButton();
-        // Wait for message to be sent - just wait for the dialog to close and message to appear
-        page.waitForTimeout(ConfigReader.getMediumTimeout());
+        // Wait for message to be sent and appear in conversation
+        page.waitForTimeout(2000);
         // Verify reply message is visible in conversation (use first() to get any occurrence)
         Locator replyMsg = page.getByText(replyMessage).first();
         waitVisible(replyMsg, DEFAULT_WAIT);
@@ -2367,8 +2413,8 @@ public class CreatorMessagingPage extends BasePage {
         verifyFreeIsSelected();
         typeReplyMessage(replyMessage);
         clickSendButton();
-        // Wait for message to be sent - just wait for the dialog to close and message to appear
-        page.waitForTimeout(ConfigReader.getMediumTimeout());
+        // Wait for message to be sent and appear in conversation
+        page.waitForTimeout(2000);
         // Verify reply message is visible in conversation (use first() to get any occurrence)
         Locator replyMsg = page.getByText(replyMessage).first();
         waitVisible(replyMsg, DEFAULT_WAIT);
@@ -2396,7 +2442,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator quickFiles = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
         waitVisible(quickFiles, DEFAULT_WAIT);
         clickWithRetry(quickFiles, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked Quick Files button");
     }
 
@@ -2406,7 +2452,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator photosVideos = page.locator("div.quick-file-switch").filter(new Locator.FilterOptions().setHasText("Photos & videos")).first();
         waitVisible(photosVideos, DEFAULT_WAIT);
         clickWithRetry(photosVideos, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked Photos & videos tab");
     }
 
@@ -2416,7 +2462,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator audios = page.locator("div.quick-file-switch").filter(new Locator.FilterOptions().setHasText("Audios")).first();
         waitVisible(audios, DEFAULT_WAIT);
         clickWithRetry(audios, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked Audios tab");
     }
 
@@ -2427,7 +2473,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator mixAlbum = page.locator("div.qf-row-title").filter(new Locator.FilterOptions().setHasText(Pattern.compile("mixalbum"))).first();
         waitVisible(mixAlbum, DEFAULT_WAIT);
         clickWithRetry(mixAlbum, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked on mix album");
     }
 
@@ -2438,7 +2484,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator audioAlbum = page.locator("div.qf-row-title").filter(new Locator.FilterOptions().setHasText(Pattern.compile("audioalbum"))).first();
         waitVisible(audioAlbum, DEFAULT_WAIT);
         clickWithRetry(audioAlbum, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked on audio album");
     }
 
@@ -2482,7 +2528,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator select = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select"));
         waitVisible(select, DEFAULT_WAIT);
         clickWithRetry(select, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked Select button");
     }
 
@@ -2491,7 +2537,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator selectAndSend = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select and send").setExact(true));
         waitVisible(selectAndSend, DEFAULT_WAIT);
         clickWithRetry(selectAndSend, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getShortTimeout());
+        page.waitForTimeout(500);
         logger.info("[Messaging] Clicked Select and send button");
     }
 
