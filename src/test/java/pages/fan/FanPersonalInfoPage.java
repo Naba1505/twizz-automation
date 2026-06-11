@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -18,12 +19,6 @@ import java.util.regex.Pattern;
 public class FanPersonalInfoPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanPersonalInfoPage.class);
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
-    private static final int LOAD_WAIT = 1500;            // Wait for page to load
-    private static final int SAVE_WAIT = 1000;            // Wait for save to complete
 
     public FanPersonalInfoPage(Page page) {
         super(page);
@@ -107,14 +102,14 @@ public class FanPersonalInfoPage extends BasePage {
 
     @Step("Click Settings icon")
     public void clickSettingsIcon() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(settingsIcon(), 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][PersonalInfo] Clicked Settings icon");
     }
 
     @Step("Assert on Settings screen by viewing title")
     public void assertOnSettingsScreen() {
-        waitVisible(settingsTitle(), DEFAULT_WAIT);
+        waitVisible(settingsTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][PersonalInfo] On Settings screen - title visible");
     }
 
@@ -133,16 +128,16 @@ public class FanPersonalInfoPage extends BasePage {
     @Step("Click Personal Information menu item")
     public void clickPersonalInfoMenu() {
         Locator menuItem = personalInfoMenu();
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(LOAD_WAIT); // Wait for screen to load
+        clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout()); // Wait for screen to load
         logger.info("[Fan][PersonalInfo] Clicked 'Personal information' menu item");
     }
 
     @Step("Assert on Personal Information screen")
     public void assertOnPersonalInfoScreen() {
-        waitVisible(personalInfoTitle(), DEFAULT_WAIT);
+        waitVisible(personalInfoTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][PersonalInfo] On Personal Information screen - title visible");
     }
 
@@ -150,43 +145,43 @@ public class FanPersonalInfoPage extends BasePage {
 
     @Step("Verify Identity field is visible")
     public void verifyIdentityFieldVisible() {
-        waitVisible(identityLabel(), DEFAULT_WAIT);
+        waitVisible(identityLabel(), ConfigReader.getShortTimeout());
         logger.info("[Fan][PersonalInfo] Identity field is visible");
     }
 
     @Step("Verify User name field is visible")
     public void verifyUserNameFieldVisible() {
-        waitVisible(userNameLabel(), DEFAULT_WAIT);
+        waitVisible(userNameLabel(), ConfigReader.getShortTimeout());
         logger.info("[Fan][PersonalInfo] User name field is visible");
     }
 
     @Step("Verify Date of birth field is visible")
     public void verifyDateOfBirthFieldVisible() {
-        waitVisible(dateOfBirthLabel(), DEFAULT_WAIT);
+        waitVisible(dateOfBirthLabel(), ConfigReader.getShortTimeout());
         logger.info("[Fan][PersonalInfo] Date of birth field is visible");
     }
 
     @Step("Verify Account type field is visible")
     public void verifyAccountTypeFieldVisible() {
-        waitVisible(accountTypeLabel(), DEFAULT_WAIT);
+        waitVisible(accountTypeLabel(), ConfigReader.getShortTimeout());
         logger.info("[Fan][PersonalInfo] Account type field is visible");
     }
 
     @Step("Verify lock icons are visible for locked fields")
     public void verifyLockedFields() {
-        waitVisible(lockIconFirst(), DEFAULT_WAIT);
+        waitVisible(lockIconFirst(), ConfigReader.getShortTimeout());
         logger.info("[Fan][PersonalInfo] First lock icon visible (Identity locked)");
         
-        waitVisible(lockIconSecond(), DEFAULT_WAIT);
+        waitVisible(lockIconSecond(), ConfigReader.getShortTimeout());
         logger.info("[Fan][PersonalInfo] Second lock icon visible (Identity locked)");
         
-        waitVisible(lockIconThird(), DEFAULT_WAIT);
+        waitVisible(lockIconThird(), ConfigReader.getShortTimeout());
         logger.info("[Fan][PersonalInfo] Third lock icon visible (User name locked)");
     }
 
     @Step("Verify Fan account type is selected")
     public void verifyFanAccountTypeSelected() {
-        waitVisible(fanAccountType(), DEFAULT_WAIT);
+        waitVisible(fanAccountType(), ConfigReader.getShortTimeout());
         logger.info("[Fan][PersonalInfo] Fan account type is selected");
     }
 
@@ -195,7 +190,7 @@ public class FanPersonalInfoPage extends BasePage {
     @Step("Update email field")
     public void updateEmail(String email) {
         Locator emailField = emailInput();
-        waitVisible(emailField, DEFAULT_WAIT);
+        waitVisible(emailField, ConfigReader.getShortTimeout());
         emailField.click();
         emailField.clear();
         emailField.fill(email);
@@ -205,7 +200,7 @@ public class FanPersonalInfoPage extends BasePage {
     @Step("Update phone number field")
     public void updatePhoneNumber(String phoneNumber) {
         Locator phoneField = phoneNumberInput();
-        waitVisible(phoneField, DEFAULT_WAIT);
+        waitVisible(phoneField, ConfigReader.getShortTimeout());
         phoneField.click();
         phoneField.clear();
         phoneField.fill(phoneNumber);
@@ -215,15 +210,15 @@ public class FanPersonalInfoPage extends BasePage {
     @Step("Click Register button to save changes")
     public void clickRegisterButton() {
         Locator button = registerButton();
-        waitVisible(button, DEFAULT_WAIT);
+        waitVisible(button, ConfigReader.getVisibilityTimeout());
         button.scrollIntoViewIfNeeded();
-        clickWithRetry(button, 2, UI_UPDATE_WAIT);
+        clickWithRetry(button, 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][PersonalInfo] Clicked Register button");
     }
 
     @Step("Verify success message is displayed")
     public void verifySuccessMessage() {
-        waitVisible(successMessage(), DEFAULT_WAIT);
+        waitVisible(successMessage(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][PersonalInfo] Success message displayed: 'Updated Personal Information'");
     }
 
@@ -251,7 +246,7 @@ public class FanPersonalInfoPage extends BasePage {
         updateEmail(email);
         updatePhoneNumber(phoneNumber);
         clickRegisterButton();
-        page.waitForTimeout(SAVE_WAIT); // Wait for save to complete
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for save to complete
         verifySuccessMessage();
         logger.info("[Fan][PersonalInfo] Personal information updated and saved successfully");
     }
