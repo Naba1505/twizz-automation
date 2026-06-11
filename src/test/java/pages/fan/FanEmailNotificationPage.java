@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -15,13 +16,6 @@ import org.slf4j.LoggerFactory;
 public class FanEmailNotificationPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanEmailNotificationPage.class);
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
-    private static final int LOAD_WAIT = 1500;            // Wait for page to load
-    private static final int SCROLL_WAIT = 200;           // Wait after scroll
-    private static final int TOGGLE_UPDATE_WAIT = 500;    // Wait for toggle state to update
 
     public FanEmailNotificationPage(Page page) {
         super(page);
@@ -75,7 +69,7 @@ public class FanEmailNotificationPage extends BasePage {
      */
     private boolean isToggleEnabled(int index) {
         Locator toggle = toggleSwitch(index);
-        waitVisible(toggle, DEFAULT_WAIT);
+        waitVisible(toggle, ConfigReader.getShortTimeout());
         
         // Try aria-checked first
         String ariaChecked = toggle.getAttribute("aria-checked");
@@ -125,14 +119,14 @@ public class FanEmailNotificationPage extends BasePage {
 
     @Step("Click Settings icon from Fan home")
     public void clickSettingsIcon() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(settingsIcon(), 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][EmailNotification] Clicked Settings icon");
     }
 
     @Step("Assert on Settings screen by viewing title")
     public void assertOnSettingsScreen() {
-        waitVisible(settingsTitle(), DEFAULT_WAIT);
+        waitVisible(settingsTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][EmailNotification] On Settings screen - title visible");
     }
 
@@ -142,19 +136,19 @@ public class FanEmailNotificationPage extends BasePage {
         // Scroll to make it visible if needed
         for (int i = 0; i < 5 && !safeIsVisible(menuItem); i++) {
             page.mouse().wheel(0, 300);
-            page.waitForTimeout(SCROLL_WAIT);
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
+        clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][EmailNotification] Clicked 'Email notification' menu item");
     }
 
     @Step("Assert on Email Notification screen by viewing title")
     public void assertOnEmailNotificationScreen() {
-        waitVisible(emailNotificationTitle(), DEFAULT_WAIT);
+        waitVisible(emailNotificationTitle(), ConfigReader.getVisibilityTimeout());
         // Wait for page to fully load and toggles to be ready
-        page.waitForTimeout(LOAD_WAIT);
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[Fan][EmailNotification] On Email Notification screen - title visible");
     }
 
@@ -174,67 +168,67 @@ public class FanEmailNotificationPage extends BasePage {
 
     @Step("Assert 'Push media from a creator' heading visible")
     public void assertPushMediaHeadingVisible() {
-        waitVisible(pushMediaHeading(), DEFAULT_WAIT);
+        waitVisible(pushMediaHeading(), ConfigReader.getShortTimeout());
         logger.info("[Fan][EmailNotification] 'Push media from a creator' heading visible");
     }
 
     @Step("Assert 'Live reminder' heading visible")
     public void assertLiveReminderHeadingVisible() {
-        waitVisible(liveReminderHeading(), DEFAULT_WAIT);
+        waitVisible(liveReminderHeading(), ConfigReader.getShortTimeout());
         logger.info("[Fan][EmailNotification] 'Live reminder' heading visible");
     }
 
     @Step("Assert 'Scheduling a live' heading visible")
     public void assertSchedulingLiveHeadingVisible() {
-        waitVisible(schedulingLiveHeading(), DEFAULT_WAIT);
+        waitVisible(schedulingLiveHeading(), ConfigReader.getShortTimeout());
         logger.info("[Fan][EmailNotification] 'Scheduling a live' heading visible");
     }
 
     @Step("Assert 'Direct live' heading visible")
     public void assertDirectLiveHeadingVisible() {
-        waitVisible(directLiveHeading(), DEFAULT_WAIT);
+        waitVisible(directLiveHeading(), ConfigReader.getShortTimeout());
         logger.info("[Fan][EmailNotification] 'Direct live' heading visible");
     }
 
     @Step("Assert 'Marketing' heading visible")
     public void assertMarketingHeadingVisible() {
-        waitVisible(marketingHeading(), DEFAULT_WAIT);
+        waitVisible(marketingHeading(), ConfigReader.getShortTimeout());
         logger.info("[Fan][EmailNotification] 'Marketing' heading visible");
     }
 
     @Step("Click toggle switch at index {index}")
     public void clickToggle(int index) {
         Locator toggle = toggleSwitch(index);
-        waitVisible(toggle, DEFAULT_WAIT);
-        clickWithRetry(toggle, 2, UI_UPDATE_WAIT);
+        waitVisible(toggle, ConfigReader.getShortTimeout());
+        clickWithRetry(toggle, 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][EmailNotification] Clicked toggle at index {}", index);
     }
 
     @Step("Assert disable confirmation dialog visible")
     public void assertDisableConfirmationVisible() {
-        waitVisible(disableConfirmationDialog(), DEFAULT_WAIT);
+        waitVisible(disableConfirmationDialog(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][EmailNotification] Disable confirmation dialog visible");
     }
 
     @Step("Assert enable confirmation dialog visible")
     public void assertEnableConfirmationVisible() {
-        waitVisible(enableConfirmationDialog(), DEFAULT_WAIT);
+        waitVisible(enableConfirmationDialog(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][EmailNotification] Enable confirmation dialog visible");
     }
 
     @Step("Click 'Yes, disable' button")
     public void clickYesDisable() {
-        waitVisible(yesDisableButton(), DEFAULT_WAIT);
-        clickWithRetry(yesDisableButton(), 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT); // Wait for toggle state to update and dialog to close
+        waitVisible(yesDisableButton(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(yesDisableButton(), 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for toggle state to update and dialog to close
         logger.info("[Fan][EmailNotification] Clicked 'Yes, disable' button");
     }
 
     @Step("Click 'Yes, enable' button")
     public void clickYesEnable() {
-        waitVisible(yesEnableButton(), DEFAULT_WAIT);
-        clickWithRetry(yesEnableButton(), 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(TOGGLE_UPDATE_WAIT); // Wait for toggle state to update
+        waitVisible(yesEnableButton(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(yesEnableButton(), 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout()); // Wait for toggle state to update
         logger.info("[Fan][EmailNotification] Clicked 'Yes, enable' button");
     }
 
@@ -339,7 +333,7 @@ public class FanEmailNotificationPage extends BasePage {
             return;
         }
         clickToggle(index);
-        page.waitForTimeout(STABILIZATION_WAIT); // Wait for toggle state to update
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for toggle state to update
         logger.info("[Fan][EmailNotification] Toggle at index {} enabled (simple click)", index);
     }
 
@@ -355,7 +349,7 @@ public class FanEmailNotificationPage extends BasePage {
             logger.info("[Fan][EmailNotification] Toggle at index {} force disabled with confirmation", index);
         } else {
             // Toggle was already disabled, clicking it enabled it - need to click again
-            page.waitForTimeout(TOGGLE_UPDATE_WAIT);
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
             clickToggle(index);
             if (safeIsVisible(disableConfirmationDialog())) {
                 clickYesDisable();
@@ -374,11 +368,11 @@ public class FanEmailNotificationPage extends BasePage {
         if (safeIsVisible(disableConfirmationDialog())) {
             // Click outside or press escape to cancel
             page.keyboard().press("Escape");
-            page.waitForTimeout(TOGGLE_UPDATE_WAIT);
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
             logger.info("[Fan][EmailNotification] Toggle at index {} already enabled", index);
         } else {
             // Toggle was disabled, now enabled
-            page.waitForTimeout(STABILIZATION_WAIT);
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
             logger.info("[Fan][EmailNotification] Toggle at index {} force enabled", index);
         }
     }
