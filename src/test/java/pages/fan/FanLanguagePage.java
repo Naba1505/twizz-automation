@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -16,13 +17,6 @@ import org.slf4j.LoggerFactory;
 public class FanLanguagePage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanLanguagePage.class);
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
-    private static final int STABILIZATION_WAIT = 500;    // Wait for page to stabilize
-    private static final int LOAD_WAIT = 1500;            // Wait for page to load
-    private static final int LANGUAGE_CHANGE_WAIT = 1000; // Wait for language change to take effect
 
     public FanLanguagePage(Page page) {
         super(page);
@@ -78,22 +72,22 @@ public class FanLanguagePage extends BasePage {
 
     @Step("Click Settings icon")
     public void clickSettingsIcon() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(settingsIcon(), 2, ConfigReader.getAnimationTimeout());
         logger.info("[Fan][Language] Clicked Settings icon");
     }
 
     @Step("Assert on Settings screen by viewing title")
     public void assertOnSettingsScreen() {
-        waitVisible(settingsTitle(), DEFAULT_WAIT);
+        waitVisible(settingsTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Language] On Settings screen - title visible");
     }
 
     @Step("Click back arrow to navigate back")
     public void clickBackArrow() {
-        waitVisible(backArrow(), DEFAULT_WAIT);
-        clickWithRetry(backArrow(), 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(STABILIZATION_WAIT);
+        waitVisible(backArrow(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(backArrow(), 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][Language] Clicked back arrow");
     }
 
@@ -112,30 +106,30 @@ public class FanLanguagePage extends BasePage {
     @Step("Click Language menu item (English)")
     public void clickLanguageMenuEnglish() {
         Locator menuItem = languageMenuEnglish();
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(LOAD_WAIT); // Wait for language screen to fully load
+        clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout()); // Wait for language screen to fully load
         logger.info("[Fan][Language] Clicked 'Language' menu item");
     }
 
     @Step("Click Langue menu item (French)")
     public void clickLanguageMenuFrench() {
         Locator menuItem = languageMenuFrench();
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(LOAD_WAIT); // Wait for language screen to fully load
+        clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout()); // Wait for language screen to fully load
         logger.info("[Fan][Language] Clicked 'Langue' menu item");
     }
 
     @Step("Click Idioma menu item (Spanish)")
     public void clickLanguageMenuSpanish() {
         Locator menuItem = languageMenuSpanish();
-        waitVisible(menuItem, DEFAULT_WAIT);
+        waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
-        clickWithRetry(menuItem, 2, UI_UPDATE_WAIT);
-        page.waitForTimeout(LOAD_WAIT); // Wait for language screen to fully load
+        clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout()); // Wait for language screen to fully load
         logger.info("[Fan][Language] Clicked 'Idioma' menu item");
     }
 
@@ -143,19 +137,19 @@ public class FanLanguagePage extends BasePage {
 
     @Step("Assert Language title visible (English)")
     public void assertLanguageTitleEnglish() {
-        waitVisible(languageMenuEnglish(), DEFAULT_WAIT);
+        waitVisible(languageMenuEnglish(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Language] Language title visible (English)");
     }
 
     @Step("Assert Langue title visible (French)")
     public void assertLanguageTitleFrench() {
-        waitVisible(languageMenuFrench(), DEFAULT_WAIT);
+        waitVisible(languageMenuFrench(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Language] Langue title visible (French)");
     }
 
     @Step("Assert Idioma title visible (Spanish)")
     public void assertLanguageTitleSpanish() {
-        waitVisible(languageMenuSpanish(), DEFAULT_WAIT);
+        waitVisible(languageMenuSpanish(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Language] Idioma title visible (Spanish)");
     }
 
@@ -163,31 +157,31 @@ public class FanLanguagePage extends BasePage {
 
     @Step("Select Français language")
     public void selectFrench() {
-        waitVisible(frenchOption(), DEFAULT_WAIT);
-        clickWithRetry(frenchOption(), 2, UI_UPDATE_WAIT);
+        waitVisible(frenchOption(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(frenchOption(), 2, ConfigReader.getAnimationTimeout());
         // Wait for checkbox to appear confirming language selection
-        waitVisible(languageCheckbox(), DEFAULT_WAIT);
-        page.waitForTimeout(LANGUAGE_CHANGE_WAIT); // Wait for language change to take effect
+        waitVisible(languageCheckbox(), ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for language change to take effect
         logger.info("[Fan][Language] Selected Français language - checkbox visible");
     }
 
     @Step("Select Español language")
     public void selectSpanish() {
-        waitVisible(spanishOption(), DEFAULT_WAIT);
-        clickWithRetry(spanishOption(), 2, UI_UPDATE_WAIT);
+        waitVisible(spanishOption(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(spanishOption(), 2, ConfigReader.getAnimationTimeout());
         // Wait for checkbox to appear confirming language selection
-        waitVisible(languageCheckbox(), DEFAULT_WAIT);
-        page.waitForTimeout(LANGUAGE_CHANGE_WAIT); // Wait for language change to take effect
+        waitVisible(languageCheckbox(), ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for language change to take effect
         logger.info("[Fan][Language] Selected Español language - checkbox visible");
     }
 
     @Step("Select English language")
     public void selectEnglish() {
-        waitVisible(englishOption(), DEFAULT_WAIT);
-        clickWithRetry(englishOption(), 2, UI_UPDATE_WAIT);
+        waitVisible(englishOption(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(englishOption(), 2, ConfigReader.getAnimationTimeout());
         // Wait for checkbox to appear confirming language selection
-        waitVisible(languageCheckbox(), DEFAULT_WAIT);
-        page.waitForTimeout(LANGUAGE_CHANGE_WAIT); // Wait for language change to take effect
+        waitVisible(languageCheckbox(), ConfigReader.getVisibilityTimeout());
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for language change to take effect
         logger.info("[Fan][Language] Selected English language - checkbox visible");
     }
 
@@ -238,7 +232,7 @@ public class FanLanguagePage extends BasePage {
      */
     @Step("Assert on Settings screen with English language")
     public void assertOnSettingsScreenEnglish() {
-        waitVisible(languageMenuEnglish(), DEFAULT_WAIT);
+        waitVisible(languageMenuEnglish(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Language] On Settings screen with English language");
     }
 
