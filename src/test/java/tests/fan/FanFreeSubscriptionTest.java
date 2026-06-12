@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.AriaRole;
 
@@ -37,19 +36,7 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         fanReg.completeFanRegistrationFlow(firstName, lastName, username, email, password);
 
-        // Switch language to English (default is French from SEO team)
-        page.waitForTimeout(2000); // Wait for registration to complete
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
-        page.waitForTimeout(1000);
-        page.getByText("Langue").click();
-        page.waitForTimeout(1000);
-        page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
-        page.waitForTimeout(1000);
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(500);
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(5000); // Wait for language change to take effect and UI re-render
-        logger.info("Switched language to English after registration");
+        switchLanguageToEnglish();
 
         // Step 2: Search for creator and subscribe
         FanFreeSubscriptionPage freeSub = new FanFreeSubscriptionPage(page);
@@ -99,8 +86,8 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         // Assert collection buy success
         freeSub.assertCollectionBuySuccess();
 
-        // Navigate back
-        freeSub.clickBack();
+        // Navigate directly to creator profile to verify subscription
+        freeSub.navigateToCreatorProfile("john_smith");
 
         // Assert Subscriber button visible (subscription confirmed)
         freeSub.assertSubscriberVisible();
@@ -119,19 +106,7 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         fanReg.completeFanRegistrationFlow(firstName, lastName, username, email, password);
 
-        // Switch language to English (default is French from SEO team)
-        page.waitForTimeout(2000); // Wait for registration to complete
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
-        page.waitForTimeout(1000);
-        page.getByText("Langue").click();
-        page.waitForTimeout(1000);
-        page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
-        page.waitForTimeout(1000);
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(500);
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(5000); // Wait for language change to take effect and UI re-render
-        logger.info("Switched language to English after registration");
+        switchLanguageToEnglish();
 
         // ===== STEP 2: Fan searches for creator and subscribes =====
         FanPrivateMediaSubscriptionPage fanPage = new FanPrivateMediaSubscriptionPage(page);
@@ -216,28 +191,11 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         // Complete 3DS verification
         fanPage.complete3DSVerification();
 
-        // ===== STEP 6: Verify subscription via My creators =====
-        // Try direct navigation to Settings instead of going through messages
-        try {
-            fanPage.clickSettingsIcon();
-            fanPage.clickMyCreators();
-            fanPage.assertCreatorDisplayed("Smith");
-        } catch (Exception e) {
-            logger.warn("[FanPrivMedia] Could not verify via My creators: {}", e.getMessage());
-            // Alternative verification - check if we're back on creator profile with Subscribe button gone
-            try {
-                page.goBack();
-                page.waitForTimeout(2000);
-                Locator subscribeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe"));
-                if (subscribeBtn.count() == 0 || !subscribeBtn.first().isVisible()) {
-                    logger.info("[FanPrivMedia] Subscription confirmed - Subscribe button is gone");
-                } else {
-                    throw new RuntimeException("Subscription verification failed - Subscribe button still visible");
-                }
-            } catch (Exception ex) {
-                throw new RuntimeException("Unable to verify subscription: " + ex.getMessage());
-            }
-        }
+        // ===== STEP 6: After 3DS, navigate directly to creator profile and verify subscription =====
+        fanPage.navigateToCreatorProfile("john_smith");
+
+        // Assert Subscriber button visible (strict - requires explicit Subscriber/Subscribed text)
+        fanPage.assertSubscriberVisible();
     }
 
     @Test(priority = 3, description = "New fan registers, searches creator john_smith, does direct free subscription via Continue + payment")
@@ -253,19 +211,7 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         fanReg.completeFanRegistrationFlow(firstName, lastName, username, email, password);
 
-        // Switch language to English (default is French from SEO team)
-        page.waitForTimeout(2000); // Wait for registration to complete
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
-        page.waitForTimeout(1000);
-        page.getByText("Langue").click();
-        page.waitForTimeout(1000);
-        page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
-        page.waitForTimeout(1000);
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(500);
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(5000); // Wait for language change to take effect and UI re-render
-        logger.info("Switched language to English after registration");
+        switchLanguageToEnglish();
 
         // Step 2: Search for creator and subscribe
         FanFreeSubscriptionPage freeSub = new FanFreeSubscriptionPage(page);
@@ -301,7 +247,29 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         freeSub.complete3DSVerification();
 
+        // Navigate back to creator profile to verify subscription
+        freeSub.clickBack();
+
         // Step 5: Assert Subscriber button visible (subscription confirmed)
         freeSub.assertSubscriberVisible();
+    }
+
+    /**
+     * Helper: Switch language from French to English after registration.
+     * The SEO team defaults language to French, so tests need English.
+     */
+    private void switchLanguageToEnglish() {
+        page.waitForTimeout(2000); // Wait for registration to complete
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
+        page.waitForTimeout(1000);
+        page.getByText("Langue").click();
+        page.waitForTimeout(1000);
+        page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
+        page.waitForTimeout(1000);
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        page.waitForTimeout(500);
+        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        page.waitForTimeout(5000); // Wait for language change to take effect and UI re-render
+        logger.info("Switched language to English after registration");
     }
 }

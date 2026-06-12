@@ -10,6 +10,8 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Page Object for Fan Private Media Subscription flow.
@@ -17,6 +19,8 @@ import io.qameta.allure.Step;
  *       (Creator accepts & sends price) → Fan accepts & pays → Verify subscription
  */
 public class FanPrivateMediaSubscriptionPage extends BasePage {
+
+    private static final Logger logger = LoggerFactory.getLogger(FanPrivateMediaSubscriptionPage.class);
 
     public FanPrivateMediaSubscriptionPage(Page page) {
         super(page);
@@ -27,8 +31,12 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     private void dismissOverlay() {
         try {
             page.evaluate("document.querySelectorAll('.fan-profile-overlay').forEach(el => el.remove())");
-        } catch (Throwable ignored) {}
-        try { page.waitForTimeout(300); } catch (Throwable ignored) {}
+        } catch (Throwable e) {
+            logger.debug("[FanPrivMedia] Dismiss overlay JS failed: {}", e.getMessage());
+        }
+        try { page.waitForTimeout(300); } catch (Throwable e) {
+            logger.debug("[FanPrivMedia] Dismiss overlay wait failed: {}", e.getMessage());
+        }
     }
 
     // ===== Locators =====
@@ -127,7 +135,9 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
                 logger.info("[FanPrivMedia] Clicked 'Click here to see the creator'");
                 page.waitForTimeout(1000);
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) {
+            logger.debug("[FanPrivMedia] Skip intro 'Click here' failed: {}", e.getMessage());
+        }
 
         try {
             Locator andHere = page.getByText("And here to see their");
@@ -136,7 +146,9 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
                 logger.info("[FanPrivMedia] Clicked 'And here to see their'");
                 page.waitForTimeout(1000);
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) {
+            logger.debug("[FanPrivMedia] Skip intro 'And here' failed: {}", e.getMessage());
+        }
 
         logger.info("[FanPrivMedia] Intro screens skipped");
     }
@@ -145,7 +157,9 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     public void clickSubscribe() {
         Locator btn = subscribeButton();
         waitVisible(btn, ConfigReader.getShortTimeout());
-        try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { btn.scrollIntoViewIfNeeded(); } catch (Throwable e) {
+            logger.debug("[FanPrivMedia] scrollIntoViewIfNeeded failed: {}", e.getMessage());
+        }
         dismissOverlay();
         clickWithRetry(btn, 2, 300);
         page.waitForTimeout(2000);
@@ -366,20 +380,29 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         for (int i = 0; i < 20 && threeDSPage == null; i++) {
             for (Page p : appPage.context().pages()) {
                 try {
-                    if (p != appPage && p.url() != null && p.url().toLowerCase().contains("securionpay")) {
+                    if (p != appPage && p.url() != null &&
+                        (p.url().toLowerCase().contains("securionpay") || p.url().toLowerCase().contains("shift4"))) {
                         threeDSPage = p;
                         break;
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) {
+                    logger.debug("[FanPrivMedia] 3DS page detection error: {}", e.getMessage());
+                }
             }
             if (threeDSPage != null) break;
-            try { appPage.waitForTimeout(500); } catch (Throwable ignored) {}
+            try { appPage.waitForTimeout(500); } catch (Throwable e) {
+                logger.debug("[FanPrivMedia] 3DS poll wait error: {}", e.getMessage());
+            }
         }
 
         if (threeDSPage != null) {
             logger.info("[FanPrivMedia] 3DS page found: {}", threeDSPage.url());
-            try { threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED); } catch (Throwable ignored) {}
-            try { threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Throwable ignored) {}
+            try { threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED); } catch (Throwable e) {
+                logger.debug("[FanPrivMedia] 3DS DOMCONTENTLOADED wait error: {}", e.getMessage());
+            }
+            try { threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Throwable e) {
+                logger.debug("[FanPrivMedia] 3DS NETWORKIDLE wait error: {}", e.getMessage());
+            }
 
             // Enhanced 3DS submit button clicking with retries
             boolean submitted = false;
@@ -392,7 +415,9 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
                     // Strategy 1: Role-based button
                     Locator submitBtn = threeDSPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"));
                     if (submitBtn.count() > 0 && safeIsVisible(submitBtn.first())) {
-                        try { submitBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                        try { submitBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) {
+                            logger.debug("[FanPrivMedia] 3DS scrollIntoView failed: {}", e.getMessage());
+                        }
                         submitBtn.first().click(new Locator.ClickOptions().setTimeout(30000));
                         submitted = true;
                         logger.info("[FanPrivMedia] Clicked Submit on 3DS page (role-based)");
@@ -435,7 +460,9 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
                 }
                 
                 if (!submitted) {
-                    try { threeDSPage.waitForTimeout(2000); } catch (Throwable ignored) {}
+                    try { threeDSPage.waitForTimeout(2000); } catch (Throwable e) {
+                        logger.debug("[FanPrivMedia] 3DS retry wait error: {}", e.getMessage());
+                    }
                 }
             }
 
@@ -449,8 +476,8 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
                         logger.info("[FanPrivMedia] Clicked 'Everything is OK' on 3DS page");
                     }
                 }
-            } catch (Throwable ignored) {
-                logger.warn("[FanPrivMedia] 'Everything is OK' button not found on 3DS page");
+            } catch (Throwable e) {
+                logger.warn("[FanPrivMedia] 'Everything is OK' button not found on 3DS page: {}", e.getMessage());
             }
 
             // Close 3DS page if still open
@@ -458,30 +485,42 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
                 if (!threeDSPage.isClosed() && appPage.context().pages().size() > 1) {
                     threeDSPage.close();
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) {
+                logger.debug("[FanPrivMedia] 3DS page close error: {}", e.getMessage());
+            }
         } else {
             logger.warn("[FanPrivMedia] 3DS page not found, checking iframes");
             // Fallback: check iframes
             for (com.microsoft.playwright.Frame fr : appPage.frames()) {
                 try {
-                    if (fr.url() != null && fr.url().toLowerCase().contains("securionpay")) {
+                    if (fr.url() != null && (fr.url().toLowerCase().contains("securionpay") || fr.url().toLowerCase().contains("shift4"))) {
                         try {
                             Locator frSubmit = fr.getByRole(AriaRole.BUTTON, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("Submit"));
                             if (frSubmit.count() > 0) { frSubmit.first().click(); }
-                        } catch (Throwable ignored) {}
+                        } catch (Throwable e) {
+                            logger.debug("[FanPrivMedia] iframe Submit click error: {}", e.getMessage());
+                        }
                         try {
                             Locator frOk = fr.getByRole(AriaRole.BUTTON, new com.microsoft.playwright.Frame.GetByRoleOptions().setName("Everything is OK"));
                             if (frOk.count() > 0) { frOk.first().click(); }
-                        } catch (Throwable ignored) {}
+                        } catch (Throwable e) {
+                            logger.debug("[FanPrivMedia] iframe OK click error: {}", e.getMessage());
+                        }
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) {
+                    logger.debug("[FanPrivMedia] iframe check error: {}", e.getMessage());
+                }
             }
         }
 
         // Ensure focus back on app page
-        try { appPage.bringToFront(); } catch (Throwable ignored) {}
-        try { appPage.waitForTimeout(3000); } catch (Throwable ignored) {}
-        logger.info("[FanPrivMedia] 3DS verification flow completed");
+        try { appPage.bringToFront(); } catch (Throwable e) {
+            logger.debug("[FanPrivMedia] bringToFront error: {}", e.getMessage());
+        }
+        try { appPage.waitForTimeout(3000); } catch (Throwable e) {
+            logger.debug("[FanPrivMedia] Final 3DS wait error: {}", e.getMessage());
+        }
+        logger.info("[FanPrivMedia] 3DS verification flow completed. Current URL: {}", appPage.url());
     }
 
     @Step("Click Confirm button")
@@ -585,5 +624,92 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         Locator creator = page.getByText(creatorName);
         waitVisible(creator.first(), ConfigReader.getVisibilityTimeout());
         logger.info("[FanPrivMedia] Creator '{}' is displayed in My creators - subscription confirmed!", creatorName);
+    }
+
+    @Step("Assert on request media page after payment")
+    public void assertOnRequestMediaPage() {
+        String currentUrl = page.url();
+        if (currentUrl.contains("requestMedia") && currentUrl.contains("from=paymentPage")) {
+            logger.info("[FanPrivMedia] On request media page after payment: {}", currentUrl);
+            return;
+        }
+        // Wait for app redirect from /payment/success to requestMedia page
+        page.waitForTimeout(5000);
+        currentUrl = page.url();
+        if (currentUrl.contains("requestMedia") && currentUrl.contains("from=paymentPage")) {
+            logger.info("[FanPrivMedia] On request media page after wait: {}", currentUrl);
+            return;
+        }
+        // One more wait for slow redirects
+        page.waitForTimeout(5000);
+        currentUrl = page.url();
+        if (currentUrl.contains("requestMedia") && currentUrl.contains("from=paymentPage")) {
+            logger.info("[FanPrivMedia] On request media page after extended wait: {}", currentUrl);
+            return;
+        }
+        throw new AssertionError("Not on request media page after payment. Current URL: " + currentUrl);
+    }
+
+    @Step("Navigate directly to creator profile: {username}")
+    public void navigateToCreatorProfile(String username) {
+        String profileUrl = ConfigReader.getBaseUrl() + "/profile/" + username;
+        page.navigate(profileUrl);
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+
+        // Verify we're actually on the creator profile, not redirected to discover
+        String currentUrl = page.url();
+        if (!currentUrl.contains("/profile/") && !currentUrl.contains(username)) {
+            logger.warn("[FanPrivMedia] Redirected away from profile to: {}. Searching for creator again.", currentUrl);
+            assertSearchIconVisible();
+            clickSearchIcon();
+            searchCreator(username);
+            clickCreatorResult(username);
+            skipIntroScreens();
+        } else {
+            logger.info("[FanPrivMedia] On creator profile: {}", currentUrl);
+        }
+
+        // Wait for backend subscription state to sync
+        page.waitForTimeout(3000);
+    }
+
+    @Step("Assert 'Subscriber' button visible (subscription confirmed)")
+    public void assertSubscriberVisible() {
+        logger.info("[FanPrivMedia] Looking for 'Subscriber' button. Current URL: {}", page.url());
+
+        Locator[] subscriberLocators = {
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber")),
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribed")),
+            page.locator("button:has-text('Subscriber')"),
+            page.locator("button:has-text('Subscribed')"),
+            page.locator("text=Subscriber"),
+            page.locator("text=Subscribed")
+        };
+
+        long end = System.currentTimeMillis() + 15000;
+        while (System.currentTimeMillis() < end) {
+            for (Locator loc : subscriberLocators) {
+                try {
+                    if (loc.count() > 0) {
+                        String text = loc.first().textContent();
+                        if (text != null && (text.contains("Subscriber") || text.contains("Subscribed"))) {
+                            logger.info("[FanPrivMedia] 'Subscriber' button found: '{}' - subscription confirmed!", text);
+                            return;
+                        }
+                    }
+                } catch (Exception e) {
+                    // ignore, try next locator
+                }
+            }
+            page.waitForTimeout(500);
+        }
+
+        try {
+            String subscribeText = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscribe")).count() > 0 ? "VISIBLE" : "NOT FOUND";
+            logger.error("[FanPrivMedia] 'Subscriber' button NOT found after polling. 'Subscribe' button: {}. URL: {}", subscribeText, page.url());
+        } catch (Exception e) {
+            logger.error("[FanPrivMedia] 'Subscriber' button NOT found after polling. URL: {}", page.url());
+        }
+        throw new AssertionError("'Subscriber' button not found on creator profile. Current URL: " + page.url());
     }
 }

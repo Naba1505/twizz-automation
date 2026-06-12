@@ -12,7 +12,6 @@ public class FanRegistrationPage extends BasePage {
     
     // Timeout constants (in milliseconds) - Standardized values (optimized)
     private static final int VISIBILITY_TIMEOUT = 5000;    // Element visibility timeout - increased for fan registration
-    private static final int NAVIGATION_TIMEOUT = 5000;    // Page navigation timeout
 
     // Locators (using helpers by placeholder/button name when needed)
 
@@ -22,7 +21,7 @@ public class FanRegistrationPage extends BasePage {
 
     public void navigate() {
         String url = ConfigReader.getFanSignupUrl();
-        page.navigate(url, new Page.NavigateOptions().setTimeout(NAVIGATION_TIMEOUT));
+        page.navigate(url, new Page.NavigateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
         page.waitForLoadState();
         logger.info("Navigated to Fan Registration page: {}", url);
     }
