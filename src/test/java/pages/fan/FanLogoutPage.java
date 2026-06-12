@@ -8,6 +8,7 @@ import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.ConfigReader;
 
 /**
  * Page object for Fan Logout functionality.
@@ -17,10 +18,8 @@ public class FanLogoutPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanLogoutPage.class);
     
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int DEFAULT_WAIT = 10000;        // Element visibility timeout
-    private static final int LOGOUT_WAIT = 2000;          // Wait for logout to complete
+    // Timeout constants (in milliseconds) - Use ConfigReader for configurable values
+    private static final int LOGOUT_WAIT = 2000;          // Wait for logout to complete (custom)
 
     public FanLogoutPage(Page page) {
         super(page);
@@ -51,14 +50,14 @@ public class FanLogoutPage extends BasePage {
 
     @Step("Click Settings icon")
     public void clickSettingsIcon() {
-        waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 2, UI_UPDATE_WAIT);
+        waitVisible(settingsIcon(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(settingsIcon(), 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Logout] Clicked Settings icon");
     }
 
     @Step("Assert on Settings screen by viewing title")
     public void assertOnSettingsScreen() {
-        waitVisible(settingsTitle(), DEFAULT_WAIT);
+        waitVisible(settingsTitle(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Logout] On Settings screen - title visible");
     }
 
@@ -77,16 +76,20 @@ public class FanLogoutPage extends BasePage {
     @Step("Click Disconnect button to logout")
     public void clickDisconnect() {
         Locator disconnect = disconnectButton();
-        waitVisible(disconnect, DEFAULT_WAIT);
-        disconnect.scrollIntoViewIfNeeded();
-        clickWithRetry(disconnect, 2, UI_UPDATE_WAIT);
+        waitVisible(disconnect, ConfigReader.getVisibilityTimeout());
+        try {
+            disconnect.scrollIntoViewIfNeeded();
+        } catch (Exception e) {
+            logger.debug("[Fan][Logout] scrollIntoViewIfNeeded failed: {}", e.getMessage());
+        }
+        clickWithRetry(disconnect, 2, ConfigReader.getElementRetryDelay());
         page.waitForTimeout(LOGOUT_WAIT); // Wait for logout to complete
         logger.info("[Fan][Logout] Clicked Disconnect button");
     }
 
     @Step("Verify user is on Login page after logout")
     public void verifyOnLoginPage() {
-        waitVisible(loginText(), DEFAULT_WAIT);
+        waitVisible(loginText(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Logout] Login text visible - user logged out successfully");
     }
 
