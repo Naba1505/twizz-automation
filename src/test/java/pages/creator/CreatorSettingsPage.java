@@ -42,7 +42,7 @@ public class CreatorSettingsPage extends BasePage {
         long end = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < end) {
             int now = 0;
-            try { now = getQueuedMediaItems().count(); } catch (RuntimeException ignored) {}
+            try { now = getQueuedMediaItems().count(); } catch (RuntimeException e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             if (now >= target) {
                 log.info("Queued items reached target {} (now={})", target, now);
                 return;
@@ -200,8 +200,8 @@ public class CreatorSettingsPage extends BasePage {
             try {
                 Locator target = trashes.nth(count - 1);
                 // Some UIs render the trash only on hover; ensure visibility
-                try { target.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                try { target.hover(); } catch (Exception ignored) {}
+                try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                try { target.hover(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                 try {
                     clickWithRetry(target, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 } catch (RuntimeException primary) {
@@ -276,7 +276,7 @@ public class CreatorSettingsPage extends BasePage {
                     try {
                         clickWithRetry(btn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                         return true;
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                 }
             }
             try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
@@ -306,8 +306,8 @@ public class CreatorSettingsPage extends BasePage {
         if (total == 0) return false;
         for (int i = total - 1; i >= 0; i--) {
             Locator card = cards.nth(i);
-            try { card.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            try { card.hover(); } catch (Exception ignored) {}
+            try { card.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            try { card.hover(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             Locator trash = card.getByRole(AriaRole.IMG, new Locator.GetByRoleOptions().setName("trash").setExact(true));
             if (trash.count() == 0) {
                 trash = card.getByRole(AriaRole.IMG, new Locator.GetByRoleOptions().setName("Trash").setExact(true));
@@ -320,11 +320,11 @@ public class CreatorSettingsPage extends BasePage {
             }
             if (trash.count() > 0) {
                 Locator target = trash.first();
-                try { target.hover(); } catch (Exception ignored) {}
+                try { target.hover(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                 try {
                     clickWithRetry(target, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 } catch (Exception e) {
-                    try { target.click(new Locator.ClickOptions().setForce(true)); } catch (Exception ignored) { continue; }
+                    try { target.click(new Locator.ClickOptions().setForce(true)); } catch (Exception e2) { logger.debug("Optional action failed: {}", e2.getMessage()); continue; }
                 }
                 // Confirm
                 if (!clickAnyConfirmDelete()) {
@@ -420,7 +420,7 @@ public class CreatorSettingsPage extends BasePage {
         Locator createBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON));
         if (createBtn.count() > 0 && createBtn.first().isVisible()) {
             log.info("Clicking 'Create' button");
-            try { createBtn.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+            try { createBtn.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             clickWithRetry(createBtn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
         } else {
             log.info("'Create' not visible; trying 'Continue' button");
@@ -430,7 +430,7 @@ public class CreatorSettingsPage extends BasePage {
                 continueBtn = page.getByText("Continue");
             }
             waitVisible(continueBtn.first(), DEFAULT_WAIT);
-            try { continueBtn.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+            try { continueBtn.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             clickWithRetry(continueBtn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
         }
         // After create, we should be on add media screen
@@ -479,7 +479,7 @@ public class CreatorSettingsPage extends BasePage {
         log.info("Detected {} file input(s) on page", inputCount);
         if (inputCount == 1) {
             String accept = null;
-            try { accept = allInputs.first().getAttribute("accept"); } catch (RuntimeException ignored) {}
+            try { accept = allInputs.first().getAttribute("accept"); } catch (RuntimeException e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             log.info("Single input accept='{}'", accept);
             log.info("Uploading all files in one batch on the single input to avoid replacement.");
             int before = getQueuedMediaItems().count();
@@ -560,7 +560,7 @@ public class CreatorSettingsPage extends BasePage {
             input = any.first();
         }
         String multipleAttr = null;
-        try { multipleAttr = input.getAttribute("multiple"); } catch (RuntimeException ignored) {}
+        try { multipleAttr = input.getAttribute("multiple"); } catch (RuntimeException e) { logger.debug("Optional action failed: {}", e.getMessage()); }
         boolean supportsMultiple = multipleAttr != null; // presence of attribute indicates multi-select
         log.info("Uploading {} file(s) to input (accept='{}', multiple='{}')", files.size(), acceptKeyword, supportsMultiple);
         if (supportsMultiple) {
@@ -608,7 +608,7 @@ public class CreatorSettingsPage extends BasePage {
             if (result instanceof Number) {
                 len = ((Number) result).intValue();
             } else if (result != null) {
-                try { len = Integer.parseInt(result.toString()); } catch (Exception ignored) {}
+                try { len = Integer.parseInt(result.toString()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             }
             log.info("Input now holds {} file(s) (expected in this batch: {})", len, expected);
         } catch (RuntimeException e) {
@@ -663,7 +663,7 @@ public class CreatorSettingsPage extends BasePage {
             
             // Check if input supports multiple files
             String multipleAttr = null;
-            try { multipleAttr = targetInput.getAttribute("multiple"); } catch (RuntimeException ignored) {}
+            try { multipleAttr = targetInput.getAttribute("multiple"); } catch (RuntimeException e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             boolean supportsMultiple = multipleAttr != null;
             
             // Get queue count before upload
@@ -740,7 +740,7 @@ public class CreatorSettingsPage extends BasePage {
                     log.info("Matched file input by accept='{}' for keyword='{}' (index {})", accept, acceptKeyword, i);
                     return i;
                 }
-            } catch (RuntimeException ignored) { }
+            } catch (RuntimeException e) { logger.debug("Optional action failed: {}", e.getMessage()); }
         }
         log.info("No input matched acceptKeyword '{}' ; returning null to allow smarter fallback", acceptKeyword);
         return null;
