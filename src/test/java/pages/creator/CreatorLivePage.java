@@ -462,7 +462,7 @@ public class CreatorLivePage extends BasePage {
             try {
                 page.keyboard().press("Escape");
                 page.waitForTimeout(ConfigReader.getAnimationTimeout());
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Escape key press failed: {}", e.getMessage()); }
         }
 
         logger.info("Date picked: {}-{}-{}", yearStr, monthName, dayText);
@@ -584,12 +584,12 @@ public class CreatorLivePage extends BasePage {
                     logger.debug("Opened time selector using fallback method");
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Time selector open failed: {}", e.getMessage()); }
         // 3) Ensure the date picker overlay is not blocking the time dropdown
         Locator visibleDropdown = page.locator(".ant-select-dropdown:visible");
         Locator dateDropdown = page.locator(".ant-picker-dropdown:visible");
         if (dateDropdown.count() > 0) {
-            try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
+            try { page.keyboard().press("Escape"); } catch (Exception e) { logger.debug("Escape key failed: {}", e.getMessage()); }
             page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         // If time dropdown still not visible, explicitly click the time selector again
@@ -602,7 +602,7 @@ public class CreatorLivePage extends BasePage {
                 } else {
                     page.locator(".ant-select-selector").first().click();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Time selector retry failed: {}", e.getMessage()); }
         }
         // Wait for dropdown to appear
         WaitUtils.waitForDropdownVisible(page, ConfigReader.getMediumTimeout());
@@ -659,7 +659,7 @@ public class CreatorLivePage extends BasePage {
                 opt = page.locator("#root").getByText(t, new Locator.GetByTextOptions().setExact(true));
             }
             if (opt.count() > 0) {
-                try { opt.first().scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
+                try { opt.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
                 WaitUtils.waitForVisible(opt.first(), ConfigReader.getShortTimeout());
                 clickWithRetry(opt.first(), 2, ConfigReader.getElementRetryDelay());
                 logger.info("Picked fallback time {}", t);
@@ -710,8 +710,7 @@ public class CreatorLivePage extends BasePage {
             fileInput.first().setInputFiles(imagePath);
             try {
                 Allure.addAttachment("Coverage image", Files.newInputStream(imagePath));
-            } catch (IOException ignored) {
-            }
+            } catch (IOException e) { logger.debug("Allure attachment failed: {}", e.getMessage()); }
             logger.info("Uploaded coverage image via input[type=file]: {}", imagePath);
             return;
         }
@@ -722,8 +721,7 @@ public class CreatorLivePage extends BasePage {
                 page.waitForFileChooser(() -> clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay())).setFiles(imagePath);
                 try {
                     Allure.addAttachment("Coverage image", Files.newInputStream(imagePath));
-                } catch (IOException ignored) {
-                }
+                } catch (IOException e) { logger.debug("Allure attachment failed: {}", e.getMessage()); }
                 logger.info("Uploaded coverage image via FileChooser: {}", imagePath);
                 return;
             } catch (Exception e) {
@@ -737,8 +735,7 @@ public class CreatorLivePage extends BasePage {
             anyInput.first().setInputFiles(imagePath);
             try {
                 Allure.addAttachment("Coverage image", Files.newInputStream(imagePath));
-            } catch (IOException ignored) {
-            }
+            } catch (IOException e) { logger.debug("Allure attachment failed: {}", e.getMessage()); }
             logger.info("Uploaded coverage image via global input[type=file]: {}", imagePath);
         } else {
             logger.warn("No file input found to upload coverage image");
