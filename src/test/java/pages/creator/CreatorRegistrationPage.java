@@ -62,7 +62,7 @@ public class CreatorRegistrationPage extends BasePage {
     public void navigate() {
         String creatorRegistrationUrl = ConfigReader.getCreatorRegistrationUrl();
         page.navigate(creatorRegistrationUrl);
-        page.waitForLoadState();
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
         logger.info("Navigated to Creator Registration page: {}", creatorRegistrationUrl);
     }
 
@@ -528,7 +528,6 @@ public class CreatorRegistrationPage extends BasePage {
     }
 
     public void submitFourthPage() {
-        page.waitForLoadState();
         page.locator(fourthPageContinueButton).click();
         logger.info("Clicked Continue button on fourth page");
         // Wait for transition to fifth page
@@ -608,7 +607,6 @@ public class CreatorRegistrationPage extends BasePage {
     }
 
     public void submitFifthPage() {
-        page.waitForLoadState();
         page.locator(finishButton).click();
         logger.info("Clicked FINISH button on fifth page");
     }
@@ -624,7 +622,7 @@ public class CreatorRegistrationPage extends BasePage {
             logger.warn("Exact final confirmation text not immediately visible: {}. Trying heading fallback...", primary.getMessage());
             try {
                 Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(finalConfirmationText));
-                heading.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(5000));
+                heading.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getShortTimeout()));
                 logger.info("Final confirmation visible via heading role");
                 return true;
             } catch (Exception last) {
