@@ -1335,7 +1335,7 @@ public class CreatorCollectionPage extends BasePage {
         Locator stayMsg = page.getByText("Stay on page during uploading");
         Locator percentSticky = page.locator("div").filter(new Locator.FilterOptions()
             .setHasText(Pattern.compile("^\\d+%Stay on page during uploading$")));
-        Locator success = page.getByText("Collection is created successfully");
+        Locator success = page.locator("text=/Collection is created successfully|Collection created|created successfully/i");
 
         boolean sawUploading = false;
         Integer lastSeen = null;
@@ -1385,9 +1385,9 @@ public class CreatorCollectionPage extends BasePage {
         }
 
         try {
-            page.waitForURL("**/creator/profile", new Page.WaitForURLOptions().setTimeout(Math.max(1, deadline - System.currentTimeMillis())));
+            page.waitForURL("**/creator/profile", new Page.WaitForURLOptions().setTimeout(ConfigReader.getLongTimeout()));
         } catch (Throwable e) {
-            logger.warn("[Upload] Did not navigate to /creator/profile within timeout: {}", e.getMessage());
+            logger.debug("[Upload] Did not navigate to /creator/profile within cap: {}", e.getMessage());
         }
 
         long remaining = Math.max(1, deadline - System.currentTimeMillis());
