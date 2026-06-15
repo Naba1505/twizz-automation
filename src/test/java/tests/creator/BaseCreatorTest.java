@@ -38,7 +38,7 @@ public class BaseCreatorTest extends BaseTestClass {
         try {
             CreatorLivePage live = new CreatorLivePage(page);
             live.tryDeleteLatestLiveEvent();
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             // best-effort cleanup; ignore errors to not mask test results
         }
     }

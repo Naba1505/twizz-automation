@@ -19,7 +19,7 @@ public class CreatorCollectionDeleteTest extends BaseCreatorTest {
         CreatorCollectionPage coll = new CreatorCollectionPage(page);
         logger.info("[Cleanup] Starting collections cleanup using exact flow: icon -> scroll -> second tile -> menu -> delete");
         // Follows UI steps: click collections icon, scroll, click second 'collection' tile, three-dots menu, Delete collection -> Yes, delete
-        coll.deleteAllCollectionsExactFlow(10);
+        coll.deleteAllCollectionsExactFlow(50);
         // Verify empty state is shown after all deletions
         coll.assertNoCollectionsEmptyState();
     }

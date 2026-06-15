@@ -18,9 +18,7 @@ import java.util.regex.Pattern;
  * Page Object for Creator Scripts feature.
  */
 public class CreatorScriptsPage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from SHORT_TIMEOUT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int POLLING_WAIT = 200;         // Polling intervals
+    // All timeouts now use ConfigReader for consistency
 
     public CreatorScriptsPage(Page page) {
         super(page);
@@ -77,7 +75,7 @@ public class CreatorScriptsPage extends BasePage {
         // Click first edit icon on scripts list
         Locator editIcons = page.locator("button.script-row-edit");
         waitVisible(editIcons.first(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(editIcons.first(), 1, POLLING_WAIT);
+        clickWithRetry(editIcons.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Edit dialog
         Locator editTitle = page.getByText("Edit", new Page.GetByTextOptions().setExact(true));
@@ -89,7 +87,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator editScriptBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Edit script"));
         waitVisible(editScriptBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(editScriptBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(editScriptBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Ensure on Edit a script screen and name step
         Locator editHeading = page.getByRole(AriaRole.HEADING,
@@ -112,7 +110,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator cont = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Continue"));
         waitVisible(cont.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(cont.first(), 1, POLLING_WAIT);
+        clickWithRetry(cont.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Small settle to allow navigation/state update to media step
         try { page.waitForTimeout(250); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
@@ -145,7 +143,7 @@ public class CreatorScriptsPage extends BasePage {
             }
             if (nextBtn.count() > 0) {
                 try { nextBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored2) { }
-                clickWithRetry(nextBtn.first(), 1, POLLING_WAIT);
+                clickWithRetry(nextBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
                 try { page.waitForTimeout(500); } catch (Throwable ignored2) { }
             }
             // Now wait with normal timeout for the note box; if it still doesn't appear,
@@ -169,7 +167,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator settingsIcon = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("settings"));
         waitVisible(settingsIcon.first(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon.first(), 1, POLLING_WAIT);
+        clickWithRetry(settingsIcon.first(), 1, utils.ConfigReader.getElementRetryDelay());
     }
 
     @Step("Open Scripts from settings")
@@ -177,7 +175,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator scripts = page.getByText("Scripts");
         waitVisible(scripts.first(), utils.ConfigReader.getShortTimeout());
         try { scripts.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(scripts.first(), 1, POLLING_WAIT);
+        clickWithRetry(scripts.first(), 1, utils.ConfigReader.getElementRetryDelay());
         waitVisible(page.getByRole(AriaRole.HEADING,
                 new Page.GetByRoleOptions().setName("Scripts")), utils.ConfigReader.getShortTimeout());
     }
@@ -193,7 +191,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator searchButton = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Search"));
         waitVisible(searchButton.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(searchButton.first(), 1, POLLING_WAIT);
+        clickWithRetry(searchButton.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         Locator searchInput = page.getByRole(AriaRole.TEXTBOX,
                 new Page.GetByRoleOptions().setName("Search"));
@@ -214,7 +212,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator cancelButton = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Cancel"));
         waitVisible(cancelButton.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(cancelButton.first(), 1, POLLING_WAIT);
+        clickWithRetry(cancelButton.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Final assertion: Scripts heading still visible (back on scripts screen)
         waitVisible(scriptsHeading.first(), utils.ConfigReader.getShortTimeout());
@@ -225,7 +223,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator plusBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("add Click on the \"+\" to"));
         waitVisible(plusBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(plusBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(plusBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
         waitVisible(page.getByRole(AriaRole.HEADING,
                 new Page.GetByRoleOptions().setName("Create a script")), utils.ConfigReader.getShortTimeout());
         waitVisible(page.getByRole(AriaRole.HEADING,
@@ -248,7 +246,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator cont = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Continue"));
         waitVisible(cont.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(cont.first(), 1, POLLING_WAIT);
+        clickWithRetry(cont.first(), 1, utils.ConfigReader.getElementRetryDelay());
         // After continue, helper text should appear guiding user to click '+' button
         Locator helper = page.getByText("Click on the \"+\" button to");
         try {
@@ -261,7 +259,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator addMedia = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("add"));
         waitVisible(addMedia.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(addMedia.first(), 1, POLLING_WAIT);
+        clickWithRetry(addMedia.first(), 1, utils.ConfigReader.getElementRetryDelay());
         waitVisible(page.getByText("Importation"), utils.ConfigReader.getShortTimeout());
     }
 
@@ -303,7 +301,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator quickFilesBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Quick Files"));
         waitVisible(quickFilesBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(quickFilesBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(quickFilesBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Wait for 'My albums' label to ensure Quick Files screen is loaded
         Locator myAlbumsLabel = page.getByText("My albums");
@@ -334,7 +332,7 @@ public class CreatorScriptsPage extends BasePage {
                 logger.info("Found {} album row(s) with prefix '{}'; clicking first", rowCount, normalizedPrefix);
                 Locator row = albumRows.first();
                 try { row.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-                clickWithRetry(row, 1, POLLING_WAIT);
+                clickWithRetry(row, 1, utils.ConfigReader.getElementRetryDelay());
                 clickedAlbum = true;
                 break;
             }
@@ -367,13 +365,13 @@ public class CreatorScriptsPage extends BasePage {
         // Click the first media item (index 0)
         logger.info("Selecting media item at index 0 from Quick Files album");
         waitVisible(selectIcons.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(selectIcons.first(), 1, POLLING_WAIT);
+        clickWithRetry(selectIcons.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Click dynamic "Select (1)" button
         Locator selectBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Select (1)"));
         waitVisible(selectBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(selectBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(selectBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Advance one step in the script flow (Next/Continue)
         Locator nextBtn = page.getByRole(AriaRole.BUTTON,
@@ -383,7 +381,7 @@ public class CreatorScriptsPage extends BasePage {
                     new Page.GetByRoleOptions().setName("Continue"));
         }
         if (nextBtn.count() > 0) {
-            clickWithRetry(nextBtn.first(), 1, POLLING_WAIT);
+            clickWithRetry(nextBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
         }
     }
 
@@ -396,7 +394,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator quickFilesBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Quick Files"));
         waitVisible(quickFilesBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(quickFilesBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(quickFilesBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Wait for 'My albums' label
         Locator myAlbumsLabel = page.getByText("My albums");
@@ -406,7 +404,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator audiosTab = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Audios"));
         waitVisible(audiosTab.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(audiosTab.first(), 1, POLLING_WAIT);
+        clickWithRetry(audiosTab.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Find the scrollable container for albums
         Locator container = page.locator(".qf-albums-container, .ant-modal-body, .ant-drawer-body").first();
@@ -427,13 +425,13 @@ public class CreatorScriptsPage extends BasePage {
                 logger.info("Found {} audio album row(s); clicking first", rowCount);
                 Locator row = albumRows.first();
                 try { row.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-                clickWithRetry(row, 1, POLLING_WAIT);
+                clickWithRetry(row, 1, utils.ConfigReader.getElementRetryDelay());
                 clickedAlbum = true;
                 break;
             }
             // Scroll down to find the album
             logger.info("Audio album row not yet visible; scrolling down");
-            try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable ignored) {}
+            try { container.evaluate("el => el.scrollBy(0, 900)"); } catch (Throwable e) { logger.debug("Scroll container failed: {}", e.getMessage()); }
             try { page.waitForTimeout(150); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
 
@@ -445,12 +443,12 @@ public class CreatorScriptsPage extends BasePage {
         Locator audioBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName(Pattern.compile("^audio\\s+.*", Pattern.CASE_INSENSITIVE)));
         waitVisible(audioBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(audioBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(audioBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         Locator selectAndSend = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Select and send").setExact(true));
         waitVisible(selectAndSend.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(selectAndSend.first(), 1, POLLING_WAIT);
+        clickWithRetry(selectAndSend.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Advance to next step of script flow
         clickNextAfterMedia();
@@ -510,14 +508,14 @@ public class CreatorScriptsPage extends BasePage {
         // which intercepts clicks on the sticky Next button. If present and visible, dismiss it.
         Locator bottomCancel = page.locator("span.bottom-modal-cancel-button-title");
         if (bottomCancel.count() > 0 && safeIsVisible(bottomCancel.first())) {
-            clickWithRetry(bottomCancel.first(), 1, POLLING_WAIT);
+            clickWithRetry(bottomCancel.first(), 1, utils.ConfigReader.getElementRetryDelay());
             try { page.waitForTimeout(300); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
 
         Locator next = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Next"));
         waitVisible(next.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(next.first(), 1, POLLING_WAIT);
+        clickWithRetry(next.first(), 1, utils.ConfigReader.getElementRetryDelay());
         // Small settle to allow navigation/state update
         try { page.waitForTimeout(250); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
@@ -544,7 +542,7 @@ public class CreatorScriptsPage extends BasePage {
         }
         
         waitVisible(plus.first(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(plus.first(), 1, POLLING_WAIT);
+        clickWithRetry(plus.first(), 1, utils.ConfigReader.getElementRetryDelay());
         waitVisible(page.getByText("Importation"), utils.ConfigReader.getShortTimeout());
     }
 
@@ -553,12 +551,12 @@ public class CreatorScriptsPage extends BasePage {
         Locator bookmarkBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Bookmark Select or create a"));
         waitVisible(bookmarkBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(bookmarkBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(bookmarkBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         Locator newBookmark = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("new-bookmark"));
         waitVisible(newBookmark.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(newBookmark.first(), 1, POLLING_WAIT);
+        clickWithRetry(newBookmark.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         String name = (baseName == null || baseName.isEmpty() ? "QA" : baseName) + "_" + timestamp();
         Locator nameInput = page.getByRole(AriaRole.TEXTBOX,
@@ -569,7 +567,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator createBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Create").setExact(true));
         waitVisible(createBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(createBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(createBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Wait for the bookmark creation to complete and UI to update
         try { page.waitForTimeout(800); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
@@ -602,7 +600,7 @@ public class CreatorScriptsPage extends BasePage {
             Locator bookmarkByName = page.getByRole(AriaRole.BUTTON,
                     new Page.GetByRoleOptions().setName(Pattern.compile(".*" + Pattern.quote(name) + ".*", Pattern.CASE_INSENSITIVE)));
             if (bookmarkByName.count() > 0 && safeIsVisible(bookmarkByName.first())) {
-                clickWithRetry(bookmarkByName.first(), 1, POLLING_WAIT);
+                clickWithRetry(bookmarkByName.first(), 1, utils.ConfigReader.getElementRetryDelay());
                 try { page.waitForTimeout(300); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 bookmarkSelected = true;
                 logger.info("Bookmark '{}' selected using name pattern", name);
@@ -614,7 +612,7 @@ public class CreatorScriptsPage extends BasePage {
             Locator listItem = page.locator("li, [role='option'], .bookmark-item, .ant-select-item")
                     .filter(new Locator.FilterOptions().setHasText(name));
             if (listItem.count() > 0 && safeIsVisible(listItem.first())) {
-                clickWithRetry(listItem.first(), 1, POLLING_WAIT);
+                clickWithRetry(listItem.first(), 1, utils.ConfigReader.getElementRetryDelay());
                 try { page.waitForTimeout(300); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 bookmarkSelected = true;
                 logger.info("Bookmark '{}' selected using list item locator", name);
@@ -627,13 +625,13 @@ public class CreatorScriptsPage extends BasePage {
             Locator anyToggle = page.getByRole(AriaRole.BUTTON,
                     new Page.GetByRoleOptions().setName(Pattern.compile("^Bookmark.*chevron.*", Pattern.CASE_INSENSITIVE)));
             if (anyToggle.count() > 0 && safeIsVisible(anyToggle.first())) {
-                clickWithRetry(anyToggle.first(), 1, POLLING_WAIT);
+                clickWithRetry(anyToggle.first(), 1, utils.ConfigReader.getElementRetryDelay());
                 try { page.waitForTimeout(300); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
                 // Now look for the bookmark option by text
                 Locator optionByText = page.getByText(name, new Page.GetByTextOptions().setExact(true));
                 if (optionByText.count() > 0 && safeIsVisible(optionByText.first())) {
-                    clickWithRetry(optionByText.first(), 1, POLLING_WAIT);
+                    clickWithRetry(optionByText.first(), 1, utils.ConfigReader.getElementRetryDelay());
                     try { page.waitForTimeout(300); } catch (Throwable e2) { logger.debug("Wait failed: {}", e2.getMessage()); }
                     bookmarkSelected = true;
                     logger.info("Bookmark '{}' selected using text locator after reopening dropdown", name);
@@ -658,12 +656,12 @@ public class CreatorScriptsPage extends BasePage {
             // Click the bookmark dropdown button
             Locator bookmarkDropdown = page.locator("button").filter(new Locator.FilterOptions().setHasText("Bookmark"));
             if (bookmarkDropdown.count() > 0 && safeIsVisible(bookmarkDropdown.first())) {
-                clickWithRetry(bookmarkDropdown.first(), 1, POLLING_WAIT);
+                clickWithRetry(bookmarkDropdown.first(), 1, utils.ConfigReader.getElementRetryDelay());
                 try { page.waitForTimeout(400); } catch (Throwable ignored) { }
                 // Click the first visible option with our bookmark name
                 Locator ourBookmark = page.getByText(name, new Page.GetByTextOptions().setExact(true));
                 if (ourBookmark.count() > 0 && safeIsVisible(ourBookmark.first())) {
-                    clickWithRetry(ourBookmark.first(), 1, POLLING_WAIT);
+                    clickWithRetry(ourBookmark.first(), 1, utils.ConfigReader.getElementRetryDelay());
                     try { page.waitForTimeout(300); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     logger.info("Bookmark '{}' selected in final verification step", name);
                 }
@@ -689,7 +687,7 @@ public class CreatorScriptsPage extends BasePage {
 
         for (Locator toggle : togglePatterns) {
             if (toggle.count() > 0 && safeIsVisible(toggle.first())) {
-                clickWithRetry(toggle.first(), 1, POLLING_WAIT);
+                clickWithRetry(toggle.first(), 1, utils.ConfigReader.getElementRetryDelay());
                 try { page.waitForTimeout(400); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 break;
             }
@@ -709,7 +707,7 @@ public class CreatorScriptsPage extends BasePage {
 
         for (Locator option : optionPatterns) {
             if (option.count() > 0 && safeIsVisible(option.first())) {
-                clickWithRetry(option.first(), 1, POLLING_WAIT);
+                clickWithRetry(option.first(), 1, utils.ConfigReader.getElementRetryDelay());
                 try { page.waitForTimeout(300); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 selected = true;
                 logger.info("Bookmark selected using fallback pattern");
@@ -721,7 +719,7 @@ public class CreatorScriptsPage extends BasePage {
         if (!selected) {
             Locator dropdownItems = page.locator(".ant-select-dropdown:visible li, .bookmark-dropdown:visible li, [class*='dropdown']:visible [class*='item']");
             if (dropdownItems.count() > 0 && safeIsVisible(dropdownItems.first())) {
-                clickWithRetry(dropdownItems.first(), 1, POLLING_WAIT);
+                clickWithRetry(dropdownItems.first(), 1, utils.ConfigReader.getElementRetryDelay());
                 try { page.waitForTimeout(300); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 logger.info("Bookmark selected using generic dropdown item");
             }
@@ -738,7 +736,7 @@ public class CreatorScriptsPage extends BasePage {
         msg.first().fill(message);
         Locator nameTag = page.getByText("/name");
         waitVisible(nameTag.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(nameTag.first(), 1, POLLING_WAIT);
+        clickWithRetry(nameTag.first(), 1, utils.ConfigReader.getElementRetryDelay());
     }
 
     @Step("Set script price to 15€")
@@ -746,7 +744,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator priceLabel = page.locator("label").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^15€$")));
         waitVisible(priceLabel.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(priceLabel.first(), 1, POLLING_WAIT);
+        clickWithRetry(priceLabel.first(), 1, utils.ConfigReader.getElementRetryDelay());
     }
 
     @Step("Set custom script price to {price} via spinbutton")
@@ -754,7 +752,7 @@ public class CreatorScriptsPage extends BasePage {
         // Click current price text
         Locator currentPrice = page.getByText("0.00 €");
         waitVisible(currentPrice.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(currentPrice.first(), 1, POLLING_WAIT);
+        clickWithRetry(currentPrice.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         Locator spin = page.getByRole(AriaRole.SPINBUTTON);
         waitVisible(spin.first(), utils.ConfigReader.getShortTimeout());
@@ -767,7 +765,7 @@ public class CreatorScriptsPage extends BasePage {
         // Toggle promo slider
         Locator slider = page.locator(".promo-slider");
         waitVisible(slider.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(slider.first(), 1, POLLING_WAIT);
+        clickWithRetry(slider.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Discount input (placeholder 0)
         Locator discountInput = page.getByPlaceholder("0").first();
@@ -780,7 +778,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator unlimitedBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Unlimited"));
         waitVisible(unlimitedBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(unlimitedBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(unlimitedBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
     }
 
     @Step("Set script price to 50€")
@@ -788,7 +786,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator priceLabel = page.locator("label").filter(new Locator.FilterOptions()
                 .setHasText(Pattern.compile("^50€$")));
         waitVisible(priceLabel.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(priceLabel.first(), 1, POLLING_WAIT);
+        clickWithRetry(priceLabel.first(), 1, utils.ConfigReader.getElementRetryDelay());
     }
 
     @Step("Enable promo slider with second discount input {discountPercent}% and 7 days validity")
@@ -796,7 +794,7 @@ public class CreatorScriptsPage extends BasePage {
         // Toggle promo slider
         Locator slider = page.locator(".promo-slider");
         waitVisible(slider.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(slider.first(), 1, POLLING_WAIT);
+        clickWithRetry(slider.first(), 1, utils.ConfigReader.getElementRetryDelay());
 
         // Second discount input (nth(1))
         Locator discountInput = page.getByPlaceholder("0").nth(1);
@@ -809,7 +807,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator sevenDaysBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("7 days"));
         waitVisible(sevenDaysBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(sevenDaysBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(sevenDaysBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
     }
 
     @Step("Fill script note")
@@ -1298,13 +1296,13 @@ public class CreatorScriptsPage extends BasePage {
             String ariaSelected = allTab.first().getAttribute("aria-selected");
             if (!"true".equals(ariaSelected)) {
                 logger.info("'All' tab not selected, clicking it");
-                clickWithRetry(allTab.first(), 1, POLLING_WAIT);
+                clickWithRetry(allTab.first(), 1, utils.ConfigReader.getElementRetryDelay());
             } else {
                 logger.info("'All' tab already selected");
             }
         } catch (Throwable e) {
             logger.warn("Could not check tab selection state, clicking anyway: {}", e.getMessage());
-            clickWithRetry(allTab.first(), 1, POLLING_WAIT);
+            clickWithRetry(allTab.first(), 1, utils.ConfigReader.getElementRetryDelay());
         }
     }
 
@@ -1315,7 +1313,7 @@ public class CreatorScriptsPage extends BasePage {
         // Use XPath to find all edit buttons and click the first one
         Locator editButtons = page.locator("//button[@aria-label='edit']");
         waitVisible(editButtons.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(editButtons.first(), 1, POLLING_WAIT);
+        clickWithRetry(editButtons.first(), 1, utils.ConfigReader.getElementRetryDelay());
     }
 
     @Step("Verify edit dialog appears")
@@ -1339,7 +1337,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator changeOrderBtn = page.getByRole(AriaRole.BUTTON, 
             new Page.GetByRoleOptions().setName("Change order"));
         waitVisible(changeOrderBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(changeOrderBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(changeOrderBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
     }
 
     @Step("Verify change order screen appears")
@@ -1357,7 +1355,7 @@ public class CreatorScriptsPage extends BasePage {
         logger.info("Attempting to drag first script to bottom");
         
         // Wait for the list to be fully loaded
-        try { page.waitForTimeout(1000); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(1000); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Get all list items (script rows)
         Locator listItems = page.getByRole(AriaRole.LISTITEM);
@@ -1510,7 +1508,7 @@ public class CreatorScriptsPage extends BasePage {
         logger.info("Clicking Finish button to save order changes");
         Locator finishBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Finish"));
         waitVisible(finishBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(finishBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(finishBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
         logger.info("Finish button clicked");
         
         // Wait for any navigation or UI update
@@ -1558,7 +1556,7 @@ public class CreatorScriptsPage extends BasePage {
         }
         
         waitVisible(editCategoriesBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(editCategoriesBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(editCategoriesBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
         logger.info("Clicked edit-categories button");
     }
 
@@ -1575,7 +1573,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator iUnderstandBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("I understand"));
         waitVisible(iUnderstandBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(iUnderstandBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(iUnderstandBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
         logger.info("Clicked 'I understand' button");
         
         try { page.waitForTimeout(250); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
@@ -1637,7 +1635,7 @@ public class CreatorScriptsPage extends BasePage {
         } catch (Throwable e) {
             logger.warn("Delete dialog did not appear after long press; retrying with click");
             // Try clicking instead
-            clickWithRetry(qaBookmarkTab.first(), 1, POLLING_WAIT);
+            clickWithRetry(qaBookmarkTab.first(), 1, utils.ConfigReader.getElementRetryDelay());
             try { page.waitForTimeout(250); } catch (Throwable e2) { logger.debug("Wait failed: {}", e2.getMessage()); }
             longPressOnBookmarkTab(qaBookmarkTab);
             try {
@@ -1651,7 +1649,7 @@ public class CreatorScriptsPage extends BasePage {
         // Click Delete button
         Locator deleteBtn = page.locator("//button[normalize-space()='Delete']");
         waitVisible(deleteBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(deleteBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(deleteBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
         logger.info("Clicked Delete button");
         
         try { page.waitForTimeout(300); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
@@ -1664,7 +1662,7 @@ public class CreatorScriptsPage extends BasePage {
         // Click Confirm button
         Locator confirmBtn = page.locator("//button[normalize-space()='Confirm']");
         waitVisible(confirmBtn.first(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(confirmBtn.first(), 1, POLLING_WAIT);
+        clickWithRetry(confirmBtn.first(), 1, utils.ConfigReader.getElementRetryDelay());
         logger.info("Clicked Confirm button - bookmark '{}' deleted", bookmarkName);
         
         // Wait for deletion to complete and UI to update

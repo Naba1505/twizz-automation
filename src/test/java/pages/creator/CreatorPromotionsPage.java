@@ -174,19 +174,19 @@ public class CreatorPromotionsPage extends BasePage {
                 try { row.scrollIntoViewIfNeeded(); } catch (Throwable e) { log.debug("Scroll failed: {}", e.getMessage()); }
                 log.info("Deleting an 'AUTOMATION' promo; remaining before delete: {}", beforeCount);
                 clickWithRetry(row, 1, ConfigReader.getElementRetryDelay());
-                page.waitForTimeout(ConfigReader.getElementRetryDelay());
 
-                // Click Delete button inside promo details (if present)
+                // Wait for promo details page to load, then click Delete button
                 try {
-                    if (deletePromoButton().isVisible()) {
-                        clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
-                        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-                    }
-                } catch (Throwable e) { log.debug("Delete button check failed: {}", e.getMessage()); }
+                    waitVisible(deletePromoButton(), LONG_TIMEOUT);
+                    clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                } catch (Throwable e) { log.debug("Delete button not found/clicked: {}", e.getMessage()); }
 
                 // Confirm delete
-                waitVisible(yesDeleteButton(), SHORT_TIMEOUT);
-                clickWithRetry(yesDeleteButton(), 1, ConfigReader.getElementRetryDelay());
+                waitVisible(yesDeleteButton(), LONG_TIMEOUT);
+                try {
+                    yesDeleteButton().first().click(new com.microsoft.playwright.Locator.ClickOptions().setTimeout(LONG_TIMEOUT));
+                } catch (Throwable e) { log.debug("Yes-delete click failed: {}", e.getMessage()); }
 
                 // Wait for the count to decrease or the row to detach
                 long startWait = System.currentTimeMillis();
@@ -256,18 +256,18 @@ public class CreatorPromotionsPage extends BasePage {
                     waitVisible(row, SHORT_TIMEOUT);
                     try { row.scrollIntoViewIfNeeded(); } catch (Throwable e) { log.debug("Scroll failed: {}", e.getMessage()); }
                     clickWithRetry(row, 1, ConfigReader.getElementRetryDelay());
-                    page.waitForTimeout(ConfigReader.getElementRetryDelay());
 
-                    // Click Delete button inside promo details (if present)
+                    // Wait for promo details page to load, then click Delete button
                     try {
-                        if (deletePromoButton().isVisible()) {
-                            clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
-                            page.waitForTimeout(ConfigReader.getAnimationTimeout());
-                        }
-                    } catch (Throwable e) { log.debug("Delete button check failed: {}", e.getMessage()); }
+                        waitVisible(deletePromoButton(), LONG_TIMEOUT);
+                        clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
+                        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                    } catch (Throwable e) { log.debug("Delete button not found/clicked: {}", e.getMessage()); }
 
-                    waitVisible(yesDeleteButton(), SHORT_TIMEOUT);
-                    clickWithRetry(yesDeleteButton(), 1, ConfigReader.getElementRetryDelay());
+                    waitVisible(yesDeleteButton(), LONG_TIMEOUT);
+                    try {
+                        yesDeleteButton().first().click(new com.microsoft.playwright.Locator.ClickOptions().setTimeout(LONG_TIMEOUT));
+                    } catch (Throwable e) { log.debug("Yes-delete click failed: {}", e.getMessage()); }
 
                     // Toast handling: only assert when it becomes last
                     int after;
