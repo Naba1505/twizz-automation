@@ -147,13 +147,14 @@ public class CreatorLoginPage extends BasePage {
         try {
             waitVisible(plusImg, ConfigReader.getVisibilityTimeout());
             visible = true;
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            logger.debug("Plus icon wait failed, trying URL check: {}", e.getMessage());
             // Strategy 3: Check URL pattern
             try { 
                 page.waitForURL("**/creator/**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout())); 
                 visible = true; 
-            } catch (Exception e) { 
-                logger.debug("URL check failed, using fallback");
+            } catch (Exception e2) { 
+                logger.debug("URL check failed, using fallback: {}", e2.getMessage());
             }
         }
         
