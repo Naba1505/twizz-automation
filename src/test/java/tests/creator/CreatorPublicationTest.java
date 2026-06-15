@@ -12,15 +12,15 @@ import utils.ConfigReader;
  */
 public class CreatorPublicationTest extends BaseCreatorTest {
 
+    private static final long TOAST_WAIT_MS = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "2000"));
+
     @Test(priority = 1, description = "Publish video with blurred media enabled")
     public void testPublishVideoBlurred() {
         PublicationData data = PublicationData.videoBlurred();
         CreatorPublicationPage pub = new CreatorPublicationPage(page);
         
         pub.completePublicationFlow(data.mediaPath, data.caption, data.blurEnabled);
-        
-        long toastWait = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "2000"));
-        Assert.assertTrue(pub.waitForSuccessToast(toastWait), 
+        Assert.assertTrue(pub.waitForSuccessToast(TOAST_WAIT_MS),
             "Success toast not visible after publishing " + data.mediaType);
     }
 
@@ -28,11 +28,8 @@ public class CreatorPublicationTest extends BaseCreatorTest {
     public void testPublishVideoUnblurred() {
         PublicationData data = PublicationData.videoUnblurred();
         CreatorPublicationPage pub = new CreatorPublicationPage(page);
-        
         pub.completePublicationFlow(data.mediaPath, data.caption, data.blurEnabled);
-        
-        long toastWait = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "2000"));
-        Assert.assertTrue(pub.waitForSuccessToast(toastWait), 
+        Assert.assertTrue(pub.waitForSuccessToast(TOAST_WAIT_MS),
             "Success toast not visible after publishing " + data.mediaType);
     }
 
@@ -40,11 +37,8 @@ public class CreatorPublicationTest extends BaseCreatorTest {
     public void testPublishImageBlurred() {
         PublicationData data = PublicationData.imageBlurred();
         CreatorPublicationPage pub = new CreatorPublicationPage(page);
-        
         pub.completePublicationFlow(data.mediaPath, data.caption, data.blurEnabled);
-        
-        long toastWait = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "2000"));
-        Assert.assertTrue(pub.waitForSuccessToast(toastWait), 
+        Assert.assertTrue(pub.waitForSuccessToast(TOAST_WAIT_MS),
             "Success toast not visible after publishing " + data.mediaType);
     }
 
@@ -52,11 +46,8 @@ public class CreatorPublicationTest extends BaseCreatorTest {
     public void testPublishImageUnblurred() {
         PublicationData data = PublicationData.imageUnblurred();
         CreatorPublicationPage pub = new CreatorPublicationPage(page);
-        
         pub.completePublicationFlow(data.mediaPath, data.caption, data.blurEnabled);
-        
-        long toastWait = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "2000"));
-        Assert.assertTrue(pub.waitForSuccessToast(toastWait), 
+        Assert.assertTrue(pub.waitForSuccessToast(TOAST_WAIT_MS),
             "Success toast not visible after publishing " + data.mediaType);
     }
 }

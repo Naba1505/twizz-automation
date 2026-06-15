@@ -424,7 +424,7 @@ private void confirmDeletionPopup() {
       // Wait for list to load: try multiple selectors with increased timeout
       long start = System.currentTimeMillis();
       boolean anyPresent = false;
-      while (System.currentTimeMillis() - start < 10000) {
+      while (System.currentTimeMillis() - start < ConfigReader.getDefaultTimeout()) {
         int dots = page.locator(".dots-wrapper").count();
         int dotsImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).count();
         int posts = page.locator(".fanProfilePost").count();
@@ -480,12 +480,6 @@ private void confirmDeletionPopup() {
         clickCaptionOk();
         setBlurEnabled(blurEnabled);
         publish();
-        // Optimized: reduced toast wait from 6000ms to 2000ms for faster execution
-        long toastWait = Long.parseLong(ConfigReader.getProperty("publication.toast.wait.ms", "2000"));
-        boolean success = waitForSuccessToast(toastWait);
-        if (!success) {
-            logger.warn("Success toast not detected within {} ms; exiting composer anyway", toastWait);
-        }
         forceExitComposer();
     }
 }
