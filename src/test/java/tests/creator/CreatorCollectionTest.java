@@ -146,9 +146,10 @@ public class CreatorCollectionTest extends BaseCreatorTest {
             coll.setPriceEuro(data.priceEuro);
         }
 
-        logger.info("[CustomPrice] Validating collection and waiting for upload to finish (up to 5 minutes)");
+        logger.info("[CustomPrice] Validating collection and waiting for upload to finish");
         coll.validateCollection();
-        coll.waitForUploadFinish(300000);
+        long uploadTimeout = Long.parseLong(utils.ConfigReader.getProperty("collection.upload.timeout.ms", "180000"));
+        coll.waitForUploadFinish(uploadTimeout);
         try {
             coll.assertCollectionCreatedToast();
         } catch (Throwable t) {

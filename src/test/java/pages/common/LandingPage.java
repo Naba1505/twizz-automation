@@ -1,15 +1,17 @@
 package pages.common;
 
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import utils.ConfigReader;
 
 public class LandingPage extends BasePage {
 
-    private final String twizzLogo = "role=img[name='Twizz']";
-    private final String creatorRegistrationButton = "role=button[name='Creator']";
-    private final String fansRegistrationButton = "role=button[name='Fans']";
-    private final String loginButton = "text='Login'";
+    private static final String TWIZZ_LOGO_NAME = "Twizz";
+    private static final String CREATOR_BTN_NAME = "Creator";
+    private static final String FANS_BTN_NAME = "Fans";
+    private static final String LOGIN_BTN_TEXT = "Login";
 
     public LandingPage(Page page) {
         super(page);
@@ -18,39 +20,47 @@ public class LandingPage extends BasePage {
     public void navigate() {
         String landingPageUrl = ConfigReader.getLandingPageUrl();
         page.navigate(landingPageUrl);
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getDefaultTimeout()));
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
         logger.info("Navigated to landing page: {}", landingPageUrl);
     }
 
     public void waitForPageToLoad() {
-        page.waitForSelector(twizzLogo, new Page.WaitForSelectorOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(TWIZZ_LOGO_NAME));
+        logo.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         logger.info("Landing page loaded successfully.");
     }
 
     public boolean isTwizzLogoVisible() {
-        boolean isVisible = page.isVisible(twizzLogo);
+        Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(TWIZZ_LOGO_NAME));
+        try {
+            logo.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getShortTimeout()));
+        } catch (Exception e) { logger.debug("Logo wait failed: {}", e.getMessage()); }
+        boolean isVisible = logo.isVisible();
         logger.info("Twizz logo visibility: {}", isVisible);
         return isVisible;
     }
 
     public void clickCreatorRegistrationButton() {
-        page.click(creatorRegistrationButton);
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATOR_BTN_NAME)).first();
+        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        btn.click();
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
         logger.info("Clicked on Creator Registration button.");
     }
 
     public void clickFansRegistrationButton() {
-        page.click(fansRegistrationButton);
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(FANS_BTN_NAME)).first();
+        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        btn.click();
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
         logger.info("Clicked on Fans Registration button.");
     }
 
     public void clickLoginButton() {
-        page.waitForSelector(loginButton, new Page.WaitForSelectorOptions()
-            .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
-            .setTimeout(ConfigReader.getVisibilityTimeout()));
-        page.click(loginButton);
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(LOGIN_BTN_TEXT)).first();
+        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        btn.click();
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
         logger.info("Clicked on Login button.");
     }
 
