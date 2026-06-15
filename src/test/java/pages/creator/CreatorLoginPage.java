@@ -30,8 +30,8 @@ public class CreatorLoginPage extends BasePage {
         int maxRetries = 3;
         for (int i = 0; i < maxRetries; i++) {
             try {
-                page.navigate(url, new Page.NavigateOptions().setTimeout(60000)); // 60s timeout
-                page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(30000));
+                page.navigate(url, new Page.NavigateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
+                page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getDefaultTimeout()));
                 logger.info("Navigated to Creator Login page: {}", url);
                 return;
             } catch (Exception e) {
@@ -100,43 +100,27 @@ public class CreatorLoginPage extends BasePage {
         Locator user = page.getByPlaceholder(usernamePlaceholder);
         Locator pass = page.getByPlaceholder(passwordPlaceholder);
         
-        // Use full visibility timeout and ensure fields are ready
+        // Wait for fields to be visible and interactive
         waitVisible(user, ConfigReader.getVisibilityTimeout());
         waitVisible(pass, ConfigReader.getVisibilityTimeout());
-        
-        // Wait for fields to be enabled (not disabled/readonly)
-        user.waitFor(new Locator.WaitForOptions()
-            .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
-            .setTimeout(ConfigReader.getVisibilityTimeout()));
-        pass.waitFor(new Locator.WaitForOptions()
-            .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
-            .setTimeout(ConfigReader.getVisibilityTimeout()));
-        
-        // Small stabilization wait to ensure fields are fully interactive
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        
-        // Fill username with proper clearing and slower typing
+
+        // Fill username
         try {
             user.click();
-            user.fill(""); // Clear first
-            user.pressSequentially(username, new Locator.PressSequentiallyOptions().setDelay(50)); // Type with 50ms delay between keys
+            user.fill(username);
         } catch (Exception e) {
             logger.warn("Username fill failed, using fallback: {}", e.getMessage());
             fillByPlaceholder(usernamePlaceholder, username);
         }
-        
-        // Fill password with proper clearing and slower typing
+
+        // Fill password
         try {
             pass.click();
-            pass.fill(""); // Clear first
-            pass.pressSequentially(password, new Locator.PressSequentiallyOptions().setDelay(50)); // Type with 50ms delay between keys
+            pass.fill(password);
         } catch (Exception e) {
             logger.warn("Password fill failed, using fallback: {}", e.getMessage());
             fillByPlaceholder(passwordPlaceholder, password);
         }
-        
-        // Final stabilization before clicking connect
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
 
         // Click Connect with robust wait and retry
         Locator connect = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true));
@@ -175,9 +159,9 @@ public class CreatorLoginPage extends BasePage {
         
         if (!visible) {
             // Final fallback: at least wait for DOM
-            try { 
-                page.waitForLoadState(LoadState.DOMCONTENTLOADED); 
-            } catch (Exception ignored) {}
+            try {
+                page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+            } catch (Exception e) { logger.debug("DOM load fallback failed: {}", e.getMessage()); }
         }
         
         // Additional stabilization wait to ensure page is fully settled
