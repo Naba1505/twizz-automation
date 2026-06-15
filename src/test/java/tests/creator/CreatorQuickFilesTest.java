@@ -77,11 +77,7 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         Assert.assertNotNull(albumName, "Album name should not be null");
         Assert.assertTrue(albumName.startsWith(data.albumPrefix), "Album name should start with prefix");
 
-        try {
-            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
-        } catch (Exception e) {
-            logger.debug("UI settle wait failed: {}", e.getMessage());
-        }
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
         settings.navigateBackToProfile(2);
     }
 
@@ -104,11 +100,7 @@ public class CreatorQuickFilesTest extends BaseCreatorTest {
         Assert.assertNotNull(albumName, "Album name should not be null");
         Assert.assertTrue(albumName.startsWith(data.albumPrefix), "Album name should start with prefix");
 
-        try {
-            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
-        } catch (Exception e) {
-            logger.debug("UI settle wait failed: {}", e.getMessage());
-        }
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
         settings.navigateBackToProfile(2);
     }
 }

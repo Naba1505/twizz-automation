@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class CreatorSettingsPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorSettingsPage.class);
-    private static final int LONG_WAIT = ConfigReader.getMediumTimeout(); // for heavy pages/uploads
+    private static final int LONG_WAIT = ConfigReader.getMediumTimeout();
     
     // All timeouts now use ConfigReader for consistency
     private static final int GUARD_LIMIT = 100;          // Loop guard limit
@@ -88,7 +88,7 @@ public class CreatorSettingsPage extends BasePage {
                     log.info("Settings page detected via title, url={}", page.url());
                     return;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) { log.debug("Settings title check failed: {}", e.getMessage()); }
             
             // Fallback: try to match URL pattern
             String currentUrl = page.url();
@@ -136,7 +136,7 @@ public class CreatorSettingsPage extends BasePage {
                     log.info("Quick Files page detected via title, url={}", page.url());
                     return;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) { log.debug("Quick Files title check failed: {}", e.getMessage()); }
             
             // Fallback: try to match URL pattern
             String currentUrl = page.url();
@@ -766,19 +766,18 @@ public class CreatorSettingsPage extends BasePage {
         // Optionally choose to stay on page during uploading if the prompt appears
         Locator stay = page.getByText("Stay on page during uploading");
         try {
-            stay.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(5_000));
+            stay.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getShortTimeout()));
             stay.click();
             log.info("Clicked 'Stay on page during uploading'.");
         } catch (RuntimeException e) {
-            log.info("'Stay on page during uploading' prompt not shown within 5s; continuing without it.");
+            log.info("'Stay on page during uploading' prompt not shown; continuing without it.");
         }
-        // Try to observe helper text briefly; do not fail if absent
         try {
             page.getByText("Files with a large size will take some time to be ready").waitFor(
-                    new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(5_000));
+                    new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getShortTimeout()));
             log.info("Upload helper text visible.");
-        } catch (RuntimeException ignored) {
-            log.info("Upload helper text not visible within 5s; proceeding.");
+        } catch (RuntimeException e) {
+            log.info("Upload helper text not visible; proceeding.");
         }
         // Allow the page to settle and handle cases where the app closes the page or navigates
         try {
@@ -820,8 +819,8 @@ public class CreatorSettingsPage extends BasePage {
     private void waitForUrlContains(String expected) {
         log.info("Waiting for URL to contain: {}", expected);
         try {
-            // Use a longer timeout for URL navigation
-            int urlTimeout = ConfigReader.getMediumTimeout(); // Use 30s instead of 10s
+            // Use medium timeout for URL navigation
+            int urlTimeout = ConfigReader.getMediumTimeout();
             log.info("Using URL timeout: {}ms", urlTimeout);
             
             // Try exact match first, then fallback to contains
@@ -894,26 +893,12 @@ public class CreatorSettingsPage extends BasePage {
         openSettingsFromProfile();
         openQuickFiles();
 
-        // Start new album via plus icon (IMG preferred, then BUTTON)
-        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
-        if (plusImg.count() > 0) {
-            log.info("Found plus as IMG (count={}), clicking", plusImg.count());
-            clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
-        } else {
-            Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
-            if (plusBtn.count() == 0) {
-                throw new IllegalStateException("Plus trigger not found for creating audio album");
-            }
-            log.info("IMG plus not found; clicking BUTTON plus (count={})", plusBtn.count());
-            clickWithRetry(plusBtn.first(), 2, ConfigReader.getElementRetryDelay());
-        }
+        clickPlusForNewAlbum();
 
-        // Ensure we are on the type selection / new album screen
         waitVisible(page.getByText(NEW_ALBUM_TITLE), DEFAULT_WAIT);
         Locator typeTitle = page.getByText("What type of album do you");
         waitVisible(typeTitle.first(), DEFAULT_WAIT);
 
-        // Select Audios type and continue
         Locator audiosBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Audios"));
         waitVisible(audiosBtn.first(), DEFAULT_WAIT);
         clickWithRetry(audiosBtn.first(), 2, ConfigReader.getElementRetryDelay());
@@ -921,7 +906,6 @@ public class CreatorSettingsPage extends BasePage {
         waitVisible(continueBtnType.first(), DEFAULT_WAIT);
         clickWithRetry(continueBtnType.first(), 2, ConfigReader.getElementRetryDelay());
 
-        // Album name screen
         Locator nameTitle = page.getByText("Give your album a name");
         waitVisible(nameTitle.first(), DEFAULT_WAIT);
         Locator nameTextbox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("My name"));
@@ -934,7 +918,6 @@ public class CreatorSettingsPage extends BasePage {
         waitVisible(continueBtnName.first(), DEFAULT_WAIT);
         clickWithRetry(continueBtnName.first(), 2, ConfigReader.getElementRetryDelay());
 
-        // Audio import screen
         Locator importMsg = page.getByText("Import or record an audio by");
         waitVisible(importMsg.first(), DEFAULT_WAIT);
 
@@ -988,26 +971,12 @@ public class CreatorSettingsPage extends BasePage {
         openSettingsFromProfile();
         openQuickFiles();
 
-        // Start new album via plus icon (reuse logic similar to createAudioAlbum)
-        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
-        if (plusImg.count() > 0) {
-            log.info("Found plus as IMG (count={}), clicking", plusImg.count());
-            clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
-        } else {
-            Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
-            if (plusBtn.count() == 0) {
-                throw new IllegalStateException("Plus trigger not found for creating audio recording album");
-            }
-            log.info("IMG plus not found; clicking BUTTON plus (count={})", plusBtn.count());
-            clickWithRetry(plusBtn.first(), 2, ConfigReader.getElementRetryDelay());
-        }
+        clickPlusForNewAlbum();
 
-        // Ensure we are on the type selection / new album screen
         waitVisible(page.getByText(NEW_ALBUM_TITLE), DEFAULT_WAIT);
         Locator typeTitle = page.getByText("What type of album do you");
         waitVisible(typeTitle.first(), DEFAULT_WAIT);
 
-        // Select Audios type and continue
         Locator audiosBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Audios"));
         waitVisible(audiosBtn.first(), DEFAULT_WAIT);
         clickWithRetry(audiosBtn.first(), 2, ConfigReader.getElementRetryDelay());
@@ -1015,7 +984,6 @@ public class CreatorSettingsPage extends BasePage {
         waitVisible(continueBtnType.first(), DEFAULT_WAIT);
         clickWithRetry(continueBtnType.first(), 2, ConfigReader.getElementRetryDelay());
 
-        // Album name screen
         Locator nameTitle = page.getByText("Give your album a name");
         waitVisible(nameTitle.first(), DEFAULT_WAIT);
         Locator nameTextbox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("My name"));
@@ -1028,7 +996,6 @@ public class CreatorSettingsPage extends BasePage {
         waitVisible(continueBtnName.first(), DEFAULT_WAIT);
         clickWithRetry(continueBtnName.first(), 2, ConfigReader.getElementRetryDelay());
 
-        // Audio record screen
         Locator importMsg = page.getByText("Import or record an audio by");
         waitVisible(importMsg.first(), DEFAULT_WAIT);
 
@@ -1067,17 +1034,32 @@ public class CreatorSettingsPage extends BasePage {
         // Pause and confirm
         Locator pause = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Pause"));
         waitVisible(pause.first(), DEFAULT_WAIT);
-        clickWithRetry(pause.first(), 1, 200);
+        clickWithRetry(pause.first(), 1, ConfigReader.getElementRetryDelay());
 
         Locator confirm = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
         waitVisible(confirm.first(), DEFAULT_WAIT);
-        clickWithRetry(confirm.first(), 1, 200);
+        clickWithRetry(confirm.first(), 1, ConfigReader.getElementRetryDelay());
 
         // Wait for success toast/text
         Locator success = page.getByText(AUDIO_SUCCESS_TEXT);
         waitVisible(success.first(), LONG_WAIT);
         log.info("Audio-recording upload success message visible: '{}' for album '{}'", AUDIO_SUCCESS_TEXT, uniqueAlbumName);
         return uniqueAlbumName;
+    }
+
+    private void clickPlusForNewAlbum() {
+        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
+        if (plusImg.count() > 0) {
+            log.info("Found plus as IMG (count={}), clicking", plusImg.count());
+            clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
+        } else {
+            Locator plusBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PLUS_ICON_NAME));
+            if (plusBtn.count() == 0) {
+                throw new IllegalStateException("Plus trigger not found for creating album");
+            }
+            log.info("IMG plus not found; clicking BUTTON plus (count={})", plusBtn.count());
+            clickWithRetry(plusBtn.first(), 2, ConfigReader.getElementRetryDelay());
+        }
     }
 
     // Convenience helper to build Paths from resource-relative strings
