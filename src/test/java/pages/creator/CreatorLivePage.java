@@ -154,7 +154,7 @@ public class CreatorLivePage extends BasePage {
                 firstImg.scrollIntoViewIfNeeded();
                 firstImg.hover();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Hover on live card failed: {}", e.getMessage()); }
 
         // Strategy 1: direct button named "Edit"
         Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN));
@@ -164,7 +164,7 @@ public class CreatorLivePage extends BasePage {
                 clickWithRetry(editBtn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked Edit via BUTTON locator");
                 return;
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Edit BUTTON strategy failed: {}", e.getMessage()); }
         }
 
         // Strategy 2: link named "Edit"
@@ -175,7 +175,7 @@ public class CreatorLivePage extends BasePage {
                 clickWithRetry(editLink.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked Edit via LINK locator");
                 return;
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Edit LINK strategy failed: {}", e.getMessage()); }
         }
 
         // Strategy 3: menu item named "Edit" (if actions are under a menu)
@@ -187,7 +187,7 @@ public class CreatorLivePage extends BasePage {
                 logger.info("Clicked Edit via MENUITEM locator");
                 return;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Edit MENUITEM strategy failed: {}", e.getMessage()); }
 
         // Strategy 4: visible text "Edit" scoped under an open dropdown/menu/dialog
         try {
@@ -198,7 +198,7 @@ public class CreatorLivePage extends BasePage {
                 logger.info("Clicked Edit via visible text fallback");
                 return;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Edit popup text strategy failed: {}", e.getMessage()); }
 
         // As a last attempt, try clicking any visible 'Edit' text on the page
         try {
@@ -208,7 +208,7 @@ public class CreatorLivePage extends BasePage {
                 logger.info("Clicked Edit via global text fallback");
                 return;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Edit global text strategy failed: {}", e.getMessage()); }
 
         // If all strategies fail, log a warning for non-fatal cleanup skip
         logger.warn("Unable to locate clickable 'Edit' action for live event after multiple strategies");
@@ -486,7 +486,7 @@ public class CreatorLivePage extends BasePage {
 
         // If a date dropdown is still open, close it to avoid overlay blocking time dropdown
         if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
-            try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
+            try { page.keyboard().press("Escape"); } catch (Exception e) { logger.debug("Escape key failed: {}", e.getMessage()); }
             page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
 
@@ -494,13 +494,11 @@ public class CreatorLivePage extends BasePage {
         boolean opened = false;
         try {
             Locator dateInput = page.getByPlaceholder(DATE_PLACEHOLDER).first();
-            // First try: the next ant-select after the Date form item
             Locator timeSelector = dateInput.locator("xpath=ancestor::div[contains(@class,'ant-form-item')][1]//following::div[contains(@class,'ant-select')][1]//div[contains(@class,'ant-select-selector')]");
             if (timeSelector.count() > 0) {
                 timeSelector.first().click();
                 opened = true;
             }
-            // Second try: any visible select selector on the page
             if (!opened) {
                 Locator anySelector = page.locator(".ant-select-selector");
                 if (anySelector.count() > 0) {
@@ -508,7 +506,7 @@ public class CreatorLivePage extends BasePage {
                     opened = true;
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("Time selector open failed: {}", e.getMessage()); }
         if (!opened) {
             logger.warn("Time dropdown not found via relative selector; clicking Date field to reveal");
             page.getByPlaceholder(DATE_PLACEHOLDER).click();
@@ -721,7 +719,7 @@ public class CreatorLivePage extends BasePage {
         // Fallback: click the upload button to trigger file chooser
         if (btn.count() > 0) {
             try {
-                page.waitForFileChooser(() -> clickWithRetry(btn.first(), 2, 200)).setFiles(imagePath);
+                page.waitForFileChooser(() -> clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay())).setFiles(imagePath);
                 try {
                     Allure.addAttachment("Coverage image", Files.newInputStream(imagePath));
                 } catch (IOException ignored) {
@@ -766,12 +764,10 @@ public class CreatorLivePage extends BasePage {
 
     @Step("Submit and verify success")
     public void submitAndVerify() {
-        // Wait for Register to become enabled
-        waitUntilRegisterEnabled(20000);
+        waitUntilRegisterEnabled(ConfigReader.getDefaultTimeout());
         Locator reg = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(REGISTER_BTN));
-        // Extra guard: scroll into view and click with retry
         reg.scrollIntoViewIfNeeded();
-        clickWithRetry(reg.first(), 3, 250);
+        clickWithRetry(reg.first(), 3, ConfigReader.getElementRetryDelay());
         // Wait for success
         waitVisible(page.getByText(SUCCESS_TOAST), ConfigReader.getVisibilityTimeout());
         Locator firstImg = page.locator(".ant-col > img").first();
@@ -793,7 +789,7 @@ public class CreatorLivePage extends BasePage {
     public void clickRegister() {
         Locator registerBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(REGISTER_BTN));
         waitVisible(registerBtn.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(registerBtn.first(), 2, 200);
+        clickWithRetry(registerBtn.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("Clicked Register button");
     }
 
@@ -853,7 +849,7 @@ public class CreatorLivePage extends BasePage {
     public void clickCloseLive() {
         Locator closeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("close"));
         waitVisible(closeIcon.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(closeIcon.first(), 2, 200);
+        clickWithRetry(closeIcon.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("Clicked close button to end live");
     }
 
@@ -868,7 +864,7 @@ public class CreatorLivePage extends BasePage {
     public void confirmEndLive() {
         Locator yesEndBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, end the live"));
         waitVisible(yesEndBtn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(yesEndBtn.first(), 2, 200);
+        clickWithRetry(yesEndBtn.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("Confirmed end live");
     }
 
