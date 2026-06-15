@@ -8,8 +8,6 @@ public class LandingPageTest extends BaseTestClass {
 
     @Test(priority = 1, description = "Verify landing page loads and logo is visible")
     public void testLandingPageLoad() {
-        landingPage.navigate();
-        landingPage.waitForPageToLoad();
         Assert.assertTrue(landingPage.isTwizzLogoVisible(), "Twizz logo is not visible on the landing page.");
     }
 

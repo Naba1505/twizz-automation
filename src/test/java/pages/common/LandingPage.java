@@ -46,31 +46,32 @@ public class LandingPage extends BasePage {
     }
 
     public void clickLoginButton() {
-        // Wait for login button to be visible and clickable
         page.waitForSelector(loginButton, new Page.WaitForSelectorOptions()
             .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
             .setTimeout(ConfigReader.getVisibilityTimeout()));
-        
-        // Use configurable animation timeout instead of hardcoded value
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        
         page.click(loginButton);
-        
-        // Wait for navigation to complete
         page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        
         logger.info("Clicked on Login button.");
     }
 
     public boolean isOnCreatorRegistrationPage() {
+        try {
+            page.waitForURL("**/auth/signUp**currentTab=creator**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
+        } catch (Exception e) { logger.debug("URL wait failed: {}", e.getMessage()); }
         return page.url().contains("/auth/signUp?currentTab=creator");
     }
 
     public boolean isOnFanRegistrationPage() {
+        try {
+            page.waitForURL("**/auth/signUp**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
+        } catch (Exception e) { logger.debug("URL wait failed: {}", e.getMessage()); }
         return page.url().contains("/auth/signUp") && !page.url().contains("currentTab=creator");
     }
 
     public boolean isOnLoginPage() {
+        try {
+            page.waitForURL("**/auth/signIn**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
+        } catch (Exception e) { logger.debug("URL wait failed: {}", e.getMessage()); }
         return page.url().contains("/auth/signIn");
     }
 }
