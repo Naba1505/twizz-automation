@@ -12,6 +12,7 @@ import org.testng.SkipException;
 import org.testng.annotations.Test;
 import pages.creator.CreatorMediaPushPage;
 import testdata.MediaPushData;
+import utils.ConfigReader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,10 +28,8 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         return Paths.get(projectDir).resolve(Paths.get(first, more));
     }
 
-    // Timeout constants for limiter popup handling - optimized for faster execution
-    private static final int LIMITER_POLL_DELAY = 100;  // Reduced from 200ms
-    private static final int LIMITER_RETRY_DELAY = 150;  // Reduced from 250ms
-    private static final int LIMITER_MAX_ITERATIONS = 20; // Reduced from 25 (~2 seconds @ 100ms)
+    // Timeout constants for limiter popup handling - using ConfigReader for consistency
+    private static final int LIMITER_MAX_ITERATIONS = 20; // ~4 seconds @ 200ms default
 
     // Helper method for common media push flow
     private void executeMediaPushFlow(String testName, MediaPushData.TestScenario scenario) {
@@ -144,12 +143,10 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
                 boolean btnVisible = false;
                 try {
                     msgVisible = msg.isVisible();
-                } catch (Exception ignored) {
-                }
+                } catch (Exception e) { logger.debug("Visibility check failed: {}", e.getMessage()); }
                 try {
                     btnVisible = btn.isVisible();
-                } catch (Exception ignored) {
-                }
+                } catch (Exception e) { logger.debug("Visibility check failed: {}", e.getMessage()); }
 
                 if (msgVisible || btnVisible) {
                     logger.info("[PostPropose] Limiter popup/button detected - clicking 'I understand' and ending test");
@@ -157,16 +154,15 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
                         btn.click();
                     } catch (Exception clickErr) {
                         // Retry once if stale timing
-                        page.waitForTimeout(LIMITER_RETRY_DELAY);
+                        page.waitForTimeout(ConfigReader.getElementRetryDelay());
                         btn.click();
                     }
                     return true;
                 }
-                page.waitForTimeout(LIMITER_POLL_DELAY);
+                page.waitForTimeout(ConfigReader.getElementRetryDelay());
             }
-        } catch (Exception ignored) {
-            // Ignore and fall through
-        }
+        } catch (Exception e) { logger.debug("Limiter handling failed: {}", e.getMessage()); }
+        // fall through
 
         return false;
     }
@@ -469,8 +465,7 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.chooseMyDevice();
         mp.uploadMediaFromDevice(img);
         mp.ensureBlurToggleEnabled();
-        Page p = this.page;
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).click();
+        mp.clickNext();
 
         Path vid = resourcePath("src", "test", "resources", "Videos", "MediaVideoA.mp4");
         if (!Files.exists(vid)) throw new SkipException("Missing test asset: " + vid);
@@ -480,7 +475,7 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.chooseMyDevice();
         mp.uploadMediaFromDevice(vid);
         mp.ensureBlurToggleEnabled();
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).click();
+        mp.clickNext();
 
         logger.info("[MediaPushInterested] Filling message and setting price 15€");
         mp.ensureMessageTitle();
@@ -1073,10 +1068,9 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.enablePromotionToggle();
         mp.ensureDiscountVisible();
 
-        Page p = this.page;
-        p.getByRole(AriaRole.TEXTBOX).nth(1).click();
-        p.getByRole(AriaRole.TEXTBOX).nth(1).fill("10");
-        p.locator("label").filter(new Locator.FilterOptions().setHasText("Unlimited")).click();
+        mp.openDiscountPercentField();
+        mp.fillDiscountPercent(10);
+        mp.selectValidityUnlimited();
 
         logger.info("[MediaPushPromoMulti] Proposing push media and asserting Messaging screen");
         mp.clickProposePushMedia();
@@ -1110,53 +1104,8 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
         mp.ensureImportation();
         mp.chooseQuickFiles();
 
-        Page p = this.page;
-
-        // Ensure we are on My albums screen and default filter is selected
-        p.getByText("My albums").first().waitFor();
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Selected Photos & videos")).first().waitFor();
-
-        // Click the Quick Files album whose name starts with "icon mixalbum"
-        Locator albumBtn = p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
-                .setName(java.util.regex.Pattern.compile("^icon\\s+mixalbum", java.util.regex.Pattern.CASE_INSENSITIVE)));
-
-        long start = System.currentTimeMillis();
-        long timeoutMs = 10_000;
-        while (albumBtn.count() == 0 && System.currentTimeMillis() - start < timeoutMs) {
-            try { p.waitForTimeout(LIMITER_RETRY_DELAY); } catch (Exception ignored) {}
-        }
-        if (albumBtn.count() == 0) {
-            throw new SkipException("Quick Files album starting with 'icon mixalbum' not found; skipping test");
-        }
-        albumBtn.first().click();
-
-        // Ensure we are inside the album ("Select media" title visible)
-        p.getByText("Select media").first().waitFor();
-
-        // Select all files in the album (6 items) by clicking the IMG role with name "select"
-        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).first().click();
-        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(1).click();
-        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(2).click();
-        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(3).click();
-        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(4).click();
-        p.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select")).nth(5).click();
-
-        // Confirm the selection with the "Select (6)" button
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select (6)")).click();
-
-        // Click Next until all files are confirmed
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).first().click();
-        p.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).click();
-
-        // Fill the message and choose the 30€ price
-        p.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Your message....")).click();
-        p.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Your message....")).fill("QA Test ");
-        p.getByText("/name").click();
-        p.locator("label").filter(new Locator.FilterOptions().setHasText("30€")).click();
+        // Use page object for Quick Files selection
+        mp.selectQuickFilesAlbumAndMedia();
         mp.ensureAddPromotionDisabled();
 
         logger.info("[MediaPushQuickFiles] Proposing push media and asserting Messaging screen");

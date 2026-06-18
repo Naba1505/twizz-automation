@@ -60,9 +60,10 @@ public class CreatorMediaPushPage extends BasePage {
         page.waitForTimeout(ConfigReader.getAnimationTimeout());
 
         Locator svg = plusImg.locator("svg");
-        if (svg.count() > 0 && svg.first().isVisible()) {
+        try {
+            waitVisible(svg.first(), ConfigReader.getShortTimeout());
             clickWithRetry(svg.first(), 2, ConfigReader.getElementRetryDelay());
-        } else {
+        } catch (Exception e) {
             clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
         }
     }
@@ -135,10 +136,8 @@ public class CreatorMediaPushPage extends BasePage {
         
         // Try multiple selector strategies for "Subscribers"
         Locator[] subscriberLocators = {
-            page.getByText(SUBSCRIBERS),
+            page.getByText(SUBSCRIBERS, new Page.GetByTextOptions().setExact(true)),
             page.getByText(SUBSCRIBERS, new Page.GetByTextOptions().setExact(false)),
-            page.locator("text=Subscribers"),
-            page.locator("*:has-text('Subscribers')"),
             page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBSCRIBERS)),
             page.getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName(SUBSCRIBERS))
         };
@@ -238,15 +237,13 @@ public class CreatorMediaPushPage extends BasePage {
     public boolean isInterestedRateLimitPopupVisible() {
         try {
             // Check for the rate limit message: "You can send to interested"
-            Locator popup = page.getByText("You can send to interested");
-            if (popup.count() > 0 && popup.first().isVisible()) {
-                logger.info("Interested segment rate limit popup detected - this is expected behavior");
-                return true;
-            }
+            waitVisible(page.getByText("You can send to interested").first(), ConfigReader.getShortTimeout());
+            logger.info("Interested segment rate limit popup detected - this is expected behavior");
+            return true;
         } catch (Exception e) {
             logger.debug("No rate limit popup found: {}", e.getMessage());
+            return false;
         }
-        return false;
     }
 
     @Step("Select Former Subscriber segment")
@@ -318,16 +315,12 @@ public class CreatorMediaPushPage extends BasePage {
         
         // Try multiple selector strategies for Importation dialog
         Locator[] importationLocators = {
-            page.getByText(IMPORTATION),
+            page.getByText(IMPORTATION, new Page.GetByTextOptions().setExact(true)),
             page.getByText(IMPORTATION, new Page.GetByTextOptions().setExact(false)),
-            page.locator("text=Importation"),
-            page.locator("*:has-text('Importation')"),
             page.locator(".ant-modal-header:has-text('Importation')"),
             page.locator(".ant-drawer-title:has-text('Importation')"),
             page.locator("[role='dialog']:has-text('Importation')"),
-            page.locator("[role='dialog'] h1:has-text('Importation')"),
-            page.locator("[role='dialog'] h2:has-text('Importation')"),
-            page.locator("[role='dialog'] h3:has-text('Importation')")
+            page.getByRole(AriaRole.DIALOG).filter(new Locator.FilterOptions().setHasText(IMPORTATION))
         };
         
         boolean found = false;
@@ -506,7 +499,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
         // Fallback 3: any element containing text "Select (" regardless of role
         if (confirm.count() == 0) {
-            confirm = page.locator("text=Select (");
+            confirm = page.getByText("Select (").first();
         }
         // Fallback 4: generic CSS text match on buttons
         if (confirm.count() == 0) {
@@ -951,6 +944,54 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Assert landed on Messaging screen")
     public void assertOnMessagingScreen() {
         waitVisible(page.getByText(MESSAGING_TITLE).first(), ConfigReader.getDefaultTimeout());
+    }
+
+    @Step("Select Quick Files album and media")
+    public void selectQuickFilesAlbumAndMedia() {
+        // Ensure we are on My albums screen and default filter is selected
+        waitVisible(page.getByText("My albums").first(), ConfigReader.getShortTimeout());
+        waitVisible(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Selected Photos & videos")).first(), ConfigReader.getShortTimeout());
+
+        // Click the Quick Files album whose name starts with "icon mixalbum"
+        Locator albumBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                .setName(Pattern.compile("^icon\\s+mixalbum", Pattern.CASE_INSENSITIVE)));
+
+        long start = System.currentTimeMillis();
+        long timeoutMs = ConfigReader.getDefaultTimeout();
+        while (albumBtn.count() == 0 && System.currentTimeMillis() - start < timeoutMs) {
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        }
+        if (albumBtn.count() == 0) {
+            throw new SkipException("Quick Files album starting with 'icon mixalbum' not found; skipping test");
+        }
+        clickWithRetry(albumBtn.first(), 2, ConfigReader.getElementRetryDelay());
+
+        // Ensure we are inside the album ("Select media" title visible)
+        waitVisible(page.getByText("Select media").first(), ConfigReader.getShortTimeout());
+
+        // Select all files in the album (6 items) by clicking the IMG role with name "select"
+        Locator selectImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select"));
+        // Ensure elements are visible before clicking
+        waitVisible(selectImg.first(), ConfigReader.getShortTimeout());
+        for (int i = 0; i < 6; i++) {
+            clickWithRetry(selectImg.nth(i), 2, ConfigReader.getElementRetryDelay());
+        }
+
+        // Confirm the selection with the "Select (6)" button
+        Locator selectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select (6)"));
+        clickWithRetry(selectBtn.first(), 2, ConfigReader.getElementRetryDelay());
+
+        // Click Next until all files are confirmed
+        for (int i = 0; i < 6; i++) {
+            clickNext();
+        }
+
+        // Fill the message and choose the 30€ price
+        Locator msgBox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Your message...."));
+        clickWithRetry(msgBox, 2, ConfigReader.getElementRetryDelay());
+        msgBox.fill("QA Test ");
+        clickWithRetry(page.getByText("/name").first(), 2, ConfigReader.getElementRetryDelay());
+        clickWithRetry(page.locator("label").filter(new Locator.FilterOptions().setHasText("30€")).first(), 2, ConfigReader.getElementRetryDelay());
     }
 }
 
