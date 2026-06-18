@@ -36,7 +36,7 @@ public class CreatorUnlockLinksPage extends BasePage {
         page.waitForTimeout(ConfigReader.getAnimationTimeout());
         
         Locator svg = plusImg.locator("svg");
-        if (svg.count() > 0 && safeIsVisible(svg.first())) {
+        if (safeIsVisible(svg.first())) {
             clickWithRetry(svg.first(), 2, ConfigReader.getElementRetryDelay());
         } else {
             clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
@@ -57,23 +57,21 @@ public class CreatorUnlockLinksPage extends BasePage {
             String[] buttonNames = {"I understand", "C'est compris"};
             for (String name : buttonNames) {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
-                if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                if (safeIsVisible(btn.first())) {
                     clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay());
                     return;
                 }
             }
-            String[] sel = new String[] {
-                    "button:has-text('I understand')",
-                    "button:has-text('C\'est compris')",
-                    "text=I understand",
-                    "text=C'est compris"
-            };
-            for (String s : sel) {
-                Locator cand = page.locator(s);
-                if (cand.count() > 0 && safeIsVisible(cand.first())) {
-                    clickWithRetry(cand.first(), 2, ConfigReader.getElementRetryDelay());
-                    return;
-                }
+            // Fallback: use Locator API with getByText
+            String[] texts = {"I understand", "C'est compris"};
+            for (String txt : texts) {
+                try {
+                    Locator cand = page.getByText(txt);
+                    if (safeIsVisible(cand.first())) {
+                        clickWithRetry(cand.first(), 2, ConfigReader.getElementRetryDelay());
+                        return;
+                    }
+                } catch (Exception ex) { logger.debug("Fallback locator failed: {}", ex.getMessage()); }
             }
         } catch (Exception e) { logger.debug("Exception in clickIUnderstandIfPresent: {}", e.getMessage()); }
     }
@@ -143,7 +141,7 @@ public class CreatorUnlockLinksPage extends BasePage {
         // button is present so it does not block subsequent steps.
         try {
             Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
-            if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
+            if (safeIsVisible(cancel.first())) {
                 clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
             }
         } catch (Exception e) { logger.debug("Exception dismissing Cancel in uploadMediaFromDevice: {}", e.getMessage()); }
@@ -182,7 +180,7 @@ public class CreatorUnlockLinksPage extends BasePage {
             for (String v : variants) {
                 try {
                     Locator cand = page.getByText(Pattern.compile(Pattern.quote(v)));
-                    if (cand.count() > 0 && cand.first().isVisible()) {
+                    if (safeIsVisible(cand.first())) {
                         return;
                     }
                 } catch (Exception e) { logger.debug("Earnings message variant check failed: {}", e.getMessage()); }
@@ -243,7 +241,7 @@ public class CreatorUnlockLinksPage extends BasePage {
             // If uploading banner is visible, keep waiting in small steps
             try {
                 Locator up = page.getByText(UPLOADING_MSG);
-                if (up.count() > 0 && up.first().isVisible()) {
+                if (safeIsVisible(up.first())) {
                     page.waitForTimeout(ConfigReader.getUiSettleTimeout());
                     continue;
                 }
@@ -282,30 +280,23 @@ public class CreatorUnlockLinksPage extends BasePage {
         for (String name : buttonNames) {
             try {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
-                if (btn.count() > 0 && btn.first().isVisible()) {
+                if (safeIsVisible(btn.first())) {
                     clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay());
                     return;
                 }
             } catch (Exception e) { logger.debug("clickCEstCompris button variant failed: {}", e.getMessage()); }
         }
         
-        // Fallback: try text-based selectors
-        String[] selectors = {
-            "button:has-text('C\'est compris')",
-            "button:has-text('Got it')",
-            "button:has-text('I understand')",
-            "text=C'est compris",
-            "text=Got it"
-        };
-        
-        for (String sel : selectors) {
+        // Fallback: use getByText for text-based matching
+        String[] fallbacks = {"C'est compris", "Got it", "I understand"};
+        for (String txt : fallbacks) {
             try {
-                Locator btn = page.locator(sel);
-                if (btn.count() > 0 && btn.first().isVisible()) {
+                Locator btn = page.getByText(txt);
+                if (safeIsVisible(btn.first())) {
                     clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay());
                     return;
                 }
-            } catch (Exception e) { logger.debug("clickCEstCompris selector fallback failed: {}", e.getMessage()); }
+            } catch (Exception e) { logger.debug("clickCEstCompris text fallback failed: {}", e.getMessage()); }
         }
         
         throw new RuntimeException("Unable to find 'C'est compris' or 'Got it' button");
