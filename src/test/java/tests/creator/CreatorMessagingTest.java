@@ -1,5 +1,7 @@
 package tests.creator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 import pages.creator.CreatorMessagingPage;
 import utils.ConfigReader;
@@ -8,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class CreatorMessagingTest extends BaseCreatorTest {
+    private static final Logger logger = LoggerFactory.getLogger(CreatorMessagingTest.class);
 
     @Test(priority = 1, description = "Creator sends a normal text message to a fan from Messaging (with timestamp)")
     public void creatorCanSendNormalTextMessageToFan() {
@@ -118,7 +121,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.waitForUploadingBanner();
         // Validate success via toast or fallback to conversation input visible
         try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); }
-        catch (Throwable ignored) { msg.assertConversationInputVisible(ConfigReader.getLongTimeout()); }
+        catch (Throwable e) { logger.debug("Media sent toast not visible, falling back to conversation input: {}", e.getMessage()); msg.assertConversationInputVisible(ConfigReader.getLongTimeout()); }
     }
 
     @Test(priority = 6, description = "Creator sends a Private media message with promotion (10€, validity Unlimited)")
@@ -155,7 +158,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Media sent toast not visible: {}", e.getMessage()); }
 
         // Ensure we land back on the conversation screen
         msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
@@ -194,7 +197,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Media sent toast not visible: {}", e.getMessage()); }
 
         // Ensure we land back on the conversation screen
         msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
@@ -235,7 +238,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Media sent toast not visible: {}", e.getMessage()); }
 
         // Ensure we land back on the conversation screen
         msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
@@ -269,7 +272,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         // Propose private media
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
-        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Media sent toast not visible: {}", e.getMessage()); }
 
         // Ensure we land back on the conversation screen
         msg.assertConversationInputVisible(ConfigReader.getLongTimeout());
@@ -305,7 +308,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.clickProposePrivateMedia();
         msg.waitForUploadingBanner();
         msg.waitForUploadingBannerToDisappear(ConfigReader.getLongTimeout());
-        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable ignored) {}
+        try { msg.waitForMediaSentToast(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Media sent toast not visible: {}", e.getMessage()); }
 
         // Ensure we land back on the conversation screen
         msg.assertConversationInputVisible(ConfigReader.getLongTimeout());

@@ -27,7 +27,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Click Next using strict XPath and force if needed")
     public void clickNextStrict() {
         Locator nextXpath = page.locator("xpath=//button//span[contains(normalize-space(.), 'Next')]/ancestor::button[1]");
-        long end = System.currentTimeMillis() + 30_000;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (System.currentTimeMillis() < end) {
             if (nextXpath.count() > 0) {
                 Locator b = nextXpath.first();
@@ -45,7 +45,7 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Wait for second add icon (.addCircle) to appear after first Next")
     public void waitForSecondAddIcon(int timeoutMs) {
-        long end = System.currentTimeMillis() + Math.max(3_000, timeoutMs);
+        long end = System.currentTimeMillis() + Math.max(ConfigReader.getShortTimeout(), timeoutMs);
         Locator second = page.locator(".addCircle");
         while (System.currentTimeMillis() < end) {
             try {
@@ -130,7 +130,7 @@ public class CreatorMessagingPage extends BasePage {
 
         // Scroll to surface albums near the bottom and click the specific album button
         Locator container = importationContainer();
-        long end = System.currentTimeMillis() + 30_000;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         boolean clickedAlbum = false;
         // Derive a relaxed prefix for regex fallback (imagealbum_/videoalbum_/mixalbum_)
         String relaxedPrefix = targetName;
@@ -182,11 +182,11 @@ public class CreatorMessagingPage extends BasePage {
         try {
             Locator selectMediaTitle = page.getByText("Select media");
             waitVisible(selectMediaTitle.first(), ConfigReader.getShortTimeout());
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
         // Wait for media thumbs/icons to appear, preferring role=IMG name "select" like codegen
         Locator thumbs = null;
-        long endThumbs = System.currentTimeMillis() + 10_000;
+        long endThumbs = System.currentTimeMillis() + ConfigReader.getShortTimeout();
         while (System.currentTimeMillis() < endThumbs) {
             try {
                 Locator byRoleImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select"));
@@ -194,7 +194,7 @@ public class CreatorMessagingPage extends BasePage {
                     thumbs = byRoleImg;
                     break;
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
             try {
                 Locator cssThumbs = page.locator(".select-quick-file-media-thumb");
@@ -202,9 +202,9 @@ public class CreatorMessagingPage extends BasePage {
                     thumbs = cssThumbs;
                     break;
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
 
         if (thumbs == null || thumbs.count() == 0) {
@@ -216,7 +216,7 @@ public class CreatorMessagingPage extends BasePage {
         logger.info("[Messaging][QuickFiles] Selecting {} Quick Files media item(s) out of {}", max, thumbs.count());
         for (int i = 0; i < max; i++) {
             Locator t = thumbs.nth(i);
-            try { t.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            try { t.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             // Try to click the radio button first (look for role='radio' in parent or nearby)
             try {
                 Locator parent = t.locator("..");
@@ -225,9 +225,14 @@ public class CreatorMessagingPage extends BasePage {
                     clickWithRetry(radio.first(), 1, ConfigReader.getElementRetryDelay());
                     continue;
                 }
-            } catch (Throwable ignored) {}
-            // Fallback: click the thumbnail itself
-            clickWithRetry(t, 1, ConfigReader.getElementRetryDelay());
+            } catch (Throwable e) { logger.debug("Radio button click failed: {}", e.getMessage()); }
+            // Fallback: click the thumbnail itself; use force if overlay intercepts pointer events
+            try {
+                clickWithRetry(t, 1, ConfigReader.getElementRetryDelay());
+            } catch (Throwable e) {
+                logger.debug("Normal click on thumb failed (overlay may intercept), retrying with force: {}", e.getMessage());
+                t.click(new Locator.ClickOptions().setForce(true));
+            }
         }
 
         // Click dynamic Select (N) button; fallback to plain Select
@@ -281,27 +286,27 @@ public class CreatorMessagingPage extends BasePage {
         waitVisible(privateMediaButton(), DEFAULT_WAIT);
         clickWithRetry(privateMediaButton(), 1, ConfigReader.getElementRetryDelay());
         // Accept either the dedicated Private media screen OR the Importation modal opening directly
-        long end = System.currentTimeMillis() + 15_000;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (System.currentTimeMillis() < end) {
             try {
                 if (privateMediaTitle().count() > 0 && safeIsVisible(privateMediaTitle().first())) {
                     return;
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             try {
                 Locator imp = importationTitle();
                 if (imp.count() > 0 && safeIsVisible(imp.first())) {
                     logger.info("[Messaging][Private] Importation modal detected (skipping Private media title)");
                     return;
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             try {
                 Locator qf = importationContainer().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Quick Files"));
                 if (qf.count() > 0 && safeIsVisible(qf.first())) {
                     logger.info("[Messaging][Private] Quick Files option visible inside Importation");
                     return;
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         // Final assertion to bubble up a clearer error
@@ -322,10 +327,10 @@ public class CreatorMessagingPage extends BasePage {
                 logger.info("[Messaging][Private] Importation already visible; skipping PLUS click");
                 return;
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
         // Small stabilization to allow UI to render toolbar icons
-        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
         // Try a series of robust candidates for the plus control (composer and private media screens)
         Locator[] candidates = new Locator[] {
@@ -356,26 +361,26 @@ public class CreatorMessagingPage extends BasePage {
         };
 
         boolean clicked = false;
-        long end = System.currentTimeMillis() + 10_000;
+        long end = System.currentTimeMillis() + ConfigReader.getShortTimeout();
         while (!clicked && System.currentTimeMillis() < end) {
             for (Locator cand : candidates) {
                 try {
                     if (cand != null && cand.count() > 0) {
                         Locator b = cand.first();
-                        try { b.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                        try { b.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                         if (safeIsVisible(b)) {
                             clickWithRetry(b, 1, ConfigReader.getElementRetryDelay());
                             clicked = true;
                             break;
                         }
                         try { b.click(new Locator.ClickOptions().setForce(true)); clicked = true; break; }
-                        catch (Throwable ignored) {}
+                        catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             }
             if (!clicked) {
                 // If composer/message input is visible, the plus is in the toolbar; give UI a moment then retry
-                try { if (safeIsVisible(privateMessagePlaceholder())) { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } } catch (Throwable ignored) {}
+                try { if (safeIsVisible(privateMessagePlaceholder())) { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             }
         }
 
@@ -383,7 +388,7 @@ public class CreatorMessagingPage extends BasePage {
             // Last resort: tap Media button to re-open private media context, then expect Importation
             try {
                 clickWithRetry(privateMediaButton(), 1, ConfigReader.getElementRetryDelay());
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
 
         // Wait for Importation title or container to appear
@@ -403,7 +408,7 @@ public class CreatorMessagingPage extends BasePage {
             if (!"true".equalsIgnoreCase(checked)) {
                 logger.warn("[Messaging][Private] Expected blur toggle enabled by default, aria-checked={}", checked);
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
     }
 
     @Step("Assert 'Blurred media' label visible")
@@ -429,7 +434,7 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Click Next (private media flow)")
     public void clickNext() {
         // Prefer clicking an explicit Next button if present; only accept message textbox if no Next is actionable
-        long end = System.currentTimeMillis() + 15_000;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (System.currentTimeMillis() < end) {
             // Build candidate locators in priority order
             Locator[] candidates = new Locator[] {
@@ -437,8 +442,8 @@ public class CreatorMessagingPage extends BasePage {
                 page.locator("xpath=//button//span[contains(normalize-space(.), 'Next')]/ancestor::button[1]"),
                 // Generic button containing Next text
                 page.locator("xpath=//button[contains(normalize-space(.), 'Next')]"),
-                // CSS has-text fallback
-                page.locator("button:has-text('Next')"),
+                // Filter fallback
+                page.locator("button").filter(new Locator.FilterOptions().setHasText("Next")),
                 // Role-based
                 page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"))
             };
@@ -446,23 +451,23 @@ public class CreatorMessagingPage extends BasePage {
                 try {
                     if (cand != null && cand.count() > 0) {
                         Locator b = cand.first();
-                        try { b.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                        try { b.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                         if (safeIsVisible(b)) {
                             clickWithRetry(b, 1, ConfigReader.getElementRetryDelay());
                             return;
                         }
                         // Try force if not reported visible
                         try { b.click(new Locator.ClickOptions().setForce(true)); return; }
-                        catch (Throwable ignored) {}
+                        catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             }
             // If no Next button was actionable, accept if message placeholder became visible (UI may auto-advance)
             if (safeIsVisible(privateMessagePlaceholder())) {
                 return;
             }
             // Small stabilization before retrying
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         // Final attempt: if message placeholder appeared late, accept it; otherwise fail clearly
         if (!safeIsVisible(privateMessagePlaceholder())) {
@@ -473,8 +478,8 @@ public class CreatorMessagingPage extends BasePage {
     @Step("Wait for 'Blurred media' section to be visible (optional)")
     public void waitForBlurredMediaVisible(int timeoutMs) {
         try {
-            waitVisible(page.getByText("Blurred media").first(), Math.max(2000, timeoutMs));
-        } catch (Throwable ignored) {}
+            waitVisible(page.getByText("Blurred media").first(), Math.max(ConfigReader.getShortTimeout(), timeoutMs));
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
     }
 
     @Step("Click 'Next' repeatedly until private message placeholder appears or maxSteps reached")
@@ -489,13 +494,13 @@ public class CreatorMessagingPage extends BasePage {
             // If Next is present, click it
             Locator next = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
             if (next.count() > 0 && safeIsVisible(next.first())) {
-                waitForBlurredMediaVisible(5_000);
+                waitForBlurredMediaVisible(ConfigReader.getShortTimeout());
                 clickWithRetry(next.first(), 1, ConfigReader.getElementRetryDelay());
-                try { page.waitForTimeout(Math.max(100, perStepWaitMs)); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(Math.max(100, perStepWaitMs)); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 continue;
             }
             // If no Next and no message field, wait a bit and retry
-            try { page.waitForTimeout(Math.max(100, perStepWaitMs)); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(Math.max(100, perStepWaitMs)); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         // Final check
         if (!safeIsVisible(privateMessagePlaceholder())) {
@@ -536,20 +541,20 @@ public class CreatorMessagingPage extends BasePage {
         // 1) Try explicit label filter
         Locator label = page.locator("label").filter(new Locator.FilterOptions().setHasText(Pattern.compile(regex)));
         try {
-            waitVisible(label.first(), 5_000);
-            try { label.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            waitVisible(label.first(), ConfigReader.getShortTimeout());
+            try { label.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
             clickWithRetry(label.first(), 1, ConfigReader.getElementRetryDelay());
             return;
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Label filter failed: {}", e.getMessage()); }
 
         // 2) Try visible text node anywhere
         Locator byText = page.getByText(euros + "€", new Page.GetByTextOptions().setExact(true));
         try {
-            waitVisible(byText.first(), 5_000);
-            try { byText.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            waitVisible(byText.first(), ConfigReader.getShortTimeout());
+            try { byText.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             clickWithRetry(byText.first(), 1, ConfigReader.getElementRetryDelay());
             return;
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
         // 3) Iterate over radio button labels in pricing section
         Locator radios = page.locator("label.ant-radio-button-wrapper.mediaAmountRadioButton");
@@ -557,21 +562,21 @@ public class CreatorMessagingPage extends BasePage {
         for (int i = 0; i < count; i++) {
             Locator r = radios.nth(i);
             String text = "";
-            try { text = r.innerText().trim(); } catch (Throwable ignored) {}
+            try { text = r.innerText().trim(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             if (text.contains(euros + "€")) {
-                try { r.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                try { r.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 clickWithRetry(r, 1, ConfigReader.getElementRetryDelay());
                 return;
             }
         }
 
         // 4) As a last resort, scroll a bit and retry #1 briefly
-        try { page.mouse().wheel(0, 600); } catch (Throwable ignored) {}
+        try { page.mouse().wheel(0, 600); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         try {
-            waitVisible(label.first(), 3_000);
+            waitVisible(label.first(), ConfigReader.getShortTimeout());
             clickWithRetry(label.first(), 1, ConfigReader.getElementRetryDelay());
             return;
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
         throw new RuntimeException("Failed to set price to " + euros + "€: option not visible or not clickable");
     }
@@ -621,13 +626,13 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Wait for Private Gallery items to load")
     public void waitForPrivateGalleryItems(int timeoutMs) {
-        long end = System.currentTimeMillis() + Math.max(5_000, timeoutMs);
+        long end = System.currentTimeMillis() + Math.max(ConfigReader.getMediumTimeout(), timeoutMs);
         while (System.currentTimeMillis() < end) {
             int c = privateGalleryItems().count();
             if (c > 0) return;
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Gallery poll wait failed: {}", e.getMessage()); }
         }
-        waitVisible(privateGalleryItems().first(), 5_000);
+        waitVisible(privateGalleryItems().first(), ConfigReader.getMediumTimeout());
     }
 
     @Step("Scroll Private Gallery to bottom then back to top")
@@ -636,13 +641,13 @@ public class CreatorMessagingPage extends BasePage {
             // Scroll down a few times to ensure lazy load, then back to top
             for (int i = 0; i < 6; i++) {
                 page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             }
             for (int i = 0; i < 3; i++) {
                 page.evaluate("window.scrollTo(0, 0)");
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
     }
 
     @Step("Preview any item in Private Gallery")
@@ -673,7 +678,7 @@ public class CreatorMessagingPage extends BasePage {
                 clickWithRetry(imgClose.first(), 1, ConfigReader.getElementRetryDelay());
                 return;
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         // Fallbacks: close button or Escape
         try {
             Locator btnClose = page.locator(".ant-modal-close, button[aria-label='Close'], .ant-image-preview-close");
@@ -681,8 +686,8 @@ public class CreatorMessagingPage extends BasePage {
                 clickWithRetry(btnClose.first(), 1, ConfigReader.getElementRetryDelay());
                 return;
             }
-        } catch (Throwable ignored) {}
-        try { page.keyboard().press("Escape"); } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+        try { page.keyboard().press("Escape"); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
     }
 
     // ===== Promotion helpers (Private media) =====
@@ -748,12 +753,12 @@ public class CreatorMessagingPage extends BasePage {
             if (msg.count() > 0) {
                 waitVisible(msg.first(), ConfigReader.getShortTimeout());
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
     }
 
     @Step("Wait for 'Stay on page during uploading' banner to disappear")
     public void waitForUploadingBannerToDisappear(long timeoutMs) {
-        long end = System.currentTimeMillis() + Math.max(5_000, timeoutMs);
+        long end = System.currentTimeMillis() + Math.max(ConfigReader.getShortTimeout(), timeoutMs);
         while (System.currentTimeMillis() < end) {
             try {
                 Locator msg = uploadingStayOnPageText();
@@ -761,15 +766,15 @@ public class CreatorMessagingPage extends BasePage {
                     logger.info("[Messaging][Private] Uploading banner is no longer visible");
                     return;
                 }
-            } catch (Throwable ignored) {}
-            try { page.waitForTimeout(125); } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Banner poll wait failed: {}", e.getMessage()); }
         }
         logger.warn("[Messaging][Private] Uploading banner still visible after {} ms", timeoutMs);
     }
 
     @Step("Wait for 'Media sent' toast")
     public void waitForMediaSentToast(long timeoutMs) {
-        long end = System.currentTimeMillis() + Math.max(10_000, timeoutMs);
+        long end = System.currentTimeMillis() + Math.max(ConfigReader.getShortTimeout(), timeoutMs);
         while (System.currentTimeMillis() < end) {
             try {
                 Locator toast = mediaSentToast();
@@ -777,8 +782,8 @@ public class CreatorMessagingPage extends BasePage {
                     logger.info("[Messaging][Private] 'Media sent' toast visible");
                     return;
                 }
-            } catch (Throwable ignored) {}
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         // Fallback assert
         waitVisible(mediaSentToast(), (int) Math.max(DEFAULT_WAIT, timeoutMs));
@@ -789,22 +794,22 @@ public class CreatorMessagingPage extends BasePage {
         logger.info("[Messaging] Clicking a Quick Files album using regex selector and index fallbacks");
         // Fast-path: scroll and prefer the specific mixalbum button used in current staging data
         try {
-            long endFast = System.currentTimeMillis() + 15_000;
+            long endFast = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
             while (System.currentTimeMillis() < endFast) {
                 Locator specificAlbumBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
                         .setName("icon mixalbum_251119_134546"));
                 if (specificAlbumBtn.count() > 0) {
                     Locator chosen = specificAlbumBtn.first();
-                    try { chosen.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                    try { chosen.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                     clickWithRetry(chosen, 1, ConfigReader.getElementRetryDelay());
                     logger.info("[Messaging] Clicked Quick Files album via BUTTON fast-path: icon mixalbum_251119_134546");
                     return;
                 }
                 // Scroll down a bit to surface albums near the bottom
-                try { page.mouse().wheel(0, 700); } catch (Throwable ignored) {}
-                try { page.waitForTimeout(125); } catch (Throwable ignored) {}
+                try { page.mouse().wheel(0, 700); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Album scroll wait failed: {}", e.getMessage()); }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Fast-path album search failed: {}", e.getMessage()); }
 
         // First, try the exact regex pattern family used in codegen
         Locator byText = page.locator("div").filter(new Locator.FilterOptions()
@@ -817,7 +822,7 @@ public class CreatorMessagingPage extends BasePage {
             for (int idx : tries) {
                 if (idx < total) {
                     Locator cand = byText.nth(idx);
-                    try { cand.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                    try { cand.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                     if (safeIsVisible(cand)) {
                         // Prefer clickable ancestor (button/a) if available
                         try {
@@ -873,7 +878,7 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Wait for album items grid (.cover) to be visible")
     public void waitForAlbumItemsGridVisible(int timeoutMs) {
-        long end = System.currentTimeMillis() + Math.max(5_000, timeoutMs);
+        long end = System.currentTimeMillis() + Math.max(ConfigReader.getShortTimeout(), timeoutMs);
         while (System.currentTimeMillis() < end) {
             try {
                 // Prefer new Quick Files media thumb tiles
@@ -888,12 +893,12 @@ public class CreatorMessagingPage extends BasePage {
                     logger.info("[Messaging][QuickFiles] Items grid visible with .cover elements (fallback)");
                     return;
                 }
-            } catch (Throwable ignored) {}
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         // Final assertion to bubble up
         Locator thumbOrCover = page.locator(".select-quick-file-media-thumb, .cover").first();
-        waitVisible(thumbOrCover, Math.max(3_000, timeoutMs));
+        waitVisible(thumbOrCover, Math.max(ConfigReader.getShortTimeout(), timeoutMs));
     }
 
     @Step("Pick first two covers or up to {n} items as fallback")
@@ -906,7 +911,7 @@ public class CreatorMessagingPage extends BasePage {
                 waitVisible(thumbs.first(), ConfigReader.getShortTimeout());
                 for (int i = 0; i < max; i++) {
                     Locator t = thumbs.nth(i);
-                    try { t.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                    try { t.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                     clickWithRetry(t, 1, ConfigReader.getElementRetryDelay());
                 }
             } else {
@@ -934,13 +939,13 @@ public class CreatorMessagingPage extends BasePage {
             if (first.count() > 0 && safeIsVisible(first)) {
                 clickWithRetry(first, 1, ConfigReader.getElementRetryDelay());
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         try {
             Locator second = page.locator("div:nth-child(2) > .cover");
             if (second.count() > 0 && safeIsVisible(second.first())) {
                 clickWithRetry(second.first(), 1, ConfigReader.getElementRetryDelay());
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
         // Broaden the item locator to account for different tile structures
         Locator tiles = page.locator(".cover, .ant-image, .ant-card, div[class*='MediaCard'], div[class*='fileCard']");
@@ -949,7 +954,7 @@ public class CreatorMessagingPage extends BasePage {
         for (int i = 0; i < total; i++) {
             try {
                 Locator tile = tiles.nth(i);
-                try { tile.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                try { tile.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 if (!safeIsVisible(tile)) continue;
                 // Prefer cover inside tile
                 Locator cover = tile.locator(".cover");
@@ -994,7 +999,7 @@ public class CreatorMessagingPage extends BasePage {
             Locator directBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
             if (directBtn.count() > 0 && safeIsVisible(directBtn.first())) {
                 logger.info("[Messaging] Clicking 'Quick Files' via direct BUTTON locator");
-                try { directBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+                try { directBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 clickWithRetry(directBtn.first(), 1, ConfigReader.getElementRetryDelay());
             } else {
                 throw new RuntimeException("Direct Quick Files BUTTON not visible");
@@ -1005,7 +1010,7 @@ public class CreatorMessagingPage extends BasePage {
             // Build candidate locators in order of preference
             Locator[] candidates = new Locator[] {
                     container.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Quick Files")),
-                    container.locator("button:has-text('Quick Files')"),
+                    container.locator("button").filter(new Locator.FilterOptions().setHasText("Quick Files")),
                     // exact text node within common clickable wrappers
                     container.locator("xpath=.//*[self::button or self::div or self::span][normalize-space(text())='Quick Files']"),
                     // more permissive contains text
@@ -1025,7 +1030,7 @@ public class CreatorMessagingPage extends BasePage {
             if (picked == null || picked.count() == 0) {
                 throw new RuntimeException("Quick Files option not found in Importation popup");
             }
-            try { picked.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+            try { picked.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             try {
                 clickWithRetry(picked.first(), 1, ConfigReader.getElementRetryDelay());
             } catch (RuntimeException e) {
@@ -1051,21 +1056,21 @@ public class CreatorMessagingPage extends BasePage {
         waitVisible(page.getByText("Quick Files"), ConfigReader.getVisibilityTimeout());
         // Prefer 'My albums' text; if absent, accept albums container or rows as valid screen
         try {
-            waitVisible(page.getByText("My albums"), 6_000);
+            waitVisible(page.getByText("My albums"), ConfigReader.getShortTimeout());
         } catch (Throwable e) {
             logger.info("[Messaging] 'My albums' text not visible quickly; checking albums container/rows instead");
-            long end = System.currentTimeMillis() + 9_000;
+            long end = System.currentTimeMillis() + ConfigReader.getShortTimeout();
             while (System.currentTimeMillis() < end) {
                 try {
                     if (quickFilesAlbumsContainer().count() > 0 || quickFilesAlbumRows().count() > 0) {
                         logger.info("[Messaging] Quick Files albums container/rows detected; accepting screen");
                         return;
                     }
-                } catch (Throwable ignored) {}
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+                } catch (Throwable ex1) { logger.debug("Suppressed: {}", ex1.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ex2) { logger.debug("Suppressed: {}", ex2.getMessage()); }
             }
             // Final attempt: assert 'My albums' strictly to bubble error
-            waitVisible(page.getByText("My albums"), 3_000);
+            waitVisible(page.getByText("My albums"), ConfigReader.getShortTimeout());
         }
     }
 
@@ -1129,7 +1134,7 @@ public class CreatorMessagingPage extends BasePage {
         logger.info("[Messaging] Ensuring 'Quick Files' albums screen is visible");
         waitVisible(quickFilesTitle(), ConfigReader.getVisibilityTimeout());
         // Focus the Quick Files container (click title like codegen did)
-        try { clickWithRetry(quickFilesTitle().first(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+        try { clickWithRetry(quickFilesTitle().first(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         // Try clicking a 'My albums' tab/label if present to reveal rows
         try {
             Locator myAlbumsBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My albums"));
@@ -1137,19 +1142,19 @@ public class CreatorMessagingPage extends BasePage {
             if (myAlbumsBtn.count() > 0 && safeIsVisible(myAlbumsBtn.first())) {
                 clickWithRetry(myAlbumsBtn.first(), 1, ConfigReader.getElementRetryDelay());
             }
-        } catch (Throwable ignored) {}
-        long end = System.currentTimeMillis() + 25_000;
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+        long end = System.currentTimeMillis() + ConfigReader.getLongTimeout();
         while (System.currentTimeMillis() < end) {
             int containers = 0, rows = 0;
-            try { containers = quickFilesAlbumsContainer().count(); } catch (Throwable ignored) {}
-            try { rows = quickFilesAlbumRows().count(); } catch (Throwable ignored) {}
+            try { containers = quickFilesAlbumsContainer().count(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { rows = quickFilesAlbumRows().count(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             if (containers > 0 || rows > 0) {
                 logger.info("[Messaging] Quick Files albums detected: containers={}, rows={}", containers, rows);
                 return;
             }
             // Light scroll to stimulate lazy load
-            try { page.mouse().wheel(0, 400); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(125); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, 400); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Albums scroll wait failed: {}", e.getMessage()); }
             // Fallback: regex probe for names starting with video/image/mix
             try {
                 Locator byText = page.locator("div").filter(new Locator.FilterOptions()
@@ -1158,7 +1163,7 @@ public class CreatorMessagingPage extends BasePage {
                     logger.info("[Messaging] Found regex-matching album text elements: {}", byText.count());
                     return;
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         logger.warn("[Messaging] No albums visible in Quick Files; skipping per spec");
         throw new SkipException("Quick Files: no albums to select");
@@ -1240,10 +1245,10 @@ public class CreatorMessagingPage extends BasePage {
             }
         }
         // Wait for items grid to appear; if not, try clicking once more
-        long end = System.currentTimeMillis() + 8_000;
+        long end = System.currentTimeMillis() + ConfigReader.getShortTimeout();
         while (System.currentTimeMillis() < end) {
             if (quickFilesItemThumbs().count() > 0) break;
-            try { page.waitForTimeout(100); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Items grid wait failed: {}", e.getMessage()); }
         }
         if (quickFilesItemThumbs().count() == 0) {
             logger.warn("[Messaging] Items view not visible after album click, retrying click once");
@@ -1258,7 +1263,7 @@ public class CreatorMessagingPage extends BasePage {
                     Locator nameSpans = container.locator("span.ant-typography.QuickLinkAlbumName.css-ixblex");
                     if (nameSpans.count() > 0) clickWithRetry(nameSpans.first(), 1, ConfigReader.getElementRetryDelay());
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         } else {
             logger.info("[Messaging] Items grid visible after album click: count={} (approx)", quickFilesItemThumbs().count());
         }
@@ -1268,9 +1273,9 @@ public class CreatorMessagingPage extends BasePage {
     public void selectUpToNQuickFiles(int max) {
         int target = Math.max(1, max);
         Locator grid = quickFilesItemThumbs();
-        long end = System.currentTimeMillis() + 15_000;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (grid.count() == 0 && System.currentTimeMillis() < end) {
-            try { page.waitForTimeout(75); } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("QuickFiles grid wait: {}", e.getMessage()); }
         }
         int total = grid.count();
         logger.info("[Messaging] Quick Files items detected: {} (select up to {})", total, target);
@@ -1282,8 +1287,8 @@ public class CreatorMessagingPage extends BasePage {
             int cc = covers.count();
             for (int i = 0; i < cc && picked < target; i++) {
                 Locator card = covers.nth(i);
-                try { card.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-                try { card.hover(); } catch (Exception ignored) {}
+                try { card.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
+                try { card.hover(); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 boolean clicked = false;
                 try {
                     Locator innerCb = card.locator("input[type='checkbox'], [role='checkbox']");
@@ -1291,7 +1296,7 @@ public class CreatorMessagingPage extends BasePage {
                         clickWithRetry(innerCb.first(), 1, ConfigReader.getElementRetryDelay());
                         clicked = true;
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 if (!clicked) {
                     try {
                         Locator roleCheckbox = card.getByRole(AriaRole.CHECKBOX);
@@ -1299,14 +1304,14 @@ public class CreatorMessagingPage extends BasePage {
                             clickWithRetry(roleCheckbox.first(), 1, ConfigReader.getElementRetryDelay());
                             clicked = true;
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 }
                 if (!clicked) {
-                    try { clickWithRetry(card, 1, ConfigReader.getElementRetryDelay()); clicked = true; } catch (Exception ignored) {}
+                    try { clickWithRetry(card, 1, ConfigReader.getElementRetryDelay()); clicked = true; } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 }
-                if (clicked) { try { page.waitForTimeout(75); } catch (Exception ignored) {} picked++; }
+                if (clicked) { try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Cover click settle: {}", e.getMessage()); } picked++; }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         // Strategy A: click checkboxes if present
         try {
             Locator container = importationContainer();
@@ -1314,10 +1319,10 @@ public class CreatorMessagingPage extends BasePage {
             int cb = checkboxes.count();
             for (int i = 0; i < cb && picked < target; i++) {
                 Locator cbx = checkboxes.nth(i);
-                try { cbx.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                try { cbx.click(new Locator.ClickOptions().setForce(true)); picked++; } catch (Throwable ignored) {}
+                try { cbx.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+                try { cbx.click(new Locator.ClickOptions().setForce(true)); picked++; } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         // Strategy B: aria-checked toggles
         if (picked < target) {
             try {
@@ -1326,34 +1331,34 @@ public class CreatorMessagingPage extends BasePage {
                 int tc = toggles.count();
                 for (int i = 0; i < tc && picked < target; i++) {
                     Locator tg = toggles.nth(i);
-                    try { tg.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                    try { tg.click(new Locator.ClickOptions().setForce(true)); picked++; } catch (Throwable ignored) {}
+                    try { tg.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+                    try { tg.click(new Locator.ClickOptions().setForce(true)); picked++; } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         for (int i = 0; i < total && picked < target; i++) {
             Locator item = grid.nth(i);
-            try { item.scrollIntoViewIfNeeded(); } catch (Exception ignored) {}
-            try { item.click(new Locator.ClickOptions().setForce(true)); picked++; } catch (Exception ignored) {}
+            try { item.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { item.click(new Locator.ClickOptions().setForce(true)); picked++; } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         // If still nothing was picked, try double-click the first item as a last resort
         if (picked == 0 && total > 0) {
-            try { grid.first().dblclick(); picked++; } catch (Throwable ignored) {}
+            try { grid.first().dblclick(); picked++; } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         // Verify Select button becomes enabled or count indicator appears
         try {
             Locator container = importationContainer();
             Locator selectBtn = container.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Select"));
-            long until = System.currentTimeMillis() + 5_000;
+            long until = System.currentTimeMillis() + ConfigReader.getShortTimeout();
             while (System.currentTimeMillis() < until) {
                 if (selectBtn.count() > 0) {
                     try {
                         if (selectBtn.first().isEnabled()) break;
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 }
-                page.waitForTimeout(75);
+                page.waitForTimeout(ConfigReader.getElementRetryDelay());
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Select button wait: {}", e.getMessage()); }
         if (picked == 0) {
             logger.warn("[Messaging] No Quick Files items could be selected");
         }
@@ -1390,14 +1395,14 @@ public class CreatorMessagingPage extends BasePage {
                                 .setState(WaitForSelectorState.HIDDEN)
                                 .setTimeout(3_000));
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 try {
                     if (quickFilesTitle.count() > 0) {
                         quickFilesTitle.first().waitFor(new Locator.WaitForOptions()
                                 .setState(WaitForSelectorState.HIDDEN)
                                 .setTimeout(2_000));
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
                 // If still visible, retry interactions
                 if ((modalOrDrawer.count() > 0 && safeIsVisible(modalOrDrawer.first())) || (quickFilesTitle.count() > 0 && safeIsVisible(quickFilesTitle.first()))) {
@@ -1415,13 +1420,13 @@ public class CreatorMessagingPage extends BasePage {
                     if (modalOrDrawer.count() > 0) {
                         Locator closeIcon = modalOrDrawer.locator(".ant-modal-close, button[aria-label='Close']");
                         if (closeIcon.count() > 0 && closeIcon.first().isVisible()) {
-                            try { clickWithRetry(closeIcon.first(), 1, ConfigReader.getElementRetryDelay()); } catch (Exception ignored) {}
+                            try { clickWithRetry(closeIcon.first(), 1, ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                         }
                     }
                     // Try ESC and click backdrop/body
-                    try { page.keyboard().press("Escape"); } catch (Exception ignored) {}
-                    try { page.mouse().click(10, 10); } catch (Exception ignored) {}
-                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception ignored) {}
+                    try { page.keyboard().press("Escape"); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
+                    try { page.mouse().click(10, 10); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 } else {
                     break;
                 }
@@ -1473,7 +1478,7 @@ public class CreatorMessagingPage extends BasePage {
                 Locator scoped = container.getByText("Send", new Locator.GetByTextOptions().setExact(true));
                 if (scoped.count() > 0) return scoped.first();
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         // Fallback to known label class
         Locator label = page.locator(".messageSendLabel");
         if (label.count() > 0) return label.first();
@@ -1585,7 +1590,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator btn = sendButton();
         waitVisible(btn, DEFAULT_WAIT);
         // Ensure visible and clickable; scroll into view as needed
-        try { btn.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
+        try { btn.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
         page.waitForTimeout(ConfigReader.getUiSettleTimeout());
     }
@@ -1636,7 +1641,7 @@ public class CreatorMessagingPage extends BasePage {
                 if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
                     clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
             return;
         }
         
@@ -1657,7 +1662,7 @@ public class CreatorMessagingPage extends BasePage {
                         page.waitForTimeout(ConfigReader.getUiSettleTimeout());
                         clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                 return;
             }
         } catch (Exception e) {
@@ -1693,19 +1698,19 @@ public class CreatorMessagingPage extends BasePage {
         try {
             Locator input = page.getByPlaceholder("Your message");
             if (input.count() > 0) { waitVisible(input.first(), 5000); }
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         while (System.currentTimeMillis() < end) {
             try {
                 if (badge.count() > 0 && badge.isVisible()) {
                     logger.info("[Messaging] Accepted badge visible");
                     return;
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
             // Gentle scroll attempts to reveal lazy content in the chat area
-            try { page.mouse().wheel(0, -400); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
-            try { page.mouse().wheel(0, 800); } catch (Throwable ignored) {}
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+            try { page.mouse().wheel(0, -400); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, 800); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         // Final assert using base waitVisible to throw detailed error
         waitVisible(badge, Math.max(DEFAULT_WAIT, (int) timeoutMs));
@@ -1784,7 +1789,7 @@ public class CreatorMessagingPage extends BasePage {
     public void clickOnFanConversation(String fanName) {
         logger.info("[Messaging] Looking for fan conversation: {}", fanName);
         // Wait for conversation list to load
-        page.waitForTimeout(1000);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         
         Locator fan = null;
         boolean found = false;
@@ -1806,7 +1811,7 @@ public class CreatorMessagingPage extends BasePage {
             Locator toDeliverTab = page.getByText("To Deliver");
             if (toDeliverTab.count() > 0 && safeIsVisible(toDeliverTab.first())) {
                 clickWithRetry(toDeliverTab.first(), 2, ConfigReader.getElementRetryDelay());
-                page.waitForTimeout(1000); // Wait for tab content to load
+                page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for tab content to load
                 logger.info("[Messaging] Switched to 'To Deliver' tab");
                 
                 found = tryFindFanInCurrentTab(fanName);
@@ -1829,7 +1834,7 @@ public class CreatorMessagingPage extends BasePage {
                 Locator avatar = avatars.nth(i);
                 if (safeIsVisible(avatar)) {
                     String alt = "";
-                    try { alt = avatar.getAttribute("alt"); } catch (Exception ignored) {}
+                    try { alt = avatar.getAttribute("alt"); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                     // Skip navigation icons
                     if (alt != null && (alt.contains("arrow") || alt.contains("settings") || alt.contains("back"))) {
                         continue;
@@ -1865,7 +1870,7 @@ public class CreatorMessagingPage extends BasePage {
         
         fan.scrollIntoViewIfNeeded();
         clickWithRetry(fan, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(2000); // Wait for conversation to load
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for conversation to load
         
         // Wait for conversation screen to be ready - try multiple indicators
         boolean conversationLoaded = false;
@@ -1897,7 +1902,7 @@ public class CreatorMessagingPage extends BasePage {
         
         // Strategy 4: Wait a bit more and check for any conversation content
         if (!conversationLoaded) {
-            page.waitForTimeout(2000);
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
             // Check if we're on a conversation screen by looking for message-related elements
             Locator conversationArea = page.locator("[class*='message'], [class*='chat'], [class*='conversation']").first();
             if (conversationArea.count() > 0) {
@@ -1917,7 +1922,7 @@ public class CreatorMessagingPage extends BasePage {
     public void verifyMessageVisible(String message) {
         logger.info("[Messaging] Looking for message: {}", message);
         // Wait a bit for messages to load
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         Locator msg = page.getByText(message).first();
         waitVisible(msg, DEFAULT_WAIT);
         logger.info("[Messaging] Message visible: {}", message);
@@ -1928,13 +1933,13 @@ public class CreatorMessagingPage extends BasePage {
         logger.info("[Messaging] Looking for Accept button near message: {}", message);
         
         // Wait for conversation to load
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         
         // Scroll to bottom to see latest messages
         try {
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-        } catch (Exception ignored) {}
-        page.waitForTimeout(500);
+        } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         
         // Try to find the message, with scrolling if needed
         Locator messageLocator = page.getByText(message).first();
@@ -1961,7 +1966,7 @@ public class CreatorMessagingPage extends BasePage {
         
         for (int poll = 0; poll < maxPollAttempts && (acceptBtn == null || acceptBtn.count() == 0 || !safeIsVisible(acceptBtn)); poll++) {
             if (poll > 0) {
-                page.waitForTimeout(200); // Wait between attempts
+                page.waitForTimeout(ConfigReader.getElementRetryDelay()); // Wait between attempts
             }
             
             // Strategy 1: Find Accept button in the same message container as the message text
@@ -2012,7 +2017,7 @@ public class CreatorMessagingPage extends BasePage {
         
         waitVisible(acceptBtn, DEFAULT_WAIT);
         clickWithRetry(acceptBtn, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked Accept button for message: {}", message);
     }
 
@@ -2021,7 +2026,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator acceptBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept")).first();
         waitVisible(acceptBtn, DEFAULT_WAIT);
         clickWithRetry(acceptBtn, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked Accept button");
     }
 
@@ -2093,11 +2098,11 @@ public class CreatorMessagingPage extends BasePage {
                 break;
             }
             logger.info("[Messaging] Send button still disabled, waiting... ({}s)", i + 1);
-            page.waitForTimeout(200);
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         }
         
         clickWithRetry(sendBtn, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500); // Wait for message to send
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for message to send
         logger.info("[Messaging] Clicked Send button");
     }
 
@@ -2106,7 +2111,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator toDeliver = page.getByText("To Deliver");
         waitVisible(toDeliver, DEFAULT_WAIT);
         clickWithRetry(toDeliver, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked 'To Deliver' tab");
     }
 
@@ -2121,7 +2126,7 @@ public class CreatorMessagingPage extends BasePage {
         }
         waitVisible(plus, DEFAULT_WAIT);
         clickWithRetry(plus, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked plus icon to add media");
     }
 
@@ -2152,7 +2157,7 @@ public class CreatorMessagingPage extends BasePage {
         verifyImportationPopup();
         
         // Wait for file input to be available
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         
         // Find hidden file input with retry
         Locator fileInput = null;
@@ -2161,7 +2166,7 @@ public class CreatorMessagingPage extends BasePage {
             if (fileInput.count() > 0) {
                 break;
             }
-            page.waitForTimeout(300);
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         }
         
         if (fileInput != null && fileInput.count() > 0) {
@@ -2176,7 +2181,7 @@ public class CreatorMessagingPage extends BasePage {
                 Locator percentText = page.locator("[class*='percent'], [class*='progress'], [class*='upload']").first();
                 if (percentText.count() > 0 && safeIsVisible(percentText)) {
                     String text = "";
-                    try { text = percentText.textContent(); } catch (Exception ignored) {}
+                    try { text = percentText.textContent(); } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
                     if (text.contains("100")) {
                         logger.info("[Messaging] Upload reached 100% after {}s", i);
                         uploadComplete = true;
@@ -2201,7 +2206,7 @@ public class CreatorMessagingPage extends BasePage {
                 if (i % 10 == 0 && i > 0 && !uploadComplete) {
                     logger.info("[Messaging] Waiting for media upload to complete... ({}s)", i);
                 }
-                page.waitForTimeout(1000);
+                page.waitForTimeout(ConfigReader.getUiSettleTimeout());
             }
             if (!uploadComplete) {
                 logger.warn("[Messaging] Upload may not be complete after 120s, proceeding anyway");
@@ -2224,11 +2229,11 @@ public class CreatorMessagingPage extends BasePage {
                 try {
                     Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
                     if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
-                        page.waitForTimeout(500);
+                        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
                         clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
                     }
-                } catch (Exception ignored) {}
-                page.waitForTimeout(ConfigReader.getMediumTimeout());
+                } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getUiSettleTimeout());
                 logger.info("[Messaging] Media file attached: {}", filePath.getFileName());
                 return;
             }
@@ -2260,7 +2265,7 @@ public class CreatorMessagingPage extends BasePage {
             if (i % 10 == 0 && i > 0) {
                 logger.info("[Messaging] Waiting for media delivery... ({}s, delivered count: {})", i, currentCount);
             }
-            page.waitForTimeout(1000);
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         }
         
         if (!delivered) {
@@ -2268,7 +2273,7 @@ public class CreatorMessagingPage extends BasePage {
         }
         
         // Additional wait to ensure delivery propagates to fan side
-        page.waitForTimeout(3000);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Media upload/send completed - delivery confirmed");
     }
 
@@ -2285,13 +2290,13 @@ public class CreatorMessagingPage extends BasePage {
                 if (cancelBtn.count() > 0 && safeIsVisible(cancelBtn.first())) {
                     cancelBtn.first().click();
                     logger.info("[Messaging] Clicked Cancel to dismiss Importation modal");
-                    page.waitForTimeout(500);
+                    page.waitForTimeout(ConfigReader.getUiSettleTimeout());
                 } else {
                     page.keyboard().press("Escape");
                     logger.info("[Messaging] Pressed Escape to dismiss Importation modal");
-                    page.waitForTimeout(500);
+                    page.waitForTimeout(ConfigReader.getUiSettleTimeout());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("Suppressed: {}", e.getMessage()); }
         }
         
         // Try multiple strategies to find the Send button
@@ -2309,7 +2314,7 @@ public class CreatorMessagingPage extends BasePage {
         }
         if (sendBtn.count() == 0 || !safeIsVisible(sendBtn.first())) {
             // Strategy 4: Any button containing euro symbol (price button acts as send)
-            sendBtn = page.locator("button:has-text('€'), button:has-text('?')");
+            sendBtn = page.locator("button").filter(new Locator.FilterOptions().setHasText(Pattern.compile("[€?]")));
         }
         
         // Wait for button to be visible
@@ -2326,7 +2331,7 @@ public class CreatorMessagingPage extends BasePage {
             if (i % 5 == 0) {
                 logger.info("[Messaging] Send button for media still disabled, waiting... ({}s)", i);
             }
-            page.waitForTimeout(1000);
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         }
         
         clickWithRetry(sendBtn.first(), 2, ConfigReader.getElementRetryDelay());
@@ -2360,7 +2365,7 @@ public class CreatorMessagingPage extends BasePage {
         // Strategy 3: Just wait a bit and assume success if no error
         if (!delivered) {
             logger.warn("[Messaging] Could not verify Delivered text, assuming success after wait");
-            page.waitForTimeout(500);
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         }
     }
 
@@ -2376,7 +2381,7 @@ public class CreatorMessagingPage extends BasePage {
         typeReplyMessage(replyMessage);
         clickSendButton();
         // Wait for message to be sent and appear in conversation
-        page.waitForTimeout(2000);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         // Verify reply message is visible in conversation (use first() to get any occurrence)
         Locator replyMsg = page.getByText(replyMessage).first();
         waitVisible(replyMsg, DEFAULT_WAIT);
@@ -2395,7 +2400,7 @@ public class CreatorMessagingPage extends BasePage {
         typeReplyMessage(replyMessage);
         clickSendButton();
         // Wait for message to be sent and appear in conversation
-        page.waitForTimeout(2000);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         // Verify reply message is visible in conversation (use first() to get any occurrence)
         Locator replyMsg = page.getByText(replyMessage).first();
         waitVisible(replyMsg, DEFAULT_WAIT);
@@ -2414,7 +2419,7 @@ public class CreatorMessagingPage extends BasePage {
         typeReplyMessage(replyMessage);
         clickSendButton();
         // Wait for message to be sent and appear in conversation
-        page.waitForTimeout(2000);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         // Verify reply message is visible in conversation (use first() to get any occurrence)
         Locator replyMsg = page.getByText(replyMessage).first();
         waitVisible(replyMsg, DEFAULT_WAIT);
@@ -2442,7 +2447,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator quickFiles = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Quick Files"));
         waitVisible(quickFiles, DEFAULT_WAIT);
         clickWithRetry(quickFiles, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked Quick Files button");
     }
 
@@ -2452,7 +2457,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator photosVideos = page.locator("div.quick-file-switch").filter(new Locator.FilterOptions().setHasText("Photos & videos")).first();
         waitVisible(photosVideos, DEFAULT_WAIT);
         clickWithRetry(photosVideos, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked Photos & videos tab");
     }
 
@@ -2462,7 +2467,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator audios = page.locator("div.quick-file-switch").filter(new Locator.FilterOptions().setHasText("Audios")).first();
         waitVisible(audios, DEFAULT_WAIT);
         clickWithRetry(audios, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked Audios tab");
     }
 
@@ -2473,7 +2478,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator mixAlbum = page.locator("div.qf-row-title").filter(new Locator.FilterOptions().setHasText(Pattern.compile("mixalbum"))).first();
         waitVisible(mixAlbum, DEFAULT_WAIT);
         clickWithRetry(mixAlbum, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked on mix album");
     }
 
@@ -2484,7 +2489,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator audioAlbum = page.locator("div.qf-row-title").filter(new Locator.FilterOptions().setHasText(Pattern.compile("audioalbum"))).first();
         waitVisible(audioAlbum, DEFAULT_WAIT);
         clickWithRetry(audioAlbum, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked on audio album");
     }
 
@@ -2528,7 +2533,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator select = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select"));
         waitVisible(select, DEFAULT_WAIT);
         clickWithRetry(select, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked Select button");
     }
 
@@ -2537,7 +2542,7 @@ public class CreatorMessagingPage extends BasePage {
         Locator selectAndSend = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select and send").setExact(true));
         waitVisible(selectAndSend, DEFAULT_WAIT);
         clickWithRetry(selectAndSend, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(500);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         logger.info("[Messaging] Clicked Select and send button");
     }
 
