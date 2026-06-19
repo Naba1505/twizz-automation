@@ -20,10 +20,6 @@ public class CreatorRevenuesPage extends BasePage {
     private static final String SELECTOR_CHART_PRICE_TEXT = "div span.ant-typography.chart-price-text.css-ixblex";
     // Last report selectors
     private static final String SELECTOR_LAST_REPORT_CONTENT = "div.ant-row.last-report-content.css-ixblex";
-    private static final String SELECTOR_DROPDOWN_UL = "ul.ant-dropdown-menu.ant-dropdown-menu-root.ant-dropdown-menu-vertical.ant-dropdown-menu-light.css-ixblex";
-    // Filter dropdown (container -> ul -> li)
-    private static final String SELECTOR_FILTER_DROPDOWN_CONTAINER = "div.ant-dropdown.css-ixblex.ant-dropdown-placement-topLeft";
-    private static final String SELECTOR_FILTER_DROPDOWN_UL = SELECTOR_FILTER_DROPDOWN_CONTAINER + " ul";
 
     // All timeout values now use centralized ConfigReader methods for consistency
 
@@ -229,30 +225,6 @@ public class CreatorRevenuesPage extends BasePage {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("change"));
     }
 
-    private Locator changeIconByXPath() {
-        return page.locator("xpath=//div//img[@alt='change'][1]");
-    }
-
-    private Locator dropdownMenu() {
-        // Use the provided UL selector and select the intended instance when multiple are present.
-        // If there are 3 or more visible menus, prefer index 2 (0-based nth(2)). If 2, prefer nth(1). Else first.
-        Locator menus = page.locator(SELECTOR_DROPDOWN_UL);
-        int count = menus.count();
-        if (count >= 3) return menus.nth(2);
-        if (count >= 2) return menus.nth(1);
-        return menus.first();
-    }
-
-    private Locator filterDropdownMenu() {
-        // Target the exact filter dropdown container then its UL
-        return page.locator(SELECTOR_FILTER_DROPDOWN_UL);
-    }
-
-    private Locator dropdownItemByText(String text) {
-        // li item under the dropdown ul with exact text
-        return dropdownMenu().locator("li").filter(new Locator.FilterOptions().setHasText(text));
-    }
-
     private void scrollIntoViewWithAttempts(Locator target, int attempts, int deltaY) {
         int tries = Math.max(1, attempts);
         for (int i = 0; i < tries; i++) {
@@ -274,128 +246,6 @@ public class CreatorRevenuesPage extends BasePage {
         // Ensure the content container under last report is visible
         waitVisible(lastReportContent(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] 'Last report' title and content visible");
-    }
-
-    @Step("Open report type change dropdown")
-    public void openChangeDropdown() {
-        waitVisible(changeIcon(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIcon(), 1, ConfigReader.getElementRetryDelay());
-        // Wait for the UL dropdown menu to appear
-        waitVisible(dropdownMenu(), ConfigReader.getShortTimeout());
-        logger.info("[Revenues] Change dropdown opened");
-    }
-
-    @Step("Select report type: {type}")
-    public void selectReportType(String type) {
-        // Ensure dropdown is open
-        if (dropdownMenu().count() == 0) {
-            openChangeDropdown();
-        }
-        Locator item = dropdownItemByText(type);
-        waitVisible(item.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(item.first(), 1, ConfigReader.getElementRetryDelay());
-        // After selection, dropdown typically closes; re-validate content still visible
-        waitVisible(lastReportContent(), ConfigReader.getShortTimeout());
-        logger.info("[Revenues] Selected report type: {} and content visible", type);
-    }
-
-    @Step("Open Filter dropdown")
-    public void openFilterDropdown() {
-        // Ensure we are in the Last report area where Filter resides
-        try { scrollToLastReportAndEnsureContent(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-
-        Locator filter = getFilterActivator();
-        // Try to bring it into view and click
-        try { filter.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        waitVisible(filter.first(), ConfigReader.getShortTimeout());
-        try {
-            clickWithRetry(filter.first(), 1, ConfigReader.getElementRetryDelay());
-        } catch (RuntimeException e) {
-            // Fallback: force click if overlapped
-            try { filter.first().click(new Locator.ClickOptions().setForce(true)); } catch (Exception ex) { logger.debug("Force click failed: {}", ex.getMessage()); throw e; }
-        }
-        // Wait for the specific filter dropdown
-        waitVisible(filterDropdownMenu(), ConfigReader.getShortTimeout());
-        logger.info("[Revenues] Filter dropdown opened");
-    }
-
-    private void openFilterOrChangeDropdown() {
-        // Prefer Filter if present/visible; else use change icon as fallback (per user spec)
-        try {
-            Locator filter = getFilterActivator();
-            if (filter != null && filter.count() > 0 && safeIsVisible(filter.first())) {
-                openFilterDropdown();
-                return;
-            }
-        } catch (Exception e) { logger.debug("Filter check failed: {}", e.getMessage()); }
-        // Fallback: use change icon (XPath) to reveal the list
-        try { scrollToLastReportAndEnsureContent(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        Locator change = changeIconByXPath();
-        if (change.count() == 0 || !change.first().isVisible()) {
-            // try role-based as secondary
-            change = changeIcon();
-        }
-        waitVisible(change.first(), ConfigReader.getShortTimeout());
-        try { change.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(change.first(), 1, ConfigReader.getElementRetryDelay());
-        waitVisible(filterDropdownMenu(), ConfigReader.getShortTimeout());
-        logger.info("[Revenues] Opened dropdown via change icon");
-    }
-
-    private Locator getFilterActivator() {
-        // Prefer a role button named Filter if present
-        Locator byRole = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Filter"));
-        if (byRole.count() > 0) return byRole;
-        // Then try exact text 'Filter'
-        Locator byTextExact = page.getByText("Filter", new Page.GetByTextOptions().setExact(true));
-        if (byTextExact.count() > 0) return byTextExact;
-        // Then try contains text (case-insensitive)
-        Locator byTextCi = page.getByText(java.util.regex.Pattern.compile("\\bFilter\\b", java.util.regex.Pattern.CASE_INSENSITIVE));
-        if (byTextCi.count() > 0) return byTextCi;
-        // As a last resort, look within the last report content area
-        Locator within = lastReportContent().getByText("Filter");
-        if (within.count() > 0) return within;
-        // Fallback to any element with title or aria-label Filter
-        Locator byAttr = page.locator("[title='Filter'], [aria-label='Filter']");
-        if (byAttr.count() > 0) return byAttr;
-        // Default to global text which may become visible after scroll
-        return byTextExact;
-    }
-
-    @Step("Iterate through all Filter options and click each")
-    public void iterateFilterOptionsAndClickAll() {
-        // Click in explicit order from bottom value up to top as requested
-        String[] order = new String[]{
-                "Decrypt",
-                "Live",
-                "Private medias",
-                "Medias push",
-                "Collection",
-                "Stream",
-                "Monthly subscription",
-                "All"
-        };
-        for (String label : order) {
-            // From second time, Filter may vanish; open via change icon if needed
-            openFilterOrChangeDropdown();
-            Locator list = filterDropdownMenu().locator("li");
-            // Prefer exact text match within the li content
-            Locator opt = list.filter(new Locator.FilterOptions().setHasText(label));
-            // Ensure visibility; try scroll into view if needed
-            if (opt.count() == 0) {
-                // As a fallback, try case-insensitive contains using regex
-                opt = list.filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile(java.util.regex.Pattern.quote(label), java.util.regex.Pattern.CASE_INSENSITIVE)));
-            }
-            if (opt.count() == 0) {
-                throw new RuntimeException("Filter option not found: " + label);
-            }
-            Locator target = opt.first();
-            try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-            waitVisible(target, ConfigReader.getShortTimeout());
-            clickWithRetry(target, 1, ConfigReader.getElementRetryDelay());
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        }
-        logger.info("[Revenues] Iterated filter options in requested order");
     }
 
     @Step("Scroll to top until 'Revenues' title visible")
@@ -494,30 +344,29 @@ public class CreatorRevenuesPage extends BasePage {
 
         // Now use change icon to iterate Medias push, Private medias, Live, Decrypt
         logger.info("[Revenues] Selecting 'Medias push' via change icon");
-        Locator changeIconImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("change"));
-        waitVisible(changeIconImg.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIconImg.first(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
         Locator mediasPush = page.getByText("Medias push");
         waitVisible(mediasPush, ConfigReader.getShortTimeout());
         clickWithRetry(mediasPush, 1, ConfigReader.getElementRetryDelay());
 
         logger.info("[Revenues] Selecting 'Private medias' via change icon");
-        waitVisible(changeIconImg.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIconImg.first(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
         Locator privateMedias = page.getByText("Private medias");
         waitVisible(privateMedias, ConfigReader.getShortTimeout());
         clickWithRetry(privateMedias, 1, ConfigReader.getElementRetryDelay());
 
         logger.info("[Revenues] Selecting 'Live' via change icon");
-        waitVisible(changeIconImg.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIconImg.first(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
         Locator liveOpt = page.getByText("Live");
         waitVisible(liveOpt, ConfigReader.getShortTimeout());
         clickWithRetry(liveOpt, 1, ConfigReader.getElementRetryDelay());
 
         logger.info("[Revenues] Selecting 'Decrypt' via change icon");
-        waitVisible(changeIconImg.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIconImg.first(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
+        clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
         Locator decryptOpt = page.getByText("Decrypt");
         waitVisible(decryptOpt, ConfigReader.getShortTimeout());
         clickWithRetry(decryptOpt, 1, ConfigReader.getElementRetryDelay());
