@@ -12,13 +12,6 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> Legal pages (Terms & Conditions of Sale, Community Regulations, Content Policy)
  */
 public class CreatorLegalPages extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 20000ms)
-
     private static final String SETTINGS_URL_PART = "/common/setting";
     private static final String SALE_TITLE_EXACT = "General Conditions of Sale";
     private static final String SALE_URL_PATH = "/common/general-conditions-of-sale";
@@ -81,90 +74,34 @@ public class CreatorLegalPages extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Legal Pages)")
     public void openSettingsFromProfile() {
-        logger.info("Opening Settings from profile via settings icon");
-        
-        // Try multiple selector strategies for settings icon
-        Locator[] settingsLocators = {
-            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("settings")),
-            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("settings")),
-            page.locator("img[alt='settings']"),
-            page.locator("img[alt*='settings']"),
-            page.locator("*:has-text('settings')"),
-            page.locator("[role='img']:has-text('settings')"),
-            page.locator(".settings-icon"),
-            page.locator("[data-testid='settings']"),
-            page.locator("button:has(img[alt='settings'])"),
-            page.locator("div:has(img[alt='settings'])")
-        };
-        
-        boolean clicked = false;
-        for (Locator locator : settingsLocators) {
-            try {
-                if (locator.count() > 0) {
-                    logger.info("Found settings element with count: {}", locator.count());
-                    
-                    // Try to make it visible if hidden
-                    try {
-                        locator.first().scrollIntoViewIfNeeded();
-                    } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-                    
-                    // Force click if regular click doesn't work
-                    try {
-                        waitVisible(locator.first(), ConfigReader.getMediumTimeout());
-                        clickWithRetry(locator.first(), 2, BUTTON_RETRY_DELAY);
-                    } catch (Exception e) {
-                        logger.debug("Normal click failed, trying force click");
-                        locator.first().click(new Locator.ClickOptions().setForce(true));
-                    }
-                    
-                    clicked = true;
-                    break;
-                }
-            } catch (Exception e) {
-                logger.debug("Settings locator strategy failed: {}", e.getMessage());
-                continue;
-            }
+        Locator settingsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("settings"));
+        waitVisible(settingsIcon, ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon, 1, ConfigReader.getElementRetryDelay());
+        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
-        
-        if (!clicked) {
-            // As a last resort, try direct navigation
-            logger.warn("Settings icon not found or not clickable, trying direct navigation");
-            try {
-                page.navigate(ConfigReader.getBaseUrl() + "/common/setting");
-                page.waitForLoadState();
-                return;
-            } catch (Exception e) {
-                logger.error("Direct navigation also failed: {}", e.getMessage());
-                throw new RuntimeException("Unable to open Settings page");
-            }
+    }
+
+    @Step("Assert current URL contains settings path")
+    public void assertOnSettingsUrl() {
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            throw new AssertionError("Did not land on Settings screen. URL: " + page.url());
         }
-        
-        // Wait for navigation and verify
-        try {
-            page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-        } catch (Exception e) {
-            logger.debug("URL wait failed, checking current URL");
-        }
-        
-        String currentUrl = page.url();
-        if (!currentUrl.contains(SETTINGS_URL_PART)) {
-            logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, currentUrl);
-        } else {
-            logger.info("Successfully navigated to Settings page: {}", currentUrl);
-        }
+        logger.info("Settings URL confirmed: {}", page.url());
     }
 
     @Step("Open Terms and conditions of sale")
     public void openTermsAndConditionsOfSale() {
-        waitVisible(termsAndConditionsOfSaleMenu(), SHORT_TIMEOUT);
+        waitVisible(termsAndConditionsOfSaleMenu(), ConfigReader.getShortTimeout());
         try { termsAndConditionsOfSaleMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(termsAndConditionsOfSaleMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(saleTitleExact(), SHORT_TIMEOUT);
+        clickWithRetry(termsAndConditionsOfSaleMenu(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(saleTitleExact(), ConfigReader.getShortTimeout());
     }
 
     @Step("Assert on Sale terms page (title and URL)")
     public void assertOnSaleTermsPage() {
-        waitVisible(saleTitleExact(), SHORT_TIMEOUT);
+        waitVisible(saleTitleExact(), ConfigReader.getShortTimeout());
         String url = page.url();
         if (!url.contains(SALE_URL_PATH)) {
             logger.warn("Expected Sale terms URL to contain '{}' but was {}", SALE_URL_PATH, url);
@@ -176,28 +113,27 @@ public class CreatorLegalPages extends BasePage {
         // Scroll down until bottom snippet is visible
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(saleBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
-        waitVisible(saleBottomSnippet(), SHORT_TIMEOUT);
-        // Scroll back up until title is visible again
+        waitVisible(saleBottomSnippet(), ConfigReader.getShortTimeout());
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(saleTitleExact())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
-        waitVisible(saleTitleExact(), SHORT_TIMEOUT);
+        waitVisible(saleTitleExact(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open Community regulations")
     public void openCommunityRegulations() {
-        waitVisible(communityRegulationsMenu(), SHORT_TIMEOUT);
+        waitVisible(communityRegulationsMenu(), ConfigReader.getShortTimeout());
         try { communityRegulationsMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(communityRegulationsMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(communityTitleExact(), SHORT_TIMEOUT);
+        clickWithRetry(communityRegulationsMenu(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(communityTitleExact(), ConfigReader.getShortTimeout());
     }
 
     @Step("Assert on Community regulations page (title and URL)")
     public void assertOnCommunityRegulationsPage() {
-        waitVisible(communityTitleExact(), SHORT_TIMEOUT);
+        waitVisible(communityTitleExact(), ConfigReader.getShortTimeout());
         String url = page.url();
         if (!url.contains(COMMUNITY_URL_PATH)) {
             logger.warn("Expected Community regulations URL to contain '{}' but was {}", COMMUNITY_URL_PATH, url);
@@ -208,47 +144,47 @@ public class CreatorLegalPages extends BasePage {
     public void scrollDownToCommunityBottomAndBackToTitle() {
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(communityBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
-        waitVisible(communityBottomSnippet(), SHORT_TIMEOUT);
+        waitVisible(communityBottomSnippet(), ConfigReader.getShortTimeout());
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(communityTitleExact())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
-        waitVisible(communityTitleExact(), SHORT_TIMEOUT);
+        waitVisible(communityTitleExact(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open Content Policy")
     public void openContentPolicy() {
-        waitVisible(contentPolicyMenu(), SHORT_TIMEOUT);
+        waitVisible(contentPolicyMenu(), ConfigReader.getShortTimeout());
         try { contentPolicyMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(contentPolicyMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(contentPolicyTitle(), MEDIUM_TIMEOUT);
+        clickWithRetry(contentPolicyMenu(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(contentPolicyTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Assert on Content Policy page (title visible)")
     public void assertOnContentPolicyPage() {
-        waitVisible(contentPolicyTitle(), MEDIUM_TIMEOUT);
+        waitVisible(contentPolicyTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Scroll to bottom Content Policy snippet and back to title")
     public void scrollDownToContentPolicyBottomAndBackToTitle() {
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(contentPolicyBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
-        waitVisible(contentPolicyBottomSnippet(), SHORT_TIMEOUT);
+        waitVisible(contentPolicyBottomSnippet(), ConfigReader.getShortTimeout());
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(contentPolicyTitle())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
-        waitVisible(contentPolicyTitle(), MEDIUM_TIMEOUT);
+        waitVisible(contentPolicyTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click back arrow")
     public void clickBackArrow() {
-        waitVisible(backArrow(), SHORT_TIMEOUT);
-        clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(backArrow(), ConfigReader.getShortTimeout());
+        clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay());
     }
 }
 
