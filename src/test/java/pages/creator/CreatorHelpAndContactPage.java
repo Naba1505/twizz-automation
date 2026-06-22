@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -11,12 +12,6 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> Help and contact
  */
 public class CreatorHelpAndContactPage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 20000ms)
-
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorHelpAndContactPage(Page page) {
@@ -28,11 +23,7 @@ public class CreatorHelpAndContactPage extends BasePage {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("settings"));
     }
 
-    private Locator helpAndContactMenu() {
-        return page.getByText("Help and contact");
-    }
-
-    private Locator helpAndContactTitle() {
+    private Locator helpAndContactMenuItem() {
         return page.getByText("Help and contact");
     }
 
@@ -55,44 +46,52 @@ public class CreatorHelpAndContactPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Help and contact)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), MEDIUM_TIMEOUT);
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
     }
 
+    @Step("Assert current URL contains settings path")
+    public void assertOnSettingsUrl() {
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            throw new AssertionError("Did not land on Settings screen. URL: " + page.url());
+        }
+        logger.info("Settings URL confirmed: {}", page.url());
+    }
+
     @Step("Open 'Help and contact' screen")
     public void openHelpAndContact() {
-        waitVisible(helpAndContactMenu(), MEDIUM_TIMEOUT);
-        try { helpAndContactMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(helpAndContactMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(helpAndContactTitle(), SHORT_TIMEOUT);
+        waitVisible(helpAndContactMenuItem(), ConfigReader.getShortTimeout());
+        try { helpAndContactMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(helpAndContactMenuItem(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(helpAndContactMenuItem(), ConfigReader.getShortTimeout());
     }
 
     @Step("Fill Subject: {subject}")
     public void fillSubject(String subject) {
-        waitVisible(subjectTextbox(), SHORT_TIMEOUT);
+        waitVisible(subjectTextbox(), ConfigReader.getShortTimeout());
         subjectTextbox().click();
         subjectTextbox().fill(subject == null ? "" : subject);
     }
 
     @Step("Fill Message: {message}")
     public void fillMessage(String message) {
-        waitVisible(messageTextbox(), SHORT_TIMEOUT);
+        waitVisible(messageTextbox(), ConfigReader.getShortTimeout());
         messageTextbox().click();
         messageTextbox().fill(message == null ? "" : message);
     }
 
     @Step("Click Send button")
     public void clickSend() {
-        waitVisible(sendButton(), SHORT_TIMEOUT);
-        clickWithRetry(sendButton(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(sendButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(sendButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert success toast is visible")
     public void assertSuccessToastVisible() {
-        waitVisible(successToast(), MEDIUM_TIMEOUT);
+        waitVisible(successToast(), ConfigReader.getMediumTimeout());
     }
 }
