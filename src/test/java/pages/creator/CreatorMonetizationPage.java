@@ -7,14 +7,11 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page Object for Creator -> Monetization -> Subscription price screen.
  */
 public class CreatorMonetizationPage extends BasePage {
-    private static final Logger log = LoggerFactory.getLogger(CreatorMonetizationPage.class);
 
     // All timeout values now use centralized ConfigReader methods for consistency
 
@@ -100,11 +97,11 @@ public class CreatorMonetizationPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from Profile and navigate to 'Subscription price'")
     public void openSubscriptionPriceFromProfile() {
-        log.info("Clicking settings icon to open Settings");
+        logger.info("Clicking settings icon to open Settings");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
 
-        log.info("Clicking 'Subscription price' in Settings");
+        logger.info("Clicking 'Subscription price' in Settings");
         waitVisible(subscriptionPriceMenuItem(), ConfigReader.getShortTimeout());
         clickWithRetry(subscriptionPriceMenuItem(), 1, ConfigReader.getElementRetryDelay());
 
@@ -117,7 +114,7 @@ public class CreatorMonetizationPage extends BasePage {
     public void assertOnMonetizationUrl() {
         page.waitForURL("**/creator/monetization**");
         if (!page.url().startsWith(MONETIZATION_URL)) {
-            log.warn("Expected monetization URL starting with {} but was {}", MONETIZATION_URL, page.url());
+            logger.warn("Expected monetization URL starting with {} but was {}", MONETIZATION_URL, page.url());
         }
     }
 
@@ -129,13 +126,13 @@ public class CreatorMonetizationPage extends BasePage {
         waitVisible(monthlyPriceInput(), ConfigReader.getShortTimeout());
         try {
             String val = monthlyPriceInput().inputValue();
-            log.info("Monthly price input visible, current value='{}'", val);
-        } catch (Throwable e) { log.debug("Failed to get monthly price value: {}", e.getMessage()); }
+            logger.info("Monthly price input visible, current value='{}'", val);
+        } catch (Throwable e) { logger.debug("Failed to get monthly price value: {}", e.getMessage()); }
         try {
             boolean on = monthlyToggle().getAttribute("aria-checked") != null ?
                     Boolean.parseBoolean(monthlyToggle().getAttribute("aria-checked")) : monthlyToggle().isChecked();
-            log.info("Monthly toggle aria-checked/isChecked = {}", on);
-        } catch (Throwable e) { log.debug("Failed to get monthly toggle state: {}", e.getMessage()); }
+            logger.info("Monthly toggle aria-checked/isChecked = {}", on);
+        } catch (Throwable e) { logger.debug("Failed to get monthly toggle state: {}", e.getMessage()); }
     }
 
     @Step("Attempt to disable Monthly and expect validation popup")
@@ -159,28 +156,10 @@ public class CreatorMonetizationPage extends BasePage {
             String aria = quarterlyToggle().getAttribute("aria-checked");
             boolean isOn = aria != null ? Boolean.parseBoolean(aria) : quarterlyToggle().isChecked();
             if (!isOn) {
-                log.info("Quarterly toggle is OFF, enabling it now.");
+                logger.info("Quarterly toggle is OFF, enabling it now.");
                 clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
             } else {
-                log.info("Quarterly toggle already ON");
-            }
-        } catch (Throwable t) {
-            // Fallback: just click once if read fails
-            clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-        }
-    }
-
-    @Step("Disable Quarterly price toggle if currently enabled")
-    public void disableQuarterlyToggleIfOn() {
-        waitVisible(quarterlyToggle(), ConfigReader.getShortTimeout());
-        try {
-            String aria = quarterlyToggle().getAttribute("aria-checked");
-            boolean isOn = aria != null ? Boolean.parseBoolean(aria) : quarterlyToggle().isChecked();
-            if (isOn) {
-                log.info("Quarterly toggle is ON, disabling it now.");
-                clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-            } else {
-                log.info("Quarterly toggle already OFF");
+                logger.info("Quarterly toggle already ON");
             }
         } catch (Throwable t) {
             // Fallback: just click once if read fails
@@ -193,45 +172,46 @@ public class CreatorMonetizationPage extends BasePage {
             String aria = quarterlyToggle().getAttribute("aria-checked");
             return aria != null ? Boolean.parseBoolean(aria) : quarterlyToggle().isChecked();
         } catch (Throwable t) {
-            log.warn("Failed to read quarterly toggle state, assuming ON to force a change.");
+            logger.warn("Failed to read quarterly toggle state, assuming ON to force a change.");
             return true;
         }
     }
 
-    @Step("Ensure quarterly ends disabled; make a change if already OFF (toggle ON then OFF)")
-    public void ensureQuarterlyDisabledWithChange() {
-        waitVisible(quarterlyToggle(), ConfigReader.getShortTimeout());
-        boolean isOn = isQuarterlyOnSafe();
-        if (isOn) {
-            log.info("Quarterly currently ON -> turning OFF");
-            clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-        } else {
-            log.info("Quarterly already OFF -> toggling ON then OFF to register change");
-            clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
-            clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-        }
+    @Step("Navigate back via arrow-left icon then go back one page")
+    public void navigateBackFromMonetization() {
+        try {
+            Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
+            if (arrowLeft.count() > 0 && safeIsVisible(arrowLeft.first())) {
+                arrowLeft.first().click();
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            }
+        } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+        try { page.goBack(); } catch (Throwable e) { logger.debug("goBack failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Wait and then ensure Quarterly is OFF, always registering a change")
-    public void waitAndDisableQuarterlyWithChange() {
-        // Wait a bit after navigation so the page fully settles
-        try { page.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
-
+    @Step("Disable quarterly: enable first if already OFF, then disable")
+    public void disableQuarterlyOffer() {
         waitVisible(quarterlyToggle(), ConfigReader.getShortTimeout());
-
-        // First click always to guarantee a change event
-        clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
-
-        // If after first click it is still ON, click once more to end OFF
-        boolean afterFirstClickOn = isQuarterlyOnSafe();
-        if (afterFirstClickOn) {
-            log.info("Quarterly still ON after first click -> clicking again to turn OFF");
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        boolean isEnabled = isQuarterlyOnSafe();
+        if (!isEnabled) {
+            // Enable first so we can then disable and trigger a real change
+            logger.info("Quarterly is OFF, enabling first to register change");
             clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-        } else {
-            log.info("Quarterly OFF after first click; no extra click needed");
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            setQuarterlyPrice("5");
+            clickContinue();
+            waitForMonetizationUpdatedToast();
+            navigateBackFromMonetization();
+            openSubscriptionPriceFromProfile();
+            assertQuarterlyOfferVisible();
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         }
+        // Now disable quarterly
+        logger.info("Disabling quarterly toggle");
+        clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
     }
 
     @Step("Set Quarterly price to: {price}")
@@ -240,13 +220,13 @@ public class CreatorMonetizationPage extends BasePage {
         Locator el = quarterlyPriceInput();
         el.click();
         // Clear robustly before filling
-        try { el.fill(""); } catch (Throwable e) { log.debug("Fill failed: {}", e.getMessage()); }
-        try { el.press("Control+A"); el.press("Backspace"); } catch (Throwable e) { log.debug("Key press failed: {}", e.getMessage()); }
+        try { el.fill(""); } catch (Throwable e) { logger.debug("Fill failed: {}", e.getMessage()); }
+        try { el.press("Control+A"); el.press("Backspace"); } catch (Throwable e) { logger.debug("Key press failed: {}", e.getMessage()); }
         el.fill(price);
         String current = el.inputValue();
         if (!price.equals(current)) {
             // UI may format as 0.0€, etc.; just log for debugging instead of failing the test
-            log.warn("Quarterly price mismatch after fill. Expected='{}' Actual='{}'", price, current);
+            logger.warn("Quarterly price mismatch after fill. Expected='{}' Actual='{}'", price, current);
         }
     }
 
@@ -259,11 +239,11 @@ public class CreatorMonetizationPage extends BasePage {
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
                 if (continueButton().isEnabled()) break;
-            } catch (Throwable e) { log.debug("Enabled check failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+            } catch (Throwable e) { logger.debug("Enabled check failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         if (!continueButton().isEnabled()) {
-            log.warn("Continue button still disabled after waiting; attempting click regardless");
+            logger.warn("Continue button still disabled after waiting; attempting click regardless");
         }
         clickWithRetry(continueButton(), 2, ConfigReader.getElementRetryDelay());
     }
@@ -271,7 +251,7 @@ public class CreatorMonetizationPage extends BasePage {
     @Step("Wait for monetization updated toast")
     public void waitForMonetizationUpdatedToast() {
         waitVisible(monetizationUpdatedPopup(), ConfigReader.getMediumTimeout());
-        try { clickWithRetry(monetizationUpdatedPopup(), 0, 0); } catch (Throwable e) { log.debug("Click failed: {}", e.getMessage()); }
+        try { clickWithRetry(monetizationUpdatedPopup(), 0, 0); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
     }
 }
 
