@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -11,15 +12,6 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> Unlock history flow
  */
 public class CreatorUnlockHistoryPage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int SCROLL_WAIT = 80;           // Scroll stabilization
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POLLING_WAIT = 200;         // Polling intervals
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 5000;      // Medium waits - increased for list loading stability
-
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorUnlockHistoryPage(Page page) {
@@ -73,57 +65,65 @@ public class CreatorUnlockHistoryPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Unlock History)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), SHORT_TIMEOUT);
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
     }
 
+    @Step("Assert current URL contains settings path")
+    public void assertOnSettingsUrl() {
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            throw new AssertionError("Did not land on Settings screen. URL: " + page.url());
+        }
+        logger.info("Settings URL confirmed: {}", page.url());
+    }
+
     @Step("Open 'Unlock history' screen")
     public void openUnlockHistory() {
-        waitVisible(unlockHistoryMenu(), SHORT_TIMEOUT);
+        waitVisible(unlockHistoryMenu(), ConfigReader.getShortTimeout());
         try { unlockHistoryMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(unlockHistoryMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(unlockLinksTitle(), SHORT_TIMEOUT);
+        clickWithRetry(unlockHistoryMenu(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(unlockLinksTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open last unlock entry from the list")
     public void openLastUnlockEntry() {
         // Nudge list and scroll to bottom to surface last item
         try { anyUnlockItems().first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        for (int i = 0; i < 8; i++) { try { page.mouse().wheel(0, 800); page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
+        for (int i = 0; i < 8; i++) { try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
         Locator last = lastUnlockClickable();
-        waitVisible(last.first(), SHORT_TIMEOUT);
+        waitVisible(last.first(), ConfigReader.getShortTimeout());
         try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(last.first(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(last.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Open first unlock entry from the list")
     public void openFirstUnlockEntry() {
-        for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
-        waitVisible(firstUnlockRow(), MEDIUM_TIMEOUT);
+        for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
+        waitVisible(firstUnlockRow(), ConfigReader.getShortTimeout());
         try { firstUnlockRow().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(firstUnlockRow(), 1, BUTTON_RETRY_DELAY);
+        clickWithRetry(firstUnlockRow(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert Details screen is visible")
     public void assertDetailsVisible() {
-        waitVisible(detailsTitle(), MEDIUM_TIMEOUT);
+        waitVisible(detailsTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Navigate back via arrow left")
     public void clickBackArrow() {
-        waitVisible(backArrow(), SHORT_TIMEOUT);
-        clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(backArrow(), ConfigReader.getShortTimeout());
+        clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Navigate back to profile screen")
     public void navigateBackToProfile() {
         for (int i = 0; i < 5; i++) {
             try { clickBackArrow(); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
             if (safeIsVisible(plusImg)) {
                 return;
