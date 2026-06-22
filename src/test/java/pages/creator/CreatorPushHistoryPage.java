@@ -12,10 +12,6 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> History of pushes flow
  */
 public class CreatorPushHistoryPage extends BasePage {
-    // Push History page uses optimized short timeouts for fast-loading UI elements
-    private static final int SHORT_TIMEOUT = 2000;       // 2s - Fast UI elements (settings, menus)
-    private static final int MEDIUM_TIMEOUT = 8000;      // 8s - History items, performance screen
-
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorPushHistoryPage(Page page) {
@@ -71,7 +67,7 @@ public class CreatorPushHistoryPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Push History)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), SHORT_TIMEOUT);
+        waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
@@ -79,12 +75,20 @@ public class CreatorPushHistoryPage extends BasePage {
         }
     }
 
+    @Step("Assert current URL contains settings path")
+    public void assertOnSettingsUrl() {
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            throw new AssertionError("Did not land on Settings screen. URL: " + page.url());
+        }
+        logger.info("Settings URL confirmed: {}", page.url());
+    }
+
     @Step("Open 'History of pushes' screen")
     public void openHistoryOfPushes() {
-        waitVisible(historyOfPushesMenu(), SHORT_TIMEOUT);
+        waitVisible(historyOfPushesMenu(), ConfigReader.getShortTimeout());
         try { historyOfPushesMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(historyOfPushesMenu(), 1, ConfigReader.getElementRetryDelay());
-        waitVisible(historyMediaPushTitle(), SHORT_TIMEOUT);
+        waitVisible(historyMediaPushTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open last media push entry from the list")
@@ -96,7 +100,7 @@ public class CreatorPushHistoryPage extends BasePage {
             try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
         }
         Locator last = lastHistoryClickable();
-        waitVisible(last.first(), SHORT_TIMEOUT);
+        waitVisible(last.first(), ConfigReader.getShortTimeout());
         try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(last.first(), 1, ConfigReader.getElementRetryDelay());
     }
@@ -105,19 +109,19 @@ public class CreatorPushHistoryPage extends BasePage {
     public void openFirstMediaPushEntry() {
         // Scroll to top first to ensure first item is interactable
         for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
-        waitVisible(firstHistoryRow(), SHORT_TIMEOUT);
+        waitVisible(firstHistoryRow(), ConfigReader.getShortTimeout());
         try { firstHistoryRow().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(firstHistoryRow(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert Performance screen is visible")
     public void assertPerformanceVisible() {
-        waitVisible(performanceTitle(), MEDIUM_TIMEOUT);
+        waitVisible(performanceTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Navigate back via arrow left")
     public void clickBackArrow() {
-        waitVisible(backArrow(), SHORT_TIMEOUT);
+        waitVisible(backArrow(), ConfigReader.getShortTimeout());
         clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay());
     }
 
