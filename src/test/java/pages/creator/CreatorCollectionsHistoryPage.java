@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -11,12 +12,6 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> History of collections
  */
 public class CreatorCollectionsHistoryPage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POLLING_WAIT = 200;         // Polling intervals
-    private static final int BRIEF_WAIT = 500;           // Brief stabilization wait
-
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorCollectionsHistoryPage(Page page) {
@@ -53,32 +48,30 @@ public class CreatorCollectionsHistoryPage extends BasePage {
     }
 
     // ---------- Steps ----------
-    @Step("Open Settings from profile via settings icon")
-    public void openSettings() {
-        waitVisible(settingsIcon(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
+    @Step("Open Settings from profile (Collections History)")
+    public void openSettingsFromProfile() {
+        waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
     }
 
-    @Step("Open Settings from profile (Collections History)")
-    public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+    @Step("Assert current URL contains settings path")
+    public void assertOnSettingsUrl() {
         if (!page.url().contains(SETTINGS_URL_PART)) {
-            logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
+            throw new AssertionError("Did not land on Settings screen. URL: " + page.url());
         }
+        logger.info("Settings URL confirmed: {}", page.url());
     }
 
     @Step("Open 'History of collections' screen")
     public void openHistoryOfCollections() {
-        waitVisible(historyOfCollectionsMenu(), utils.ConfigReader.getVisibilityTimeout());
+        waitVisible(historyOfCollectionsMenu(), ConfigReader.getShortTimeout());
         try { historyOfCollectionsMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(historyOfCollectionsMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(collectionsTitle(), utils.ConfigReader.getShortTimeout());
+        clickWithRetry(historyOfCollectionsMenu(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(collectionsTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open first collection entry")
@@ -86,29 +79,38 @@ public class CreatorCollectionsHistoryPage extends BasePage {
         // Check if any collections exist first
         Locator collectionIcon = firstCollectionIcon();
         try {
-            waitVisible(collectionIcon, utils.ConfigReader.getVisibilityTimeout());
+            waitVisible(collectionIcon, ConfigReader.getShortTimeout());
             try { collectionIcon.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-            clickWithRetry(collectionIcon, 1, BUTTON_RETRY_DELAY);
+            clickWithRetry(collectionIcon, 1, ConfigReader.getElementRetryDelay());
         } catch (Exception e) {
             logger.warn("No collections found in history - this is acceptable if user hasn't created any collections yet");
             // Don't fail the test - it's valid to have no collections
         }
     }
 
+    @Step("Assert Details screen if on collection page")
+    public void assertDetailsIfOnCollectionPage() {
+        if (page.url().contains("/collection/")) {
+            assertDetailsVisibleAndWait();
+        } else {
+            logger.info("No collection details to verify - user may not have any collections in history");
+        }
+    }
+
     @Step("Assert Details screen is visible and wait briefly")
     public void assertDetailsVisibleAndWait() {
-        waitVisible(detailsTitle(), utils.ConfigReader.getVisibilityTimeout());
-        try { page.waitForTimeout(BRIEF_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        waitVisible(detailsTitle(), ConfigReader.getShortTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Navigate back to profile (three back clicks)")
     public void navigateBackToProfile() {
         for (int i = 0; i < 3; i++) {
             try {
-                waitVisible(backArrow(), utils.ConfigReader.getShortTimeout());
-                clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY);
+                waitVisible(backArrow(), ConfigReader.getShortTimeout());
+                clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay());
             } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             if (safeIsVisible(profilePlusIcon())) return;
         }
         if (!safeIsVisible(profilePlusIcon())) {
