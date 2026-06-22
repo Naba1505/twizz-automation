@@ -25,38 +25,31 @@ public class CreatorProfilePage extends BasePage {
     }
 
     private Locator avatarImg() {
-        // Try multiple strategies to find avatar
-        Locator byAlt = page.locator("//img[@alt='avatar']");
-        if (byAlt.count() > 0) {
-            return byAlt;
-        }
-        // Fallback: look for avatar in profile header area
+        Locator byAlt = page.getByAltText("avatar");
+        if (byAlt.count() > 0) return byAlt;
         Locator byClass = page.locator(".ant-avatar img, .header-my-profile img, img[src*='avatar']");
-        if (byClass.count() > 0) {
-            return byClass.first();
-        }
-        // Final fallback: return original locator
+        if (byClass.count() > 0) return byClass.first();
         return byAlt;
     }
 
     private Locator publicationsText() {
-        return page.locator("//span[contains(text(),'Publications')]");
+        return page.getByText("Publications");
     }
 
     private Locator subscribersText() {
-        return page.locator("//span[contains(text(),'Subscribers')]");
+        return page.getByText("Subscribers");
     }
 
     private Locator interestedText() {
-        return page.locator("//span[contains(text(),'Interested')]");
+        return page.getByText("Interested");
     }
 
     private Locator publicationsIcon() {
-        return page.locator("//img[@alt='publications icon']");
+        return page.getByAltText("publications icon");
     }
 
     private Locator collectionsIcon() {
-        return page.locator("//img[@alt='collections icon']");
+        return page.getByAltText("collections icon");
     }
 
     // ===== Actions & Asserts =====
@@ -128,15 +121,6 @@ public class CreatorProfilePage extends BasePage {
     public void clickPublicationsIcon() {
         waitVisible(publicationsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(publicationsIcon(), 1, ConfigReader.getElementRetryDelay());
-    }
-
-    @Step("Open Messaging from header (optional fast nav)")
-    public void openMessagingFromHeader() {
-        // Some profile screens expose a Messaging icon as in other modules
-        Locator msgIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Messaging icon"));
-        if (msgIcon.count() > 0) {
-            clickWithRetry(msgIcon.first(), 1, ConfigReader.getElementRetryDelay());
-        }
     }
 
     // ===== Modify Profile & Avatar upload =====
@@ -334,7 +318,7 @@ public class CreatorProfilePage extends BasePage {
             });
             try { popup.close(); } catch (Throwable e) { logger.debug("Close popup failed: {}", e.getMessage()); }
         } catch (Throwable t) {
-            // If popup suppressed by browser, proceed without failing
+            logger.debug("[Profile] Share popup suppressed by browser: {}", t.getMessage());
         }
     }
 
