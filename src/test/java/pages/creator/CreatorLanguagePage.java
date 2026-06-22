@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -13,13 +14,6 @@ import java.util.regex.Pattern;
  * Page object for Creator -> Settings -> Language switch
  */
 public class CreatorLanguagePage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POLLING_WAIT = 200;         // Polling intervals
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int MEDIUM_TIMEOUT = 2000;      // Medium waits (was 20000ms)
-
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorLanguagePage(Page page) {
@@ -31,11 +25,7 @@ public class CreatorLanguagePage extends BasePage {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("settings"));
     }
 
-    private Locator languageMenu() {
-        return page.getByText("Language");
-    }
-
-    private Locator languageTitleEnglish() {
+    private Locator languageMenuItem() {
         return page.getByText("Language");
     }
 
@@ -71,57 +61,64 @@ public class CreatorLanguagePage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Language)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), SHORT_TIMEOUT);
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
     }
 
+    @Step("Assert current URL contains settings path")
+    public void assertOnSettingsUrl() {
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            throw new AssertionError("Did not land on Settings screen. URL: " + page.url());
+        }
+        logger.info("Settings URL confirmed: {}", page.url());
+    }
+
     @Step("Open Language screen")
     public void openLanguageScreen() {
-        waitVisible(languageMenu(), SHORT_TIMEOUT);
-        try { languageMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(languageMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(languageTitleEnglish(), SHORT_TIMEOUT);
+        waitVisible(languageMenuItem(), ConfigReader.getShortTimeout());
+        try { languageMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(languageMenuItem(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(languageMenuItem(), ConfigReader.getShortTimeout());
     }
 
     @Step("Switch to Français and verify")
     public void switchToFrenchAndVerify() {
-        waitVisible(optionFrancais(), SHORT_TIMEOUT);
-        clickWithRetry(optionFrancais(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(languageTitleFrench(), MEDIUM_TIMEOUT);
+        waitVisible(optionFrancais(), ConfigReader.getShortTimeout());
+        clickWithRetry(optionFrancais(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(languageTitleFrench(), ConfigReader.getShortTimeout());
     }
 
     @Step("Switch to Español and verify")
     public void switchToSpanishAndVerify() {
-        waitVisible(optionEspanol(), SHORT_TIMEOUT);
-        clickWithRetry(optionEspanol(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(languageTitleSpanish(), MEDIUM_TIMEOUT);
+        waitVisible(optionEspanol(), ConfigReader.getShortTimeout());
+        clickWithRetry(optionEspanol(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(languageTitleSpanish(), ConfigReader.getShortTimeout());
     }
 
     @Step("Switch to English and verify")
     public void switchToEnglishAndVerify() {
-        waitVisible(optionEnglish(), SHORT_TIMEOUT);
-        clickWithRetry(optionEnglish(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(languageTitleEnglish(), MEDIUM_TIMEOUT);
+        waitVisible(optionEnglish(), ConfigReader.getShortTimeout());
+        clickWithRetry(optionEnglish(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(languageMenuItem(), ConfigReader.getShortTimeout());
     }
 
     @Step("Navigate back to profile (two back arrows)")
     public void navigateBackToProfile() {
         for (int i = 0; i < 2; i++) {
             try {
-                waitVisible(backArrow(), SHORT_TIMEOUT);
-                clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY);
+                waitVisible(backArrow(), ConfigReader.getShortTimeout());
+                clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay());
             } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         if (!safeIsVisible(profilePlusIcon())) {
-            // Attempt additional back clicks if needed
             for (int i = 0; i < 2 && !safeIsVisible(profilePlusIcon()); i++) {
-                try { clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
-                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                try { clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
         }
     }
