@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -11,11 +12,6 @@ import io.qameta.allure.Step;
  * Page object for Creator -> Settings -> Payment method (Add bank account)
  */
 public class CreatorPaymentMethodPage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POLLING_WAIT = 200;         // Polling intervals
-    private static final int STABILIZATION_WAIT = 2000;  // UI stabilization after actions
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorPaymentMethodPage(Page page) {
@@ -27,11 +23,7 @@ public class CreatorPaymentMethodPage extends BasePage {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("settings"));
     }
 
-    private Locator paymentMethodMenu() {
-        return page.getByText("Payment method");
-    }
-
-    private Locator paymentMethodTitle() {
+    private Locator paymentMethodMenuItem() {
         return page.getByText("Payment method");
     }
 
@@ -109,19 +101,19 @@ public class CreatorPaymentMethodPage extends BasePage {
     }
 
     private Locator depositEvery7Days() {
-        return page.locator("//span[contains(text(),'Every 7 days')]");
+        return page.getByText("Every 7 days");
     }
 
     private Locator depositOnPause() {
-        return page.locator("//span[contains(text(),'On pause')]");
+        return page.getByText("On pause");
     }
 
     private Locator depositEvery30Days() {
-        return page.locator("//span[contains(text(),'Every 30 days')]");
+        return page.getByText("Every 30 days");
     }
 
     private Locator confirmTextContains(String snippet) {
-        return page.locator("//span[contains(text(),'" + snippet + "')]");
+        return page.getByText(snippet);
     }
 
     private Locator confirmButton() {
@@ -139,157 +131,168 @@ public class CreatorPaymentMethodPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Payment method)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
     }
 
+    @Step("Assert current URL contains settings path")
+    public void assertOnSettingsUrl() {
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            throw new AssertionError("Did not land on Settings screen. URL: " + page.url());
+        }
+        logger.info("Settings URL confirmed: {}", page.url());
+    }
+
     @Step("Open Payment method screen")
     public void openPaymentMethodScreen() {
-        waitVisible(paymentMethodMenu(), utils.ConfigReader.getVisibilityTimeout());
-        try { paymentMethodMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(paymentMethodMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(paymentMethodTitle(), utils.ConfigReader.getShortTimeout());
+        waitVisible(paymentMethodMenuItem(), ConfigReader.getShortTimeout());
+        try { paymentMethodMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(paymentMethodMenuItem(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(paymentMethodMenuItem(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click 'Add an account'")
     public void clickAddAnAccount() {
-        waitVisible(addAnAccountButton(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(addAnAccountButton(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(addAnAccountButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(addAnAccountButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Fill bank account details")
     public void fillBankAccountDetails(String bankName, String swift, String iban, String countryQuery, String countryExact, String address, String postalCode, String city) {
-        waitVisible(bankNameTextbox(), utils.ConfigReader.getShortTimeout());
+        waitVisible(bankNameTextbox(), ConfigReader.getShortTimeout());
         bankNameTextbox().click();
         bankNameTextbox().fill(bankName == null ? "" : bankName);
 
-        waitVisible(swiftTextbox(), utils.ConfigReader.getShortTimeout());
+        waitVisible(swiftTextbox(), ConfigReader.getShortTimeout());
         swiftTextbox().click();
         swiftTextbox().fill(swift == null ? "" : swift);
 
-        waitVisible(ibanTextbox(), utils.ConfigReader.getShortTimeout());
+        waitVisible(ibanTextbox(), ConfigReader.getShortTimeout());
         ibanTextbox().click();
         ibanTextbox().fill(iban == null ? "" : iban);
 
-        // Country selection: open and filter then choose exact
         try { countrySearchInput().click(); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
         try {
-            waitVisible(countrySearchInput(), utils.ConfigReader.getShortTimeout());
+            waitVisible(countrySearchInput(), ConfigReader.getShortTimeout());
             countrySearchInput().fill(countryQuery == null ? "" : countryQuery);
-            waitVisible(countryOptionExact(countryExact), utils.ConfigReader.getVisibilityTimeout());
-            clickWithRetry(countryOptionExact(countryExact), 1, BUTTON_RETRY_DELAY);
+            waitVisible(countryOptionExact(countryExact), ConfigReader.getShortTimeout());
+            clickWithRetry(countryOptionExact(countryExact), 1, ConfigReader.getElementRetryDelay());
         } catch (Throwable e) {
             logger.warn("Country selection fallback: {}", e.getMessage());
         }
 
-        waitVisible(addressTextbox(), utils.ConfigReader.getShortTimeout());
+        waitVisible(addressTextbox(), ConfigReader.getShortTimeout());
         addressTextbox().click();
         addressTextbox().fill(address == null ? "" : address);
 
-        waitVisible(postalCodeTextbox(), utils.ConfigReader.getShortTimeout());
+        waitVisible(postalCodeTextbox(), ConfigReader.getShortTimeout());
         postalCodeTextbox().click();
         postalCodeTextbox().fill(postalCode == null ? "" : postalCode);
 
-        waitVisible(cityTextbox(), utils.ConfigReader.getShortTimeout());
+        waitVisible(cityTextbox(), ConfigReader.getShortTimeout());
         cityTextbox().click();
         cityTextbox().fill(city == null ? "" : city);
     }
 
     @Step("Submit Add method")
     public void submitAddMethod() {
-        waitVisible(addMethodButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(addMethodButton(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(addMethodButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(addMethodButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert success toast and card visible")
     public void assertSuccessAndCardVisible() {
         // Wait up to 60s for any toast containing the expected text
         try {
-            waitVisible(successToast().first(), utils.ConfigReader.getMediumTimeout());
+            waitVisible(successToast().first(), ConfigReader.getMediumTimeout());
         } catch (Throwable t) {
             logger.warn("Success toast (Banking setting successfully) not detected within medium timeout: {}", t.getMessage());
         }
 
-        // Then wait for the payment card image to appear (can be slow on stage)
-        waitVisible(revoCardImage().first(), utils.ConfigReader.getVisibilityTimeout());
+        waitVisible(revoCardImage().first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open added payment card")
     public void openAddedCard() {
-        waitVisible(revoCardImage().first(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(revoCardImage().first(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(revoCardImage().first(), ConfigReader.getShortTimeout());
+        clickWithRetry(revoCardImage().first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert 'Payment card' screen is visible")
     public void assertOnPaymentCardScreen() {
-        waitVisible(paymentCardTitle(), utils.ConfigReader.getShortTimeout());
+        waitVisible(paymentCardTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click 'Set as default' on payment card")
     public void setAsDefault() {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Set as default"));
-        waitVisible(btn, utils.ConfigReader.getShortTimeout());
-        clickWithRetry(btn, 1, BUTTON_RETRY_DELAY);
+        waitVisible(btn, ConfigReader.getShortTimeout());
+        clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Delete current payment card with confirmation")
     public void deleteCurrentCard() {
-        waitVisible(deleteCardButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(deleteCardButton(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(deleteConfirmText(), utils.ConfigReader.getShortTimeout());
-        waitVisible(yesDeleteButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(yesDeleteButton(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(deleteCardButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(deleteCardButton(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(deleteConfirmText(), ConfigReader.getShortTimeout());
+        waitVisible(yesDeleteButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(yesDeleteButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     // ---------- Deposit duration steps ----------
     @Step("Ensure initial 'Whenever you want.' text is visible")
     public void ensureInitialDepositTextVisible() {
-        waitVisible(initialWheneverYouWantText(), utils.ConfigReader.getShortTimeout());
+        waitVisible(initialWheneverYouWantText(), ConfigReader.getShortTimeout());
     }
 
     @Step("Switch deposit to Every 7 days and confirm")
     public void switchDepositEvery7DaysAndConfirm() {
-        waitVisible(depositEvery7Days(), utils.ConfigReader.getShortTimeout());
+        waitVisible(depositEvery7Days(), ConfigReader.getShortTimeout());
         try { depositEvery7Days().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(depositEvery7Days(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(confirmTextContains("you will receive a payment every 7 days."), utils.ConfigReader.getShortTimeout());
-        waitVisible(confirmButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(confirmButton(), 1, BUTTON_RETRY_DELAY);
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        clickWithRetry(depositEvery7Days(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(confirmTextContains("you will receive a payment every 7 days."), ConfigReader.getShortTimeout());
+        waitVisible(confirmButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(confirmButton(), 1, ConfigReader.getElementRetryDelay());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Switch deposit to On pause and confirm")
     public void switchDepositOnPauseAndConfirm() {
-        waitVisible(depositOnPause(), utils.ConfigReader.getShortTimeout());
+        waitVisible(depositOnPause(), ConfigReader.getShortTimeout());
         try { depositOnPause().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(depositOnPause(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(confirmTextContains("payments will be paused."), utils.ConfigReader.getShortTimeout());
-        waitVisible(confirmButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(confirmButton(), 1, BUTTON_RETRY_DELAY);
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        clickWithRetry(depositOnPause(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(confirmTextContains("payments will be paused."), ConfigReader.getShortTimeout());
+        waitVisible(confirmButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(confirmButton(), 1, ConfigReader.getElementRetryDelay());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Switch deposit to Every 30 days and confirm")
     public void switchDepositEvery30DaysAndConfirm() {
-        waitVisible(depositEvery30Days(), utils.ConfigReader.getShortTimeout());
+        waitVisible(depositEvery30Days(), ConfigReader.getShortTimeout());
         try { depositEvery30Days().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(depositEvery30Days(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(confirmTextContains("you will receive a payment every 30 days."), utils.ConfigReader.getShortTimeout());
-        waitVisible(confirmButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(confirmButton(), 1, BUTTON_RETRY_DELAY);
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        clickWithRetry(depositEvery30Days(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(confirmTextContains("you will receive a payment every 30 days."), ConfigReader.getShortTimeout());
+        waitVisible(confirmButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(confirmButton(), 1, ConfigReader.getElementRetryDelay());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+    }
+
+    @Step("Wait for UI to settle after card deletion")
+    public void waitAfterDelete() {
+        try { page.waitForTimeout(ConfigReader.getMediumTimeout() / 10); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Navigate back to profile if needed")
     public void navigateBackToProfile() {
         for (int i = 0; i < 3; i++) {
             if (safeIsVisible(profilePlusIcon())) return;
-            try { clickWithRetry(backArrow(), 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         if (!safeIsVisible(profilePlusIcon())) {
             logger.warn("Profile marker (plus icon) not visible after navigating back from payment method");
