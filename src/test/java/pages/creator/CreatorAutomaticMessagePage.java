@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -13,14 +14,6 @@ import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 public class CreatorAutomaticMessagePage extends BasePage {
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    // Reduced from DEFAULT_WAIT (60000ms) to SHORT_TIMEOUT (1000ms) = 98% faster!
-    private static final int NAVIGATION_WAIT = 100;      // Navigation delays
-    private static final int BUTTON_RETRY_DELAY = 150;   // Button click retry delay
-    private static final int POLLING_WAIT = 250;         // Polling intervals
-    private static final int SHORT_TIMEOUT = 1000;       // Short waits (was 60000ms)
-    private static final int UPLOAD_TIMEOUT = 25000;     // Upload completion timeout
-
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public CreatorAutomaticMessagePage(Page page) {
@@ -29,8 +22,8 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     @Step("Save auto message (no waits)")
     public void clickSaveOnly() {
-        waitVisible(saveButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(saveButton(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(saveButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(saveButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     // -------- Locators --------
@@ -178,15 +171,15 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     private boolean clickAnyConfirmDeleteInline() {
         String[] labels = new String[]{"Yes, delete", "Yes, Delete", "Delete", "Yes"};
-        long end = System.currentTimeMillis() + utils.ConfigReader.getShortTimeout();
+        long end = System.currentTimeMillis() + ConfigReader.getShortTimeout();
         while (System.currentTimeMillis() < end) {
             for (String label : labels) {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
                 if (btn.count() > 0 && btn.first().isVisible()) {
-                    try { clickWithRetry(btn.first(), 1, BUTTON_RETRY_DELAY); return true; } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
+                    try { clickWithRetry(btn.first(), 1, ConfigReader.getElementRetryDelay()); return true; } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
                 }
             }
-            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         return false;
     }
@@ -194,81 +187,97 @@ public class CreatorAutomaticMessagePage extends BasePage {
     // -------- Steps --------
     @Step("Open Settings from profile (Automatic Message)")
     public void openSettingsFromProfile() {
-        waitVisible(settingsIcon(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(settingsIcon(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
+        }
+    }
+
+    @Step("Assert current URL contains settings path")
+    public void assertOnSettingsUrl() {
+        if (!page.url().contains(SETTINGS_URL_PART)) {
+            throw new AssertionError("Did not land on Settings screen. URL: " + page.url());
+        }
+        logger.info("Settings URL confirmed: {}", page.url());
+    }
+
+    @Step("Wait briefly for UI to settle")
+    public void waitBriefly() {
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Open Automatic Message screen")
     public void openAutomaticMessage() {
-        waitVisible(automaticMessageMenu(), utils.ConfigReader.getShortTimeout());
+        waitVisible(automaticMessageMenu(), ConfigReader.getShortTimeout());
         try { automaticMessageMenu().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(automaticMessageMenu(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(automationTitle(), utils.ConfigReader.getShortTimeout());
+        clickWithRetry(automaticMessageMenu(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(automationTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Assert New subscriber section and info visible")
     public void assertNewSubscriberHeaderAndInfo() {
-        waitVisible(newSubscriberHeading(), utils.ConfigReader.getShortTimeout());
-        waitVisible(newSubscriberInfoText(), utils.ConfigReader.getShortTimeout());
+        waitVisible(newSubscriberHeading(), ConfigReader.getShortTimeout());
+        waitVisible(newSubscriberInfoText(), ConfigReader.getShortTimeout());
     }
     
     @Step("Assert Renew subscriber section and info visible")
     public void assertRenewSubscriberHeaderAndInfo() {
-        waitVisible(renewSubscriberHeading(), utils.ConfigReader.getShortTimeout());
-        waitVisible(renewSubscriberInfoText(), utils.ConfigReader.getShortTimeout());
+        waitVisible(renewSubscriberHeading(), ConfigReader.getShortTimeout());
+        waitVisible(renewSubscriberInfoText(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click Modify for New subscriber (first)")
     public void clickModifyFirst() {
-        waitVisible(modifyButtonFirst(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(modifyButtonFirst(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(modifyButtonFirst(), ConfigReader.getShortTimeout());
+        clickWithRetry(modifyButtonFirst(), 1, ConfigReader.getElementRetryDelay());
     }
     
     @Step("Click Modify for Renew subscriber (second)")
     public void clickModifySecond() {
-        waitVisible(modifyButtonSecond(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(modifyButtonSecond(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(modifyButtonSecond(), ConfigReader.getShortTimeout());
+        clickWithRetry(modifyButtonSecond(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert Unsubscribe section and info visible")
     public void assertUnsubscribeHeaderAndInfo() {
-        waitVisible(unsubscribeHeading(), utils.ConfigReader.getShortTimeout());
-        waitVisible(unsubscribeInfoText(), utils.ConfigReader.getShortTimeout());
+        waitVisible(unsubscribeHeading(), ConfigReader.getShortTimeout());
+        waitVisible(unsubscribeInfoText(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click Modify for Unsubscribe (third)")
     public void clickModifyThird() {
-        waitVisible(modifyButtonThird(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(modifyButtonThird(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(modifyButtonThird(), ConfigReader.getShortTimeout());
+        clickWithRetry(modifyButtonThird(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert Re-subscription section and info visible")
     public void assertResubscriptionHeaderAndInfo() {
-        waitVisible(resubscriptionHeading(), utils.ConfigReader.getShortTimeout());
-        waitVisible(resubscriptionInfoText(), utils.ConfigReader.getShortTimeout());
+        waitVisible(resubscriptionHeading(), ConfigReader.getShortTimeout());
+        waitVisible(resubscriptionInfoText(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click Modify for Re-subscription (fourth)")
     public void clickModifyFourth() {
-        waitVisible(modifyButtonFourth(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(modifyButtonFourth(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(modifyButtonFourth(), ConfigReader.getShortTimeout());
+        clickWithRetry(modifyButtonFourth(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Add media via plus > My Device: {filePath}")
     public void addMediaViaPlusFromMyDevice(String filePath) {
-        waitVisible(plusImage(), utils.ConfigReader.getVisibilityTimeout());
-        clickWithRetry(plusImage(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(importationTitle(), utils.ConfigReader.getShortTimeout());
+        waitVisible(plusImage(), ConfigReader.getShortTimeout());
+        clickWithRetry(plusImage(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(importationTitle(), ConfigReader.getShortTimeout());
         // Avoid native OS file dialog: directly set files on hidden inputs in Importation dialog
         uploadMediaFromDevice(Paths.get(filePath));
     }
 
     @Step("Add media from My Device: {filePath}")
     public void addMediaFromMyDevice(String filePath) {
-        waitVisible(addCircle(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(addCircle(), 1, BUTTON_RETRY_DELAY);
-        waitVisible(importationTitle(), utils.ConfigReader.getShortTimeout());
+        waitVisible(addCircle(), ConfigReader.getShortTimeout());
+        clickWithRetry(addCircle(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(importationTitle(), ConfigReader.getShortTimeout());
         // Avoid native OS file dialog: directly set files on hidden inputs in Importation dialog
         uploadMediaFromDevice(Paths.get(filePath));
     }
@@ -294,130 +303,114 @@ public class CreatorAutomaticMessagePage extends BasePage {
         try {
             Locator cancel = importationCancelButton();
             if (cancel.count() > 0 && safeIsVisible(cancel.first())) {
-                clickWithRetry(cancel.first(), 1, BUTTON_RETRY_DELAY);
+                clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
             }
         } catch (Exception e) { logger.debug("Cancel click failed: {}", e.getMessage()); }
     }
 
     @Step("Click Next in auto message flow")
     public void clickNext() {
-        waitVisible(nextButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(nextButton(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(nextButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(nextButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Fill message and set price to 15€")
     public void fillMessageAndSetPrice(String message) {
-        waitVisible(messageTextbox(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(messageTextbox(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(messageTextbox(), ConfigReader.getShortTimeout());
+        clickWithRetry(messageTextbox(), 1, ConfigReader.getElementRetryDelay());
         messageTextbox().fill(message);
-        waitVisible(priceLabel15(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(priceLabel15(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(priceLabel15(), ConfigReader.getShortTimeout());
+        clickWithRetry(priceLabel15(), 1, ConfigReader.getElementRetryDelay());
     }
     
     @Step("Fill message and set price to Free")
     public void fillMessageAndSetPriceFree(String message) {
-        waitVisible(messageTextbox(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(messageTextbox(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(messageTextbox(), ConfigReader.getShortTimeout());
+        clickWithRetry(messageTextbox(), 1, ConfigReader.getElementRetryDelay());
         messageTextbox().fill(message);
-        waitVisible(priceLabelFree(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(priceLabelFree(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(priceLabelFree(), ConfigReader.getShortTimeout());
+        clickWithRetry(priceLabelFree(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Enable promotion toggle and fill discount: {discount}")
     public void enablePromotionAndFillDiscount(String discount) {
         // Give UI a brief moment after price selection to enable the toggle
-        try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         Locator promoSwitch = anySwitch();
-        waitVisible(promoSwitch, utils.ConfigReader.getShortTimeout());
+        waitVisible(promoSwitch, ConfigReader.getShortTimeout());
         try { promoSwitch.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        // Try regular click first
-        try { clickWithRetry(promoSwitch, 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
+        try { clickWithRetry(promoSwitch, 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
         boolean checked = false;
         try { checked = promoSwitch.isChecked(); } catch (Throwable e) { logger.debug("Checked check failed: {}", e.getMessage()); }
         if (!checked) {
-            // Try a force click as fallback (overlays/z-index issues)
             try { promoSwitch.click(new Locator.ClickOptions().setForce(true)); } catch (Throwable e) { logger.debug("Force click failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             try { checked = promoSwitch.isChecked(); } catch (Throwable e) { logger.debug("Checked check failed: {}", e.getMessage()); }
         }
         if (!checked) {
-            // As last resort, try focusing and pressing Space
             try { promoSwitch.focus(); page.keyboard().press("Space"); } catch (Throwable e) { logger.debug("Keyboard action failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        // Proceed to discount field
-        waitVisible(discountTextboxSecond(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(discountTextboxSecond(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(discountTextboxSecond(), ConfigReader.getShortTimeout());
+        clickWithRetry(discountTextboxSecond(), 1, ConfigReader.getElementRetryDelay());
         discountTextboxSecond().fill(discount);
     }
 
     @Step("Save auto message and wait for upload to finish")
     public void clickSaveAndWaitUploadComplete() {
-        waitVisible(saveButton(), utils.ConfigReader.getShortTimeout());
-        clickWithRetry(saveButton(), 1, BUTTON_RETRY_DELAY);
-        // Poll until uploading indicators and transient alerts are gone (max ~30s)
+        waitVisible(saveButton(), ConfigReader.getShortTimeout());
+        clickWithRetry(saveButton(), 1, ConfigReader.getElementRetryDelay());
         for (int i = 0; i < 60; i++) {
             boolean uploadingVisible = safeIsVisible(uploadStayMessage());
             boolean mainVisible = safeIsVisible(mainBannerRole());
             boolean alertsVisible = false;
             try { alertsVisible = genericAlerts().count() > 0 && genericAlerts().isVisible(); } catch (Throwable e) { logger.debug("Alert check failed: {}", e.getMessage()); }
             if (!uploadingVisible && !mainVisible && !alertsVisible) break;
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        // Allow network to settle if supported by current page state
-        try { page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(utils.ConfigReader.getMediumTimeout())); } catch (Throwable e) { logger.debug("Network idle wait failed: {}", e.getMessage()); }
-        // Finally, wait for the Modify button to be visible again
+        try { page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout())); } catch (Throwable e) { logger.debug("Network idle wait failed: {}", e.getMessage()); }
         try {
-            waitVisible(modifyButtonVisibleAgain(), utils.ConfigReader.getMediumTimeout());
+            waitVisible(modifyButtonVisibleAgain(), ConfigReader.getMediumTimeout());
         } catch (Throwable firstWait) {
-            // If not visible yet, try dismissing overlays/backdrops and re-wait
             try {
                 if (modalOrDrawerMasks().count() > 0 && modalOrDrawerMasks().isVisible()) {
-                    // Click the mask to dismiss
-                    clickWithRetry(modalOrDrawerMasks().first(), 1, NAVIGATION_WAIT);
-                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    clickWithRetry(modalOrDrawerMasks().first(), 1, ConfigReader.getAnimationTimeout());
+                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
             } catch (Throwable e) { logger.debug("Mask dismiss failed: {}", e.getMessage()); }
             try {
                 if (genericAlerts().count() > 0 && genericAlerts().isVisible()) {
-                    // Try clicking the alert container to dismiss
-                    clickWithRetry(genericAlerts().first(), 1, NAVIGATION_WAIT);
-                    try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    clickWithRetry(genericAlerts().first(), 1, ConfigReader.getAnimationTimeout());
+                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
             } catch (Throwable e) { logger.debug("Alert dismiss failed: {}", e.getMessage()); }
-            // Last resort (mirrors codegen): attempt a generic div nth(4) click guardedly
             try {
                 Locator genericDiv = page.locator("div").nth(4);
-                clickWithRetry(genericDiv, 1, NAVIGATION_WAIT);
-                try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                clickWithRetry(genericDiv, 1, ConfigReader.getAnimationTimeout());
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             } catch (Throwable e) { logger.debug("Generic div click failed: {}", e.getMessage()); }
-            // Re-wait for Modify
-            waitVisible(modifyButtonVisibleAgain(), UPLOAD_TIMEOUT);
+            waitVisible(modifyButtonVisibleAgain(), ConfigReader.getShortTimeout());
         }
-        // If Modify is visible now, close any lingering text banners
         try {
             if (genericAlerts().count() > 0 && genericAlerts().isVisible()) {
-                clickWithRetry(genericAlerts().first(), 1, NAVIGATION_WAIT);
+                clickWithRetry(genericAlerts().first(), 1, ConfigReader.getAnimationTimeout());
             } else if (modalOrDrawerMasks().count() > 0 && modalOrDrawerMasks().isVisible()) {
-                clickWithRetry(modalOrDrawerMasks().first(), 1, NAVIGATION_WAIT);
+                clickWithRetry(modalOrDrawerMasks().first(), 1, ConfigReader.getAnimationTimeout());
             } else {
-                // Send ESC as a generic dismiss action
                 page.keyboard().press("Escape");
             }
         } catch (Throwable e) { logger.debug("Banner close failed: {}", e.getMessage()); }
-        try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        // Ensure Modify still visible
-        waitVisible(modifyButtonVisibleAgain(), SHORT_TIMEOUT);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        waitVisible(modifyButtonVisibleAgain(), ConfigReader.getShortTimeout());
     }
 
     @Step("Assert first toggle is enabled")
     public void assertFirstToggleEnabled() {
-        waitVisible(firstSwitchToggle(), SHORT_TIMEOUT);
+        waitVisible(firstSwitchToggle(), ConfigReader.getShortTimeout());
         boolean checked = firstSwitchToggle().isChecked();
         if (!checked) {
-            // Try to enable if not
-            try { clickWithRetry(firstSwitchToggle(), 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(POLLING_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { clickWithRetry(firstSwitchToggle(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             checked = firstSwitchToggle().isChecked();
         }
         if (!checked) {
@@ -427,12 +420,12 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     @Step("Assert Modify button is visible (back on Automatic Message)")
     public void assertModifyVisible() {
-        waitVisible(modifyButtonVisibleAgain(), SHORT_TIMEOUT);
+        waitVisible(modifyButtonVisibleAgain(), ConfigReader.getShortTimeout());
     }
 
     @Step("Assert Automation title visible on Automatic Message screen")
     public void assertAutomationTitleVisible() {
-        waitVisible(automationTitle(), SHORT_TIMEOUT);
+        waitVisible(automationTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Delete all visible media items via delete buttons (with verification)")
@@ -454,26 +447,24 @@ public class CreatorAutomaticMessagePage extends BasePage {
             try {
                 Locator target = deleteButtons().nth(idx);
                 try { target.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-                clickWithRetry(target, 1, BUTTON_RETRY_DELAY);
+                clickWithRetry(target, 1, ConfigReader.getElementRetryDelay());
             } catch (Throwable e) {
-                // Try the first as fallback
-                try { clickWithRetry(deleteButtons().first(), 1, BUTTON_RETRY_DELAY); } catch (Throwable e2) { logger.debug("Click failed: {}", e2.getMessage()); break; }
+                try { clickWithRetry(deleteButtons().first(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e2) { logger.debug("Click failed: {}", e2.getMessage()); break; }
             }
 
             // Confirm if a confirmation dialog appears
             try { clickAnyConfirmDeleteInline(); } catch (Throwable e) { logger.debug("Confirm delete failed: {}", e.getMessage()); }
 
             // Wait for media count to decrease or delete button count to decrease
-            long end = System.currentTimeMillis() + SHORT_TIMEOUT;
+            long end = System.currentTimeMillis() + ConfigReader.getShortTimeout();
             while (System.currentTimeMillis() < end) {
                 int mediaNow = 0; int delNow = 0;
                 try { mediaNow = editorMediaItems().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
                 try { delNow = deleteButtons().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
                 if ((mediaBefore > 0 && mediaNow < mediaBefore) || (delNow < delButtons)) { break; }
-                try { page.waitForTimeout(NAVIGATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
-            // Small settle
-            try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             guard++; if (guard > 100) break;
             // If not decreased, attempt one more confirm then continue loop
         }
@@ -487,8 +478,8 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     @Step("Clear message textbox to a single space")
     public void clearMessageToSpace() {
-        waitVisible(messageTextbox(), SHORT_TIMEOUT);
-        clickWithRetry(messageTextbox(), 1, BUTTON_RETRY_DELAY);
+        waitVisible(messageTextbox(), ConfigReader.getShortTimeout());
+        clickWithRetry(messageTextbox(), 1, ConfigReader.getElementRetryDelay());
         messageTextbox().fill(" ");
     }
 
@@ -500,12 +491,12 @@ public class CreatorAutomaticMessagePage extends BasePage {
         int limit = Math.min(4, total);
         for (int i = 0; i < limit; i++) {
             Locator t = toggles.nth(i);
-            try { waitVisible(t, SHORT_TIMEOUT); } catch (Throwable e) { logger.debug("Wait visible failed: {}", e.getMessage()); }
+            try { waitVisible(t, ConfigReader.getShortTimeout()); } catch (Throwable e) { logger.debug("Wait visible failed: {}", e.getMessage()); }
             boolean isOn = false;
             try { isOn = t.isChecked(); } catch (Throwable e) { logger.debug("Checked check failed: {}", e.getMessage()); }
             if (isOn) {
-                try { clickWithRetry(t, 1, BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
-                try { page.waitForTimeout(BUTTON_RETRY_DELAY); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                try { clickWithRetry(t, 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
         }
     }

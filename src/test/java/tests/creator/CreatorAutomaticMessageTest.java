@@ -1,13 +1,9 @@
 package tests.creator;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.creator.CreatorAutomaticMessagePage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CreatorAutomaticMessageTest extends BaseCreatorTest {
-    private static final Logger log = LoggerFactory.getLogger(CreatorAutomaticMessageTest.class);
 
     @Test(priority = 1, description = "Verify Automatic Message - New subscriber create and enable")
     public void verifyNewSubscriberAutoMessageCreateAndEnable() {
@@ -18,9 +14,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
-        String settingsUrl = page.url();
-        log.info("Settings URL after click: {}", settingsUrl);
-        Assert.assertTrue(settingsUrl.contains("/common/setting"), "Did not land on Settings screen");
+        amPage.assertOnSettingsUrl();
 
         // Open Automatic Message
         amPage.openAutomaticMessage();
@@ -32,7 +26,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.clickNext();
         amPage.fillMessageAndSetPrice(message);
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(1500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
     }
 
     @Test(priority = 2, description = "Verify Automatic Message - Renew subscriber modify with free price")
@@ -44,9 +38,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
-        String settingsUrl = page.url();
-        log.info("Settings URL after click: {}", settingsUrl);
-        Assert.assertTrue(settingsUrl.contains("/common/setting"), "Did not land on Settings screen");
+        amPage.assertOnSettingsUrl();
 
         // Open Automatic Message
         amPage.openAutomaticMessage();
@@ -58,11 +50,9 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.clickNext();
         amPage.fillMessageAndSetPriceFree(message);
         amPage.clickSaveOnly();
-
-        // Wait briefly for upload; then ensure 'Automation' title is visible again
-        try { page.waitForTimeout(2000); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
         amPage.assertAutomationTitleVisible();
-        try { page.waitForTimeout(500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
     }
 
         @Test(priority = 3, description = "Verify Automatic Message - Unsubscribe modify with free price")
@@ -74,9 +64,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
-        String settingsUrl = page.url();
-        log.info("Settings URL after click: {}", settingsUrl);
-        Assert.assertTrue(settingsUrl.contains("/common/setting"), "Did not land on Settings screen");
+        amPage.assertOnSettingsUrl();
 
         // Open Automatic Message and ensure title visible
         amPage.openAutomaticMessage();
@@ -89,11 +77,9 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.clickNext();
         amPage.fillMessageAndSetPriceFree(message);
         amPage.clickSaveOnly();
-
-        // Wait some time for upload and ensure Automation title is visible again
-        try { page.waitForTimeout(2000); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
         amPage.assertAutomationTitleVisible();
-        try { page.waitForTimeout(500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
     }
 
         @Test(priority = 4, description = "Verify Automatic Message - Re-subscription modify with 15€ and promotion")
@@ -105,9 +91,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
-        String settingsUrl = page.url();
-        log.info("Settings URL after click: {}", settingsUrl);
-        Assert.assertTrue(settingsUrl.contains("/common/setting"), "Did not land on Settings screen");
+        amPage.assertOnSettingsUrl();
 
         // Open Automatic Message and ensure section visible
         amPage.openAutomaticMessage();
@@ -121,11 +105,9 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.fillMessageAndSetPrice(message); // sets 15€
         amPage.enablePromotionAndFillDiscount("10");
         amPage.clickSaveOnly();
-
-        // Wait some time for upload and ensure Automation title is visible again
-        try { page.waitForTimeout(2000); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
         amPage.assertAutomationTitleVisible();
-        try { page.waitForTimeout(500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
     }
 
         @Test(priority = 5, description = "Verify Automatic Message - Delete added media and disable all messages")
@@ -134,9 +116,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
 
         // Open Settings and ensure URL contains settings path
         amPage.openSettingsFromProfile();
-        String settingsUrl = page.url();
-        log.info("Settings URL after click: {}", settingsUrl);
-        Assert.assertTrue(settingsUrl.contains("/common/setting"), "Did not land on Settings screen");
+        amPage.assertOnSettingsUrl();
 
         // Open Automatic Message and ensure title visible
         amPage.openAutomaticMessage();
@@ -147,32 +127,32 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.deleteAllVisibleMedia();
         amPage.clearMessageToSpace();
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(800); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
 
         // 2) Second Modify (Renew subscriber)
         amPage.clickModifySecond();
         amPage.deleteAllVisibleMedia();
         amPage.clearMessageToSpace();
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(800); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
 
         // 3) Third Modify (Unsubscribe)
         amPage.clickModifyThird();
         amPage.deleteAllVisibleMedia();
         amPage.clearMessageToSpace();
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(800); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
 
         // 4) Fourth Modify (Re-subscription)
         amPage.clickModifyFourth();
         amPage.deleteAllVisibleMedia();
         amPage.clearMessageToSpace();
         amPage.clickSaveOnly();
-        try { page.waitForTimeout(800); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
 
         // Finally, disable all enabled toggles
         amPage.assertAutomationTitleVisible();
         amPage.disableAllFirstFourToggles();
-        try { page.waitForTimeout(500); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        amPage.waitBriefly();
     }
 }
