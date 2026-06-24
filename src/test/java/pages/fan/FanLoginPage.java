@@ -12,10 +12,6 @@ import com.microsoft.playwright.options.LoadState;
 import utils.ConfigReader;
 
 public class FanLoginPage extends BasePage {
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int VISIBILITY_TIMEOUT = 3000;    // Element visibility timeout
-    private static final int LOGIN_TIMEOUT = 10000;       // Home icon wait after login
 
     private final String usernamePlaceholder = "Email address or username";
     private final String passwordPlaceholder = "Password";
@@ -38,9 +34,9 @@ public class FanLoginPage extends BasePage {
         try {
             Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(twizzLogoRoleName));
             Locator loginText = page.getByText(loginTextExact, new Page.GetByTextOptions().setExact(true));
-            waitVisible(logo, VISIBILITY_TIMEOUT);
-            waitVisible(loginText, VISIBILITY_TIMEOUT);
-            return logo.isVisible() && loginText.isVisible();
+            waitVisible(logo, ConfigReader.getShortTimeout());
+            waitVisible(loginText, ConfigReader.getShortTimeout());
+            return safeIsVisible(logo) && safeIsVisible(loginText);
         } catch (Exception e) {
             logger.warn("[Fan] Login header not visible: {}", e.getMessage());
             return false;
@@ -56,17 +52,16 @@ public class FanLoginPage extends BasePage {
         logger.info("[Fan] Login attempt for: {}", username);
         fillByPlaceholder(usernamePlaceholder, username);
         fillByPlaceholder(passwordPlaceholder, password);
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).click();
-        // Wait for Home icon to be visible - this confirms successful login
-        // Fan may land on /fan/home or /common/discover, so use Home icon as success indicator
-        waitForHomeIconVisible(LOGIN_TIMEOUT);
+        Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true));
+        clickWithRetry(connectBtn.first(), 1, ConfigReader.getElementRetryDelay());
+        waitForHomeIconVisible(ConfigReader.getShortTimeout());
     }
 
     public boolean isHomeIconVisible(long timeoutMs) {
         try {
             Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
-            homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(timeoutMs).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
-            boolean visible = homeIcon.first().isVisible();
+            waitVisible(homeIcon.first(), timeoutMs);
+            boolean visible = safeIsVisible(homeIcon.first());
             logger.info("[Fan] Login successful - Home icon visible: {} (URL: {})", visible, page.url());
             return visible;
         } catch (Exception e) {
@@ -78,6 +73,12 @@ public class FanLoginPage extends BasePage {
     public void waitForHomeIconVisible(long timeoutMs) {
         if (!isHomeIconVisible(timeoutMs)) {
             throw new IllegalStateException("Fan login failed - Home icon not visible. Actual URL: " + page.url());
+        }
+    }
+
+    public void assertHomeIconVisible() {
+        if (!isHomeIconVisible(ConfigReader.getShortTimeout())) {
+            throw new AssertionError("Fan login failed - Home icon not visible. Actual URL: " + page.url());
         }
     }
 
