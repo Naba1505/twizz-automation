@@ -6,11 +6,8 @@ import pages.common.BaseTestClass;
 import pages.creator.CreatorLoginPage;
 import pages.creator.CreatorLogoutPage;
 import utils.ConfigReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CreatorLogoutTest extends BaseTestClass {
-    private static final Logger log = LoggerFactory.getLogger(CreatorLogoutTest.class);
 
     @Test(priority = 1, description = "Verify Logout functionality of Creator account")
     public void verifyCreatorLogout() {
@@ -27,11 +24,8 @@ public class CreatorLogoutTest extends BaseTestClass {
         Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible");
         loginPage.login(username, password);
 
-        // Open Settings and ensure URL contains settings path
         logoutPage.openSettingsFromProfile();
-        String settingsUrl = page.url();
-        log.info("Settings URL after click: {}", settingsUrl);
-        Assert.assertTrue(settingsUrl.contains("/common/setting"), "Did not land on Settings screen");
+        logoutPage.assertOnSettingsUrl();
 
         // Click Disconnect and assert logout to intro screen
         logoutPage.clickDisconnect();
