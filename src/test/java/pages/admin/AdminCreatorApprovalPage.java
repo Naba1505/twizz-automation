@@ -1,27 +1,17 @@
 package pages.admin;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
+import utils.TestDataManager;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utils.ConfigReader;
-import utils.TestDataManager;
 
 public class AdminCreatorApprovalPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(AdminCreatorApprovalPage.class);
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int BUTTON_RETRY_DELAY = 200;    // Button click retry delay
-    private static final int BUTTON_RETRY_COUNT = 2;      // Number of retries for buttons
-    private static final int SEARCH_RETRY_COUNT = 1;      // Search field retry count
-    private static final int SHORT_TIMEOUT = 1000;        // Short waits (was ConfigReader.getShortTimeout)
-    private static final int MEDIUM_TIMEOUT = 3000;       // Medium waits - for visibility
-    private static final int LONG_TIMEOUT = 5000;         // Long waits - for success messages
-    private static final int NAVIGATION_WAIT = 500;       // Navigation stabilization
-    private static final int DROPDOWN_WAIT = 300;         // Dropdown menu wait
 
     public AdminCreatorApprovalPage(Page page) {
         super(page);
@@ -61,30 +51,26 @@ public class AdminCreatorApprovalPage extends BasePage {
         }
 
         // Ensure fields are visible before interacting
-        waitVisible(userInput, MEDIUM_TIMEOUT);
-        userInput.click();
+        waitVisible(userInput, ConfigReader.getMediumTimeout());
+        clickWithRetry(userInput, 1, ConfigReader.getElementRetryDelay());
         userInput.fill("");
         userInput.fill(username);
 
-        waitVisible(passInput, MEDIUM_TIMEOUT);
-        passInput.click();
+        waitVisible(passInput, ConfigReader.getMediumTimeout());
+        clickWithRetry(passInput, 1, ConfigReader.getElementRetryDelay());
         passInput.fill("");
         passInput.fill(password);
 
-        // Click Login button
         Locator loginButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Login"));
         if (loginButton.count() == 0) {
             loginButton = page.locator("button[type='submit']").first();
         }
-        waitVisible(loginButton, MEDIUM_TIMEOUT);
-        clickWithRetry(loginButton, BUTTON_RETRY_COUNT, BUTTON_RETRY_DELAY);
-        
-        // Wait for successful login - check URL
-        page.waitForURL("**/home", new Page.WaitForURLOptions().setTimeout(LONG_TIMEOUT));
+        waitVisible(loginButton, ConfigReader.getMediumTimeout());
+        clickWithRetry(loginButton, 2, ConfigReader.getElementRetryDelay());
+
+        page.waitForURL("**/home", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
         log.info("Successfully logged in and navigated to home page");
-        
-        // Wait for home page to fully load
-        page.waitForTimeout(NAVIGATION_WAIT);
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
     }
 
     public void loginWithConfig() {
@@ -97,12 +83,11 @@ public class AdminCreatorApprovalPage extends BasePage {
     public void navigateToUsers() {
         log.info("Navigating to Users section");
         Locator usersLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Users"));
-        waitVisible(usersLink, MEDIUM_TIMEOUT);
-        clickWithRetry(usersLink, BUTTON_RETRY_COUNT, BUTTON_RETRY_DELAY);
-        
-        // Wait for Creators tab to be visible
+        waitVisible(usersLink, ConfigReader.getMediumTimeout());
+        clickWithRetry(usersLink, 2, ConfigReader.getElementRetryDelay());
+
         Locator creatorsTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Creators"));
-        waitVisible(creatorsTab, MEDIUM_TIMEOUT);
+        waitVisible(creatorsTab, ConfigReader.getMediumTimeout());
         log.info("Successfully navigated to Users > Creators tab");
     }
 
@@ -168,14 +153,13 @@ public class AdminCreatorApprovalPage extends BasePage {
         }
         
         // Clear and fill search
-        clickWithRetry(searchField, 2, BUTTON_RETRY_DELAY);
+        clickWithRetry(searchField, 2, ConfigReader.getElementRetryDelay());
         searchField.fill("");
         searchField.fill(toUse);
-        
-        // Trigger search and wait
-        try { 
-            searchField.press("Enter"); 
-            page.waitForTimeout(1000); // Wait for search to process
+
+        try {
+            searchField.press("Enter");
+            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
         } catch (Exception e) {
             log.debug("Search trigger failed: {}", e.getMessage());
         }
@@ -216,19 +200,17 @@ public class AdminCreatorApprovalPage extends BasePage {
         log.info("Opening Action > Edit for creator: {}", username);
         waitForCreatorInResults(username);
         
-        // Wait before clicking the 3-dot icon
-        page.waitForTimeout(DROPDOWN_WAIT);
-        
-        // Find the specific creator row and click its MoreVertIcon
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+
         Locator creatorRow = page.locator("tr").filter(new Locator.FilterOptions().setHasText(username)).first();
         Locator moreVertIcon = creatorRow.locator("[data-testid='MoreVertIcon']").first();
-        
-        // Click the 3-dot icon within the specific creator row
-        moreVertIcon.click();
-        
-        // Wait for dropdown and click Edit
-        page.waitForTimeout(DROPDOWN_WAIT);
-        page.getByText("Edit").click();
+
+        clickWithRetry(moreVertIcon, 2, ConfigReader.getElementRetryDelay());
+
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { log.debug("Wait failed: {}", e.getMessage()); }
+        Locator editOption = page.getByText("Edit");
+        waitVisible(editOption.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(editOption.first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     public void toggleVerificationAndStatus() {
@@ -238,34 +220,31 @@ public class AdminCreatorApprovalPage extends BasePage {
         Locator emailCheckbox = page.getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName("Verified Email"));
         Locator accountCheckbox = page.getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName("Verified Account"));
         
-        waitVisible(emailCheckbox, SHORT_TIMEOUT);
+        waitVisible(emailCheckbox, ConfigReader.getShortTimeout());
         emailCheckbox.check();
         log.info("Checked Verified Email");
-        
-        waitVisible(accountCheckbox, SHORT_TIMEOUT);
+
+        waitVisible(accountCheckbox, ConfigReader.getShortTimeout());
         accountCheckbox.check();
         log.info("Checked Verified Account");
-        
-        // Change registration status from Pending to Registered
+
         Locator statusDropdown = page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName("Registration Status Pending"));
-        waitVisible(statusDropdown, SHORT_TIMEOUT);
-        clickWithRetry(statusDropdown, SEARCH_RETRY_COUNT, BUTTON_RETRY_DELAY);
-        
-        // Select Registered option
+        waitVisible(statusDropdown, ConfigReader.getShortTimeout());
+        clickWithRetry(statusDropdown, 1, ConfigReader.getElementRetryDelay());
+
         Locator registeredOption = page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName("Registered"));
-        waitVisible(registeredOption, SHORT_TIMEOUT);
-        clickWithRetry(registeredOption, SEARCH_RETRY_COUNT, BUTTON_RETRY_DELAY);
+        waitVisible(registeredOption, ConfigReader.getShortTimeout());
+        clickWithRetry(registeredOption, 1, ConfigReader.getElementRetryDelay());
     }
 
     public void submitAndAssertUpdated() {
         log.info("Submitting the update and verifying success toast");
         Locator submitButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"));
-        waitVisible(submitButton, MEDIUM_TIMEOUT);
-        clickWithRetry(submitButton, BUTTON_RETRY_COUNT, BUTTON_RETRY_DELAY);
-        
-        // Wait for success message to be visually displayed
+        waitVisible(submitButton, ConfigReader.getMediumTimeout());
+        clickWithRetry(submitButton, 2, ConfigReader.getElementRetryDelay());
+
         Locator successMessage = page.getByText("Creator updated successfully");
-        waitVisible(successMessage, LONG_TIMEOUT);
+        waitVisible(successMessage, ConfigReader.getShortTimeout());
         log.info("Successfully updated creator");
     }
 }

@@ -18,10 +18,6 @@ import utils.TestDataManager;
 public class AdminApproveCreatorTest extends BaseTestClass {
     private static final Logger log = LoggerFactory.getLogger(AdminApproveCreatorTest.class);
     public static String approvedUsername;
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int LONG_TIMEOUT = 120000;    // Page navigation timeout
-    private static final int DEFAULT_TIMEOUT = 60000;  // Default wait timeout
 
     @BeforeMethod
     @Override
@@ -29,8 +25,8 @@ public class AdminApproveCreatorTest extends BaseTestClass {
         // Custom setup: same as BaseTestClass but WITHOUT navigating to Twizz landing page
         BrowserFactory.initialize();
         page = BrowserFactory.getPage();
-        page.setDefaultNavigationTimeout(LONG_TIMEOUT);
-        page.setDefaultTimeout(DEFAULT_TIMEOUT);
+        page.setDefaultNavigationTimeout(ConfigReader.getNavigationTimeout());
+        page.setDefaultTimeout(ConfigReader.getVisibilityTimeout() * 3);
 
         try {
             boolean traceEnabled = Boolean.parseBoolean(ConfigReader.getProperty("trace.enable", "true"));
