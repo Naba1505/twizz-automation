@@ -34,7 +34,7 @@ public class FanSavedCardsPage extends BasePage {
         waitVisible(savedCards.first(), ConfigReader.getShortTimeout());
         clickWithRetry(savedCards.first(), 1, ConfigReader.getAnimationTimeout());
         assertOnSavedCards();
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Check for "No Card Found!" message
         Locator noCardMsg = page.getByText("No Card Found!");
@@ -217,7 +217,7 @@ public class FanSavedCardsPage extends BasePage {
         logger.info("[Saved Cards] Completed deletion, removed {} cards", deletedCount);
         
         // Final verification
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         if (safeIsVisible(noCardMessage)) {
             logger.info("[Saved Cards] Verified 'No Card Found!' message is displayed");
         } else if (deletedCount == 0) {
@@ -235,7 +235,7 @@ public class FanSavedCardsPage extends BasePage {
         Locator anyCard = page.locator("button[type='button'] span").first();
         
         // Wait for page to stabilize
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Check if any cards are visible
         if (anyCard.count() > 0 && safeIsVisible(anyCard)) {
