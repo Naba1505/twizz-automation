@@ -136,7 +136,7 @@ public class FanEmailNotificationPage extends BasePage {
         // Scroll to make it visible if needed
         for (int i = 0; i < 5 && !safeIsVisible(menuItem); i++) {
             page.mouse().wheel(0, 300);
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
@@ -147,8 +147,7 @@ public class FanEmailNotificationPage extends BasePage {
     @Step("Assert on Email Notification screen by viewing title")
     public void assertOnEmailNotificationScreen() {
         waitVisible(emailNotificationTitle(), ConfigReader.getVisibilityTimeout());
-        // Wait for page to fully load and toggles to be ready
-        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][EmailNotification] On Email Notification screen - title visible");
     }
 
@@ -220,7 +219,7 @@ public class FanEmailNotificationPage extends BasePage {
     public void clickYesDisable() {
         waitVisible(yesDisableButton(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(yesDisableButton(), 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for toggle state to update and dialog to close
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][EmailNotification] Clicked 'Yes, disable' button");
     }
 
@@ -228,7 +227,7 @@ public class FanEmailNotificationPage extends BasePage {
     public void clickYesEnable() {
         waitVisible(yesEnableButton(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(yesEnableButton(), 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout()); // Wait for toggle state to update
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][EmailNotification] Clicked 'Yes, enable' button");
     }
 
@@ -333,7 +332,7 @@ public class FanEmailNotificationPage extends BasePage {
             return;
         }
         clickToggle(index);
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for toggle state to update
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][EmailNotification] Toggle at index {} enabled (simple click)", index);
     }
 
@@ -349,7 +348,7 @@ public class FanEmailNotificationPage extends BasePage {
             logger.info("[Fan][EmailNotification] Toggle at index {} force disabled with confirmation", index);
         } else {
             // Toggle was already disabled, clicking it enabled it - need to click again
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             clickToggle(index);
             if (safeIsVisible(disableConfirmationDialog())) {
                 clickYesDisable();
@@ -368,11 +367,11 @@ public class FanEmailNotificationPage extends BasePage {
         if (safeIsVisible(disableConfirmationDialog())) {
             // Click outside or press escape to cancel
             page.keyboard().press("Escape");
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[Fan][EmailNotification] Toggle at index {} already enabled", index);
         } else {
             // Toggle was disabled, now enabled
-            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[Fan][EmailNotification] Toggle at index {} force enabled", index);
         }
     }
