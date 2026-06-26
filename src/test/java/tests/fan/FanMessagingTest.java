@@ -153,7 +153,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Reload fan page to see creator's reply
             fanPage.reload();
-            fanPage.waitForTimeout(2000);
+            try { fanPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[FanMessaging] Fan page reloaded");
 
             // Verify creator's reply is visible and accept
@@ -169,7 +169,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Navigate creator to home/profile first, then to messaging
             creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
-            creatorPage.waitForTimeout(2000);
+            try { creatorPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[FanMessaging] Creator navigated to profile");
 
             // Navigate to messaging screen on creator
@@ -189,7 +189,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Reload fan page to see new media
             fanPage.reload();
-            fanPage.waitForTimeout(2000);
+            try { fanPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
             // Fan views media - click preview for message with timestamp
             fanMessaging.verifyMessageVisible(creatorReply);
@@ -287,7 +287,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Reload fan page to see creator's reply
             fanPage.reload();
-            fanPage.waitForTimeout(2000);
+            try { fanPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[FanMessaging] Fan page reloaded");
 
             // Verify creator's reply is visible and accept
@@ -303,7 +303,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Navigate creator to home/profile first, then to messaging
             creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
-            creatorPage.waitForTimeout(2000);
+            try { creatorPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[FanMessaging] Creator navigated to profile");
 
             // Navigate to messaging screen on creator
@@ -323,7 +323,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Reload fan page to see new media
             fanPage.reload();
-            fanPage.waitForTimeout(2000);
+            try { fanPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
             // Fan views video - click preview for message with timestamp
             fanMessaging.verifyMessageVisible(creatorReply);
@@ -414,7 +414,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Reload fan page to see creator's reply
             fanPage.reload();
-            fanPage.waitForTimeout(2000);
+            try { fanPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[FanMessaging] Fan page reloaded");
 
             // Fan accepts free message - no payment needed
@@ -426,7 +426,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Navigate creator back to messaging
             creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
-            creatorPage.waitForTimeout(2000);
+            try { creatorPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[FanMessaging] Creator navigated to profile");
 
             creatorMessaging.openMessagingFromProfile();
@@ -445,7 +445,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Reload fan page to see new media
             fanPage.reload();
-            fanPage.waitForTimeout(2000);
+            try { fanPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
             // Fan verifies audio element is visible (no preview for audio)
             fanMessaging.verifyMessageVisible(creatorReply);
@@ -536,7 +536,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Reload fan page to see creator's reply
             fanPage.reload();
-            fanPage.waitForTimeout(2000);
+            try { fanPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[FanMessaging] Fan page reloaded");
 
             // Fan accepts and pays
@@ -552,7 +552,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Navigate creator back to messaging
             creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
-            creatorPage.waitForTimeout(2000);
+            try { creatorPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[FanMessaging] Creator navigated to profile");
 
             creatorMessaging.openMessagingFromProfile();
@@ -567,7 +567,7 @@ public class FanMessagingTest extends BaseTestClass {
 
             // Reload fan page to see new media
             fanPage.reload();
-            fanPage.waitForTimeout(2000);
+            try { fanPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
             // Fan verifies mixed media (image preview, video preview, audio element)
             fanMessaging.verifyMixedMediaReceived(creatorReply);

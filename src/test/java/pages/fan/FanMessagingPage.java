@@ -163,7 +163,7 @@ public class FanMessagingPage extends BasePage {
         if (safeIsVisible(creator)) {
             creator.scrollIntoViewIfNeeded();
             clickWithRetry(creator, 2, ConfigReader.getAnimationTimeout());
-            page.waitForTimeout(500); // Wait for conversation to load
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[Fan][Messaging] Clicked on creator: {}", creatorName);
             return;
         }
@@ -171,13 +171,13 @@ public class FanMessagingPage extends BasePage {
         // If not found, try switching to General tab
         logger.info("[Fan][Messaging] Creator '{}' not found in subscriptions, checking General tab", creatorName);
         clickWithRetry(generalTab(), 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Try to find in General tab
         if (safeIsVisible(creator)) {
             creator.scrollIntoViewIfNeeded();
             clickWithRetry(creator, 2, ConfigReader.getAnimationTimeout());
-            page.waitForTimeout(500); // Wait for conversation to load
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[Fan][Messaging] Found and clicked creator '{}' in General tab", creatorName);
         } else {
             // If still not found, throw an exception with helpful message
@@ -204,7 +204,7 @@ public class FanMessagingPage extends BasePage {
     public void clickSend() {
         waitVisible(sendButton(), ConfigReader.getShortTimeout());
         clickWithRetry(sendButton(), 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(500); // Wait for message to send
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Messaging] Clicked Send button");
     }
 
@@ -224,7 +224,7 @@ public class FanMessagingPage extends BasePage {
     @Step("Verify message from creator is visible: {message}")
     public void verifyMessageVisible(String message) {
         logger.info("[Fan][Messaging] Looking for message: {}", message);
-        page.waitForTimeout(500); // Wait for messages to load
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         Locator msg = page.getByText(message).first();
         waitVisible(msg, ConfigReader.getShortTimeout());
         logger.info("[Fan][Messaging] Message visible: {}", message);
@@ -233,13 +233,13 @@ public class FanMessagingPage extends BasePage {
     @Step("Click Accept button for paid media")
     public void clickAcceptMedia() {
         logger.info("[Fan][Messaging] Looking for Accept media button");
-        page.waitForTimeout(500); // Wait for messages to load
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Scroll to bottom to see latest messages
         try {
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
         } catch (Exception ignored) {}
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         Locator acceptBtn = acceptMediaButton();
         
@@ -259,7 +259,7 @@ public class FanMessagingPage extends BasePage {
         waitVisible(acceptBtn, ConfigReader.getVisibilityTimeout());
         acceptBtn.scrollIntoViewIfNeeded();
         clickWithRetry(acceptBtn, 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(500); // Wait for payment screen
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Messaging] Clicked Accept button for paid media");
     }
 
@@ -306,8 +306,7 @@ public class FanMessagingPage extends BasePage {
 
     @Step("Click Registered card option")
     public void clickRegisteredCard() {
-        // Wait for payment options to load
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Try multiple strategies to find Registered card option
         Locator registeredCard = registeredCardOption();
@@ -332,27 +331,24 @@ public class FanMessagingPage extends BasePage {
             clickWithRetry(registeredCard, 2, ConfigReader.getAnimationTimeout());
             logger.info("[Fan][Messaging] Clicked Registered card option");
             
-            // Wait a bit after selecting payment method
-            page.waitForTimeout(500);
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             
             // Check if we need to fill CVV for registered card
             Locator cvvField = page.locator("input[placeholder*='CVV'], input[placeholder*='cvv']").first();
             if (safeIsVisible(cvvField)) {
                 cvvField.fill("123");
                 logger.info("[Fan][Messaging] Filled CVV for registered card");
-                page.waitForTimeout(500);
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
         } else {
             logger.warn("[Fan][Messaging] Registered card option not found, waiting for payment form to appear");
-            // Just wait a bit more for the payment form to stabilize
-            page.waitForTimeout(500);
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
     }
 
     @Step("Click Confirm button")
     public void clickConfirm() {
-        // Wait for payment form to be ready
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Try multiple strategies to find Confirm button
         Locator confirmBtn = confirmButton();
@@ -387,7 +383,7 @@ public class FanMessagingPage extends BasePage {
             
             waitVisible(confirmBtn.first(), ConfigReader.getVisibilityTimeout());
             clickWithRetry(confirmBtn.first(), 2, ConfigReader.getAnimationTimeout());
-            page.waitForTimeout(500); // Wait for payment processing
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[Fan][Messaging] Clicked Confirm button");
         } else {
             logger.warn("[Fan][Messaging] Confirm button not found, payment may have auto-completed");
@@ -436,7 +432,7 @@ public class FanMessagingPage extends BasePage {
         if (found) {
             waitVisible(okBtn.first(), ConfigReader.getShortTimeout());
             clickWithRetry(okBtn.first(), 2, ConfigReader.getAnimationTimeout());
-            page.waitForTimeout(500);
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[Fan][Messaging] Clicked Everything is OK button");
         } else {
             logger.warn("[Fan][Messaging] Everything is OK button not found after polling, payment may have completed without confirmation");
@@ -460,13 +456,13 @@ public class FanMessagingPage extends BasePage {
     @Step("Click to preview media for message: {messageTimestamp}")
     public void clickToPreviewMediaForMessage(String messageTimestamp) {
         logger.info("[Fan][Messaging] Looking for Preview icon near message: {}", messageTimestamp);
-        page.waitForTimeout(2000); // Wait for media to load
+        try { page.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Scroll to the bottom of the conversation to see the most recent media
         try {
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
         } catch (Exception ignored) {}
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // The media is sent as a SEPARATE message after the text reply.
         // We need to find the preview icon that belongs to the most recent media sent by creator.
@@ -480,7 +476,7 @@ public class FanMessagingPage extends BasePage {
             Locator images = page.locator(".ant-image img, img[class*='media']");
             if (images.count() > 0) {
                 images.last().hover();
-                page.waitForTimeout(500);
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 allPreviews = page.locator("span[aria-label='eye']");
                 previewCount = allPreviews.count();
                 logger.info("[Fan][Messaging] After hover, found {} preview icons", previewCount);
@@ -490,23 +486,23 @@ public class FanMessagingPage extends BasePage {
         // Click the last preview icon (most recent media)
         Locator targetPreview = allPreviews.last();
         targetPreview.scrollIntoViewIfNeeded();
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         waitVisible(targetPreview, ConfigReader.getShortTimeout());
         clickWithRetry(targetPreview, 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Messaging] Clicked most recent preview icon for media");
     }
 
     @Step("Click to preview media")
     public void clickToPreviewImage() {
         logger.info("[Fan][Messaging] Looking for Preview icon to click (most recent)");
-        page.waitForTimeout(2000); // Wait for media to load
+        try { page.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         // Click the last (most recent) preview icon
         Locator preview = page.locator("span[aria-label='eye']").last();
         waitVisible(preview, ConfigReader.getShortTimeout());
         clickWithRetry(preview, 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Messaging] Clicked to preview media");
     }
 
@@ -514,14 +510,14 @@ public class FanMessagingPage extends BasePage {
     public void closeImagePreview() {
         waitVisible(closePreviewButton(), ConfigReader.getShortTimeout());
         clickWithRetry(closePreviewButton(), 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Messaging] Closed image preview");
     }
 
     @Step("Verify video play icon is visible")
     public void verifyVideoPlayIconVisible() {
         logger.info("[Fan][Messaging] Looking for video play icon");
-        page.waitForTimeout(2000); // Wait for media to load
+        try { page.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         Locator playIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("play")).nth(2);
         waitVisible(playIcon, ConfigReader.getShortTimeout());
         logger.info("[Fan][Messaging] Video play icon is visible - video received successfully");
@@ -530,13 +526,13 @@ public class FanMessagingPage extends BasePage {
     @Step("Verify audio element is visible for message: {messageTimestamp}")
     public void verifyAudioElementVisible(String messageTimestamp) {
         logger.info("[Fan][Messaging] Looking for audio element near message: {}", messageTimestamp);
-        page.waitForTimeout(2000); // Wait for media to load
+        try { page.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Scroll to bottom to see most recent media
         try {
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
         } catch (Exception ignored) {}
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Verify audio element is visible - try multiple selectors for audio player
         Locator audioElement = page.locator("div[class*='audio-mini-player'], div[class*='audio'], img[alt='audio'], audio, [class*='wavesurfer'], [class*='waveform']").last();
@@ -545,7 +541,7 @@ public class FanMessagingPage extends BasePage {
             // Scroll more and retry
             logger.info("[Fan][Messaging] Audio not immediately visible, scrolling further...");
             page.mouse().wheel(0, 500);
-            page.waitForTimeout(1000);
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             audioElement = page.locator("div[class*='audio-mini-player'], div[class*='audio'], img[alt='audio'], audio, [class*='wavesurfer'], [class*='waveform']").last();
         }
         
@@ -557,14 +553,14 @@ public class FanMessagingPage extends BasePage {
     public void fanAcceptsFreeMessage(String creatorMessage) {
         verifyMessageVisible(creatorMessage);
         clickAcceptMedia();
-        page.waitForTimeout(500); // No payment needed for free messages - just wait for acceptance
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Messaging] Fan accepted free message");
     }
 
     @Step("Verify mixed media received (image preview, video preview, audio element)")
     public void verifyMixedMediaReceived(String messageTimestamp) {
         logger.info("[Fan][Messaging] Verifying mixed media received for message: {}", messageTimestamp);
-        page.waitForTimeout(2000); // Wait for media to load
+        try { page.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
         // Find the message with timestamp
         Locator messageLocator = page.getByText(messageTimestamp).first();
@@ -581,7 +577,7 @@ public class FanMessagingPage extends BasePage {
             Locator firstPreview = previewIcons.first();
             waitVisible(firstPreview, ConfigReader.getShortTimeout());
             clickWithRetry(firstPreview, 2, ConfigReader.getAnimationTimeout());
-            page.waitForTimeout(500);
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[Fan][Messaging] Clicked first preview (image)");
             closeImagePreview();
         }
@@ -591,7 +587,7 @@ public class FanMessagingPage extends BasePage {
             Locator secondPreview = previewIcons.nth(1);
             waitVisible(secondPreview, ConfigReader.getShortTimeout());
             clickWithRetry(secondPreview, 2, ConfigReader.getAnimationTimeout());
-            page.waitForTimeout(500);
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("[Fan][Messaging] Clicked second preview (video)");
             closeImagePreview();
         }
