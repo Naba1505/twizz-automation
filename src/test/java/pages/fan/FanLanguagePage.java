@@ -87,7 +87,7 @@ public class FanLanguagePage extends BasePage {
     public void clickBackArrow() {
         waitVisible(backArrow(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(backArrow(), 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Language] Clicked back arrow");
     }
 
@@ -109,7 +109,7 @@ public class FanLanguagePage extends BasePage {
         waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
         clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getPageLoadTimeout()); // Wait for language screen to fully load
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Language] Clicked 'Language' menu item");
     }
 
@@ -119,7 +119,7 @@ public class FanLanguagePage extends BasePage {
         waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
         clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getPageLoadTimeout()); // Wait for language screen to fully load
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Language] Clicked 'Langue' menu item");
     }
 
@@ -129,7 +129,7 @@ public class FanLanguagePage extends BasePage {
         waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
         clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getPageLoadTimeout()); // Wait for language screen to fully load
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Language] Clicked 'Idioma' menu item");
     }
 
@@ -161,7 +161,7 @@ public class FanLanguagePage extends BasePage {
         clickWithRetry(frenchOption(), 2, ConfigReader.getAnimationTimeout());
         // Wait for checkbox to appear confirming language selection
         waitVisible(languageCheckbox(), ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for language change to take effect
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Language] Selected Français language - checkbox visible");
     }
 
@@ -171,7 +171,7 @@ public class FanLanguagePage extends BasePage {
         clickWithRetry(spanishOption(), 2, ConfigReader.getAnimationTimeout());
         // Wait for checkbox to appear confirming language selection
         waitVisible(languageCheckbox(), ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for language change to take effect
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Language] Selected Español language - checkbox visible");
     }
 
@@ -181,7 +181,7 @@ public class FanLanguagePage extends BasePage {
         clickWithRetry(englishOption(), 2, ConfigReader.getAnimationTimeout());
         // Wait for checkbox to appear confirming language selection
         waitVisible(languageCheckbox(), ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for language change to take effect
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Language] Selected English language - checkbox visible");
     }
 
