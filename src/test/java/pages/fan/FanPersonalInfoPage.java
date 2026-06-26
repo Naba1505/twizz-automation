@@ -131,7 +131,7 @@ public class FanPersonalInfoPage extends BasePage {
         waitVisible(menuItem, ConfigReader.getVisibilityTimeout());
         menuItem.scrollIntoViewIfNeeded();
         clickWithRetry(menuItem, 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getPageLoadTimeout()); // Wait for screen to load
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][PersonalInfo] Clicked 'Personal information' menu item");
     }
 
@@ -246,7 +246,7 @@ public class FanPersonalInfoPage extends BasePage {
         updateEmail(email);
         updatePhoneNumber(phoneNumber);
         clickRegisterButton();
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout()); // Wait for save to complete
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         verifySuccessMessage();
         logger.info("[Fan][PersonalInfo] Personal information updated and saved successfully");
     }
