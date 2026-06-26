@@ -90,8 +90,7 @@ public class FanLiveTest extends BaseTestClass {
         creatorLive.createInstantLiveEveryone15Euro();
         logger.info("[FanLive] Creator instant live created and started");
 
-        // Wait for live to fully initialize
-        creatorPage.waitForTimeout(3000);
+        try { creatorPage.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
         // ==================== FAN FLOW (Separate Browser Context) ====================
         logger.info("[FanLive] Step 3: Fan login and navigate to Lives screen (separate context)");
@@ -217,8 +216,7 @@ public class FanLiveTest extends BaseTestClass {
         creatorLive.submitAndVerify();
         logger.info("[FanLive] Creator scheduled live event successfully");
 
-        // Wait for event to be fully created
-        creatorPage.waitForTimeout(2000);
+        try { creatorPage.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
         // ==================== FAN FLOW (Separate Browser Context) ====================
         logger.info("[FanLive] Step 3: Fan login and navigate to Lives screen (separate context)");

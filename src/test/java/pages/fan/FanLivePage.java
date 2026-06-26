@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -13,16 +14,6 @@ import io.qameta.allure.Step;
  * Handles navigation to lives screen, joining live events, payment, and interaction.
  */
 public class FanLivePage extends BasePage {
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int VISIBILITY_TIMEOUT = 20000;  // Element visibility timeout
-    private static final int SHORT_TIMEOUT = 10000;       // Short timeout for quick checks
-    
-    // 3DS specific timeouts
-    private static final int THREEDS_POPUP_WAIT = 500;    // Wait for 3DS popup
-    private static final int THREEDS_RETRY_WAIT = 400;    // Wait between 3DS retries
-    private static final int THREEDS_SUBMIT_TIMEOUT = 1200; // 3DS submit button timeout
 
     // Navigation
     private static final String LIVE_ICON_NAME = "Live icon";
@@ -49,23 +40,23 @@ public class FanLivePage extends BasePage {
     @Step("Click on Live icon from home screen")
     public void clickLiveIcon() {
         Locator liveIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(LIVE_ICON_NAME));
-        waitVisible(liveIcon.first(), VISIBILITY_TIMEOUT);
-        clickWithRetry(liveIcon.first(), 2, UI_UPDATE_WAIT);
+        waitVisible(liveIcon.first(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(liveIcon.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Live] Clicked on Live icon");
     }
 
     @Step("Ensure on Lives screen by verifying title")
     public void assertOnLivesScreen() {
         Locator livesTitle = page.getByText(LIVES_TITLE);
-        waitVisible(livesTitle.first(), VISIBILITY_TIMEOUT);
+        waitVisible(livesTitle.first(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Live] On Lives screen - title visible");
     }
 
     @Step("Click on Live tab")
     public void clickLiveTab() {
         Locator liveTab = page.getByText(LIVE_TEXT_EXACT, new Page.GetByTextOptions().setExact(true));
-        waitVisible(liveTab.first(), SHORT_TIMEOUT);
-        clickWithRetry(liveTab.first(), 2, UI_UPDATE_WAIT);
+        waitVisible(liveTab.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(liveTab.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Live] Clicked on Live tab");
     }
 
@@ -73,40 +64,17 @@ public class FanLivePage extends BasePage {
     public void clickEventsTab() {
         logger.info("[Fan][Live] Looking for Events tab");
         
-        // Wait a moment for page to load
-        page.waitForTimeout(1000);
-        
-        // Debug: List all available tabs/elements first
-        try {
-            logger.info("[Fan][Live] Debugging - looking for Events tab elements");
-            Locator potentialTabs = page.locator("div, button, span, [role='tab'], .ant-tab");
-            int tabCount = potentialTabs.count();
-            logger.info("[Fan][Live] Found {} potential tab elements", tabCount);
-            
-            for (int i = 0; i < Math.min(tabCount, 20); i++) {
-                try {
-                    String text = potentialTabs.nth(i).textContent();
-                    String tagName = potentialTabs.nth(i).evaluate("el => el.tagName.toLowerCase()").toString();
-                    if (text != null && text.toLowerCase().contains("events")) {
-                        logger.info("[Fan][Live] Found Events element {} ({}): '{}'", i, tagName, text);
-                    }
-                } catch (Exception e) {
-                    logger.debug("[Fan][Live] Could not analyze tab element {}: {}", i, e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            logger.debug("[Fan][Live] Debug failed: {}", e.getMessage());
-        }
-        
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+
         // Try multiple specific strategies for Events tab
         boolean clicked = false;
         
         // Strategy 1: Exact text match with tab role
         try {
-            Locator eventsTab = page.locator("[role='tab']:has-text('Events'), .ant-tab:has-text('Events')");
+            Locator eventsTab = page.locator("[role='tab']").filter(new Locator.FilterOptions().setHasText("Events"));
             if (eventsTab.count() > 0) {
                 eventsTab.first().scrollIntoViewIfNeeded();
-                waitVisible(eventsTab.first(), 8000); // 8s timeout
+                waitVisible(eventsTab.first(), ConfigReader.getShortTimeout());
                 eventsTab.first().click();
                 clicked = true;
                 logger.info("[Fan][Live] Clicked Events tab via role/tab selector");
@@ -121,7 +89,7 @@ public class FanLivePage extends BasePage {
                 Locator eventsTab = page.getByText("Events", new Page.GetByTextOptions().setExact(true));
                 if (eventsTab.count() > 0) {
                     eventsTab.first().scrollIntoViewIfNeeded();
-                    waitVisible(eventsTab.first(), 8000);
+                    waitVisible(eventsTab.first(), ConfigReader.getShortTimeout());
                     eventsTab.first().click();
                     clicked = true;
                     logger.info("[Fan][Live] Clicked Events tab via exact text");
@@ -174,8 +142,7 @@ public class FanLivePage extends BasePage {
             throw new RuntimeException("Unable to find or click Events tab after all strategies");
         }
         
-        // Wait after clicking Events tab for content to load
-        page.waitForTimeout(3000);
+        try { page.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Live] Successfully clicked Events tab");
     }
 
@@ -274,8 +241,8 @@ public class FanLivePage extends BasePage {
     @Step("Click 'Go to live' button")
     public void clickGoToLive() {
         Locator goToLiveBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GO_TO_LIVE_BTN)).first();
-        waitVisible(goToLiveBtn, VISIBILITY_TIMEOUT);
-        clickWithRetry(goToLiveBtn, 2, UI_UPDATE_WAIT);
+        waitVisible(goToLiveBtn, ConfigReader.getVisibilityTimeout());
+        clickWithRetry(goToLiveBtn, 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Live] Clicked 'Go to live' button");
     }
 
@@ -287,15 +254,14 @@ public class FanLivePage extends BasePage {
         
         // Handle "No saved cards" scenario like in FanSubscriptionPage
         try {
-            page.waitForTimeout(2000);
+            try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             Locator noSavedCards = page.getByText("No saved cards");
             Locator addNewCardButton = page.getByText("Add new card");
-            
             if (noSavedCards.count() > 0 && safeIsVisible(noSavedCards.first())) {
                 logger.info("[Fan][Live] No saved cards found - clicking Add new card");
                 if (addNewCardButton.count() > 0) {
                     addNewCardButton.first().click();
-                    page.waitForTimeout(1000);
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
             }
         } catch (Exception e) {
@@ -305,28 +271,8 @@ public class FanLivePage extends BasePage {
         // Now fill card details if needed (for "Add new card" scenario)
         fillCardDetailsIfNeeded();
         
-        // Wait after filling card details
-        page.waitForTimeout(2000);
-        
-        // Debug: Check what buttons are available after filling card details
-        try {
-            logger.info("[Fan][Live] Debugging available buttons after card details");
-            Locator allButtons = page.locator("button");
-            int buttonCount = allButtons.count();
-            logger.info("[Fan][Live] Found {} buttons on payment page", buttonCount);
-            
-            for (int i = 0; i < Math.min(buttonCount, 10); i++) {
-                try {
-                    String buttonText = allButtons.nth(i).textContent();
-                    logger.info("[Fan][Live] Button {}: '{}'", i, buttonText);
-                } catch (Exception e) {
-                    logger.debug("[Fan][Live] Could not get text for button {}: {}", i, e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            logger.debug("[Fan][Live] Error debugging buttons: {}", e.getMessage());
-        }
-        
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+
         // Try multiple approaches for the Select button
         boolean clicked = false;
         
@@ -334,8 +280,8 @@ public class FanLivePage extends BasePage {
         try {
                 Locator selectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SELECT_BTN));
                 if (selectBtn.count() > 0) {
-                    waitVisible(selectBtn.first(), 5_000); // Reduced from 10s to 5s
-                    clickWithRetry(selectBtn.first(), 2, 200);
+                    waitVisible(selectBtn.first(), ConfigReader.getShortTimeout());
+                    clickWithRetry(selectBtn.first(), 2, ConfigReader.getElementRetryDelay());
                     clicked = true;
                     logger.info("[Fan][Live] Selected payment card via Select button");
                 }
@@ -348,8 +294,8 @@ public class FanLivePage extends BasePage {
                 try {
                     Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
                     if (continueBtn.count() > 0) {
-                        waitVisible(continueBtn.first(), 5_000); // Reduced from 10s to 5s
-                        clickWithRetry(continueBtn.first(), 2, 200);
+                        waitVisible(continueBtn.first(), ConfigReader.getShortTimeout());
+                        clickWithRetry(continueBtn.first(), 2, ConfigReader.getElementRetryDelay());
                         clicked = true;
                         logger.info("[Fan][Live] Selected payment card via Continue button");
                     }
@@ -363,8 +309,8 @@ public class FanLivePage extends BasePage {
                 try {
                     Locator payBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Pay"));
                     if (payBtn.count() > 0) {
-                        waitVisible(payBtn.first(), 5_000); // Reduced from 10s to 5s
-                        clickWithRetry(payBtn.first(), 2, 200);
+                        waitVisible(payBtn.first(), ConfigReader.getShortTimeout());
+                        clickWithRetry(payBtn.first(), 2, ConfigReader.getElementRetryDelay());
                         clicked = true;
                         logger.info("[Fan][Live] Selected payment card via Pay button");
                     }
@@ -432,15 +378,15 @@ public class FanLivePage extends BasePage {
     private void fillCardDetailsIfNeeded() {
         logger.info("[Fan][Live] Checking if card details need to be filled");
         
-        String cardNumber = "4012 0018 0000 0016";
-        String expiry = "07/34";
-        String cvc = "657";
+        String cardNumber = ConfigReader.getProperty("payment.card.number", "4012 0018 0000 0016");
+        String expiry = ConfigReader.getProperty("payment.card.expiry", "07/34");
+        String cvc = ConfigReader.getProperty("payment.card.cvc", "657");
         
         // Try to fill card details (same logic as FanSubscriptionPage)
         try {
             Locator number = page.getByPlaceholder("1234 1234 1234");
             if (number.count() > 0) {
-                waitVisible(number.first(), VISIBILITY_TIMEOUT);
+                waitVisible(number.first(), ConfigReader.getVisibilityTimeout());
                 number.first().click();
                 number.first().fill(cardNumber);
                 logger.info("[Fan][Live] Filled card number");
@@ -528,8 +474,8 @@ public class FanLivePage extends BasePage {
             try {
                 Locator confirmBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(variation));
                 if (confirmBtn.count() > 0) {
-                    waitVisible(confirmBtn.first(), 5_000); // Reduced from 10s to 5s
-                    clickWithRetry(confirmBtn.first(), 2, 200);
+                    waitVisible(confirmBtn.first(), ConfigReader.getShortTimeout());
+                    clickWithRetry(confirmBtn.first(), 2, ConfigReader.getElementRetryDelay());
                     clicked = true;
                     logger.info("[Fan][Live] Confirmed payment via '{}' button", variation);
                     break;
@@ -587,7 +533,7 @@ public class FanLivePage extends BasePage {
             // Wait for 3DS page to be ready (same as FanSubscriptionPage)
             try { if (!threeDSPage.isClosed()) threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
             try { if (!threeDSPage.isClosed()) threeDSPage.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
-            try { if (!threeDSPage.isClosed()) clickWithRetry(threeDSPage.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("SecurionPay")), 1, UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+            try { if (!threeDSPage.isClosed()) clickWithRetry(threeDSPage.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("SecurionPay")), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
             
             // Try direct JavaScript submit immediately for .btn.btn-success (same as FanSubscriptionPage)
             try {
@@ -613,7 +559,7 @@ public class FanLivePage extends BasePage {
                     if (!threeDSPage.isClosed() && byRole.count() > 0) {
                         logger.info("[Fan][Live] Found Submit button by role");
                         try { byRole.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
-                        try { byRole.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                        try { byRole.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout())); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { byRole.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { byRole.first().click(new Locator.ClickOptions().setForce(true)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     }
@@ -625,7 +571,7 @@ public class FanLivePage extends BasePage {
                     if (!threeDSPage.isClosed() && xpathSubmit.count() > 0) {
                         logger.info("[Fan][Live] Found Submit input via XPath");
                         try { xpathSubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
-                        try { xpathSubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                        try { xpathSubmit.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout())); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { xpathSubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { xpathSubmit.first().click(new Locator.ClickOptions().setForce(true)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     }
@@ -637,7 +583,7 @@ public class FanLivePage extends BasePage {
                     if (!threeDSPage.isClosed() && genericSubmit.count() > 0) {
                         logger.info("[Fan][Live] Found generic submit button");
                         try { genericSubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
-                        try { genericSubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                        try { genericSubmit.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout())); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { genericSubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { genericSubmit.first().click(new Locator.ClickOptions().setForce(true)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     }
@@ -645,11 +591,11 @@ public class FanLivePage extends BasePage {
                 
                 // Strategy 4: Any button with "Submit" text
                 try {
-                    Locator textSubmit = threeDSPage.locator("button:has-text('Submit'), *:has-text('Submit')");
+                    Locator textSubmit = threeDSPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"));
                     if (!threeDSPage.isClosed() && textSubmit.count() > 0) {
                         logger.info("[Fan][Live] Found button with Submit text");
                         try { textSubmit.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
-                        try { textSubmit.first().click(new Locator.ClickOptions().setTimeout(THREEDS_SUBMIT_TIMEOUT)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                        try { textSubmit.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout())); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { textSubmit.first().evaluate("el => el.click()"); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                         try { textSubmit.first().click(new Locator.ClickOptions().setForce(true)); submitted = true; continue; } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                     }
@@ -691,7 +637,7 @@ public class FanLivePage extends BasePage {
                 }
                 
                 if (!submitted) {
-                    try { if (!threeDSPage.isClosed()) threeDSPage.waitForTimeout(THREEDS_RETRY_WAIT); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                    try { if (!threeDSPage.isClosed()) threeDSPage.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
             }
             
@@ -704,8 +650,8 @@ public class FanLivePage extends BasePage {
             // Wait for 3DS page to close
             try {
                 long startTime = System.currentTimeMillis();
-                while (!threeDSPage.isClosed() && (System.currentTimeMillis() - startTime) < 10000) {
-                    page.waitForTimeout(500);
+                while (!threeDSPage.isClosed() && (System.currentTimeMillis() - startTime) < ConfigReader.getShortTimeout()) {
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
                 if (threeDSPage.isClosed()) {
                     logger.info("[Fan][Live] 3DS page closed successfully");
@@ -725,8 +671,8 @@ public class FanLivePage extends BasePage {
     public void clickEverythingOkIfPresent() {
         try {
             Locator okBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EVERYTHING_OK_BTN));
-            if (waitVisibleSafe(okBtn.first(), SHORT_TIMEOUT)) {
-                clickWithRetry(okBtn.first(), 2, UI_UPDATE_WAIT);
+            if (waitVisibleSafe(okBtn.first(), ConfigReader.getShortTimeout())) {
+                clickWithRetry(okBtn.first(), 2, ConfigReader.getElementRetryDelay());
                 logger.info("[Fan][Live] Clicked 'Everything is OK' - payment confirmed for live access");
             }
         } catch (Exception e) {
@@ -743,7 +689,7 @@ public class FanLivePage extends BasePage {
         Page threeDSPage = null;
         try {
             // Wait a moment for 3DS popup
-            page.waitForTimeout(THREEDS_POPUP_WAIT);
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             
             // Check if 3DS page appeared
             for (Page p : page.context().pages()) {
@@ -772,15 +718,15 @@ public class FanLivePage extends BasePage {
     @Step("Click on comment textbox")
     public void clickCommentTextbox() {
         Locator commentBox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(COMMENT_TEXTBOX));
-        waitVisible(commentBox.first(), VISIBILITY_TIMEOUT);
-        clickWithRetry(commentBox.first(), 2, UI_UPDATE_WAIT);
+        waitVisible(commentBox.first(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(commentBox.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Live] Clicked on comment textbox");
     }
 
     @Step("Type comment: {message}")
     public void typeComment(String message) {
         Locator commentBox = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(COMMENT_TEXTBOX));
-        waitVisible(commentBox.first(), SHORT_TIMEOUT);
+        waitVisible(commentBox.first(), ConfigReader.getShortTimeout());
         commentBox.first().fill(message);
         logger.info("[Fan][Live] Typed comment: {}", message);
     }
@@ -788,8 +734,8 @@ public class FanLivePage extends BasePage {
     @Step("Send comment")
     public void sendComment() {
         Locator sendIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(SEND_ICON));
-        waitVisible(sendIcon.first(), SHORT_TIMEOUT);
-        clickWithRetry(sendIcon.first(), 2, UI_UPDATE_WAIT);
+        waitVisible(sendIcon.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(sendIcon.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Live] Sent comment");
     }
 
@@ -806,8 +752,8 @@ public class FanLivePage extends BasePage {
     @Step("Close live stream (fan side)")
     public void closeLive() {
         Locator closeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(CLOSE_ICON));
-        waitVisible(closeIcon.first(), SHORT_TIMEOUT);
-        clickWithRetry(closeIcon.first(), 2, UI_UPDATE_WAIT);
+        waitVisible(closeIcon.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(closeIcon.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Live] Closed live stream");
     }
 
@@ -820,8 +766,8 @@ public class FanLivePage extends BasePage {
     @Step("Click on creator tile by name: {creatorName}")
     public void clickCreatorTile(String creatorName) {
         Locator creatorTile = page.getByText(creatorName);
-        waitVisible(creatorTile.first(), VISIBILITY_TIMEOUT);
-        clickWithRetry(creatorTile.first(), 2, UI_UPDATE_WAIT);
+        waitVisible(creatorTile.first(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(creatorTile.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Live] Clicked on creator tile: {}", creatorName);
     }
 
@@ -856,7 +802,7 @@ public class FanLivePage extends BasePage {
                     
                     // Try with wait
                     try {
-                        waitVisible(textElement.first(), 5000); // 5s timeout
+                        waitVisible(textElement.first(), ConfigReader.getShortTimeout());
                         found = true;
                         logger.info("[Fan][Live] Exclusive live text visible after wait using selector: {}", selector);
                         break;
@@ -868,10 +814,9 @@ public class FanLivePage extends BasePage {
         }
         
         if (!found) {
-            // As a fallback, just check if the text exists anywhere on the page
             try {
-                page.waitForTimeout(2000);
-                if (page.locator("*:has-text('" + EXCLUSIVE_LIVE_TEXT + "')").count() > 0) {
+                try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                if (page.getByText(EXCLUSIVE_LIVE_TEXT).count() > 0) {
                     logger.info("[Fan][Live] Exclusive live text found on page (may be hidden)");
                     found = true;
                 }
@@ -889,15 +834,15 @@ public class FanLivePage extends BasePage {
     @Step("Click 'Get a ticket' button")
     public void clickGetTicket() {
         Locator getTicketBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GET_TICKET_BTN));
-        waitVisible(getTicketBtn.first(), VISIBILITY_TIMEOUT);
-        clickWithRetry(getTicketBtn.first(), 2, UI_UPDATE_WAIT);
+        waitVisible(getTicketBtn.first(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(getTicketBtn.first(), 2, ConfigReader.getElementRetryDelay());
         logger.info("[Fan][Live] Clicked 'Get a ticket' button");
     }
 
     @Step("Verify secure payment screen is displayed")
     public void assertSecurePaymentVisible() {
         Locator securePayment = page.getByText(SECURE_PAYMENT_TEXT);
-        waitVisible(securePayment.first(), VISIBILITY_TIMEOUT);
+        waitVisible(securePayment.first(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Live] Secure payment screen visible");
     }
 
@@ -992,8 +937,7 @@ public class FanLivePage extends BasePage {
             throw new RuntimeException("No available live events found to click");
         }
         
-        // Wait after clicking
-        page.waitForTimeout(2000);
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     // ================= Helper Methods =================
