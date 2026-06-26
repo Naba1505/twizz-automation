@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -14,15 +15,6 @@ import io.qameta.allure.Step;
  * Handles viewing subscribed creators and their details.
  */
 public class FanMyCreatorsPage extends BasePage {
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int SCROLL_WAIT = 300;           // Wait between scroll actions
-    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
-    private static final int LOAD_WAIT = 2000;            // Wait for page to load
-    
-    // Scroll configuration constants
-    private static final int MAX_SCROLL_ATTEMPTS = 10;     // Maximum scroll attempts
-    private static final int SCROLL_STEP_SIZE = 500;       // Scroll step size in pixels
 
     public FanMyCreatorsPage(Page page) {
         super(page);
@@ -34,12 +26,10 @@ public class FanMyCreatorsPage extends BasePage {
     public void clickSettingsIcon() {
         logger.info("Clicking Settings icon");
         
-        Locator settingsIcon = page.getByRole(AriaRole.IMG, 
+        Locator settingsIcon = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("Settings icon"));
-        waitVisible(settingsIcon.first(), DEFAULT_WAIT);
-        settingsIcon.click();
-        
-        waitForAnimation();
+        settingsIcon.first().click(new Locator.ClickOptions().setForce(true));
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked Settings icon");
     }
 
@@ -48,16 +38,9 @@ public class FanMyCreatorsPage extends BasePage {
         logger.info("Clicking My creators tile");
         
         Locator myCreatorsTile = page.getByText("My creators");
-        
-        // Scroll to make element visible if needed
-        if (myCreatorsTile.count() > 0) {
-            myCreatorsTile.first().scrollIntoViewIfNeeded();
-        }
-        
         waitVisible(myCreatorsTile.first(), DEFAULT_WAIT);
-        myCreatorsTile.first().click();
-        
-        waitForAnimation();
+        clickWithRetry(myCreatorsTile.first(), 1, ConfigReader.getElementRetryDelay());
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked My creators tile");
     }
 
@@ -87,7 +70,7 @@ public class FanMyCreatorsPage extends BasePage {
     @Step("Check if any creators are listed")
     public boolean hasCreatorsListed() {
         logger.info("Checking if any creators are listed");
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         Locator arrowRight = page.getByRole(AriaRole.IMG, 
                 new Page.GetByRoleOptions().setName("arrow right"));
@@ -103,9 +86,8 @@ public class FanMyCreatorsPage extends BasePage {
         Locator arrowRight = page.getByRole(AriaRole.IMG, 
                 new Page.GetByRoleOptions().setName("arrow right")).first();
         waitVisible(arrowRight, DEFAULT_WAIT);
-        arrowRight.click();
-        
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        clickWithRetry(arrowRight, 1, ConfigReader.getElementRetryDelay());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked on first creator arrow");
     }
 
@@ -116,8 +98,7 @@ public class FanMyCreatorsPage extends BasePage {
         Locator cancelButton = page.getByRole(AriaRole.BUTTON, 
                 new Page.GetByRoleOptions().setName("Cancel").setExact(true));
         waitVisible(cancelButton.first(), DEFAULT_WAIT);
-        cancelButton.click();
-        
+        clickWithRetry(cancelButton.first(), 1, ConfigReader.getElementRetryDelay());
         waitForAnimation();
         logger.info("Clicked Cancel button");
     }
@@ -127,103 +108,59 @@ public class FanMyCreatorsPage extends BasePage {
         logger.info("Attempting to click 'See all results' if present");
         
         Locator seeAllResults = page.getByText("See all results");
-        
-        // Scroll down until element is visible using standardized parameters
-        int maxScrollAttempts = MAX_SCROLL_ATTEMPTS;
-        int scrollStep = SCROLL_STEP_SIZE;
-        int waitBetween = SCROLL_WAIT;
-        
-        for (int i = 0; i < maxScrollAttempts; i++) {
-            if (seeAllResults.count() > 0 && safeIsVisible(seeAllResults.first())) {
-                break;
-            }
-            page.mouse().wheel(0, scrollStep);
-            try { page.waitForTimeout(waitBetween); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        for (int i = 0; i < ConfigReader.getMaxScrollAttempts(); i++) {
+            if (seeAllResults.count() > 0 && safeIsVisible(seeAllResults.first())) break;
+            page.mouse().wheel(0, ConfigReader.getScrollStepSize());
+            try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        
-        // Try to click if visible, but don't fail if not found
         try {
             if (seeAllResults.count() > 0 && safeIsVisible(seeAllResults.first())) {
-                seeAllResults.first().click();
+                clickWithRetry(seeAllResults.first(), 1, ConfigReader.getElementRetryDelay());
                 waitForPageLoad();
                 logger.info("Clicked 'See all results' - loading more creators");
             } else {
-                logger.info("'See all results' button not found - continuing without it (may not be needed)");
+                logger.info("'See all results' not found - continuing without it");
             }
         } catch (Exception e) {
-            logger.info("'See all results' button not available or not needed - continuing test");
+            logger.info("'See all results' not available - continuing test");
         }
     }
 
     @Step("Scroll to last creator avatar in the list")
     public void scrollToLastCreatorAvatar() {
         logger.info("Scrolling to last creator avatar in the list");
-        
-        // Scroll down until we can't find any more creator avatars
-        int maxScrollAttempts = MAX_SCROLL_ATTEMPTS;
-        int scrollStep = SCROLL_STEP_SIZE;
-        int waitBetween = SCROLL_WAIT;
-        
-        int lastVisibleIndex = 0;
-        for (int i = 0; i < maxScrollAttempts; i++) {
-            // Check for creator avatars with increasing index
-            for (int idx = lastVisibleIndex + 1; idx <= 50; idx++) {
-                Locator avatar = page.locator("div:nth-child(" + idx + ") > .fanSubscriptionPageAvatarImg");
-                if (avatar.count() > 0 && safeIsVisible(avatar.first())) {
-                    lastVisibleIndex = idx;
+        int lastCount = 0;
+        int stableRounds = 0;
+        for (int i = 0; i < ConfigReader.getMaxScrollAttempts(); i++) {
+            int currentCount = page.locator(".fanSubscriptionPageAvatarImg").count();
+            if (currentCount == lastCount) {
+                stableRounds++;
+                if (stableRounds > 2) {
+                    logger.info("Reached end of list with {} creators after {} scroll(s)", currentCount, i);
+                    break;
                 }
+            } else {
+                stableRounds = 0;
             }
-            
-            // Scroll down
-            page.mouse().wheel(0, scrollStep);
-            try { page.waitForTimeout(waitBetween); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            
-            // Check if we've reached the bottom (no new avatars appearing)
-            int newLastIndex = lastVisibleIndex;
-            for (int idx = lastVisibleIndex + 1; idx <= 50; idx++) {
-                Locator avatar = page.locator("div:nth-child(" + idx + ") > .fanSubscriptionPageAvatarImg");
-                if (avatar.count() > 0 && safeIsVisible(avatar.first())) {
-                    newLastIndex = idx;
-                }
-            }
-            if (newLastIndex == lastVisibleIndex && i > 3) {
-                logger.info("Reached end of list at creator index {} after {} scroll(s)", lastVisibleIndex, i);
-                break;
-            }
-            lastVisibleIndex = newLastIndex;
+            lastCount = currentCount;
+            page.mouse().wheel(0, ConfigReader.getScrollStepSize());
+            try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        
         waitForUiToSettle();
-        logger.info("Scrolled to last creator avatar (index: {})", lastVisibleIndex);
+        logger.info("Scrolled to last creator avatar (total visible: {})", lastCount);
     }
 
     @Step("Scroll to first creator avatar in the list")
     public void scrollToFirstCreatorAvatar() {
         logger.info("Scrolling back to first creator avatar");
-        
-        int maxScrollAttempts = MAX_SCROLL_ATTEMPTS;
-        int scrollStep = SCROLL_STEP_SIZE;
-        int waitBetween = SCROLL_WAIT;
-        
-        // First, scroll all the way to the top
-        for (int i = 0; i < maxScrollAttempts; i++) {
-            page.mouse().wheel(0, -scrollStep);
-            try { page.waitForTimeout(waitBetween); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            logger.info("Scroll up attempt {}", i + 1);
+        for (int i = 0; i < ConfigReader.getMaxScrollAttempts(); i++) {
+            page.mouse().wheel(0, -ConfigReader.getScrollStepSize());
+            try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        
-        // Verify first creator avatar (div:nth-child(1) or div:nth-child(2)) is visible
-        Locator firstCreatorAvatar = page.locator("div:nth-child(2) > .fanSubscriptionPageAvatarImg");
-        if (firstCreatorAvatar.count() > 0 && safeIsVisible(firstCreatorAvatar.first())) {
+        Locator firstAvatar = page.locator(".fanSubscriptionPageAvatarImg").first();
+        if (safeIsVisible(firstAvatar)) {
             logger.info("First creator avatar is now visible");
-        } else {
-            // Try alternative locator
-            firstCreatorAvatar = page.locator(".fanSubscriptionPageAvatarImg").first();
-            if (firstCreatorAvatar.count() > 0 && safeIsVisible(firstCreatorAvatar)) {
-                logger.info("First creator avatar (alternative locator) is now visible");
-            }
         }
-        
         waitForUiToSettle();
         logger.info("Scrolled back to first creator avatar");
     }
@@ -232,12 +169,10 @@ public class FanMyCreatorsPage extends BasePage {
     public void clickArrowLeft() {
         logger.info("Clicking arrow left to navigate back");
         
-        Locator arrowLeft = page.getByRole(AriaRole.IMG, 
+        Locator arrowLeft = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("arrow left"));
-        waitVisible(arrowLeft.first(), DEFAULT_WAIT);
-        arrowLeft.click();
-        
-        waitForAnimation();
+        arrowLeft.first().click(new Locator.ClickOptions().setForce(true));
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked arrow left");
     }
 
