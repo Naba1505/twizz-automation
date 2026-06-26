@@ -95,7 +95,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
     public void clickBackArrow() {
         waitVisible(backArrow(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(backArrow(), 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][TermsAndPolicies] Clicked back arrow");
     }
 
@@ -131,7 +131,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator endText = termsAndConditionsEndText();
         endText.scrollIntoViewIfNeeded();
         waitVisible(endText, ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Terms and Conditions");
     }
 
@@ -140,7 +140,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator title = termsAndConditionsTitle();
         title.scrollIntoViewIfNeeded();
         waitVisible(title, ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Terms and Conditions");
     }
 
@@ -180,7 +180,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator endText = communityRegulationsEndText();
         endText.scrollIntoViewIfNeeded();
         waitVisible(endText, ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Community Regulations");
     }
 
@@ -189,7 +189,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator title = communityRegulationsTitle();
         title.scrollIntoViewIfNeeded();
         waitVisible(title, ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Community Regulations");
     }
 
@@ -229,7 +229,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator endText = contentPolicyEndText();
         endText.scrollIntoViewIfNeeded();
         waitVisible(endText, ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][TermsAndPolicies] Scrolled to end of Content Policy");
     }
 
@@ -238,7 +238,7 @@ public class FanTermsAndPoliciesPage extends BasePage {
         Locator title = contentPolicyTitle();
         title.scrollIntoViewIfNeeded();
         waitVisible(title, ConfigReader.getVisibilityTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][TermsAndPolicies] Scrolled back to top of Content Policy");
     }
 
