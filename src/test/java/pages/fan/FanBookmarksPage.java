@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -13,19 +14,12 @@ import io.qameta.allure.Step;
  * Handles bookmarking feeds from home screen and managing bookmarked feeds.
  */
 public class FanBookmarksPage extends BasePage {
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int SCROLL_WAIT = 300;           // Wait between scroll actions
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
-    private static final int LOAD_WAIT = 2000;            // Wait for page to load
-    private static final int DETAIL_VIEW_WAIT = 1500;     // Wait for detail view to load
-    
+
     // Scroll distance constants (in pixels)
-    private static final int SCROLL_DOWN_SMALL = 300;     // Small scroll down
-    private static final int SCROLL_DOWN_MEDIUM = 400;    // Medium scroll down
-    private static final int SCROLL_DOWN_LARGE = 500;     // Large scroll down
-    private static final int SCROLL_UP_LARGE = 1200;      // Large scroll up
+    private static final int SCROLL_DOWN_SMALL = 300;
+    private static final int SCROLL_DOWN_MEDIUM = 400;
+    private static final int SCROLL_DOWN_LARGE = 500;
+    private static final int SCROLL_UP_LARGE = 1200;
 
     public FanBookmarksPage(Page page) {
         super(page);
@@ -38,7 +32,7 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Scrolling to ensure feeds are visible");
         for (int i = 0; i < 5; i++) {
             page.mouse().wheel(0, SCROLL_DOWN_MEDIUM);
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
     }
 
@@ -46,16 +40,15 @@ public class FanBookmarksPage extends BasePage {
     public void bookmarkFeedAtIndex(int index) {
         logger.info("Bookmarking feed at index {}", index);
         
-        Locator bookmarkIcons = page.getByRole(AriaRole.IMG, 
-                new Page.GetByRoleOptions().setName("bookmark"));
-        
+        // Use exact CSS selector to exclude bookmarkFill icons
+        Locator bookmarkIcons = page.locator("img[alt='bookmark']");
+
         // Scroll until we have enough bookmark icons visible
         int maxScrollAttempts = 10;
         for (int i = 0; i < maxScrollAttempts && bookmarkIcons.count() <= index; i++) {
             page.mouse().wheel(0, SCROLL_DOWN_LARGE);
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            bookmarkIcons = page.getByRole(AriaRole.IMG, 
-                    new Page.GetByRoleOptions().setName("bookmark"));
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            bookmarkIcons = page.locator("img[alt='bookmark']");
         }
         
         if (bookmarkIcons.count() > index) {
@@ -67,11 +60,10 @@ public class FanBookmarksPage extends BasePage {
                 targetBookmark.click(new Locator.ClickOptions().setForce(true));
             } catch (Throwable e) {
                 logger.warn("Force click failed, retrying with standard click: {}", e.getMessage());
-                clickWithRetry(targetBookmark, 1, UI_UPDATE_WAIT);
+                clickWithRetry(targetBookmark, 1, ConfigReader.getElementRetryDelay());
             }
-            
             logger.info("Clicked bookmark icon at index {}", index);
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         } else {
             throw new RuntimeException("Could not find bookmark icon at index " + index);
         }
@@ -88,58 +80,47 @@ public class FanBookmarksPage extends BasePage {
         scrollToTop();
         
         // Wait for page to stabilize
-        try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+
         int bookmarked = 0;
-        
-        // Get initial count of bookmarkFill icons
-        int initialFillCount = page.getByRole(AriaRole.IMG, 
+
+        int initialFillCount = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("bookmarkFill")).count();
         logger.info("Initial bookmarkFill count: {}", initialFillCount);
-        
-        // Click bookmark icons by index to avoid clicking same one
+
         for (int i = 0; i < count; i++) {
-            // Use exact match for unbookmarked icons only
+            // Use exact CSS selector - click by sequential index like baseline
             Locator bookmarkIcons = page.locator("img[alt='bookmark']");
             logger.info("Iteration {}: Bookmarking feed at index {}", i + 1, i);
-            
+
             if (bookmarkIcons.count() > i) {
                 try {
-                    // Click the bookmark icon at index i (0, 1, 2 for first 3)
                     Locator target = bookmarkIcons.nth(i);
                     target.scrollIntoViewIfNeeded();
-                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     target.click(new Locator.ClickOptions().setForce(true));
                     bookmarked++;
                     logger.info("Bookmarked feed #{} at index {}", bookmarked, i);
-                    
-                    // Wait for UI to update
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-                    
-                    // Verify the click worked by checking bookmarkFill count increased
-                    int currentFillCount = page.getByRole(AriaRole.IMG, 
-                            new Page.GetByRoleOptions().setName("bookmarkFill")).count();
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    int currentFillCount = page.locator("img[alt='bookmarkFill']").count();
                     logger.info("Current bookmarkFill count: {}", currentFillCount);
-                    
                 } catch (Throwable e) {
                     logger.warn("Failed to click bookmark icon: {}", e.getMessage());
                 }
             } else {
-                logger.warn("No more unbookmarked icons available, scrolling down");
+                logger.warn("Not enough unbookmarked icons (need index {}), scrolling down", i);
                 page.mouse().wheel(0, SCROLL_DOWN_LARGE);
-                try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-                i--; // Retry this iteration after scrolling
-                if (i < -5) break; // Safety limit
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                i--;
+                if (i < -4) break;
             }
         }
         
         // Scroll to top and verify bookmarkFill icons count
         scrollToTop();
-        try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
-        Locator bookmarkFillIcons = page.getByRole(AriaRole.IMG, 
-                new Page.GetByRoleOptions().setName("bookmarkFill"));
-        int bookmarkedCount = bookmarkFillIcons.count();
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        int bookmarkedCount = page.getByRole(AriaRole.IMG,
+                new Page.GetByRoleOptions().setName("bookmarkFill")).count();
         logger.info("Total bookmarkFill icons after bookmarking: {}", bookmarkedCount);
         
         logger.info("Completed bookmarking - {} feeds bookmarked", bookmarked);
@@ -176,37 +157,23 @@ public class FanBookmarksPage extends BasePage {
     @Step("Verify all {count} bookmarks are highlighted")
     public boolean verifyAllBookmarksHighlighted(int count) {
         logger.info("Verifying {} bookmarks are highlighted", count);
-        
-        // Scroll to top first to ensure we can see all bookmarked feeds
         scrollToTop();
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
-        // Wait and retry for bookmarkFill icons to appear (UI may take time to update)
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         int maxRetries = 5;
         int highlightedCount = 0;
-        
         for (int retry = 0; retry < maxRetries; retry++) {
-            // Check bookmarkFill icons count
-            Locator bookmarkFillIcons = page.getByRole(AriaRole.IMG, 
-                    new Page.GetByRoleOptions().setName("bookmarkFill"));
-            highlightedCount = bookmarkFillIcons.count();
-            
+            highlightedCount = page.getByRole(AriaRole.IMG,
+                    new Page.GetByRoleOptions().setName("bookmarkFill")).count();
             logger.info("Retry {}: Found {} bookmarkFill icons (expected {})", retry + 1, highlightedCount, count);
-            
             if (highlightedCount >= count) {
                 logger.info("All {} bookmarks are highlighted", count);
                 return true;
             }
-            
-            // Scroll down slightly to load more content and wait
             page.mouse().wheel(0, SCROLL_DOWN_SMALL);
-            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            
-            // Scroll back up
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             scrollToTop();
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        
         logger.warn("Expected {} highlighted bookmarks but found {} after {} retries", count, highlightedCount, maxRetries);
         return false;
     }
@@ -225,22 +192,19 @@ public class FanBookmarksPage extends BasePage {
     @Step("Click Settings icon from home screen")
     public void clickSettingsIcon() {
         logger.info("Clicking Settings icon");
-        
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
-        
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        Locator settingsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon"));
+        settingsIcon.first().click(new Locator.ClickOptions().setForce(true));
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked Settings icon");
     }
 
     @Step("Click Bookmarks tile to navigate to bookmarks screen")
     public void clickBookmarksTile() {
         logger.info("Clicking Bookmarks tile");
-        
         Locator bookmarksTile = page.getByText("Bookmarks");
         waitVisible(bookmarksTile.first(), DEFAULT_WAIT);
-        clickWithRetry(bookmarksTile.first(), 1, UI_UPDATE_WAIT);
-        
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        clickWithRetry(bookmarksTile.first(), 1, ConfigReader.getElementRetryDelay());
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked Bookmarks tile");
     }
 
@@ -275,8 +239,8 @@ public class FanBookmarksPage extends BasePage {
         if (watermarkedFeeds.count() > index) {
             Locator targetFeed = watermarkedFeeds.nth(index);
             waitVisible(targetFeed, DEFAULT_WAIT);
-            clickWithRetry(targetFeed, 1, UI_UPDATE_WAIT);
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            clickWithRetry(targetFeed, 1, ConfigReader.getElementRetryDelay());
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             logger.info("Clicked watermarked feed at index {}", index);
         } else {
             throw new RuntimeException("Could not find watermarked feed at index " + index + 
@@ -305,16 +269,12 @@ public class FanBookmarksPage extends BasePage {
     public boolean verifyBookmarkedFeedsCount(int expectedCount) {
         logger.info("Verifying {} bookmarked feeds are displayed", expectedCount);
         
-        // Wait for page to load
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
-        // Retry logic to handle timing issues
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         int maxRetries = 5;
         int feedCount = 0;
-        
         for (int retry = 0; retry < maxRetries; retry++) {
-            // Use //img[@alt='watermarked'] to count bookmarked feeds
-            Locator watermarkedFeeds = page.locator("img[alt='watermarked']");
+            Locator watermarkedFeeds = page.getByRole(AriaRole.IMG,
+                    new Page.GetByRoleOptions().setName("watermarked"));
             feedCount = watermarkedFeeds.count();
             logger.info("Retry {}: Found {} watermarked feeds on bookmarks screen (expected {})", retry + 1, feedCount, expectedCount);
             
@@ -325,9 +285,8 @@ public class FanBookmarksPage extends BasePage {
             
             // Scroll down to load more content
             page.mouse().wheel(0, SCROLL_DOWN_SMALL);
-            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        
         logger.warn("Bookmark count mismatch: expected {} but found {} after {} retries", expectedCount, feedCount, maxRetries);
         return false;
     }
@@ -373,11 +332,10 @@ public class FanBookmarksPage extends BasePage {
                 targetBookmark.click(new Locator.ClickOptions().setForce(true));
             } catch (Throwable e) {
                 logger.warn("Force click failed, retrying: {}", e.getMessage());
-                clickWithRetry(targetBookmark, 1, UI_UPDATE_WAIT);
+                clickWithRetry(targetBookmark, 1, ConfigReader.getElementRetryDelay());
             }
-            
             logger.info("Clicked to unbookmark at index {}", index);
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         } else {
             throw new RuntimeException("Could not find bookmarkFill icon at index " + index);
         }
@@ -404,7 +362,7 @@ public class FanBookmarksPage extends BasePage {
                 bookmarkFillIcons.first().click(new Locator.ClickOptions().setForce(true));
                 unbookmarkedCount++;
                 logger.info("Unbookmarked feed #{}", unbookmarkedCount);
-                try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             } catch (Throwable e) {
                 logger.warn("Failed to unbookmark: {}", e.getMessage());
                 break;
@@ -433,59 +391,48 @@ public class FanBookmarksPage extends BasePage {
     public void unbookmarkAllFromBookmarksScreen() {
         logger.info("Unbookmarking all feeds from bookmarks screen");
         
-        // Wait for page to fully load
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         int unbookmarked = 0;
-        int maxAttempts = 20; // Safety limit
-        
+        int maxAttempts = 20;
         for (int i = 0; i < maxAttempts; i++) {
-            // Check if there are any watermarked feeds (bookmarked items) on the screen
-            Locator watermarkedList = page.locator("img[alt='watermarked']");
+            Locator watermarkedList = page.getByRole(AriaRole.IMG,
+                    new Page.GetByRoleOptions().setName("watermarked"));
             int watermarkedCount = watermarkedList.count();
             logger.info("Iteration {}: Found {} watermarked feeds", i + 1, watermarkedCount);
-            
             if (watermarkedCount == 0) {
                 logger.info("No more watermarked feeds - all unbookmarked");
                 break;
             }
-            
             try {
-                // Click on first watermarked feed to enter detail view
                 Locator watermarked = watermarkedList.first();
                 watermarked.scrollIntoViewIfNeeded();
-                try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 watermarked.click(new Locator.ClickOptions().setForce(true));
                 logger.info("Clicked on watermarked feed");
-                try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-                
-                // Now find and click the bookmarkFill icon to unbookmark
-                Locator bookmarkFill = page.locator("img[alt='bookmarkFill']").first();
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                Locator bookmarkFill = page.getByRole(AriaRole.IMG,
+                        new Page.GetByRoleOptions().setName("bookmarkFill")).first();
                 int fillCount = bookmarkFill.count();
                 logger.info("Found {} bookmarkFill icons", fillCount);
-                
                 if (fillCount > 0) {
                     bookmarkFill.scrollIntoViewIfNeeded();
-                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     bookmarkFill.click(new Locator.ClickOptions().setForce(true));
                     unbookmarked++;
                     logger.info("Unbookmarked feed #{}", unbookmarked);
-                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-                    
-                    // Navigate back to bookmarks list after unbookmarking
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     page.goBack();
                     logger.info("Navigated back to bookmarks list");
-                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 } else {
                     logger.warn("No bookmarkFill icon found after clicking watermarked feed, going back");
                     page.goBack();
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
             } catch (Throwable e) {
                 logger.warn("Failed during unbookmark iteration: {}", e.getMessage());
-                // Try to recover by going back
                 try { page.goBack(); } catch (Throwable e2) { logger.debug("Go back failed: {}", e2.getMessage()); }
-                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e2) { logger.debug("Wait failed: {}", e2.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e2) { logger.debug("Wait failed: {}", e2.getMessage()); }
             }
         }
         
@@ -494,8 +441,9 @@ public class FanBookmarksPage extends BasePage {
 
     @Step("Get count of watermarked feeds on bookmarks screen")
     public int getWatermarkedFeedsCount() {
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        Locator watermarked = page.locator("img[alt='watermarked']");
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        Locator watermarked = page.getByRole(AriaRole.IMG,
+                new Page.GetByRoleOptions().setName("watermarked"));
         int count = watermarked.count();
         logger.info("Found {} watermarked feeds on bookmarks screen", count);
         return count;
@@ -505,15 +453,12 @@ public class FanBookmarksPage extends BasePage {
     public int unbookmarkFeedsFromScreen(int count) {
         logger.info("Unbookmarking {} feeds from bookmarks screen", count);
         
-        // Wait for page to fully load
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         int unbookmarked = 0;
-        int maxAttempts = count + 5; // Allow some extra attempts
-        
+        int maxAttempts = count + 5;
         for (int i = 0; i < maxAttempts && unbookmarked < count; i++) {
-            // Check if there are any watermarked feeds (bookmarked items) on the screen
-            Locator watermarkedList = page.locator("img[alt='watermarked']");
+            Locator watermarkedList = page.getByRole(AriaRole.IMG,
+                    new Page.GetByRoleOptions().setName("watermarked"));
             int watermarkedCount = watermarkedList.count();
             logger.info("Iteration {}: Found {} watermarked feeds, unbookmarked so far: {}", i + 1, watermarkedCount, unbookmarked);
             
@@ -526,37 +471,33 @@ public class FanBookmarksPage extends BasePage {
                 // Click on first watermarked feed to enter detail view
                 Locator watermarked = watermarkedList.first();
                 watermarked.scrollIntoViewIfNeeded();
-                try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 watermarked.click(new Locator.ClickOptions().setForce(true));
                 logger.info("Clicked on watermarked feed");
-                try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-                
-                // Now find and click the bookmarkFill icon to unbookmark
-                Locator bookmarkFill = page.locator("img[alt='bookmarkFill']").first();
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                Locator bookmarkFill = page.getByRole(AriaRole.IMG,
+                        new Page.GetByRoleOptions().setName("bookmarkFill")).first();
                 int fillCount = bookmarkFill.count();
                 logger.info("Found {} bookmarkFill icons", fillCount);
-                
                 if (fillCount > 0) {
                     bookmarkFill.scrollIntoViewIfNeeded();
-                    try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     bookmarkFill.click(new Locator.ClickOptions().setForce(true));
                     unbookmarked++;
                     logger.info("Unbookmarked feed #{}", unbookmarked);
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-                    
-                    // Navigate back to bookmarks list after unbookmarking
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                     page.goBack();
                     logger.info("Navigated back to bookmarks list");
-                    try { page.waitForTimeout(DETAIL_VIEW_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 } else {
                     logger.warn("No bookmarkFill icon found after clicking watermarked feed, going back");
                     page.goBack();
-                    try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 }
             } catch (Throwable e) {
                 logger.warn("Failed during unbookmark iteration: {}", e.getMessage());
                 try { page.goBack(); } catch (Throwable e2) { logger.debug("Go back failed: {}", e2.getMessage()); }
-                try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e2) { logger.debug("Wait failed: {}", e2.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e2) { logger.debug("Wait failed: {}", e2.getMessage()); }
             }
         }
         
@@ -567,13 +508,10 @@ public class FanBookmarksPage extends BasePage {
     @Step("Click arrow left to navigate back")
     public void clickArrowLeft() {
         logger.info("Clicking arrow left to navigate back");
-        
-        Locator arrowLeft = page.getByRole(AriaRole.IMG, 
+        Locator arrowLeft = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("arrow left"));
-        waitVisible(arrowLeft.first(), DEFAULT_WAIT);
-        clickWithRetry(arrowLeft.first(), 1, UI_UPDATE_WAIT);
-        
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        arrowLeft.first().click(new Locator.ClickOptions().setForce(true));
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked arrow left");
     }
 
@@ -581,7 +519,7 @@ public class FanBookmarksPage extends BasePage {
     public void hardRefreshBrowser() {
         logger.info("Hard refreshing browser");
         page.reload(new Page.ReloadOptions().setWaitUntil(com.microsoft.playwright.options.WaitUntilState.LOAD));
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Browser refreshed");
     }
 
@@ -589,31 +527,23 @@ public class FanBookmarksPage extends BasePage {
     public boolean verifyNoBookmarksFoundText() {
         logger.info("Verifying 'No bookmarks found!' text is displayed");
         
-        // Wait for page to load
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
-        // Retry logic to handle timing issues
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         int maxRetries = 5;
         for (int retry = 0; retry < maxRetries; retry++) {
-            // Check for "No bookmarks found!" text
             Locator noBookmarksText = page.getByText("No bookmarks found!");
             if (noBookmarksText.count() > 0 && safeIsVisible(noBookmarksText.first())) {
                 logger.info("'No bookmarks found!' text visible on retry {}", retry + 1);
                 return true;
             }
-            
-            // Alternative: check if there are no watermarked feeds (empty bookmarks)
-            Locator watermarked = page.locator("img[alt='watermarked']");
+            Locator watermarked = page.getByRole(AriaRole.IMG,
+                    new Page.GetByRoleOptions().setName("watermarked"));
             if (watermarked.count() == 0) {
                 logger.info("No watermarked feeds found - bookmarks are empty on retry {}", retry + 1);
                 return true;
             }
-            
             logger.info("Retry {}: Still checking for empty bookmarks state...", retry + 1);
-            try { page.waitForTimeout(STABILIZATION_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        
-        // Final check
         Locator noBookmarksText = page.getByText("No bookmarks found!");
         boolean visible = noBookmarksText.count() > 0 && safeIsVisible(noBookmarksText.first());
         
@@ -631,17 +561,15 @@ public class FanBookmarksPage extends BasePage {
                 new Page.GetByRoleOptions().setName("arrow left"));
         
         if (backArrow.count() > 0 && safeIsVisible(backArrow.first())) {
-            clickWithRetry(backArrow.first(), 1, UI_UPDATE_WAIT);
+            clickWithRetry(backArrow.first(), 1, ConfigReader.getElementRetryDelay());
         } else {
-            // Try home icon
-            Locator homeIcon = page.getByRole(AriaRole.IMG, 
+            Locator homeIcon = page.getByRole(AriaRole.IMG,
                     new Page.GetByRoleOptions().setName("home"));
             if (homeIcon.count() > 0 && safeIsVisible(homeIcon.first())) {
-                clickWithRetry(homeIcon.first(), 1, UI_UPDATE_WAIT);
+                clickWithRetry(homeIcon.first(), 1, ConfigReader.getElementRetryDelay());
             }
         }
-        
-        try { page.waitForTimeout(LOAD_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
     @Step("Scroll to top of feed")
@@ -649,7 +577,7 @@ public class FanBookmarksPage extends BasePage {
         logger.info("Scrolling to top of feed");
         for (int i = 0; i < 10; i++) {
             page.mouse().wheel(0, -SCROLL_UP_LARGE);
-            try { page.waitForTimeout(SCROLL_WAIT); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
     }
 }
