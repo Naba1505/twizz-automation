@@ -1,6 +1,7 @@
 package pages.fan;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,20 +13,9 @@ import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 
 public class FanDiscoverPage extends BasePage {
-    
-    // Timeout constants (in milliseconds) - Standardized values (optimized)
-    private static final int SCROLL_WAIT = 300;           // Wait between scroll actions
-    private static final int UI_UPDATE_WAIT = 200;        // Wait for UI to update after click
-    private static final int STABILIZATION_WAIT = 1000;   // Wait for page to stabilize
-    private static final int VISIBILITY_TIMEOUT = 20000;  // Element visibility timeout
-    private static final int SHORT_TIMEOUT = 10000;       // Short timeout for quick checks
-    
-    // Scroll distance constants (in pixels)
-    private static final int SCROLL_DOWN_LARGE = 1200;    // Large scroll down
-    private static final int SCROLL_UP_LARGE = 1200;      // Large scroll up
-    
-    // Retry configuration
-    private static final int PROFILE_SCROLL_ATTEMPTS = 6; // Max attempts to find profile
+
+    private static final int SCROLL_DOWN_LARGE = 1200;
+    private static final int SCROLL_UP_LARGE = 1200;
 
     private static final String DISCOVER_PATH_FRAGMENT = "/common/discover";
     private static final String FEED_XPATH = "//div[@class='hls-video-player']";
@@ -38,15 +28,15 @@ public class FanDiscoverPage extends BasePage {
     @Step("Navigate to Discover screen via Search icon (Fan)")
     public void navigateToDiscover() {
         Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), VISIBILITY_TIMEOUT);
-        clickWithRetry(searchIcon.first(), 2, UI_UPDATE_WAIT);
+        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(searchIcon.first(), 2, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert on Discover screen (URL contains /common/discover)")
     public void assertOnDiscoverScreen() {
-        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(VISIBILITY_TIMEOUT));
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         Locator feeds = page.locator("xpath=" + FEED_XPATH);
-        waitVisible(feeds.first(), VISIBILITY_TIMEOUT);
+        waitVisible(feeds.first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Collect all visible feeds on the page")
@@ -68,20 +58,20 @@ public class FanDiscoverPage extends BasePage {
             Locator feed = feeds.nth(i);
             try {
                 feed.scrollIntoViewIfNeeded();
-                waitVisible(feed, SHORT_TIMEOUT);
-                page.waitForTimeout(STABILIZATION_WAIT);
+                waitVisible(feed, ConfigReader.getShortTimeout());
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
                 seen++;
             } catch (Exception e) {
                 logger.warn("Feed {} not confirmed visible: {}", i, e.toString());
             }
         }
-        try { page.mouse().wheel(0, 1200); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        try { page.mouse().wheel(0, SCROLL_DOWN_LARGE); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        logger.info("Scrolled through {} feeds", seen);
         return seen;
     }
 
     @Step("Unmute every visible feed by clicking its mute button while scrolling down")
     public int unmuteAllFeedsWhileScrolling() {
-        Locator muteButtons = page.locator("xpath=" + MUTE_BTN_XPATH);
         Locator feeds = page.locator("xpath=" + FEED_XPATH);
         int toggled = 0;
         int totalFeeds = feeds.count();
@@ -89,89 +79,80 @@ public class FanDiscoverPage extends BasePage {
             Locator feed = feeds.nth(i);
             try {
                 feed.scrollIntoViewIfNeeded();
-                waitVisible(feed, SHORT_TIMEOUT);
-                int btnCount = muteButtons.count();
-                for (int b = 0; b < btnCount; b++) {
-                    Locator btn = muteButtons.nth(b);
-                    if (safeIsVisible(btn)) {
-                        try { btn.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-                        clickWithRetry(btn, 1, UI_UPDATE_WAIT);
-                        toggled++;
-                        break;
-                    }
+                waitVisible(feed, ConfigReader.getShortTimeout());
+                Locator muteBtn = feed.locator("xpath=." + MUTE_BTN_XPATH.substring(1));
+                if (muteBtn.count() > 0 && safeIsVisible(muteBtn.first())) {
+                    try { muteBtn.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+                    clickWithRetry(muteBtn.first(), 1, ConfigReader.getElementRetryDelay());
+                    toggled++;
                 }
-                page.waitForTimeout(STABILIZATION_WAIT);
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             } catch (Exception e) {
                 logger.warn("Unable to unmute feed {}: {}", i, e.toString());
             }
         }
+        logger.info("Unmuted {} feeds", toggled);
         return toggled;
     }
 
     @Step("Scroll up to the top of the Discover feed")
     public void scrollUpToTop() {
-        try {
-            for (int i = 0; i < 6; i++) {
-                page.mouse().wheel(0, -SCROLL_UP_LARGE);
-                page.waitForTimeout(SCROLL_WAIT);
-            }
-        } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        for (int i = 0; i < 6; i++) {
+            try { page.mouse().wheel(0, -SCROLL_UP_LARGE); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        }
     }
 
     @Step("Open a random visible Discover profile from a feed")
     public void openRandomVisibleDiscoverProfile() {
-        // Codegen equivalent: page.getByText("Discover profile").first().click();
-        // Try to surface a "Discover profile" element by scrolling a few times
         Locator profileText = page.getByText("Discover profile");
         int attempts = 0;
-        while ((profileText.count() == 0 || !safeIsVisible(profileText.first())) && attempts++ < PROFILE_SCROLL_ATTEMPTS) {
+        while ((profileText.count() == 0 || !safeIsVisible(profileText.first())) && attempts++ < ConfigReader.getMaxScrollAttempts()) {
             try { page.mouse().wheel(0, SCROLL_DOWN_LARGE); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(UI_UPDATE_WAIT); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
             profileText = page.getByText("Discover profile");
         }
-
         if (profileText.count() == 0) {
             throw new RuntimeException("No 'Discover profile' text found on Fan Discover feed");
         }
-
         Locator target = profileText.first();
         try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(target, 2, UI_UPDATE_WAIT);
+        clickWithRetry(target, 2, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Ensure creator profile screen is visible via publications icon")
     public void ensureOnCreatorProfileScreen() {
         Locator publicationsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("publications icon"));
-        waitVisible(publicationsIcon.first(), VISIBILITY_TIMEOUT);
+        waitVisible(publicationsIcon.first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Navigate back from profile to Discover and assert URL")
     public void navigateBackToDiscover() {
         Locator back = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
-        waitVisible(back.first(), SHORT_TIMEOUT);
-        clickWithRetry(back.first(), 1, UI_UPDATE_WAIT);
-        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(VISIBILITY_TIMEOUT));
+        waitVisible(back.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(back.first(), 1, ConfigReader.getElementRetryDelay());
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
     }
 
     @Step("Open search field on Discover")
     public void openSearchField() {
         Locator searchFieldActivator = page.locator("div").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^Search$"))).nth(1);
-        waitVisible(searchFieldActivator, SHORT_TIMEOUT);
-        clickWithRetry(searchFieldActivator, 1, UI_UPDATE_WAIT);
+        waitVisible(searchFieldActivator, ConfigReader.getShortTimeout());
+        clickWithRetry(searchFieldActivator, 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Fill search query: {query}")
     public void fillSearch(String query) {
         Locator input = page.getByPlaceholder("Search");
-        waitVisible(input.first(), SHORT_TIMEOUT);
+        waitVisible(input.first(), ConfigReader.getShortTimeout());
         input.first().fill(query == null ? "" : query);
     }
 
     @Step("Click search result by text: {resultText}")
     public void clickSearchResult(String resultText) {
         Locator res = page.getByText(resultText);
-        waitVisible(res.first(), VISIBILITY_TIMEOUT);
-        clickWithRetry(res.first(), 1, UI_UPDATE_WAIT);
+        waitVisible(res.first(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(res.first(), 1, ConfigReader.getElementRetryDelay());
     }
 }
 
