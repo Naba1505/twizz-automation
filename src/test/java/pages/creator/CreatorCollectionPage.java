@@ -120,7 +120,7 @@ public class CreatorCollectionPage extends BasePage {
                 try { loc.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
                 try { page.keyboard().press("PageDown"); } catch (Throwable e) { logger.debug("PageDown failed: {}", e.getMessage()); }
                 try { page.mouse().wheel(0, SCROLL_WHEEL_AMOUNT); } catch (Throwable e) { logger.debug("Mouse wheel failed: {}", e.getMessage()); }
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
             } catch (Throwable e) { logger.debug("Scroll iteration failed: {}", e.getMessage()); }
         }
         try { return loc.count() > 0 && loc.first().isVisible(); } catch (Throwable e) { return false; }
