@@ -44,7 +44,7 @@ public class CreatorCollectionPage extends BasePage {
         waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
         
         // Small stabilization to ensure icon is clickable
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
         
         // Some builds require clicking the nested svg
         Locator svg = plusImg.locator("svg");

@@ -161,10 +161,10 @@ public class CreatorPromotionsPage extends BasePage {
                 try {
                     waitVisible(deletePromoButton(), ConfigReader.getShortTimeout());
                     clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
-                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                    try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Post-delete wait failed: {}", e.getMessage()); }
                 } catch (Throwable e) { logger.debug("Delete button not found/clicked: {}", e.getMessage()); }
-                waitVisible(yesDeleteButton(), ConfigReader.getShortTimeout());
                 try {
+                    waitVisible(yesDeleteButton(), ConfigReader.getShortTimeout());
                     clickWithRetry(yesDeleteButton().first(), 1, ConfigReader.getElementRetryDelay());
                 } catch (Throwable e) { logger.debug("Yes-delete click failed: {}", e.getMessage()); }
                 long startWait = System.currentTimeMillis();
@@ -220,10 +220,12 @@ public class CreatorPromotionsPage extends BasePage {
                     try {
                         waitVisible(deletePromoButton(), ConfigReader.getShortTimeout());
                         clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
-                        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Post-delete wait failed: {}", e.getMessage()); }
                     } catch (Throwable e) { logger.debug("Delete button not found/clicked: {}", e.getMessage()); }
-                    waitVisible(yesDeleteButton(), ConfigReader.getShortTimeout());
-                    try { clickWithRetry(yesDeleteButton().first(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Yes-delete click failed: {}", e.getMessage()); }
+                    try {
+                        waitVisible(yesDeleteButton(), ConfigReader.getShortTimeout());
+                        clickWithRetry(yesDeleteButton().first(), 1, ConfigReader.getElementRetryDelay());
+                    } catch (Throwable e) { logger.debug("Yes-delete click failed: {}", e.getMessage()); }
                     int after = 0;
                     long startCheck = System.currentTimeMillis();
                     while (System.currentTimeMillis() - startCheck < ConfigReader.getShortTimeout()) {
@@ -259,7 +261,7 @@ public class CreatorPromotionsPage extends BasePage {
         try { promoMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(promoMenuItem(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(promoTitleExact(), ConfigReader.getShortTimeout());
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Promo settle wait failed: {}", e.getMessage()); }
         try {
             page.waitForSelector("span.creatorCodePromoName", new Page.WaitForSelectorOptions().setTimeout(ConfigReader.getAnimationTimeout()));
             logger.info("Promo code items found on screen");
