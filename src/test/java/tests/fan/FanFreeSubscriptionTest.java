@@ -170,7 +170,7 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         // ===== STEP 5: Back to fan - accept creator's price and pay =====
         page.bringToFront();
-        page.waitForTimeout(3000);
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
         // Assert price row visible and click Accept
         fanPage.assertPriceRowAndAccept();
@@ -259,17 +259,17 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
      * The SEO team defaults language to French, so tests need English.
      */
     private void switchLanguageToEnglish() {
-        page.waitForTimeout(2000); // Wait for registration to complete
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
-        page.waitForTimeout(1000);
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         page.getByText("Langue").click();
-        page.waitForTimeout(1000);
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
-        page.waitForTimeout(1000);
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(500);
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        page.waitForTimeout(5000); // Wait for language change to take effect and UI re-render
+        try { page.waitForTimeout(5000); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Switched language to English after registration");
     }
 }
