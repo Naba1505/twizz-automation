@@ -170,7 +170,7 @@ public class CreatorPublicationPage extends BasePage {
     private boolean isTextVisible(String text, boolean exact) {
         try {
             Locator toast = exact ? page.getByText(text, new Page.GetByTextOptions().setExact(true)) : page.getByText(text);
-            waitVisible(toast, ConfigReader.getLongTimeout());
+            waitVisible(toast, ConfigReader.getVisibilityTimeout());
             return toast.isVisible();
         } catch (Exception e) {
             return false;
@@ -414,11 +414,11 @@ private void confirmDeletionPopup() {
       // Aggressive scroll to trigger lazy load immediately
       try {
         page.evaluate("window.scrollTo(0, 0)");
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         page.evaluate("window.scrollBy(0, 500)");
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         page.evaluate("window.scrollBy(0, -500)");
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
       } catch (Exception e) { logger.debug("Scroll trigger failed: {}", e.getMessage()); }
 
       // Wait for list to load: try multiple selectors with increased timeout
@@ -465,9 +465,6 @@ private void confirmDeletionPopup() {
     public int getPublicationMenuCount() {
         return page.locator(".dots-wrapper").count();
     }
-
-// ... (rest of the code remains the same)
-    
 
     public void completePublicationFlow(Path mediaPath, String caption, boolean blurEnabled) {
         openPlusMenu();
