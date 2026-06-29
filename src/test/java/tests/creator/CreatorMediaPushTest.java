@@ -154,12 +154,12 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
                         btn.click();
                     } catch (Exception clickErr) {
                         // Retry once if stale timing
-                        page.waitForTimeout(ConfigReader.getElementRetryDelay());
+                        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception ignored) {}
                         btn.click();
                     }
                     return true;
                 }
-                page.waitForTimeout(ConfigReader.getElementRetryDelay());
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception ignored) {}
             }
         } catch (Exception e) { logger.debug("Limiter handling failed: {}", e.getMessage()); }
         // fall through

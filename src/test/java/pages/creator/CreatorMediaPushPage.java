@@ -503,7 +503,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
         // Fallback 4: generic CSS text match on buttons
         if (confirm.count() == 0) {
-            confirm = page.locator("button:has-text('Select')");
+            confirm = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Select"));
         }
 
         if (confirm.count() == 0) {
@@ -664,10 +664,10 @@ public class CreatorMediaPushPage extends BasePage {
             primaryNext,
             page.getByText("Next"),
             page.getByText("Next", new Page.GetByTextOptions().setExact(false)),
-            page.locator("button:has-text('Next')"),
-            page.locator(".ant-btn:has-text('Next')"),
-            page.locator("[type='button']:has-text('Next')"),
-            page.locator("button[type='submit']:has-text('Next')")
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")),
+            page.locator(".ant-btn").filter(new Locator.FilterOptions().setHasText("Next")),
+            page.locator("[type='button']").filter(new Locator.FilterOptions().setHasText("Next")),
+            page.locator("button[type='submit']").filter(new Locator.FilterOptions().setHasText("Next"))
         };
         
         boolean clicked = false;
@@ -719,7 +719,7 @@ public class CreatorMediaPushPage extends BasePage {
             page.getByPlaceholder(MESSAGE_PLACEHOLDER, new Page.GetByPlaceholderOptions().setExact(false)),
             page.locator("textarea[placeholder*='message']"),
             page.locator("input[placeholder*='message']"),
-            page.locator("*:has-text('Your message')"),
+            page.getByText("Your message"),
             page.locator("[placeholder*='Your message']")
         };
         

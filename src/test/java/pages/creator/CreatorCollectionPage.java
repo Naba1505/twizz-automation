@@ -356,7 +356,7 @@ public class CreatorCollectionPage extends BasePage {
         Locator toastExact = page.getByText("Collection successfully deleted");
         if (WaitUtils.waitForVisible(toastExact, ConfigReader.getLongTimeout())) return;
         // Try regex match on any text containing 'deleted'
-        Locator toastRegex = page.locator("text=/Collection( is)? (successfully )?deleted|deleted successfully|deleted/i");
+        Locator toastRegex = page.getByText(java.util.regex.Pattern.compile("Collection( is)? (successfully )?deleted|deleted successfully|deleted", java.util.regex.Pattern.CASE_INSENSITIVE));
         if (WaitUtils.waitForVisible(toastRegex, ConfigReader.getLongTimeout())) return;
         // Try generic role alert that contains 'deleted'
         try {
@@ -1195,7 +1195,7 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Confirm selection in Quick Files dialog")
     public void clickSelectInQuickFiles() {
-        Locator selectCountBtn = page.locator("text=/^Select \\([0-9]+\\)/");
+        Locator selectCountBtn = page.getByText(java.util.regex.Pattern.compile("^Select \\([0-9]+\\)"));
         if (selectCountBtn.count() > 0) {
             waitVisible(selectCountBtn.first(), ConfigReader.getShortTimeout());
             clickWithRetry(selectCountBtn.first(), 1, ConfigReader.getElementRetryDelay());
@@ -1335,7 +1335,7 @@ public class CreatorCollectionPage extends BasePage {
         Locator stayMsg = page.getByText("Stay on page during uploading");
         Locator percentSticky = page.locator("div").filter(new Locator.FilterOptions()
             .setHasText(Pattern.compile("^\\d+%Stay on page during uploading$")));
-        Locator success = page.locator("text=/Collection is created successfully|Collection created|created successfully/i");
+        Locator success = page.getByText(java.util.regex.Pattern.compile("Collection is created successfully|Collection created|created successfully", java.util.regex.Pattern.CASE_INSENSITIVE));
 
         boolean sawUploading = false;
         Integer lastSeen = null;

@@ -1,6 +1,7 @@
 package pages.creator;
 
 import pages.common.BasePage;
+import utils.ConfigReader;
 
 import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
@@ -69,7 +70,7 @@ public class CreatorPresentationVideosPage extends BasePage {
     @Step("Open Settings from profile (Presentation Videos)")
     public void openSettingsFromProfile() {
         waitVisible(settingsIcon(), DEFAULT_WAIT);
-        clickWithRetry(settingsIcon(), 1, 150);
+        clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
         if (!page.url().contains(SETTINGS_URL_PART)) {
             log.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
@@ -81,14 +82,14 @@ public class CreatorPresentationVideosPage extends BasePage {
         // Wait for the sticky button to appear and be interactable, then click
         waitVisible(presentationVideoStickyButton().first(), DEFAULT_WAIT);
         try { presentationVideoStickyButton().first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(presentationVideoStickyButton().first(), 1, 150);
+        clickWithRetry(presentationVideoStickyButton().first(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Open 'Presentation Videos' in Settings")
     public void openPresentationVideosScreen() {
         waitVisible(presentationVideosMenuItem(), DEFAULT_WAIT);
         try { presentationVideosMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-        clickWithRetry(presentationVideosMenuItem(), 1, 150);
+        clickWithRetry(presentationVideosMenuItem(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(presentationVideoTitleExact(), DEFAULT_WAIT);
     }
 
@@ -147,7 +148,7 @@ public class CreatorPresentationVideosPage extends BasePage {
             } catch (Throwable ignored) {}
             try {
                 page.mouse().wheel(0, 500);
-                page.waitForTimeout(200);
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
                 page.mouse().wheel(0, -500);
             } catch (Throwable ignored) {}
         }
@@ -158,10 +159,10 @@ public class CreatorPresentationVideosPage extends BasePage {
     @Step("Delete the presentation video via trash icon and confirm")
     public void deletePresentationVideo() {
         waitVisible(trashIcon(), DEFAULT_WAIT);
-        clickWithRetry(trashIcon(), 1, 120);
+        clickWithRetry(trashIcon(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(deleteConfirmMessage(), DEFAULT_WAIT);
         waitVisible(deleteVideoButton(), DEFAULT_WAIT);
-        clickWithRetry(deleteVideoButton(), 1, 150);
+        clickWithRetry(deleteVideoButton(), 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Assert empty prompt is visible after deleting presentation video")
@@ -178,7 +179,7 @@ public class CreatorPresentationVideosPage extends BasePage {
             } catch (Throwable ignored) {}
             try {
                 page.mouse().wheel(0, 200);
-                page.waitForTimeout(120);
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
                 page.mouse().wheel(0, -200);
             } catch (Throwable ignored) {}
         }
