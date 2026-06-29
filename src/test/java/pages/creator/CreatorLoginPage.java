@@ -166,7 +166,7 @@ public class CreatorLoginPage extends BasePage {
         }
         
         // Additional stabilization wait to ensure page is fully settled
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception ignored) {}
         
         logger.info("Clicked Connect; post-login UI visible: {}", visible);
     }
