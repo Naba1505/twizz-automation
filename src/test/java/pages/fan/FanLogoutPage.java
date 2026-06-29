@@ -18,9 +18,6 @@ public class FanLogoutPage extends BasePage {
 
     private static final Logger logger = LoggerFactory.getLogger(FanLogoutPage.class);
     
-    // Timeout constants (in milliseconds) - Use ConfigReader for configurable values
-    private static final int LOGOUT_WAIT = 2000;          // Wait for logout to complete (custom)
-
     public FanLogoutPage(Page page) {
         super(page);
     }
@@ -83,7 +80,7 @@ public class FanLogoutPage extends BasePage {
             logger.debug("[Fan][Logout] scrollIntoViewIfNeeded failed: {}", e.getMessage());
         }
         clickWithRetry(disconnect, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(LOGOUT_WAIT); // Wait for logout to complete
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[Fan][Logout] Logout wait failed: {}", e.getMessage()); }
         logger.info("[Fan][Logout] Clicked Disconnect button");
     }
 
