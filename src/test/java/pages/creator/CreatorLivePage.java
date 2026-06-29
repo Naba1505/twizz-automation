@@ -304,7 +304,7 @@ public class CreatorLivePage extends BasePage {
             } catch (Exception e) {
                 logger.debug("Register button enabled check failed: {}", e.getMessage());
             }
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Register wait failed: {}", e.getMessage()); }
         }
         throw new RuntimeException("Register button did not become enabled within timeout");
     }
@@ -336,7 +336,7 @@ public class CreatorLivePage extends BasePage {
                 Locator dateField = page.getByPlaceholder(DATE_PLACEHOLDER);
                 dateField.first().click();
                 logger.info("Clicked date picker (attempt {})", attempt);
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Date picker wait failed: {}", e.getMessage()); }
                 
                 // Verify calendar modal appeared
                 if (page.locator(".calendar-modal-overlay").isVisible()) {
@@ -346,7 +346,7 @@ public class CreatorLivePage extends BasePage {
                 }
             } catch (Exception e) {
                 logger.warn("Attempt {} to open date picker failed: {}", attempt, e.getMessage());
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e2) { logger.debug("Date picker retry wait failed: {}", e2.getMessage()); }
             }
         }
 
@@ -487,7 +487,7 @@ public class CreatorLivePage extends BasePage {
         // If a date dropdown is still open, close it to avoid overlay blocking time dropdown
         if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
             try { page.keyboard().press("Escape"); } catch (Exception e) { logger.debug("Escape key failed: {}", e.getMessage()); }
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Escape wait failed: {}", e.getMessage()); }
         }
 
         // Try opening the time select near the Date field (robust against rc_select_* changes)
@@ -590,7 +590,7 @@ public class CreatorLivePage extends BasePage {
         Locator dateDropdown = page.locator(".ant-picker-dropdown:visible");
         if (dateDropdown.count() > 0) {
             try { page.keyboard().press("Escape"); } catch (Exception e) { logger.debug("Escape key failed: {}", e.getMessage()); }
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Escape wait failed: {}", e.getMessage()); }
         }
         // If time dropdown still not visible, explicitly click the time selector again
         if (visibleDropdown.count() == 0) {
@@ -683,7 +683,7 @@ public class CreatorLivePage extends BasePage {
                 input.first().fill("");
                 input.first().fill(candidate);
                 page.keyboard().press("Enter");
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Final time wait failed: {}", e.getMessage()); }
                 logger.info("Final fallback: typed time '{}' and pressed Enter", candidate);
                 return;
             } catch (Exception e) {
