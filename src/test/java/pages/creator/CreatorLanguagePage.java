@@ -61,6 +61,8 @@ public class CreatorLanguagePage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Language)")
     public void openSettingsFromProfile() {
+        // Ensure we are on the profile page before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
