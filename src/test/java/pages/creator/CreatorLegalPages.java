@@ -74,6 +74,8 @@ public class CreatorLegalPages extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Legal Pages)")
     public void openSettingsFromProfile() {
+        // Ensure we are on the profile page before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         Locator settingsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("settings"));
         waitVisible(settingsIcon, ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon, 1, ConfigReader.getElementRetryDelay());
@@ -113,12 +115,14 @@ public class CreatorLegalPages extends BasePage {
         // Scroll down until bottom snippet is visible
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(saleBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, 800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         }
         waitVisible(saleBottomSnippet(), ConfigReader.getShortTimeout());
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(saleTitleExact())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, -800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         }
         waitVisible(saleTitleExact(), ConfigReader.getShortTimeout());
     }
@@ -144,12 +148,14 @@ public class CreatorLegalPages extends BasePage {
     public void scrollDownToCommunityBottomAndBackToTitle() {
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(communityBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, 800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         }
         waitVisible(communityBottomSnippet(), ConfigReader.getShortTimeout());
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(communityTitleExact())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, -800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         }
         waitVisible(communityTitleExact(), ConfigReader.getShortTimeout());
     }
@@ -171,12 +177,14 @@ public class CreatorLegalPages extends BasePage {
     public void scrollDownToContentPolicyBottomAndBackToTitle() {
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(contentPolicyBottomSnippet())) break;
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, 800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         }
         waitVisible(contentPolicyBottomSnippet(), ConfigReader.getShortTimeout());
         for (int i = 0; i < 12; i++) {
             if (safeIsVisible(contentPolicyTitle())) break;
-            try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, -800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         }
         waitVisible(contentPolicyTitle(), ConfigReader.getShortTimeout());
     }
