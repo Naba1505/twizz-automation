@@ -103,7 +103,7 @@ public class CreatorPromotionsPage extends BasePage {
         try {
             try {
                 page.mouse().wheel(0, 200);
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e2) { logger.debug("Animation wait failed: {}", e2.getMessage()); }
                 page.mouse().wheel(0, -200);
             } catch (Throwable e) { logger.debug("Wheel failed: {}", e.getMessage()); }
             return automationSpans().count();
@@ -116,21 +116,23 @@ public class CreatorPromotionsPage extends BasePage {
     private void nudgeLazyLoad() {
         try {
             page.mouse().wheel(0, 600);
-            page.waitForTimeout(ConfigReader.getElementRetryDelay());
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e2) { logger.debug("Lazy load wait failed: {}", e2.getMessage()); }
             page.mouse().wheel(0, -600);
         } catch (Throwable e) { logger.debug("Wheel failed: {}", e.getMessage()); }
     }
 
     private void scrollToEndAndBack() {
         try {
-            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getElementRetryDelay()); }
-            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); }
+            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, 800); try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e2) { logger.debug("Scroll wait failed: {}", e2.getMessage()); } }
+            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, -800); try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e2) { logger.debug("Scroll wait failed: {}", e2.getMessage()); } }
         } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
     }
 
     // ----------- Steps -----------
     @Step("Open Settings from profile")
     public void openSettingsFromProfile() {
+        // Ensure we are on the profile page before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
@@ -359,7 +361,7 @@ public class CreatorPromotionsPage extends BasePage {
                 if (count > 0) break;
                 try {
                     page.mouse().wheel(0, 600);
-                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e2) { logger.debug("Scroll wait failed: {}", e2.getMessage()); }
                     page.mouse().wheel(0, -600);
                 } catch (Throwable e) { logger.debug("Wheel failed: {}", e.getMessage()); }
             }
