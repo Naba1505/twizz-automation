@@ -154,12 +154,12 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
                         btn.click();
                     } catch (Exception clickErr) {
                         // Retry once if stale timing
-                        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception ignored) {}
+                        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Retry delay wait failed: {}", e.getMessage()); }
                         btn.click();
                     }
                     return true;
                 }
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception ignored) {}
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
             }
         } catch (Exception e) { logger.debug("Limiter handling failed: {}", e.getMessage()); }
         // fall through

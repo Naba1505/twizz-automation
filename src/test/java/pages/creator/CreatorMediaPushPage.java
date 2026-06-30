@@ -57,7 +57,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
 
         // Small stabilization to ensure icon is clickable
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
 
         Locator svg = plusImg.locator("svg");
         try {
@@ -463,7 +463,7 @@ public class CreatorMediaPushPage extends BasePage {
                     continue;
                 }
                 clickWithRetry(thumb, 1, ConfigReader.getElementRetryDelay());
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
                 picked++;
             } catch (Exception e) { logger.debug("Exception in confirmQuickFilesSelection: {}", e.getMessage()); }
         }
@@ -587,7 +587,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
         
         // Additional stabilization for UI to update after upload
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
 
         // After setting files, dismiss the Importation bottom sheet if a Cancel
         // button is present so it does not block subsequent steps.
@@ -649,7 +649,7 @@ public class CreatorMediaPushPage extends BasePage {
         }
         
         // Additional stabilization wait for UI to settle
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
 
         // Poll until the primary Next button locator appears in DOM (device uploads can be slow)
         Locator primaryNext = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
@@ -687,7 +687,7 @@ public class CreatorMediaPushPage extends BasePage {
                     }
                     
                     // Additional small wait to ensure button is fully interactive
-                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
                     
                     clickWithRetry(locator.first(), 3, ConfigReader.getElementRetryDelay());
                     clicked = true;
