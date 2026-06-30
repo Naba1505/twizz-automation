@@ -33,7 +33,7 @@ public class CreatorUnlockLinksPage extends BasePage {
         waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
         
         // Small stabilization to ensure icon is clickable
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
         
         Locator svg = plusImg.locator("svg");
         if (safeIsVisible(svg.first())) {
@@ -242,7 +242,7 @@ public class CreatorUnlockLinksPage extends BasePage {
             try {
                 Locator up = page.getByText(UPLOADING_MSG);
                 if (safeIsVisible(up.first())) {
-                    page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("Upload wait failed: {}", e.getMessage()); }
                     continue;
                 }
             } catch (Exception e) { logger.debug("Upload banner check failed: {}", e.getMessage()); }
