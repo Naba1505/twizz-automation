@@ -65,6 +65,8 @@ public class CreatorUnlockHistoryPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Unlock History)")
     public void openSettingsFromProfile() {
+        // Ensure we are on the profile page before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
@@ -93,7 +95,10 @@ public class CreatorUnlockHistoryPage extends BasePage {
     public void openLastUnlockEntry() {
         // Nudge list and scroll to bottom to surface last item
         try { anyUnlockItems().first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        for (int i = 0; i < 8; i++) { try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
+        for (int i = 0; i < 8; i++) {
+            try { page.mouse().wheel(0, 800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
+        }
         Locator last = lastUnlockClickable();
         waitVisible(last.first(), ConfigReader.getShortTimeout());
         try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
@@ -102,7 +107,10 @@ public class CreatorUnlockHistoryPage extends BasePage {
 
     @Step("Open first unlock entry from the list")
     public void openFirstUnlockEntry() {
-        for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
+        for (int i = 0; i < 4; i++) {
+            try { page.mouse().wheel(0, -800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
+        }
         waitVisible(firstUnlockRow(), ConfigReader.getShortTimeout());
         try { firstUnlockRow().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(firstUnlockRow(), 1, ConfigReader.getElementRetryDelay());
