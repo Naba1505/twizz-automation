@@ -67,6 +67,8 @@ public class CreatorPushHistoryPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Push History)")
     public void openSettingsFromProfile() {
+        // Ensure we are on the profile page before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**");
@@ -97,7 +99,8 @@ public class CreatorPushHistoryPage extends BasePage {
         try { anyHistoryItems().first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         // Scroll to bottom by repeated wheel to surface last item
         for (int i = 0; i < 8; i++) {
-            try { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.mouse().wheel(0, 800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
         }
         Locator last = lastHistoryClickable();
         waitVisible(last.first(), ConfigReader.getShortTimeout());
@@ -108,7 +111,10 @@ public class CreatorPushHistoryPage extends BasePage {
     @Step("Open first media push entry from the list")
     public void openFirstMediaPushEntry() {
         // Scroll to top first to ensure first item is interactable
-        for (int i = 0; i < 4; i++) { try { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); } }
+        for (int i = 0; i < 4; i++) {
+            try { page.mouse().wheel(0, -800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
+        }
         waitVisible(firstHistoryRow(), ConfigReader.getShortTimeout());
         try { firstHistoryRow().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(firstHistoryRow(), 1, ConfigReader.getElementRetryDelay());
