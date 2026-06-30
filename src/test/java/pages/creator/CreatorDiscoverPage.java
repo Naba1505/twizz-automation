@@ -45,7 +45,7 @@ public class CreatorDiscoverPage extends BasePage {
             try {
                 feed.scrollIntoViewIfNeeded();
                 waitVisible(feed, ConfigReader.getShortTimeout());
-                page.waitForTimeout(ConfigReader.getElementRetryDelay());
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e2) { logger.debug("Feed scroll wait failed: {}", e2.getMessage()); }
                 seen++;
             } catch (Exception e) {
                 logger.warn("Feed {} not confirmed visible: {}", i, e.toString());
@@ -71,7 +71,7 @@ public class CreatorDiscoverPage extends BasePage {
                     clickWithRetry(feedMuteBtn.first(), 1, ConfigReader.getElementRetryDelay());
                     toggled++;
                 }
-                page.waitForTimeout(ConfigReader.getElementRetryDelay());
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e2) { logger.debug("Unmute wait failed: {}", e2.getMessage()); }
             } catch (Exception e) {
                 logger.warn("Unable to unmute feed {}: {}", i, e.toString());
             }
@@ -84,7 +84,7 @@ public class CreatorDiscoverPage extends BasePage {
         try {
             for (int i = 0; i < 6; i++) {
                 page.mouse().wheel(0, -1200);
-                page.waitForTimeout(ConfigReader.getElementRetryDelay());
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Scroll up wait failed: {}", e.getMessage()); }
             }
         } catch (Exception e) { logger.debug("ScrollUpToTop failed: {}", e.getMessage()); }
     }
