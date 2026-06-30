@@ -97,6 +97,8 @@ public class CreatorMonetizationPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from Profile and navigate to 'Subscription price'")
     public void openSubscriptionPriceFromProfile() {
+        // Ensure we are on the profile page before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         logger.info("Clicking settings icon to open Settings");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
@@ -183,35 +185,35 @@ public class CreatorMonetizationPage extends BasePage {
             Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
             if (arrowLeft.count() > 0 && safeIsVisible(arrowLeft.first())) {
                 arrowLeft.first().click();
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e2) { logger.debug("Animation wait failed: {}", e2.getMessage()); }
             }
         } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
         try { page.goBack(); } catch (Throwable e) { logger.debug("goBack failed: {}", e.getMessage()); }
-        page.waitForTimeout(ConfigReader.getElementRetryDelay());
+        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Back wait failed: {}", e.getMessage()); }
     }
 
     @Step("Disable quarterly: enable first if already OFF, then disable")
     public void disableQuarterlyOffer() {
         waitVisible(quarterlyToggle(), ConfigReader.getShortTimeout());
-        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
         boolean isEnabled = isQuarterlyOnSafe();
         if (!isEnabled) {
             // Enable first so we can then disable and trigger a real change
             logger.info("Quarterly is OFF, enabling first to register change");
             clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
             setQuarterlyPrice("5");
             clickContinue();
             waitForMonetizationUpdatedToast();
             navigateBackFromMonetization();
             openSubscriptionPriceFromProfile();
             assertQuarterlyOfferVisible();
-            page.waitForTimeout(ConfigReader.getElementRetryDelay());
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
         }
         // Now disable quarterly
         logger.info("Disabling quarterly toggle");
         clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
     }
 
     @Step("Set Quarterly price to: {price}")
