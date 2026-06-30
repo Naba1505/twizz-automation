@@ -96,13 +96,13 @@ public class CreatorProfilePage extends BasePage {
     @Step("Scroll to bottom of the page")
     public void scrollToBottom() {
         try { page.evaluate("window.scrollTo(0, document.body.scrollHeight)"); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
     }
 
     @Step("Scroll to top of the page")
     public void scrollToTop() {
         try { page.evaluate("window.scrollTo(0, 0)"); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
     }
 
     @Step("Assert Publications and Collections icons visible")
