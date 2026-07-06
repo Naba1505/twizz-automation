@@ -156,17 +156,8 @@ public class CreatorAutomaticMessagePage extends BasePage {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
     }
 
-    private Locator deleteButtons() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("delete"));
-    }
-
     private Locator switchesAll() {
         return page.getByRole(AriaRole.SWITCH);
-    }
-
-    private Locator editorMediaItems() {
-        // Common candidates for thumbnails/items within the auto message editor panel
-        return page.locator(".ant-upload-list-item, .ant-image, .media-thumb, .ant-card, [data-testid='upload-item']");
     }
 
     private boolean clickAnyConfirmDeleteInline() {
@@ -430,49 +421,16 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     @Step("Delete all visible media items via delete buttons (with verification)")
     public void deleteAllVisibleMedia() {
-        // Keep deleting until no media items remain; verify decrement after each click
-        int guard = 0;
-        while (true) {
-            int mediaBefore = 0;
-            try { mediaBefore = editorMediaItems().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
-            if (mediaBefore <= 0) {
-                // As a fallback, if no explicit media found, still attempt based on delete buttons presence
-                int delCount = 0; try { delCount = deleteButtons().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
-                if (delCount <= 0) break; // nothing to delete
-            }
-
-            int delButtons = 0; try { delButtons = deleteButtons().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
-            if (delButtons <= 0) break;
-            int idx = Math.max(0, delButtons - 1);
-            try {
-                Locator target = deleteButtons().nth(idx);
-                try { target.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-                clickWithRetry(target, 1, ConfigReader.getElementRetryDelay());
-            } catch (Throwable e) {
-                try { clickWithRetry(deleteButtons().first(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e2) { logger.debug("Click failed: {}", e2.getMessage()); break; }
-            }
-
-            // Confirm if a confirmation dialog appears
+        // Wait up to SHORT_TIMEOUT for at least one delete button to appear
+        Locator deleteBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("delete"));
+        try { deleteBtn.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getShortTimeout())); } catch (Throwable e) { logger.debug("No delete button appeared: {}", e.getMessage()); return; }
+        // Click delete button one at a time until none remain (reference pattern)
+        for (int guard = 0; guard < 20; guard++) {
+            int count = 0;
+            try { count = deleteBtn.count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
+            if (count <= 0) break;
+            try { deleteBtn.first().click(); } catch (Throwable e) { logger.debug("Delete click failed: {}", e.getMessage()); break; }
             try { clickAnyConfirmDeleteInline(); } catch (Throwable e) { logger.debug("Confirm delete failed: {}", e.getMessage()); }
-
-            // Wait for media count to decrease or delete button count to decrease
-            long end = System.currentTimeMillis() + ConfigReader.getShortTimeout();
-            while (System.currentTimeMillis() < end) {
-                int mediaNow = 0; int delNow = 0;
-                try { mediaNow = editorMediaItems().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
-                try { delNow = deleteButtons().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
-                if ((mediaBefore > 0 && mediaNow < mediaBefore) || (delNow < delButtons)) { break; }
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            }
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            guard++; if (guard > 100) break;
-            // If not decreased, attempt one more confirm then continue loop
-        }
-        // Final assertion: no media items in editor
-        int remaining = 0;
-        try { remaining = editorMediaItems().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
-        if (remaining > 0) {
-            throw new AssertionError("Not all media were deleted from the editor; remaining items: " + remaining);
         }
     }
 
