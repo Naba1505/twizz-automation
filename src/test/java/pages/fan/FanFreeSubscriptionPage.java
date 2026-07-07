@@ -9,8 +9,6 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import utils.ConfigReader;
 
@@ -19,8 +17,6 @@ import utils.ConfigReader;
  * Flow: Register → Search creator → Subscribe (free) → Buy collection → Payment → Verify
  */
 public class FanFreeSubscriptionPage extends BasePage {
-
-    private static final Logger logger = LoggerFactory.getLogger(FanFreeSubscriptionPage.class);
 
     private static final int THREEDS_SUBMIT_TIMEOUT = 30000; // External gateway — keep fixed
 
@@ -175,8 +171,6 @@ public class FanFreeSubscriptionPage extends BasePage {
         // Try multiple variations of free subscription text
         Locator[] freeTextVariations = {
             page.getByText("Subscription is free when"),
-            page.getByText("Free subscription"),
-            page.getByText("Free"),
             page.getByText("Subscription is free"),
             page.getByText("Free subscription"),
             page.getByText("Free")
@@ -535,8 +529,6 @@ public class FanFreeSubscriptionPage extends BasePage {
         Locator[] collectionTextVariations = {
             page.getByText("Collection", new Page.GetByTextOptions().setExact(true)),
             page.getByText("Collections"),
-            page.getByText("Collection"),
-            page.getByText("Collections"),
             page.getByText("My collection"),
             page.getByText("My collections")
         };
@@ -582,10 +574,6 @@ public class FanFreeSubscriptionPage extends BasePage {
             
             // Check 3: Look for success messages or purchase confirmations
             Locator[] successIndicators = {
-                page.getByText("Purchase successful"),
-                page.getByText("Payment successful"),
-                page.getByText("Thank you"),
-                page.getByText("Success"),
                 page.getByText("Purchase successful"),
                 page.getByText("Payment successful"),
                 page.getByText("Thank you"),
@@ -731,7 +719,7 @@ public class FanFreeSubscriptionPage extends BasePage {
             page.getByText("Subscribed", new Page.GetByTextOptions().setExact(true))
         };
 
-        long end = System.currentTimeMillis() + 15000; // 15s polling
+        long end = System.currentTimeMillis() + ConfigReader.getVisibilityTimeout();
         while (System.currentTimeMillis() < end) {
             for (Locator loc : subscriberLocators) {
                 try {

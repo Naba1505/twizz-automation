@@ -10,8 +10,6 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page Object for Fan Private Media Subscription flow.
@@ -19,8 +17,6 @@ import org.slf4j.LoggerFactory;
  *       (Creator accepts & sends price) → Fan accepts & pays → Verify subscription
  */
 public class FanPrivateMediaSubscriptionPage extends BasePage {
-
-    private static final Logger logger = LoggerFactory.getLogger(FanPrivateMediaSubscriptionPage.class);
 
     public FanPrivateMediaSubscriptionPage(Page page) {
         super(page);
@@ -34,7 +30,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         } catch (Throwable e) {
             logger.debug("[FanPrivMedia] Dismiss overlay JS failed: {}", e.getMessage());
         }
-        try { page.waitForTimeout(300); } catch (Throwable e) {
+        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) {
             logger.debug("[FanPrivMedia] Dismiss overlay wait failed: {}", e.getMessage());
         }
     }

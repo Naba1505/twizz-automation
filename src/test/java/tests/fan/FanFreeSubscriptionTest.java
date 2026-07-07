@@ -269,7 +269,7 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
         try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        try { page.waitForTimeout(5000); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Switched language to English after registration");
     }
 }
