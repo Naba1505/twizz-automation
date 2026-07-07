@@ -7,16 +7,12 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page object for Fan Terms and Policies screens in Settings.
  * Covers: Terms and Conditions of Sale, Community Regulations, Content Policy.
  */
 public class FanTermsAndPoliciesPage extends BasePage {
-
-    private static final Logger logger = LoggerFactory.getLogger(FanTermsAndPoliciesPage.class);
 
     public FanTermsAndPoliciesPage(Page page) {
         super(page);
