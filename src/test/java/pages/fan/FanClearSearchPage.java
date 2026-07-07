@@ -8,8 +8,6 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page Object for Fan Clear Recent Searches functionality.
@@ -17,9 +15,7 @@ import org.slf4j.LoggerFactory;
  */
 public class FanClearSearchPage extends BasePage {
 
-    private static final Logger logger = LoggerFactory.getLogger(FanClearSearchPage.class);
     private static final String DISCOVER_PATH_FRAGMENT = "/common/discover";
-    
 
     public FanClearSearchPage(Page page) {
         super(page);
@@ -53,8 +49,11 @@ public class FanClearSearchPage extends BasePage {
     public void clickSearchField() {
         logger.info("Clicking on search field");
         
-        // Click on the search field (5th div element)
-        Locator searchField = page.locator("div").nth(5);
+        // Click on the search field (use div filter with fallback for robustness)
+        Locator searchField = page.locator("div").filter(new Locator.FilterOptions().setHasText("Search")).nth(5);
+        if (searchField.count() == 0) {
+            searchField = page.locator("div").nth(5);
+        }
         waitVisible(searchField, DEFAULT_WAIT);
         clickWithRetry(searchField, 1, ConfigReader.getAnimationTimeout());
         try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
@@ -65,8 +64,8 @@ public class FanClearSearchPage extends BasePage {
     public boolean isRecentTextVisible() {
         logger.info("Verifying 'Recent' text is displayed");
         
-        Locator recentText = page.getByText("Recent");
-        boolean visible = recentText.count() > 0 && safeIsVisible(recentText.first());
+        Locator recentText = page.getByText("Recent").first();
+        boolean visible = safeIsVisible(recentText);
         
         logger.info("'Recent' text visible: {}", visible);
         return visible;
@@ -105,7 +104,7 @@ public class FanClearSearchPage extends BasePage {
         try {
             // Click the first Remove icon
             Locator firstRemove = removeIcons.first();
-            firstRemove.click();
+            clickWithRetry(firstRemove, 1, ConfigReader.getAnimationTimeout());
             
             // Wait for UI to update
             try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
