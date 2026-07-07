@@ -206,7 +206,7 @@ public class FanLivePage extends BasePage {
                         
                         // Try with longer timeout
                         try {
-                            waitVisible(element, 5000); // 5s timeout instead of 20s
+                            waitVisible(element, ConfigReader.getShortTimeout());
                             found = true;
                             logger.info("[Fan][Live] Creator '{}' visible on live tile after wait", name);
                             break;
@@ -776,40 +776,35 @@ public class FanLivePage extends BasePage {
         logger.info("[Fan][Live] Looking for exclusive live show text: {}", EXCLUSIVE_LIVE_TEXT);
         
         // Try multiple strategies to find the exclusive live text
-        String[] textSelectors = {
-            "text=" + EXCLUSIVE_LIVE_TEXT,
-            "*:has-text('" + EXCLUSIVE_LIVE_TEXT + "')",
-            "div:has-text('" + EXCLUSIVE_LIVE_TEXT + "')",
-            "span:has-text('" + EXCLUSIVE_LIVE_TEXT + "')",
-            "h1:has-text('" + EXCLUSIVE_LIVE_TEXT + "')",
-            "h2:has-text('" + EXCLUSIVE_LIVE_TEXT + "')",
-            "[class*='exclusive']:has-text('" + EXCLUSIVE_LIVE_TEXT + "')"
+        Locator[] textLocators = {
+            page.getByText(EXCLUSIVE_LIVE_TEXT),
+            page.locator("div").filter(new Locator.FilterOptions().setHasText(EXCLUSIVE_LIVE_TEXT)),
+            page.locator("span").filter(new Locator.FilterOptions().setHasText(EXCLUSIVE_LIVE_TEXT)),
+            page.locator("h1").filter(new Locator.FilterOptions().setHasText(EXCLUSIVE_LIVE_TEXT)),
+            page.locator("h2").filter(new Locator.FilterOptions().setHasText(EXCLUSIVE_LIVE_TEXT))
         };
         
         boolean found = false;
-        for (String selector : textSelectors) {
+        for (Locator textElement : textLocators) {
             try {
-                Locator textElement = page.locator(selector);
                 if (textElement.count() > 0) {
                     try {
                         textElement.first().scrollIntoViewIfNeeded();
                         if (safeIsVisible(textElement.first())) {
                             found = true;
-                            logger.info("[Fan][Live] Exclusive live text visible using selector: {}", selector);
+                            logger.info("[Fan][Live] Exclusive live text visible");
                             break;
                         }
                     } catch (Exception ignored) {}
-                    
-                    // Try with wait
                     try {
                         waitVisible(textElement.first(), ConfigReader.getShortTimeout());
                         found = true;
-                        logger.info("[Fan][Live] Exclusive live text visible after wait using selector: {}", selector);
+                        logger.info("[Fan][Live] Exclusive live text visible after wait");
                         break;
                     } catch (Exception ignored) {}
                 }
             } catch (Exception e) {
-                logger.debug("[Fan][Live] Text selector failed: {}", selector);
+                logger.debug("[Fan][Live] Text locator check failed: {}", e.getMessage());
             }
         }
         
