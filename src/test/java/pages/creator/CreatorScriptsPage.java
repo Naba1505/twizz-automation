@@ -311,7 +311,7 @@ public class CreatorScriptsPage extends BasePage {
         String xpathExpr = "//div[@class='qf-row' and @role='button'][.//div[@class='qf-row-title' and starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '" + normalizedPrefix + "')]]";
         
         boolean clickedAlbum = false;
-        long end = System.currentTimeMillis() + 15_000L;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (System.currentTimeMillis() < end && !clickedAlbum) {
             Locator albumRows = page.locator("xpath=" + xpathExpr);
             int rowCount = albumRows.count();
@@ -394,7 +394,7 @@ public class CreatorScriptsPage extends BasePage {
         String xpathExpr = "//div[@class='qf-row' and @role='button'][.//div[@class='qf-row-title' and starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'audio')]]";
         
         boolean clickedAlbum = false;
-        long end = System.currentTimeMillis() + 15_000L;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (System.currentTimeMillis() < end && !clickedAlbum) {
             Locator albumRows = page.locator("xpath=" + xpathExpr);
             int rowCount = albumRows.count();
@@ -497,21 +497,7 @@ public class CreatorScriptsPage extends BasePage {
 
     @Step("Click plus to add more media")
     public void clickPlusToAddMoreMedia() {
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-
-        Locator plus = page.getByRole(AriaRole.IMG,
-                new Page.GetByRoleOptions().setName("plus"));
-
-        if (plus.count() == 0) {
-            plus = page.locator("img[alt='plus'], [aria-label='plus'], button[aria-label='add'], .add-media-button");
-        }
-
-        if (plus.count() == 0) {
-            try { page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2)"); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        }
-
+        Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
         waitVisible(plus.first(), ConfigReader.getShortTimeout());
         clickWithRetry(plus.first(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(page.getByText("Importation"), ConfigReader.getShortTimeout());
@@ -548,7 +534,7 @@ public class CreatorScriptsPage extends BasePage {
             if (spinner.count() > 0 && safeIsVisible(spinner.first())) {
                 spinner.first().waitFor(new Locator.WaitForOptions()
                         .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN)
-                        .setTimeout(5000));
+                        .setTimeout(ConfigReader.getShortTimeout()));
             }
         } catch (Throwable e) { logger.debug("Spinner wait failed: {}", e.getMessage()); }
 
@@ -696,7 +682,6 @@ public class CreatorScriptsPage extends BasePage {
 
     @Step("Fill main script message")
     public void fillScriptMessage(String message) {
-        // ... (rest of the code remains the same)
         Locator msg = page.getByRole(AriaRole.TEXTBOX,
                 new Page.GetByRoleOptions().setName("Your message..."));
         waitVisible(msg.first(), ConfigReader.getShortTimeout());
@@ -717,11 +702,13 @@ public class CreatorScriptsPage extends BasePage {
 
     @Step("Set custom script price to {price} via spinbutton")
     public void setCustomPrice(String price) {
-        Locator currentPrice = page.getByText("0.00 €");
-        waitVisible(currentPrice.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(currentPrice.first(), 1, ConfigReader.getElementRetryDelay());
-
         Locator spin = page.getByRole(AriaRole.SPINBUTTON);
+        if (spin.count() == 0) {
+            Locator priceDisplay = page.getByText(Pattern.compile("\\d+\\.\\d+\\s*\u20ac"));
+            if (priceDisplay.count() > 0 && safeIsVisible(priceDisplay.first())) {
+                clickWithRetry(priceDisplay.first(), 1, ConfigReader.getElementRetryDelay());
+            }
+        }
         waitVisible(spin.first(), ConfigReader.getShortTimeout());
         spin.first().fill("");
         spin.first().fill(price);
@@ -781,61 +768,42 @@ public class CreatorScriptsPage extends BasePage {
         noteBox.first().fill(note);
     }
 
+    private Locator resolveConfirmButton() {
+        Locator btn = page.locator("//div[@class='chat-scripts-button' and normalize-space(text())='Confirm']");
+        if (btn.count() == 0) btn = page.locator("//div[@class='chat-scripts-button enabled']");
+        if (btn.count() == 0) btn = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^Confirm$")));
+        if (btn.count() == 0) btn = page.locator("//button[.//div[contains(text(),'Confirm')]]");
+        if (btn.count() == 0) btn = page.getByText("Confirm");
+        return btn;
+    }
+
     @Step("Confirm script creation")
     public void confirmScriptCreation() {
-        // Prefer the specific chat-scripts Confirm div, then fall back to broader locators
-        Locator confirmBtn = page.locator("//div[@class='chat-scripts-button' and normalize-space(text())='Confirm']");
-        if (confirmBtn.count() == 0) {
-            confirmBtn = page.locator("//div[@class='chat-scripts-button enabled']");
-        }
-        if (confirmBtn.count() == 0) {
-            confirmBtn = page.locator("div").filter(new Locator.FilterOptions()
-                    .setHasText(Pattern.compile("^Confirm$")));
-        }
-        if (confirmBtn.count() == 0) {
-            confirmBtn = page.locator("//button[.//div[contains(text(),'Confirm')]]");
-        }
-        if (confirmBtn.count() == 0) {
-            confirmBtn = page.getByText("Confirm");
-        }
+        Locator confirmBtn = resolveConfirmButton();
         waitVisible(confirmBtn.first(), ConfigReader.getShortTimeout());
 
         long enableDeadline = System.currentTimeMillis() + ConfigReader.getShortTimeout();
         while (System.currentTimeMillis() < enableDeadline) {
             try {
                 String cls = confirmBtn.first().getAttribute("class");
-                boolean hasEnabledClass = cls != null && cls.contains("enabled");
                 boolean isEnabled = false;
                 try { isEnabled = confirmBtn.first().isEnabled(); } catch (Throwable ignored) { }
-                if (hasEnabledClass || isEnabled) { break; }
-            } catch (Throwable ignoredOuter) { }
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignoredSleep) { }
+                if ((cls != null && cls.contains("enabled")) || isEnabled) break;
+            } catch (Throwable ignored) { }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
 
         try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) { }
         clickWithRetry(confirmBtn.first(), 3, ConfigReader.getUiSettleTimeout());
 
-        // During upload, UI may show a message asking to stay on page; when done, a success toast
-        Locator stayOnPage = page.getByText("Stay on page during uploading");
-        // Prefer an exact "Script created successfully" toast, then fall back to a broader regex
-        Locator success = page.getByText("Script created successfully");
-        if (success.count() == 0) {
-            success = page.getByText(Pattern.compile("script.*created", Pattern.CASE_INSENSITIVE));
-        }
-
-        // Validation toast if bookmark is missing
+        Locator success = page.getByText(Pattern.compile("script.*created", Pattern.CASE_INSENSITIVE));
         Locator noBookmark = page.getByText("No bookmark assigned to this script");
 
-        // Allow up to 90s for heavy uploads (e.g. videos)
         long deadline = System.currentTimeMillis() + 90_000L;
         boolean seenSuccess = false;
         boolean bookmarkRetried = false;
         while (System.currentTimeMillis() < deadline) {
-            if (safeIsVisible(success)) {
-                seenSuccess = true;
-                break;
-            }
-            // If we see a bookmark validation, try to fix it and retry Confirm once
+            if (safeIsVisible(success)) { seenSuccess = true; break; }
             if (!bookmarkRetried && safeIsVisible(noBookmark)) {
                 logger.warn("Validation toast 'No bookmark assigned to this script' detected; attempting to select a bookmark and retry Confirm.");
                 ensureAnyBookmarkSelected();
@@ -843,16 +811,10 @@ public class CreatorScriptsPage extends BasePage {
                 clickWithRetry(confirmBtn.first(), 3, ConfigReader.getUiSettleTimeout());
                 bookmarkRetried = true;
             }
-            if (safeIsVisible(stayOnPage)) {
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            } else {
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
 
-        if (!seenSuccess) {
-            logger.warn("Script creation success toast not seen within timeout; proceeding anyway.");
-        }
+        if (!seenSuccess) { logger.warn("Script creation success toast not seen within timeout; proceeding anyway."); }
     }
 
     @Step("Wait for script created success message")
@@ -1102,47 +1064,23 @@ public class CreatorScriptsPage extends BasePage {
 
     @Step("Confirm script update and wait for completion toast")
     public void confirmScriptUpdateAndWait() {
-        // Click Confirm (reuse robust handling and prefer chat-scripts Confirm div)
-        Locator confirmBtn = page.locator("//div[@class='chat-scripts-button' and normalize-space(text())='Confirm']");
-        if (confirmBtn.count() == 0) {
-            confirmBtn = page.locator("//div[@class='chat-scripts-button enabled']");
-        }
-        if (confirmBtn.count() == 0) {
-            confirmBtn = page.locator("div").filter(new Locator.FilterOptions()
-                    .setHasText(Pattern.compile("^Confirm$")));
-        }
-        if (confirmBtn.count() == 0) {
-            confirmBtn = page.locator("//button[.//div[contains(text(),'Confirm')]]");
-        }
-        if (confirmBtn.count() == 0) {
-            confirmBtn = page.getByText("Confirm");
-        }
+        Locator confirmBtn = resolveConfirmButton();
         waitVisible(confirmBtn.first(), ConfigReader.getShortTimeout());
         try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) { }
         clickWithRetry(confirmBtn.first(), 3, ConfigReader.getUiSettleTimeout());
 
-        Locator stayOnPage = page.getByText("Stay on page during uploading");
         Locator success = page.getByText("Script updated successfully");
-
-        long deadline = System.currentTimeMillis() + 60_000L;
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         boolean seenSuccess = false;
         while (System.currentTimeMillis() < deadline) {
-            if (safeIsVisible(success)) {
-                seenSuccess = true;
-                break;
-            }
-            if (safeIsVisible(stayOnPage)) {
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            } else {
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            }
+            if (safeIsVisible(success)) { seenSuccess = true; break; }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
 
         if (!seenSuccess) {
             throw new RuntimeException("Script update success toast not seen within timeout; script may not have been updated.");
-        } else {
-            logger.info("Script updated successfully toast observed.");
         }
+        logger.info("Script updated successfully toast observed.");
     }
 
     // ===== Edit full flows =====
