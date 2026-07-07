@@ -28,7 +28,8 @@ public class FanMyCreatorsPage extends BasePage {
         
         Locator settingsIcon = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("Settings icon"));
-        settingsIcon.first().click(new Locator.ClickOptions().setForce(true));
+        waitVisible(settingsIcon.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon.first(), 1, ConfigReader.getElementRetryDelay());
         try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked Settings icon");
     }
@@ -171,7 +172,8 @@ public class FanMyCreatorsPage extends BasePage {
         
         Locator arrowLeft = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("arrow left"));
-        arrowLeft.first().click(new Locator.ClickOptions().setForce(true));
+        waitVisible(arrowLeft.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(arrowLeft.first(), 1, ConfigReader.getElementRetryDelay());
         try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked arrow left");
     }
