@@ -8,13 +8,8 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FanSavedCardsPage extends BasePage {
-
-    private static final Logger logger = LoggerFactory.getLogger(FanSavedCardsPage.class);
-    
 
     public FanSavedCardsPage(Page page) { super(page); }
 
@@ -37,7 +32,7 @@ public class FanSavedCardsPage extends BasePage {
         try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Check for "No Card Found!" message
-        Locator noCardMsg = page.getByText("No Card Found!");
+        Locator noCardMsg = page.getByText("No Card Found!").first();
         if (safeIsVisible(noCardMsg)) {
             logger.info("[Saved Cards] 'No Card Found!' message is visible - no cards to clean");
         } else {
@@ -168,7 +163,7 @@ public class FanSavedCardsPage extends BasePage {
         logger.info("[Saved Cards] Starting to delete all existing cards");
         
         // First check if "No Card Found!" message is already visible
-        Locator noCardMessage = page.getByText("No Card Found!");
+        Locator noCardMessage = page.getByText("No Card Found!").first();
         if (safeIsVisible(noCardMessage)) {
             logger.info("[Saved Cards] 'No Card Found!' message is already visible - no cards to delete");
             return;
@@ -191,14 +186,14 @@ public class FanSavedCardsPage extends BasePage {
                 page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete")).click();
                 
                 // Ensure popup is displayed
-                page.getByText("Do you really want to delete");
+                waitVisible(page.getByText("Do you really want to delete").first(), ConfigReader.getShortTimeout());
                 
                 // Click on "Yes delete" button
                 page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes delete")).click();
                 
                 // Wait for "No Card Found!" to be visible
                 try {
-                    page.waitForSelector(":text-is('No Card Found!')", new Page.WaitForSelectorOptions().setTimeout(ConfigReader.getShortTimeout()));
+                    waitVisible(page.getByText("No Card Found!").first(), ConfigReader.getShortTimeout());
                     logger.info("[Saved Cards] 'No Card Found!' message appeared after deletion");
                     deletedCount++;
                     break;
