@@ -7,15 +7,11 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page object for Fan -> Settings -> Help and contact
  */
 public class FanHelpAndContactPage extends BasePage {
-
-    private static final Logger logger = LoggerFactory.getLogger(FanHelpAndContactPage.class);
     private static final String SETTINGS_URL_PART = "/common/setting";
 
     public FanHelpAndContactPage(Page page) {
@@ -71,7 +67,7 @@ public class FanHelpAndContactPage extends BasePage {
 
     @Step("Assert on Settings screen")
     public void assertOnSettingsScreen() {
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         logger.info("[Fan][HelpAndContact] On Settings screen - URL: {}", page.url());
     }
 
