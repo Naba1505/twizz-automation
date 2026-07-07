@@ -6,8 +6,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import utils.ConfigReader;
 
 /**
@@ -16,8 +14,6 @@ import utils.ConfigReader;
  */
 public class FanLogoutPage extends BasePage {
 
-    private static final Logger logger = LoggerFactory.getLogger(FanLogoutPage.class);
-    
     public FanLogoutPage(Page page) {
         super(page);
     }
@@ -30,17 +26,17 @@ public class FanLogoutPage extends BasePage {
     }
 
     private Locator settingsTitle() {
-        return page.getByText("Settings");
+        return page.getByText("Settings").first();
     }
 
     // Disconnect button
     private Locator disconnectButton() {
-        return page.getByText("Disconnect");
+        return page.getByText("Disconnect").first();
     }
 
     // Login text (visible after logout)
     private Locator loginText() {
-        return page.getByText("Login");
+        return page.getByText("Login").first();
     }
 
     // ================= Navigation Methods =================
@@ -58,6 +54,7 @@ public class FanLogoutPage extends BasePage {
         logger.info("[Fan][Logout] On Settings screen - title visible");
     }
 
+
     /**
      * Navigate from Fan home to Settings screen.
      */
@@ -74,6 +71,7 @@ public class FanLogoutPage extends BasePage {
     public void clickDisconnect() {
         Locator disconnect = disconnectButton();
         waitVisible(disconnect, ConfigReader.getVisibilityTimeout());
+
         try {
             disconnect.scrollIntoViewIfNeeded();
         } catch (Exception e) {
