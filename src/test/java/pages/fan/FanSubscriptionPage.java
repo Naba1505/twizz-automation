@@ -48,7 +48,7 @@ public class FanSubscriptionPage extends BasePage {
         // Wait for creator profile to load: either subscribe button appears or URL indicates profile
         logger.info("[Fan][Subscribe] Waiting for creator profile to load");
         boolean landed = false;
-        long end = System.currentTimeMillis() + 20_000;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (!landed && System.currentTimeMillis() < end) {
             // Check if we've successfully landed on the profile page
             try {
@@ -71,7 +71,7 @@ public class FanSubscriptionPage extends BasePage {
                     return; // Exit method immediately when alternative subscribe button is found
                 }
             } catch (Throwable e) { logger.debug("Alternative subscribe button check failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(250); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         
         // Additional wait for page to fully settle
@@ -143,7 +143,7 @@ public class FanSubscriptionPage extends BasePage {
             throw new RuntimeException("Failed to click Subscribe button");
         }
         
-        try { page.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         
         // Check if Premium modal appeared (paid subscription)
         Locator premiumText = page.getByText("Premium");
@@ -277,7 +277,7 @@ public class FanSubscriptionPage extends BasePage {
             Locator confirmBtn = appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
             boolean clicked = false;
             try {
-                waitVisible(confirmBtn, 8_000);
+                waitVisible(confirmBtn, ConfigReader.getShortTimeout());
                 try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
                 // Try a bounded-time click first to avoid 60s default timeouts
                 try {
@@ -521,17 +521,17 @@ public class FanSubscriptionPage extends BasePage {
                             break;
                         }
                     } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
-                    try { page.waitForTimeout(500); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                    try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
                 }
                 
                 // Give the profile page a moment to fully load
-                try { page.waitForTimeout(2000); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
             }
         } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
         
         // Now check for Subscriber button on creator profile
         logger.info("[Fan][Subscribe] Checking for 'Subscriber' button on profile");
-        long end = System.currentTimeMillis() + 20_000;
+        long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (System.currentTimeMillis() < end) {
             try {
                 Locator subscriberBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber"));
@@ -549,7 +549,7 @@ public class FanSubscriptionPage extends BasePage {
                     return;
                 }
             } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(500); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Operation failed: {}", e.getMessage()); }
         }
         
         logger.warn("[Fan][Subscribe] Subscriber button not found within timeout, but payment was confirmed");
