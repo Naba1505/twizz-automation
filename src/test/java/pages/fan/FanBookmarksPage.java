@@ -193,7 +193,8 @@ public class FanBookmarksPage extends BasePage {
     public void clickSettingsIcon() {
         logger.info("Clicking Settings icon");
         Locator settingsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon"));
-        settingsIcon.first().click(new Locator.ClickOptions().setForce(true));
+        waitVisible(settingsIcon.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(settingsIcon.first(), 1, ConfigReader.getElementRetryDelay());
         try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("Clicked Settings icon");
     }
