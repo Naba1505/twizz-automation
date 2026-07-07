@@ -7,8 +7,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
 
@@ -17,8 +15,6 @@ import java.util.regex.Pattern;
  * Supports viewing and updating personal information fields.
  */
 public class FanPersonalInfoPage extends BasePage {
-
-    private static final Logger logger = LoggerFactory.getLogger(FanPersonalInfoPage.class);
 
     public FanPersonalInfoPage(Page page) {
         super(page);

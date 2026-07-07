@@ -7,8 +7,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Page object for Fan Messaging functionality.
@@ -16,8 +14,6 @@ import org.slf4j.LoggerFactory;
  * accepting paid messages, and viewing media.
  */
 public class FanMessagingPage extends BasePage {
-
-    private static final Logger logger = LoggerFactory.getLogger(FanMessagingPage.class);
 
     public FanMessagingPage(Page page) {
         super(page);
@@ -375,7 +371,7 @@ public class FanMessagingPage extends BasePage {
                     if (confirmBtn.first().isEnabled()) {
                         break;
                     }
-                    page.waitForTimeout(200);
+                    page.waitForTimeout(ConfigReader.getElementRetryDelay());
                 }
             } catch (Exception e) {
                 logger.warn("[Fan][Messaging] Button did not become enabled within timeout");
@@ -426,7 +422,7 @@ public class FanMessagingPage extends BasePage {
                 found = true;
                 break;
             }
-            page.waitForTimeout(300);
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         }
         
         if (found) {
