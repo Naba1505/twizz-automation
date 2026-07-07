@@ -35,8 +35,9 @@ public class FanDiscoverPage extends BasePage {
     @Step("Assert on Discover screen (URL contains /common/discover)")
     public void assertOnDiscoverScreen() {
         page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        Locator feeds = page.locator("xpath=" + FEED_XPATH);
-        waitVisible(feeds.first(), ConfigReader.getVisibilityTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
+        waitVisible(searchIcon.first(), ConfigReader.getMediumTimeout());
     }
 
     @Step("Collect all visible feeds on the page")
