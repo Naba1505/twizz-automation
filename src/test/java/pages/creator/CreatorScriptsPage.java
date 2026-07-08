@@ -140,9 +140,9 @@ public class CreatorScriptsPage extends BasePage {
                         new Page.GetByRoleOptions().setName("Continue"));
             }
             if (nextBtn.count() > 0) {
-                try { nextBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored2) { }
+                try { nextBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
                 clickWithRetry(nextBtn.first(), 1, ConfigReader.getElementRetryDelay());
-                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable ignored2) { }
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
             }
             try {
                 waitVisible(noteBox.first(), ConfigReader.getShortTimeout());
@@ -612,7 +612,7 @@ public class CreatorScriptsPage extends BasePage {
             Locator bookmarkDropdown = page.locator("button").filter(new Locator.FilterOptions().setHasText("Bookmark"));
             if (bookmarkDropdown.count() > 0 && safeIsVisible(bookmarkDropdown.first())) {
                 clickWithRetry(bookmarkDropdown.first(), 1, ConfigReader.getElementRetryDelay());
-                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable ignored) { }
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
                 Locator ourBookmark = page.getByText(name, new Page.GetByTextOptions().setExact(true));
                 if (ourBookmark.count() > 0 && safeIsVisible(ourBookmark.first())) {
                     clickWithRetry(ourBookmark.first(), 1, ConfigReader.getElementRetryDelay());
@@ -787,13 +787,13 @@ public class CreatorScriptsPage extends BasePage {
             try {
                 String cls = confirmBtn.first().getAttribute("class");
                 boolean isEnabled = false;
-                try { isEnabled = confirmBtn.first().isEnabled(); } catch (Throwable ignored) { }
+                try { isEnabled = confirmBtn.first().isEnabled(); } catch (Throwable e) { logger.debug("isEnabled check failed: {}", e.getMessage()); }
                 if ((cls != null && cls.contains("enabled")) || isEnabled) break;
-            } catch (Throwable ignored) { }
+            } catch (Throwable e) { logger.debug("Confirm button class check failed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
 
-        try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) { }
+        try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
         clickWithRetry(confirmBtn.first(), 3, ConfigReader.getUiSettleTimeout());
 
         Locator success = page.getByText(Pattern.compile("script.*created", Pattern.CASE_INSENSITIVE));
@@ -823,8 +823,8 @@ public class CreatorScriptsPage extends BasePage {
         Locator success = page.getByText(Pattern.compile("script.*created", Pattern.CASE_INSENSITIVE));
         try {
             waitVisible(success.first(), ConfigReader.getMediumTimeout());
-            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable ignored) { }
-            try { clickWithRetry(success.first(), 0, 0); } catch (Throwable ignored) { }
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("UI settle wait failed: {}", e.getMessage()); }
+            try { clickWithRetry(success.first(), 0, 0); } catch (Throwable e) { logger.debug("Toast dismiss click failed: {}", e.getMessage()); }
         } catch (Throwable t) {
             // Soft failure: toast may be localized or occasionally suppressed
             logger.warn("Script created success toast not seen within timeout; proceeding anyway.");
@@ -1066,7 +1066,7 @@ public class CreatorScriptsPage extends BasePage {
     public void confirmScriptUpdateAndWait() {
         Locator confirmBtn = resolveConfirmButton();
         waitVisible(confirmBtn.first(), ConfigReader.getShortTimeout());
-        try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable ignored) { }
+        try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
         clickWithRetry(confirmBtn.first(), 3, ConfigReader.getUiSettleTimeout());
 
         Locator success = page.getByText("Script updated successfully");
