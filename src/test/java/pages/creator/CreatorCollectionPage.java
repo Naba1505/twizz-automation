@@ -904,17 +904,16 @@ public class CreatorCollectionPage extends BasePage {
                     clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay());
                     return;
                 }
-                String[] sel = new String[] {
-                        "button:has-text('I understand')",
-                        "text=I understand",
-                        "//*[self::button or self::*][contains(translate(normalize-space(.), 'IUNDERSTAND', 'iunderstand'), 'i understand')]"
-                };
-                for (String s : sel) {
-                    Locator cand = s.startsWith("//") ? page.locator("xpath=" + s) : page.locator(s);
-                    if (cand.count() > 0 && safeIsVisible(cand.first())) {
-                        clickWithRetry(cand.first(), 2, ConfigReader.getElementRetryDelay());
-                        return;
-                    }
+                // Fallback: try getByText and xpath
+                Locator textLoc = page.getByText(I_UNDERSTAND_BTN, new Page.GetByTextOptions().setExact(true));
+                if (textLoc.count() > 0 && safeIsVisible(textLoc.first())) {
+                    clickWithRetry(textLoc.first(), 2, ConfigReader.getElementRetryDelay());
+                    return;
+                }
+                Locator xpathLoc = page.locator("xpath=//*[self::button or self::*][contains(translate(normalize-space(.), 'IUNDERSTAND', 'iunderstand'), 'i understand')]");
+                if (xpathLoc.count() > 0 && safeIsVisible(xpathLoc.first())) {
+                    clickWithRetry(xpathLoc.first(), 2, ConfigReader.getElementRetryDelay());
+                    return;
                 }
             } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
@@ -1142,7 +1141,7 @@ public class CreatorCollectionPage extends BasePage {
                     try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                 } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             } catch (Exception e) {
-                // If click or navigation fails, continue to next candidate
+                logger.debug("Album candidate click/navigation failed: {}", e.getMessage());
             }
         }
 
@@ -1166,7 +1165,7 @@ public class CreatorCollectionPage extends BasePage {
                     clickWithRetry(icon, 1, ConfigReader.getAnimationTimeout());
                     try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                     picked++;
-                } catch (Exception e) { }
+                } catch (Exception e) { logger.debug("Select icon click failed at index {}: {}", i, e.getMessage()); }
             }
             return;
         }
@@ -1189,7 +1188,7 @@ public class CreatorCollectionPage extends BasePage {
                 clickWithRetry(thumb, 1, ConfigReader.getAnimationTimeout());
                 try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                 picked++;
-            } catch (Exception e) { }
+            } catch (Exception e) { logger.debug("Thumbnail click failed at index {}: {}", i, e.getMessage()); }
         }
     }
 
