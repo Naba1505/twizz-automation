@@ -53,7 +53,7 @@ public class BasePage {
             } catch (RuntimeException e) {
                 last = e;
                 logger.warn("Click failed (attempt {}/{}): {}", i + 1, retries + 1, e.getMessage());
-                try { page.waitForTimeout(sleepMs); } catch (Exception ignored) {}
+                try { page.waitForTimeout(sleepMs); } catch (Exception ie) { logger.debug("Sleep interrupted between retries: {}", ie.getMessage()); }
             }
         }
         throw last != null ? last : new RuntimeException("Click failed after retries");
@@ -67,19 +67,19 @@ public class BasePage {
     protected void waitForAnimation() {
         try { 
             page.waitForTimeout(ConfigReader.getAnimationTimeout()); 
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("waitForAnimation interrupted: {}", e.getMessage()); }
     }
 
     protected void waitForUiToSettle() {
         try { 
             page.waitForTimeout(ConfigReader.getUiSettleTimeout()); 
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("waitForUiToSettle interrupted: {}", e.getMessage()); }
     }
 
     protected void waitForPageLoad() {
         try { 
             page.waitForTimeout(ConfigReader.getPageLoadTimeout()); 
-        } catch (Exception ignored) {}
+        } catch (Exception e) { logger.debug("waitForPageLoad interrupted: {}", e.getMessage()); }
     }
 
     protected void smartScroll(int direction, String targetDescription) {
@@ -93,7 +93,7 @@ public class BasePage {
             page.mouse().wheel(0, direction * stepSize);
             try { 
                 page.waitForTimeout(waitBetween); 
-            } catch (Exception ignored) {}
+            } catch (Exception e) { logger.debug("smartScroll wait interrupted: {}", e.getMessage()); }
         }
     }
 
