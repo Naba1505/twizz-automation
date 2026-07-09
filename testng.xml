@@ -30,6 +30,7 @@
             <class name="tests.creator.CreatorFormationTest"/>
             <class name="tests.creator.CreatorSubscriptionPriceTest"/>
             <class name="tests.creator.CreatorPromotionsTest"/>
+            <class name="tests.creator.CreatorPresentationVideosTest"/>
             <class name="tests.creator.CreatorPushHistoryTest"/>
             <class name="tests.creator.CreatorUnlockHistoryTest"/>
             <class name="tests.creator.CreatorHelpAndContactTest"/>
@@ -57,6 +58,7 @@
         <classes>
             <class name="tests.fan.FanRegistrationTest"/>
             <class name="tests.fan.FanLoginTest"/>
+            <class name="tests.fan.FanHomeScreenTest"/>
             <class name="tests.fan.FanBookmarksTest"/>
             <class name="tests.fan.FanMyCreatorsTest"/>
             <class name="tests.fan.FanDiscoverTest"/>
