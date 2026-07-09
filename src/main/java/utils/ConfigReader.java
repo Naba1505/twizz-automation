@@ -157,6 +157,15 @@ public class ConfigReader {
     private static final int NAVIGATION_TIMEOUT = Integer.parseInt(getProperty("timeout.navigation", "60000"));
     private static final int VISIBILITY_TIMEOUT = Integer.parseInt(getProperty("timeout.visibility", "20000"));
     private static final int ANIMATION_TIMEOUT = Integer.parseInt(getProperty("timeout.animation", "500"));
+    private static final int UI_SETTLE_TIMEOUT = Integer.parseInt(getProperty("timeout.ui.settle", "1000"));
+    private static final int PAGE_LOAD_TIMEOUT = Integer.parseInt(getProperty("timeout.page.load", "2000"));
+    private static final int POLL_INTERVAL = Integer.parseInt(getProperty("timeout.poll.interval", "100"));
+    private static final int MAX_SCROLL_ATTEMPTS = Integer.parseInt(getProperty("scroll.max.attempts", "15"));
+    private static final int SCROLL_STEP_SIZE = Integer.parseInt(getProperty("scroll.step.size", "500"));
+    private static final int SCROLL_WAIT_BETWEEN = Integer.parseInt(getProperty("scroll.wait.between", "300"));
+    private static final int ELEMENT_RETRY_MAX = Integer.parseInt(getProperty("element.retry.max", "3"));
+    private static final int ELEMENT_RETRY_DELAY = Integer.parseInt(getProperty("element.retry.delay", "200"));
+    private static final int RETRY_DELAY = Integer.parseInt(getProperty("retry.delay.ms", "2000"));
 
     public static int getDefaultTimeout() {
         return DEFAULT_TIMEOUT;
@@ -190,63 +199,63 @@ public class ConfigReader {
      * UI settling timeout (1 second)
      */
     public static int getUiSettleTimeout() {
-        return Integer.parseInt(getProperty("timeout.ui.settle", "1000"));
+        return UI_SETTLE_TIMEOUT;
     }
 
     /**
      * Page load timeout (2 seconds)
      */
     public static int getPageLoadTimeout() {
-        return Integer.parseInt(getProperty("timeout.page.load", "2000"));
+        return PAGE_LOAD_TIMEOUT;
     }
 
     /**
      * Polling interval for wait operations (100ms)
      */
     public static int getPollInterval() {
-        return Integer.parseInt(getProperty("timeout.poll.interval", "100"));
+        return POLL_INTERVAL;
     }
 
     /**
      * Maximum scroll attempts for finding elements
      */
     public static int getMaxScrollAttempts() {
-        return Integer.parseInt(getProperty("scroll.max.attempts", "15"));
+        return MAX_SCROLL_ATTEMPTS;
     }
 
     /**
      * Scroll step size in pixels
      */
     public static int getScrollStepSize() {
-        return Integer.parseInt(getProperty("scroll.step.size", "500"));
+        return SCROLL_STEP_SIZE;
     }
 
     /**
      * Wait between scroll attempts (300ms)
      */
     public static int getScrollWaitBetween() {
-        return Integer.parseInt(getProperty("scroll.wait.between", "300"));
+        return SCROLL_WAIT_BETWEEN;
     }
 
     /**
      * Maximum retry attempts for element interactions
      */
     public static int getElementRetryMax() {
-        return Integer.parseInt(getProperty("element.retry.max", "3"));
+        return ELEMENT_RETRY_MAX;
     }
 
     /**
      * Delay between element retry attempts (200ms)
      */
     public static int getElementRetryDelay() {
-        return Integer.parseInt(getProperty("element.retry.delay", "200"));
+        return ELEMENT_RETRY_DELAY;
     }
 
     /**
      * Delay between navigation retry attempts (2000ms)
      */
     public static int getRetryDelay() {
-        return Integer.parseInt(getProperty("retry.delay.ms", "2000"));
+        return RETRY_DELAY;
     }
 
     // ===== Twizz Business App URLs =====
