@@ -12,8 +12,9 @@ public class BaseCreatorTest extends BaseTestClass {
 
     @BeforeMethod(alwaysRun = true)
     public void creatorLogin() {
-        String username = ConfigReader.getProperty("creator.username", "TwizzCreator@proton.me");
-        String password = ConfigReader.getProperty("creator.password", "Twizz$123");
+        String username = ConfigReader.getProperty("creator.username", null);
+        String password = ConfigReader.getProperty("creator.password", null);
+        if (username == null || password == null) throw new RuntimeException("creator.username / creator.password not set in config.properties");
 
         // Use landing page already loaded by BaseTestClass instead of navigating directly
         landingPage.clickLoginButton();

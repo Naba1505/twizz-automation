@@ -10,8 +10,9 @@ public class BaseFanTest extends BaseTestClass {
 
     @BeforeMethod(alwaysRun = true)
     public void fanLogin() {
-        String username = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
-        String password = ConfigReader.getProperty("fan.password", "Twizz$123");
+        String username = ConfigReader.getProperty("fan.username", null);
+        String password = ConfigReader.getProperty("fan.password", null);
+        if (username == null || password == null) throw new RuntimeException("fan.username / fan.password not set in config.properties");
 
         FanLoginPage loginPage = new FanLoginPage(page);
         loginPage.navigate();
