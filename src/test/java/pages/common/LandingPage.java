@@ -93,6 +93,46 @@ public class LandingPage extends BasePage {
         logger.info("Landing page loaded successfully.");
     }
 
+    private boolean waitForUrlContains(String urlPart, String label, long timeoutMs) {
+        try {
+            page.waitForURL("**" + urlPart + "**", new Page.WaitForURLOptions().setTimeout(timeoutMs));
+            logger.info("{} URL confirmed: {}", label, page.url());
+            return true;
+        } catch (Exception e) {
+            logger.debug("{} URL wait failed: {}", label, e.getMessage());
+        }
+        boolean result = page.url().contains(urlPart);
+        logger.info("{} URL fallback check - url={}, result={}", label, page.url(), result);
+        return result;
+    }
+
+    private boolean waitForRegistrationUrl(String currentTab, String label) {
+        String pattern = "**/auth/signUp**currentTab=" + currentTab + "**";
+        try {
+            page.waitForURL(pattern, new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
+            logger.info("{} registration URL confirmed: {}", label, page.url());
+            return true;
+        } catch (Exception e) {
+            logger.debug("{} registration URL wait failed: {}", label, e.getMessage());
+        }
+        boolean result = page.url().contains("/auth/signUp") && page.url().contains("currentTab=" + currentTab);
+        logger.info("{} registration URL fallback check - url={}, result={}", label, page.url(), result);
+        return result;
+    }
+
+    private void clickArrowUpButton(int nth, boolean exact, String logLabel) {
+        clickByRole(AriaRole.BUTTON, ARROW_UP_BTN, exact, nth, "Clicked " + logLabel + " 'arrow-up' button");
+    }
+
+    private void clickByRole(AriaRole role, String name, boolean exact, int nth, String logMessage) {
+        Locator element = page.getByRole(role, new Page.GetByRoleOptions().setName(name).setExact(exact)).nth(nth);
+        element.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        element.scrollIntoViewIfNeeded();
+        element.click();
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
+        logger.info("{}. Current URL: {}", logMessage, page.url());
+    }
+
     public boolean isTwizzLogoVisible() {
         Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(TWIZZ_LOGO_NAME));
         try {
@@ -104,48 +144,28 @@ public class LandingPage extends BasePage {
     }
 
     public void clickLoginButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(LOGIN_BTN_TEXT)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked on Login button.");
+        clickByRole(AriaRole.BUTTON, LOGIN_BTN_TEXT, false, 0, "Clicked on Login button");
     }
 
     public void clickFansButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(FANS_BTN_NAME)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Fans' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, FANS_BTN_NAME, false, 0, "Clicked 'Fans' button");
     }
 
     public void clickDiscoverTwizzButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(DISCOVER_TWIZZ_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Discover TWIZZ' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, DISCOVER_TWIZZ_BTN, false, 0, "Clicked 'Discover TWIZZ' button");
     }
 
     public boolean isPublicDiscoverUrlCorrect() {
-        try {
-            page.waitForURL("**" + PUBLIC_DISCOVER_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Public discover URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Public discover URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(PUBLIC_DISCOVER_URL_PART);
-        logger.info("isPublicDiscoverUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(PUBLIC_DISCOVER_URL_PART, "Public discover", ConfigReader.getMediumTimeout());
     }
 
     public boolean isHomeIconVisible() {
         Locator icon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(HOME_ICON_NAME));
         try {
+            icon.first().scrollIntoViewIfNeeded();
             icon.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Home icon wait failed: {}", e.getMessage()); }
-        boolean visible = icon.count() > 0 && icon.first().isVisible();
+        boolean visible = safeIsVisible(icon);
         logger.info("Home icon visible: {}", visible);
         return visible;
     }
@@ -161,9 +181,10 @@ public class LandingPage extends BasePage {
     public boolean isRegisterToSeeContentVisible() {
         Locator text = page.getByText(REGISTER_TO_SEE_CONTENT_TEXT);
         try {
+            text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Register to see content text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Register to see the content' visible: {}", visible);
         return visible;
     }
@@ -174,7 +195,7 @@ public class LandingPage extends BasePage {
             video.first().scrollIntoViewIfNeeded();
             video.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Video wait failed: {}", e.getMessage()); }
-        boolean visible = video.count() > 0 && video.first().isVisible();
+        boolean visible = safeIsVisible(video);
         logger.info("Video visible: {}", visible);
         return visible;
     }
@@ -182,20 +203,16 @@ public class LandingPage extends BasePage {
     public boolean isItsSimpleTextVisible() {
         Locator text = page.getByText(ITS_SIMPLE_TEXT);
         try {
+            text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Its simple text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'It's simple, it's better.' text visible: {}", visible);
         return visible;
     }
 
     public void clickOpenApplicationButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(OPEN_APP_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Open the application' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, OPEN_APP_BTN, false, 0, "Clicked 'Open the application' button");
     }
 
     public boolean isAgencyTextVisible() {
@@ -204,7 +221,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Agency text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("Agency text visible: {}", visible);
         return visible;
     }
@@ -215,7 +232,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Smart security text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Smart and safe security' text visible: {}", visible);
         return visible;
     }
@@ -226,7 +243,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Already taking text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'THEY ARE ALREADY TAKING' text visible: {}", visible);
         return visible;
     }
@@ -237,7 +254,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("If you have questions text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'If you have any questions' text visible: {}", visible);
         return visible;
     }
@@ -248,7 +265,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("To register as user text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'To register as a user:' text visible: {}", visible);
         return visible;
     }
@@ -259,7 +276,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Start by creating text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Start by creating a creator' text visible: {}", visible);
         return visible;
     }
@@ -270,7 +287,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Our team acts text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Our team acts quickly to' text visible: {}", visible);
         return visible;
     }
@@ -278,22 +295,16 @@ public class LandingPage extends BasePage {
     public boolean isContentByThousandTextVisible() {
         Locator text = page.getByText(CONTENT_BY_THOUSAND_TEXT);
         try {
+            text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Content by thousand text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Content by the thousand. Free' text visible: {}", visible);
         return visible;
     }
 
     public boolean isIntroUrlCorrect() {
-        try {
-            page.waitForURL("**" + INTRO_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Intro URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Intro URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(INTRO_URL_PART);
-        logger.info("isIntroUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(INTRO_URL_PART, "Intro", ConfigReader.getMediumTimeout());
     }
 
     public boolean isToWithdrawMoneyTextVisible() {
@@ -302,7 +313,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("To withdraw money text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'To withdraw your money on' text visible: {}", visible);
         return visible;
     }
@@ -313,7 +324,7 @@ public class LandingPage extends BasePage {
             link.first().scrollIntoViewIfNeeded();
             link.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Contact arrow-up link wait failed: {}", e.getMessage()); }
-        boolean visible = link.count() > 0 && link.first().isVisible();
+        boolean visible = safeIsVisible(link);
         logger.info("'Contact arrow-up' link visible: {}", visible);
         return visible;
     }
@@ -324,7 +335,7 @@ public class LandingPage extends BasePage {
             link.first().scrollIntoViewIfNeeded();
             link.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Legal notices link wait failed: {}", e.getMessage()); }
-        boolean visible = link.count() > 0 && link.first().isVisible();
+        boolean visible = safeIsVisible(link);
         logger.info("'Legal notices arrow-up' link visible: {}", visible);
         return visible;
     }
@@ -332,22 +343,16 @@ public class LandingPage extends BasePage {
     public boolean isLegalInformationHeadingVisible() {
         Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(LEGAL_INFORMATION_HEADING));
         try {
+            heading.first().scrollIntoViewIfNeeded();
             heading.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Legal information heading wait failed: {}", e.getMessage()); }
-        boolean visible = heading.count() > 0 && heading.first().isVisible();
+        boolean visible = safeIsVisible(heading);
         logger.info("'Legal information' heading visible: {}", visible);
         return visible;
     }
 
     public boolean isLegalNoticesUrlCorrect() {
-        try {
-            page.waitForURL("**" + LEGAL_NOTICES_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Legal notices URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Legal notices URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(LEGAL_NOTICES_URL_PART);
-        logger.info("isLegalNoticesUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(LEGAL_NOTICES_URL_PART, "Legal notices", ConfigReader.getMediumTimeout());
     }
 
     public boolean isContentPolicyLinkVisible() {
@@ -356,7 +361,7 @@ public class LandingPage extends BasePage {
             link.first().scrollIntoViewIfNeeded();
             link.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Content policy link wait failed: {}", e.getMessage()); }
-        boolean visible = link.count() > 0 && link.first().isVisible();
+        boolean visible = safeIsVisible(link);
         logger.info("'Content Policy and Child' link visible: {}", visible);
         return visible;
     }
@@ -367,7 +372,7 @@ public class LandingPage extends BasePage {
             link.first().scrollIntoViewIfNeeded();
             link.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Confidentiality link wait failed: {}", e.getMessage()); }
-        boolean visible = link.count() > 0 && link.first().isVisible();
+        boolean visible = safeIsVisible(link);
         logger.info("'Confidentiality arrow-up' link visible: {}", visible);
         return visible;
     }
@@ -378,7 +383,7 @@ public class LandingPage extends BasePage {
             link.first().scrollIntoViewIfNeeded();
             link.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("General conditions link wait failed: {}", e.getMessage()); }
-        boolean visible = link.count() > 0 && link.first().isVisible();
+        boolean visible = safeIsVisible(link);
         logger.info("'General Conditions of Sale' link visible: {}", visible);
         return visible;
     }
@@ -389,7 +394,7 @@ public class LandingPage extends BasePage {
             link.first().scrollIntoViewIfNeeded();
             link.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("General conditions of use link wait failed: {}", e.getMessage()); }
-        boolean visible = link.count() > 0 && link.first().isVisible();
+        boolean visible = safeIsVisible(link);
         logger.info("'General Conditions of Use' link visible: {}", visible);
         return visible;
     }
@@ -400,7 +405,7 @@ public class LandingPage extends BasePage {
             img.first().scrollIntoViewIfNeeded();
             img.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Earth image wait failed: {}", e.getMessage()); }
-        boolean visible = img.count() > 0 && img.first().isVisible();
+        boolean visible = safeIsVisible(img);
         logger.info("'Earth' image visible: {}", visible);
         return visible;
     }
@@ -408,9 +413,10 @@ public class LandingPage extends BasePage {
     public boolean isLanguageSelectorVisible(String language) {
         Locator selector = page.locator("div").filter(new Locator.FilterOptions().setHasText(language)).nth(4);
         try {
+            selector.scrollIntoViewIfNeeded();
             selector.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Language selector ({}) wait failed: {}", language, e.getMessage()); }
-        boolean visible = selector.isVisible();
+        boolean visible = safeIsVisible(selector);
         logger.info("Language selector '{}' visible: {}", language, visible);
         return visible;
     }
@@ -431,7 +437,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("French landing text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("French landing text visible: {}", visible);
         return visible;
     }
@@ -442,7 +448,7 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("English landing text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("English landing text visible: {}", visible);
         return visible;
     }
@@ -450,9 +456,10 @@ public class LandingPage extends BasePage {
     public boolean isLanguageSelectorNth5Visible(String language) {
         Locator selector = page.locator("div").filter(new Locator.FilterOptions().setHasText(language)).nth(5);
         try {
+            selector.scrollIntoViewIfNeeded();
             selector.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Language selector nth5 ({}) wait failed: {}", language, e.getMessage()); }
-        boolean visible = selector.isVisible();
+        boolean visible = safeIsVisible(selector);
         logger.info("Language selector nth5 '{}' visible: {}", language, visible);
         return visible;
     }
@@ -463,7 +470,7 @@ public class LandingPage extends BasePage {
             link.first().scrollIntoViewIfNeeded();
             link.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Blog link wait failed: {}", e.getMessage()); }
-        boolean visible = link.count() > 0 && link.first().isVisible();
+        boolean visible = safeIsVisible(link);
         logger.info("'Blog arrow-up' link visible: {}", visible);
         return visible;
     }
@@ -478,44 +485,26 @@ public class LandingPage extends BasePage {
     }
 
     public boolean isBlogsUrlCorrect() {
-        try {
-            page.waitForURL("**" + BLOGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Blogs URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Blogs URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(BLOGS_URL_PART);
-        logger.info("isBlogsUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(BLOGS_URL_PART, "Blogs", ConfigReader.getMediumTimeout());
     }
 
     public boolean isTwizzBlogTextVisible() {
         Locator text = page.getByText(TWIZZ_BLOG_TEXT);
         try {
+            text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("TwizzBlog text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'TwizzBlog' text visible: {}", visible);
         return visible;
     }
 
     public void clickSixthArrowUpButtonExact() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ARROW_UP_BTN).setExact(true)).nth(5);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked sixth exact 'arrow-up' button. Current URL: {}", page.url());
+        clickArrowUpButton(5, true, "sixth exact");
     }
 
     public boolean isGeneralConditionsUseUrlCorrect() {
-        try {
-            page.waitForURL("**" + GENERAL_CONDITIONS_USE_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("General conditions of use URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("General conditions of use URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(GENERAL_CONDITIONS_USE_URL_PART);
-        logger.info("isGeneralConditionsUseUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(GENERAL_CONDITIONS_USE_URL_PART, "General conditions of use", ConfigReader.getMediumTimeout());
     }
 
     public boolean isTwizzRecommendsTextVisible() {
@@ -524,29 +513,17 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Twizz recommends text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Twizz therefore recommends' text visible: {}", visible);
         return visible;
     }
 
     public void clickSixthArrowUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ARROW_UP_BTN)).nth(5);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked sixth 'arrow-up' button. Current URL: {}", page.url());
+        clickArrowUpButton(5, false, "sixth");
     }
 
     public boolean isGeneralConditionsUrlCorrect() {
-        try {
-            page.waitForURL("**" + GENERAL_CONDITIONS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("General conditions URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("General conditions URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(GENERAL_CONDITIONS_URL_PART);
-        logger.info("isGeneralConditionsUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(GENERAL_CONDITIONS_URL_PART, "General conditions", ConfigReader.getMediumTimeout());
     }
 
     public boolean isGeneralConditionsTextVisible() {
@@ -555,37 +532,26 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("General conditions text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("General conditions footer text visible: {}", visible);
         return visible;
     }
 
     public void clickFifthArrowUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ARROW_UP_BTN)).nth(4);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked fifth 'arrow-up' button. Current URL: {}", page.url());
+        clickArrowUpButton(4, false, "fifth");
     }
 
     public boolean isConfidentialityUrlCorrect() {
-        try {
-            page.waitForURL("**" + CONFIDENTIALITY_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Confidentiality URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Confidentiality URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(CONFIDENTIALITY_URL_PART);
-        logger.info("isConfidentialityUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(CONFIDENTIALITY_URL_PART, "Confidentiality", ConfigReader.getMediumTimeout());
     }
 
     public boolean isConfidentialityHeadingVisible() {
         Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(CONFIDENTIALITY_HEADING));
         try {
+            heading.first().scrollIntoViewIfNeeded();
             heading.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Confidentiality heading wait failed: {}", e.getMessage()); }
-        boolean visible = heading.count() > 0 && heading.first().isVisible();
+        boolean visible = safeIsVisible(heading);
         logger.info("'v12.06.2024 made for ITDW by' heading visible: {}", visible);
         return visible;
     }
@@ -596,29 +562,17 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Our privacy policy text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Our Privacy Policy may be' text visible: {}", visible);
         return visible;
     }
 
     public void clickFourthArrowUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ARROW_UP_BTN)).nth(3);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked fourth 'arrow-up' button. Current URL: {}", page.url());
+        clickArrowUpButton(3, false, "fourth");
     }
 
     public boolean isContentPolicyUrlCorrect() {
-        try {
-            page.waitForURL("**" + CONTENT_POLICY_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Content policy URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Content policy URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(CONTENT_POLICY_URL_PART);
-        logger.info("isContentPolicyUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(CONTENT_POLICY_URL_PART, "Content policy", ConfigReader.getMediumTimeout());
     }
 
     public boolean isContentPolicyHeadingVisible() {
@@ -627,7 +581,7 @@ public class LandingPage extends BasePage {
             heading.first().scrollIntoViewIfNeeded();
             heading.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Content policy heading wait failed: {}", e.getMessage()); }
-        boolean visible = heading.count() > 0 && heading.first().isVisible();
+        boolean visible = safeIsVisible(heading);
         logger.info("'CONTENT POLICY v12.06.2024' heading visible: {}", visible);
         return visible;
     }
@@ -638,27 +592,17 @@ public class LandingPage extends BasePage {
             text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Twizz users encounter text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Twizz users who encounter' text visible: {}", visible);
         return visible;
     }
 
     public void clickThirdArrowUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ARROW_UP_BTN)).nth(2);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked third 'arrow-up' button. Current URL: {}", page.url());
+        clickArrowUpButton(2, false, "third");
     }
 
     public void clickSecondArrowUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ARROW_UP_BTN)).nth(1);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked second 'arrow-up' button. Current URL: {}", page.url());
+        clickArrowUpButton(1, false, "second");
     }
 
     public boolean isExploreTwizzButtonVisible() {
@@ -667,304 +611,189 @@ public class LandingPage extends BasePage {
             btn.first().scrollIntoViewIfNeeded();
             btn.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Explore Twizz button wait failed: {}", e.getMessage()); }
-        boolean visible = btn.count() > 0 && btn.first().isVisible();
+        boolean visible = safeIsVisible(btn);
         logger.info("'Explore Twizz arrow-up' button visible: {}", visible);
         return visible;
     }
 
     public void clickExploreTwizzButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EXPLORE_TWIZZ_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Explore Twizz' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, EXPLORE_TWIZZ_BTN, false, 0, "Clicked 'Explore Twizz' button");
     }
 
     public boolean isHlsVideoPlayerVisible() {
         Locator player = page.locator(HLS_PLAYER_LOCATOR);
         try {
+            player.first().scrollIntoViewIfNeeded();
             player.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("HLS video player wait failed: {}", e.getMessage()); }
-        boolean visible = player.count() > 0 && player.first().isVisible();
+        boolean visible = safeIsVisible(player);
         logger.info("HLS video player visible: {}", visible);
         return visible;
     }
 
     public void clickThirdGoToTwizzButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GO_TO_TWIZZ_BTN)).nth(2);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked third 'Go to Twizz' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, GO_TO_TWIZZ_BTN, false, 2, "Clicked third 'Go to Twizz' button");
     }
 
     public void clickSecondGoToTwizzButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GO_TO_TWIZZ_BTN)).nth(1);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked second 'Go to Twizz' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, GO_TO_TWIZZ_BTN, false, 1, "Clicked second 'Go to Twizz' button");
     }
 
     public void clickGoToTwizzButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(GO_TO_TWIZZ_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Go to Twizz' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, GO_TO_TWIZZ_BTN, false, 0, "Clicked 'Go to Twizz' button");
     }
 
     public void clickSignUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SIGN_UP_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Sign up' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, SIGN_UP_BTN, false, 0, "Clicked 'Sign up' button");
     }
 
     public void clickRegisterAsCreatorButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(REGISTER_AS_CREATOR_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Register as a creator' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, REGISTER_AS_CREATOR_BTN, false, 0, "Clicked 'Register as a creator' button");
     }
 
     public void clickUser1Link() {
-        Locator link = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(USER1_LINK_NAME)).first();
-        link.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        link.scrollIntoViewIfNeeded();
-        link.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'User 1' link. Current URL: {}", page.url());
+        clickByRole(AriaRole.LINK, USER1_LINK_NAME, false, 0, "Clicked 'User 1' link");
     }
 
     public void clickThirdToStartUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(TO_START_UP_BTN)).nth(2);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked third 'To start up' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, TO_START_UP_BTN, false, 2, "Clicked third 'To start up' button");
     }
 
     public void clickSecondToStartUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(TO_START_UP_BTN)).nth(1);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked second 'To start up' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, TO_START_UP_BTN, false, 1, "Clicked second 'To start up' button");
     }
 
     public void clickToStartUpButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(TO_START_UP_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'To start up' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, TO_START_UP_BTN, false, 0, "Clicked 'To start up' button");
     }
 
     public boolean isDesignedForManagersTextVisible() {
         Locator text = page.getByText(DESIGNED_FOR_MANAGERS_TEXT);
         try {
+            text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Designed for managers text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Designed for managers' text visible: {}", visible);
         return visible;
     }
 
     public boolean isBusinessUrlCorrect() {
-        try {
-            page.waitForURL("**" + BUSINESS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
-            logger.info("Business URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Business URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(BUSINESS_URL_PART);
-        logger.info("isBusinessUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(BUSINESS_URL_PART, "Business", ConfigReader.getShortTimeout());
     }
 
     public void clickBecomeAFanButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(BECOME_A_FAN_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Become a fan' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, BECOME_A_FAN_BTN, false, 0, "Clicked 'Become a fan' button");
     }
 
     public boolean isFanTabVisible() {
         Locator tab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(FAN_TAB_NAME));
         try {
+            tab.first().scrollIntoViewIfNeeded();
             tab.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Fan tab wait failed: {}", e.getMessage()); }
-        boolean visible = tab.count() > 0 && tab.first().isVisible();
+        boolean visible = safeIsVisible(tab);
         logger.info("Fan tab visible: {}", visible);
         return visible;
     }
 
     public boolean isFanRegistrationUrlCorrect() {
-        try {
-            page.waitForURL("**/auth/signUp**currentTab=fan**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Fan registration URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Fan registration URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains("/auth/signUp") && page.url().contains("currentTab=fan");
-        logger.info("isFanRegistrationUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForRegistrationUrl("fan", "Fan registration");
     }
 
     public void clickSecondContactUsButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CONTACT_US_BTN)).nth(1);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked second 'Contact us' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, CONTACT_US_BTN, false, 1, "Clicked second 'Contact us' button");
     }
 
     public void clickContactUsButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CONTACT_US_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Contact us' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, CONTACT_US_BTN, false, 0, "Clicked 'Contact us' button");
     }
 
     public boolean isContactUsTextVisible() {
         Locator text = page.getByText(CONTACT_US_TEXT);
         try {
+            text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Contact us text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("Contact us text visible: {}", visible);
         return visible;
     }
 
     public boolean isContactUsUrlCorrect() {
-        try {
-            page.waitForURL("**" + CONTACT_US_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Contact us URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Contact us URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(CONTACT_US_URL_PART);
-        logger.info("isContactUsUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(CONTACT_US_URL_PART, "Contact us", ConfigReader.getMediumTimeout());
     }
 
     public boolean isBecomingACreatorTextVisible() {
         Locator text = page.getByText(BECOMING_A_CREATOR_TEXT);
         try {
+            text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Becoming a creator text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("'Becoming a creator ?' text visible: {}", visible);
         return visible;
     }
 
     public void clickBecomingACreatorButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(BECOMING_A_CREATOR_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Becoming a creator' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, BECOMING_A_CREATOR_BTN, false, 0, "Clicked 'Becoming a creator' button");
     }
 
     public void clickBecomeACreatorButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(BECOME_A_CREATOR_BTN)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Become a creator' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, BECOME_A_CREATOR_BTN, false, 0, "Clicked 'Become a creator' button");
     }
 
     public boolean isCreatorTabVisible() {
         Locator tab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(CREATOR_TAB_NAME));
         try {
+            tab.first().scrollIntoViewIfNeeded();
             tab.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Creator tab wait failed: {}", e.getMessage()); }
-        boolean visible = tab.count() > 0 && tab.first().isVisible();
+        boolean visible = safeIsVisible(tab);
         logger.info("Creator tab visible: {}", visible);
         return visible;
     }
 
     public boolean isCreatorRegistrationUrlCorrect() {
-        try {
-            page.waitForURL("**/auth/signUp**currentTab=creator**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Creator registration URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Creator registration URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains("/auth/signUp") && page.url().contains("currentTab=creator");
-        logger.info("isCreatorRegistrationUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForRegistrationUrl("creator", "Creator registration");
     }
 
     public boolean isLoginTextVisible() {
         Locator text = page.getByText(LOGIN_BTN_TEXT);
         try {
+            text.first().scrollIntoViewIfNeeded();
             text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Login text wait failed: {}", e.getMessage()); }
-        boolean visible = text.count() > 0 && text.first().isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("Login page text visible: {}", visible);
         return visible;
     }
 
     public boolean isLoginUrlCorrect() {
-        try {
-            page.waitForURL("**" + LOGIN_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("Login URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("Login URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(LOGIN_URL_PART);
-        logger.info("isLoginUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(LOGIN_URL_PART, "Login", ConfigReader.getMediumTimeout());
     }
 
     public void clickSecondLoginButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(LOGIN_BTN_TEXT)).nth(1);
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked second Login button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, LOGIN_BTN_TEXT, false, 1, "Clicked second Login button");
     }
 
     public void clickRegisterButton() {
-        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(REGISTER_BTN_TEXT).setExact(true)).first();
-        btn.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        btn.click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Clicked 'Register' button. Current URL: {}", page.url());
+        clickByRole(AriaRole.BUTTON, REGISTER_BTN_TEXT, true, 0, "Clicked 'Register' button");
     }
 
     public boolean isRegistrationTextVisible() {
-        Locator text = page.getByText(REGISTRATION_TEXT).first();
+        Locator text = page.getByText(REGISTRATION_TEXT);
         try {
-            text.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+            text.first().scrollIntoViewIfNeeded();
+            text.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         } catch (Exception e) { logger.debug("Registration text wait failed: {}", e.getMessage()); }
-        boolean visible = text.isVisible();
+        boolean visible = safeIsVisible(text);
         logger.info("Registration text visible: {}", visible);
         return visible;
     }
 
     public boolean isSignUpUrlCorrect() {
-        try {
-            page.waitForURL("**" + SIGNUP_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
-            logger.info("SignUp URL confirmed: {}", page.url());
-            return true;
-        } catch (Exception e) { logger.debug("SignUp URL wait failed: {}", e.getMessage()); }
-        boolean result = page.url().contains(SIGNUP_URL_PART);
-        logger.info("isSignUpUrlCorrect - url={}, result={}", page.url(), result);
-        return result;
+        return waitForUrlContains(SIGNUP_URL_PART, "SignUp", ConfigReader.getMediumTimeout());
     }
 
 }
