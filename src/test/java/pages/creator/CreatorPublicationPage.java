@@ -9,6 +9,9 @@ import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
+import com.microsoft.playwright.options.WaitUntilState;
 
 import utils.ConfigReader;
 import utils.WaitUtils;
@@ -63,12 +66,17 @@ public class CreatorPublicationPage extends BasePage {
         if (!Files.exists(mediaPath)) {
             throw new RuntimeException("Media file not found: " + mediaPath.toAbsolutePath());
         }
-        // Try direct input first
-        Locator input = page.locator("input[type='file']");
-        if (input.count() > 0) {
-            input.first().setInputFiles(mediaPath);
+        // Try direct hidden file input first
+        Locator input = page.locator("input[type='file']").first();
+        try {
+            input.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.ATTACHED)
+                    .setTimeout(ConfigReader.getShortTimeout()));
+            input.setInputFiles(mediaPath);
             logger.info("Uploaded media via input[type=file]: {}", mediaPath);
             return;
+        } catch (Exception e) {
+            logger.debug("Direct file input not available, using FileChooser: {}", e.getMessage());
         }
         // Otherwise, click plus button and use FileChooser
         Locator plusButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("plus"));
@@ -168,13 +176,10 @@ public class CreatorPublicationPage extends BasePage {
     }
 
     private boolean isTextVisible(String text, boolean exact) {
-        try {
-            Locator toast = exact ? page.getByText(text, new Page.GetByTextOptions().setExact(true)) : page.getByText(text);
-            waitVisible(toast, ConfigReader.getVisibilityTimeout());
-            return toast.isVisible();
-        } catch (Exception e) {
-            return false;
-        }
+        Locator toast = exact
+                ? page.getByText(text, new Page.GetByTextOptions().setExact(true))
+                : page.getByText(text);
+        return safeIsVisible(toast);
     }
 
     public boolean waitForSuccessToast(long timeoutMs) {
@@ -192,23 +197,9 @@ public class CreatorPublicationPage extends BasePage {
 
     // Consider composer closed when publish UI is no longer visible
     private boolean isComposerOpen() {
-        try {
-            // If publish button or caption placeholder visible, composer is open
-            if (getPublishButton().isVisible()) return true;
-        } catch (Exception e) {
-            logger.debug("Publish button check failed: {}", e.getMessage());
-        }
-        try {
-            if (page.getByText(CAPTION_TITLE_TEXT, new Page.GetByTextOptions().setExact(true)).isVisible()) return true;
-        } catch (Exception e) {
-            logger.debug("Caption title check failed: {}", e.getMessage());
-        }
-        try {
-            if (page.getByPlaceholder(CAPTION_PLACEHOLDER).isVisible()) return true;
-        } catch (Exception e) {
-            logger.debug("Caption placeholder check failed: {}", e.getMessage());
-        }
-        return false;
+        return safeIsVisible(getPublishButton())
+                || safeIsVisible(page.getByText(CAPTION_TITLE_TEXT, new Page.GetByTextOptions().setExact(true)))
+                || safeIsVisible(page.getByPlaceholder(CAPTION_PLACEHOLDER));
     }
 
     
@@ -216,27 +207,23 @@ public class CreatorPublicationPage extends BasePage {
     // Try to close composer if still open (best-effort, non-fatal)
     private void closeComposerIfOpen() {
         if (!isComposerOpen()) return;
-        try {
-            Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
-            if (closeBtn.isVisible()) {
-                clickWithRetry(closeBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                return;
-            }
-        } catch (Exception e) { logger.debug("Close btn strategy 1 failed: {}", e.getMessage()); }
-        try {
-            Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
-            if (cancelBtn.isVisible()) {
-                clickWithRetry(cancelBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                return;
-            }
-        } catch (Exception e) { logger.debug("Close btn strategy 2 failed: {}", e.getMessage()); }
-        try {
-            // Generic .close icon or top-right X in dialogs
-            Locator x = page.locator(".close, button[aria-label='Close'], [data-testid='close']").first();
-            if (x != null && x.count() > 0 && x.isVisible()) {
-                clickWithRetry(x, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-            }
-        } catch (Exception e) { logger.debug("Close btn strategy 3 failed: {}", e.getMessage()); }
+
+        Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
+        if (safeIsVisible(closeBtn)) {
+            clickWithRetry(closeBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+            return;
+        }
+
+        Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+        if (safeIsVisible(cancelBtn)) {
+            clickWithRetry(cancelBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+            return;
+        }
+
+        Locator x = page.locator(".close, button[aria-label='Close'], [data-testid='close']").first();
+        if (safeIsVisible(x)) {
+            clickWithRetry(x, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+        }
     }
 
     // Force-exit composer quickly without waiting on background uploads
@@ -273,14 +260,14 @@ public class CreatorPublicationPage extends BasePage {
     }
 
     private void handleConversionPromptIfPresent() {
-        if (page.getByText(CONVERSION_TOOLS_TEXT).isVisible()) {
+        if (safeIsVisible(page.getByText(CONVERSION_TOOLS_TEXT))) {
             clickIUnderstandIfPresent();
         }
     }
 
     private void clickIUnderstandIfPresent() {
         Locator understand = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(I_UNDERSTAND_BTN));
-        if (understand.isVisible()) {
+        if (safeIsVisible(understand)) {
             try {
                 page.evaluate("window.scrollBy(0, document.body.scrollHeight)");
             } catch (Exception e) {
@@ -293,25 +280,23 @@ public class CreatorPublicationPage extends BasePage {
 
     // Navigation from profile to Publications
     public void openProfilePublicationsIcon() {
-        Locator icon = page.getByRole(AriaRole.TABPANEL, new Page.GetByRoleOptions().setName("publications icon")).locator("img").first();
-        if (icon.count() > 0 && icon.isVisible()) {
-            clickWithRetry(icon, 2, ConfigReader.getAnimationTimeout());
-            logger.info("Clicked publications icon from profile");
-            return;
-        }
         if (isPublicationsScreen()) {
             logger.info("Already on Publications screen; no need to click icon");
             return;
         }
+
+        Locator icon = page.getByRole(AriaRole.TABPANEL, new Page.GetByRoleOptions().setName("publications icon")).locator("img").first();
+        if (safeIsVisible(icon)) {
+            clickWithRetry(icon, 2, ConfigReader.getAnimationTimeout());
+            logger.info("Clicked publications icon from profile");
+            return;
+        }
+
         Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Connect").setExact(true));
-        if (connectBtn.isVisible()) {
+        if (safeIsVisible(connectBtn)) {
             clickWithRetry(connectBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-            try { 
-                page.waitForTimeout(ConfigReader.getAnimationTimeout()); 
-            } catch (Exception e) {
-                logger.debug("Wait failed: {}", e.getMessage());
-            }
-            if (icon.count() > 0 && icon.isVisible()) {
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            if (safeIsVisible(icon)) {
                 clickWithRetry(icon, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked publications icon after Connect");
                 return;
@@ -328,57 +313,50 @@ public void verifyPublicationsScreen() {
 }
 
 private boolean isPublicationsScreen() {
-    try {
-        Locator publicationsTitle = page.getByText(PUBLICATIONS_TEXT);
-        return publicationsTitle.isVisible();
-    } catch (Exception e) {
-        logger.debug("isPublicationsScreen check failed: {}", e.getMessage());
-        return false;
-    }
+    return safeIsVisible(page.getByText(PUBLICATIONS_TEXT));
 }
 
 // Delete a single publication via available UI entry points
 public void deleteOnePublication() {
-    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Pre-delete wait failed: {}", e.getMessage()); }
+    page.waitForTimeout(ConfigReader.getElementRetryDelay());
 
-    // 1) Some flows require clicking 'Connect' first
+    // Some flows require clicking 'Connect' first
     Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Connect").setExact(true));
-    if (connectBtn.isVisible()) {
-      clickWithRetry(connectBtn, 2, ConfigReader.getElementRetryDelay());
-      logger.info("Clicked 'Connect' before deletion flow");
-      try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Post-connect wait failed: {}", e.getMessage()); }
+    if (safeIsVisible(connectBtn)) {
+        clickWithRetry(connectBtn, 2, ConfigReader.getElementRetryDelay());
+        logger.info("Clicked 'Connect' before deletion flow");
+        page.waitForTimeout(ConfigReader.getElementRetryDelay());
     }
 
-    // 2) Primary path: menu beside post '.dots-wrapper'
-    Locator dotsWrapper = page.locator(".dots-wrapper");
-    if (dotsWrapper.count() > 0) {
-      try { dotsWrapper.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
-      // Wait for dots wrapper to be visible before clicking
-      waitVisible(dotsWrapper.first(), ConfigReader.getLongTimeout());
-      clickWithRetry(dotsWrapper.first(), 2, ConfigReader.getElementRetryDelay());
-      confirmDeletionPopup();
-      return;
+    // Primary path: menu beside post '.dots-wrapper'
+    Locator dotsWrapper = page.locator(".dots-wrapper").first();
+    if (safeIsVisible(dotsWrapper)) {
+        dotsWrapper.scrollIntoViewIfNeeded();
+        waitVisible(dotsWrapper, ConfigReader.getLongTimeout());
+        clickWithRetry(dotsWrapper, 2, ConfigReader.getElementRetryDelay());
+        confirmDeletionPopup();
+        return;
     }
 
-    // 3) Alternate menu icon: role IMG name 'dot'
+    // Alternate menu icon: role IMG name 'dot'
     Locator dotImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).first();
-    if (dotImg != null && dotImg.count() > 0) {
-      try { dotImg.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
-      clickWithRetry(dotImg, 2, ConfigReader.getElementRetryDelay());
-      confirmDeletionPopup();
-      return;
+    if (safeIsVisible(dotImg)) {
+        dotImg.scrollIntoViewIfNeeded();
+        clickWithRetry(dotImg, 2, ConfigReader.getElementRetryDelay());
+        confirmDeletionPopup();
+        return;
     }
 
-    // 4) Fallback path: open first post and use action button '.d-flex'
+    // Fallback path: open first post and use action button '.d-flex'
     Locator fanPost = page.locator(".fanProfilePost").first();
     Locator actionBtn = page.locator(".d-flex").first();
-    if (fanPost.count() > 0 && fanPost.isVisible()) {
-      clickWithRetry(fanPost, 2, ConfigReader.getElementRetryDelay());
-      logger.info("Opened first fan profile post");
-      waitVisible(actionBtn, ConfigReader.getShortTimeout());
-      clickWithRetry(actionBtn, 2, ConfigReader.getElementRetryDelay());
-      confirmDeletionPopup();
-      return;
+    if (safeIsVisible(fanPost)) {
+        clickWithRetry(fanPost, 2, ConfigReader.getElementRetryDelay());
+        logger.info("Opened first fan profile post");
+        waitVisible(actionBtn, ConfigReader.getShortTimeout());
+        clickWithRetry(actionBtn, 2, ConfigReader.getElementRetryDelay());
+        confirmDeletionPopup();
+        return;
     }
 
     logger.warn("No known delete entry point found for publication");
@@ -395,78 +373,52 @@ private void confirmDeletionPopup() {
 }
 
 // Loop delete until none remain
-  public void deleteAllPublicationsLoop() {
-    int deleted = 0;
-    while (true) {
-      // Open publications only if not already there
-      if (!isPublicationsScreen()) {
-        openProfilePublicationsIcon();
-        // If still not on publications, try a brief wait and check again
-        if (!isPublicationsScreen()) {
-          try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Navigation wait failed: {}", e.getMessage()); }
-          if (!isPublicationsScreen()) {
-            logger.warn("Could not navigate to Publications screen; stopping loop");
-            break;
-          }
+    public void deleteAllPublicationsLoop() {
+        int deleted = 0;
+        while (true) {
+            if (!isPublicationsScreen()) {
+                openProfilePublicationsIcon();
+                if (!isPublicationsScreen()) {
+                    logger.warn("Could not navigate to Publications screen; stopping loop");
+                    break;
+                }
+            }
+
+            Locator dotsWrapper = page.locator(".dots-wrapper").first();
+            Locator dotImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).first();
+            Locator fanPost = page.locator(".fanProfilePost").first();
+
+            boolean anyPresent = safeIsVisible(dotsWrapper) || safeIsVisible(dotImg) || safeIsVisible(fanPost);
+            if (!anyPresent) {
+                logger.info("No publications found on Publications screen");
+                break;
+            }
+
+            logger.info("Found publications on Publications screen");
+            deleteOnePublication();
+            deleted++;
+
+            try {
+                logger.info("Reloading page to refresh Publications list after deletion");
+                page.reload(new Page.ReloadOptions()
+                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+                        .setTimeout(ConfigReader.getNavigationTimeout()));
+                page.waitForLoadState(LoadState.NETWORKIDLE,
+                        new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getShortTimeout()));
+                page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+            } catch (Exception e) {
+                logger.warn("Failed to reload page after deletion: {}", e.getMessage());
+            }
         }
-      }
-
-      // Aggressive scroll to trigger lazy load immediately
-      try {
-        page.evaluate("window.scrollTo(0, 0)");
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
-        page.evaluate("window.scrollBy(0, 500)");
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
-        page.evaluate("window.scrollBy(0, -500)");
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
-      } catch (Exception e) { logger.debug("Scroll trigger failed: {}", e.getMessage()); }
-
-      // Wait for list to load: try multiple selectors with increased timeout
-      long start = System.currentTimeMillis();
-      boolean anyPresent = false;
-      while (System.currentTimeMillis() - start < ConfigReader.getDefaultTimeout()) {
-        int dots = page.locator(".dots-wrapper").count();
-        int dotsImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).count();
-        int posts = page.locator(".fanProfilePost").count();
-        if (dots > 0 || dotsImg > 0 || posts > 0) { 
-          anyPresent = true; 
-          logger.info("Found {} publications (dots: {}, dotsImg: {}, posts: {})", 
-                     Math.max(Math.max(dots, dotsImg), posts), dots, dotsImg, posts);
-          break; 
-        }
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
-      }
-
-      if (!anyPresent) {
-        logger.info("No publications found on Publications screen");
-        break;
-      }
-
-      // Delete one and loop
-      deleteOnePublication();
-      deleted++;
-      
-      // Force a full page reload to ensure the Publications list is completely refreshed
-      try {
-        logger.info("Reloading page to refresh Publications list after deletion");
-        page.reload();
-        page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
-        // Extra wait for UI to stabilize and lazy loading to complete
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { logger.debug("Post-reload wait failed: {}", e.getMessage()); }
-        logger.info("Page reloaded, waiting for Publications list to refresh");
-      } catch (Exception e) {
-        logger.warn("Failed to reload page after deletion: {}", e.getMessage());
-      }
+        logger.info("Deleted {} publications (loop until none left)", deleted);
     }
-    logger.info("Deleted {} publications (loop until none left)", deleted);
-  }
 
     // Helper to check remaining publication menus
     public int getPublicationMenuCount() {
         return page.locator(".dots-wrapper").count();
     }
 
-    public void completePublicationFlow(Path mediaPath, String caption, boolean blurEnabled) {
+    public boolean completePublicationFlow(Path mediaPath, String caption, boolean blurEnabled) {
         openPlusMenu();
         selectPostEntry();
         ensurePublicationsScreen();
@@ -477,7 +429,9 @@ private void confirmDeletionPopup() {
         clickCaptionOk();
         setBlurEnabled(blurEnabled);
         publish();
+        boolean success = waitForSuccessToast(ConfigReader.getMediumTimeout());
         forceExitComposer();
+        return success;
     }
 }
 
