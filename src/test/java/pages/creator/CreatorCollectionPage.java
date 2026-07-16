@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.LoadState;
 
 import io.qameta.allure.Step;
 import utils.WaitUtils;
@@ -47,9 +48,9 @@ public class CreatorCollectionPage extends BasePage {
         try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
         
         // Some builds require clicking the nested svg
-        Locator svg = plusImg.locator("svg");
-        if (svg.count() > 0 && svg.first().isVisible()) {
-            clickWithRetry(svg.first(), 2, ConfigReader.getElementRetryDelay());
+        Locator svg = plusImg.locator("svg").first();
+        if (safeIsVisible(svg)) {
+            clickWithRetry(svg, 2, ConfigReader.getElementRetryDelay());
         } else {
             clickWithRetry(plusImg.first(), 2, ConfigReader.getElementRetryDelay());
         }
@@ -164,7 +165,7 @@ public class CreatorCollectionPage extends BasePage {
             Locator collectionsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collections icon"));
             waitVisible(collectionsIcon.first(), ConfigReader.getShortTimeout());
             clickWithRetry(collectionsIcon.first(), 2, ConfigReader.getElementRetryDelay());
-            try { page.waitForLoadState(); } catch (Exception e) { logger.debug("waitForLoadState failed: {}", e.getMessage()); }
+            try { page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout())); } catch (Exception e) { logger.debug("waitForLoadState failed: {}", e.getMessage()); }
             waitForIdle();
             try { page.mouse().wheel(0, 600); } catch (Exception e) { logger.debug("Mouse wheel failed: {}", e.getMessage()); }
             // Wait for grid to render at least one tile
@@ -624,7 +625,7 @@ public class CreatorCollectionPage extends BasePage {
                 logger.warn("[Cleanup] Collections icon not found; stopping cleanup");
                 return;
             }
-            try { page.waitForLoadState(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            try { page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout())); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             
             // Check if empty state is visible - all collections deleted
@@ -895,28 +896,20 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Dismiss 'I understand' dialog if present")
     public void clickIUnderstandIfPresent() {
-        long start = System.currentTimeMillis();
-        long timeoutMs = ConfigReader.getShortTimeout(); // Use shorter timeout to avoid delays
-        while (System.currentTimeMillis() - start < timeoutMs) {
-            try {
-                Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(I_UNDERSTAND_BTN));
-                if (btn.count() > 0 && safeIsVisible(btn.first())) {
-                    clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay());
-                    return;
-                }
-                // Fallback: try getByText and xpath
-                Locator textLoc = page.getByText(I_UNDERSTAND_BTN, new Page.GetByTextOptions().setExact(true));
-                if (textLoc.count() > 0 && safeIsVisible(textLoc.first())) {
-                    clickWithRetry(textLoc.first(), 2, ConfigReader.getElementRetryDelay());
-                    return;
-                }
-                Locator xpathLoc = page.locator("xpath=//*[self::button or self::*][contains(translate(normalize-space(.), 'IUNDERSTAND', 'iunderstand'), 'i understand')]");
-                if (xpathLoc.count() > 0 && safeIsVisible(xpathLoc.first())) {
-                    clickWithRetry(xpathLoc.first(), 2, ConfigReader.getElementRetryDelay());
-                    return;
-                }
-            } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(I_UNDERSTAND_BTN)).first();
+        if (safeIsVisible(btn)) {
+            clickWithRetry(btn, 2, ConfigReader.getElementRetryDelay());
+            return;
+        }
+        // Fallback: try getByText and xpath
+        Locator textLoc = page.getByText(I_UNDERSTAND_BTN, new Page.GetByTextOptions().setExact(true)).first();
+        if (safeIsVisible(textLoc)) {
+            clickWithRetry(textLoc, 2, ConfigReader.getElementRetryDelay());
+            return;
+        }
+        Locator xpathLoc = page.locator("xpath=//*[self::button or self::*][contains(translate(normalize-space(.), 'IUNDERSTAND', 'iunderstand'), 'i understand')]").first();
+        if (safeIsVisible(xpathLoc)) {
+            clickWithRetry(xpathLoc, 2, ConfigReader.getElementRetryDelay());
         }
     }
 
@@ -982,19 +975,19 @@ public class CreatorCollectionPage extends BasePage {
     @Step("Open Add Media dialog")
     public void clickAddMediaPlus() {
         // Preferred: codegen locator IMG[name='add'] used for Add Media
-        Locator addImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("add"));
-        if (addImg.count() > 0) {
-            waitVisible(addImg.first(), ConfigReader.getShortTimeout());
-            clickWithRetry(addImg.first(), 2, ConfigReader.getElementRetryDelay());
+        Locator addImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("add")).first();
+        if (safeIsVisible(addImg)) {
+            waitVisible(addImg, ConfigReader.getShortTimeout());
+            clickWithRetry(addImg, 2, ConfigReader.getElementRetryDelay());
         } else {
             // Fallback: legacy plus icon behavior
-            Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-            waitVisible(plus.first(), ConfigReader.getShortTimeout());
-            Locator svg = plus.locator("svg");
-            if (svg.count() > 0 && svg.first().isVisible()) {
-                clickWithRetry(svg.first(), 2, ConfigReader.getElementRetryDelay());
+            Locator plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus")).first();
+            waitVisible(plus, ConfigReader.getShortTimeout());
+            Locator svg = plus.locator("svg").first();
+            if (safeIsVisible(svg)) {
+                clickWithRetry(svg, 2, ConfigReader.getElementRetryDelay());
             } else {
-                clickWithRetry(plus.first(), 2, ConfigReader.getElementRetryDelay());
+                clickWithRetry(plus, 2, ConfigReader.getElementRetryDelay());
             }
         }
         // Ensure Importation is displayed
