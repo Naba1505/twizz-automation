@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.WaitForSelectorState;
 
 import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
@@ -134,15 +135,14 @@ public class CreatorLivePage extends BasePage {
     // ================= Delete Flow =================
     @Step("Check if live logo visible on profile")
     public boolean isLiveLogoVisibleOnProfile() {
-        Locator logo = page.locator(".ant-col > img");
-        try {
-            waitVisible(logo.first(), ConfigReader.getVisibilityTimeout());
+        Locator logo = page.locator(".ant-col > img").first();
+        boolean visible = safeIsVisible(logo);
+        if (visible) {
             logger.info("Live logo visible on profile");
-            return true;
-        } catch (Exception e) {
-            logger.warn("Live logo not visible on profile: {}", e.getMessage());
-            return false;
+        } else {
+            logger.warn("Live logo not visible on profile");
         }
+        return visible;
     }
 
     @Step("Open Edit on latest event")
@@ -150,65 +150,46 @@ public class CreatorLivePage extends BasePage {
         // Try to reveal edit actions by hovering the first live card/logo
         try {
             Locator firstImg = page.locator(".ant-col > img").first();
-            if (firstImg.count() > 0) {
+            if (safeIsVisible(firstImg)) {
                 firstImg.scrollIntoViewIfNeeded();
                 firstImg.hover();
             }
         } catch (Exception e) { logger.debug("Hover on live card failed: {}", e.getMessage()); }
 
         // Strategy 1: direct button named "Edit"
-        Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN));
-        if (editBtn.count() > 0) {
-            try {
-                waitVisible(editBtn.first(), ConfigReader.getShortTimeout());
-                clickWithRetry(editBtn.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                logger.info("Clicked Edit via BUTTON locator");
-                return;
-            } catch (Exception e) { logger.debug("Edit BUTTON strategy failed: {}", e.getMessage()); }
+        Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
+        if (safeIsVisible(editBtn)) {
+            clickWithRetry(editBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+            logger.info("Clicked Edit via BUTTON locator");
+            return;
         }
 
         // Strategy 2: link named "Edit"
-        Locator editLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(EDIT_BTN));
-        if (editLink.count() > 0) {
-            try {
-                waitVisible(editLink.first(), ConfigReader.getMediumTimeout());
-                clickWithRetry(editLink.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                logger.info("Clicked Edit via LINK locator");
-                return;
-            } catch (Exception e) { logger.debug("Edit LINK strategy failed: {}", e.getMessage()); }
+        Locator editLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
+        if (safeIsVisible(editLink)) {
+            clickWithRetry(editLink, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+            logger.info("Clicked Edit via LINK locator");
+            return;
         }
 
         // Strategy 3: menu item named "Edit" (if actions are under a menu)
-        try {
-            Locator menuItem = page.getByRole(AriaRole.MENUITEM, new Page.GetByRoleOptions().setName(EDIT_BTN));
-            if (menuItem.count() > 0) {
-                waitVisible(menuItem.first(), ConfigReader.getMediumTimeout());
-                clickWithRetry(menuItem.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                logger.info("Clicked Edit via MENUITEM locator");
-                return;
-            }
-        } catch (Exception e) { logger.debug("Edit MENUITEM strategy failed: {}", e.getMessage()); }
+        Locator menuItem = page.getByRole(AriaRole.MENUITEM, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
+        if (safeIsVisible(menuItem)) {
+            clickWithRetry(menuItem, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+            logger.info("Clicked Edit via MENUITEM locator");
+            return;
+        }
 
         // Strategy 4: visible text "Edit" scoped under an open dropdown/menu/dialog
         try {
             Locator popup = page.locator(".ant-dropdown:visible, .ant-popover:visible, .ant-modal:visible, body");
-            Locator editTxt = popup.getByText(EDIT_BTN, new Locator.GetByTextOptions().setExact(true));
-            if (editTxt.count() > 0) {
-                clickWithRetry(editTxt.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+            Locator editTxt = popup.getByText(EDIT_BTN, new Locator.GetByTextOptions().setExact(true)).first();
+            if (safeIsVisible(editTxt)) {
+                clickWithRetry(editTxt, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
                 logger.info("Clicked Edit via visible text fallback");
                 return;
             }
         } catch (Exception e) { logger.debug("Edit popup text strategy failed: {}", e.getMessage()); }
-
-        // As a last attempt, try clicking any visible 'Edit' text on the page
-        try {
-            Locator anyEdit = page.getByText(EDIT_BTN, new Page.GetByTextOptions().setExact(true));
-            if (anyEdit.count() > 0 && anyEdit.first().isVisible()) {
-                clickWithRetry(anyEdit.first(), ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                logger.info("Clicked Edit via global text fallback");
-                return;
-            }
-        } catch (Exception e) { logger.debug("Edit global text strategy failed: {}", e.getMessage()); }
 
         // If all strategies fail, log a warning for non-fatal cleanup skip
         logger.warn("Unable to locate clickable 'Edit' action for live event after multiple strategies");
@@ -297,16 +278,9 @@ public class CreatorLivePage extends BasePage {
 
     private void waitUntilRegisterEnabled(int timeoutMs) {
         Locator reg = registerButton();
-        long deadline = System.currentTimeMillis() + timeoutMs;
-        while (System.currentTimeMillis() < deadline) {
-            try {
-                if (reg.first().isEnabled()) return;
-            } catch (Exception e) {
-                logger.debug("Register button enabled check failed: {}", e.getMessage());
-            }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Register wait failed: {}", e.getMessage()); }
+        if (!WaitUtils.waitForEnabled(reg, timeoutMs)) {
+            throw new RuntimeException("Register button did not become enabled within timeout");
         }
-        throw new RuntimeException("Register button did not become enabled within timeout");
     }
 
     @Step("Choose Schedule option")
@@ -697,31 +671,31 @@ public class CreatorLivePage extends BasePage {
 
     @Step("Upload coverage image if provided")
     public void uploadCoverage(Path imagePath) {
-        Locator section = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^CoverageDescription$")));
-        Locator btn = section.getByRole(AriaRole.BUTTON);
         if (imagePath == null || !Files.exists(imagePath)) {
             logger.warn("Coverage image not found, skipping upload: {}", imagePath);
             return;
         }
 
-        // Prefer uploading to an actual input[type=file] inside the section (Ant Design wraps it inside .ant-upload)
-        Locator fileInput = section.locator("input[type='file']");
-        if (fileInput.count() > 0) {
-            fileInput.first().setInputFiles(imagePath);
-            try {
-                Allure.addAttachment("Coverage image", Files.newInputStream(imagePath));
-            } catch (IOException e) { logger.debug("Allure attachment failed: {}", e.getMessage()); }
+        Locator section = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^CoverageDescription$")));
+        Locator fileInput = section.locator("input[type='file']").first();
+        try {
+            fileInput.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.ATTACHED)
+                    .setTimeout(ConfigReader.getShortTimeout()));
+            fileInput.setInputFiles(imagePath);
+            attachCoverageImage(imagePath);
             logger.info("Uploaded coverage image via input[type=file]: {}", imagePath);
             return;
+        } catch (Exception e) {
+            logger.debug("Direct file input upload failed: {}", e.getMessage());
         }
 
         // Fallback: click the upload button to trigger file chooser
-        if (btn.count() > 0) {
+        Locator btn = section.getByRole(AriaRole.BUTTON).first();
+        if (safeIsVisible(btn)) {
             try {
-                page.waitForFileChooser(() -> clickWithRetry(btn.first(), 2, ConfigReader.getElementRetryDelay())).setFiles(imagePath);
-                try {
-                    Allure.addAttachment("Coverage image", Files.newInputStream(imagePath));
-                } catch (IOException e) { logger.debug("Allure attachment failed: {}", e.getMessage()); }
+                page.waitForFileChooser(() -> clickWithRetry(btn, 2, ConfigReader.getElementRetryDelay())).setFiles(imagePath);
+                attachCoverageImage(imagePath);
                 logger.info("Uploaded coverage image via FileChooser: {}", imagePath);
                 return;
             } catch (Exception e) {
@@ -730,45 +704,56 @@ public class CreatorLivePage extends BasePage {
         }
 
         // Last attempt: try a global input[type=file]
-        Locator anyInput = page.locator("input[type='file']");
-        if (anyInput.count() > 0) {
-            anyInput.first().setInputFiles(imagePath);
-            try {
-                Allure.addAttachment("Coverage image", Files.newInputStream(imagePath));
-            } catch (IOException e) { logger.debug("Allure attachment failed: {}", e.getMessage()); }
+        Locator anyInput = page.locator("input[type='file']").first();
+        try {
+            anyInput.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.ATTACHED)
+                    .setTimeout(ConfigReader.getShortTimeout()));
+            anyInput.setInputFiles(imagePath);
+            attachCoverageImage(imagePath);
             logger.info("Uploaded coverage image via global input[type=file]: {}", imagePath);
-        } else {
-            logger.warn("No file input found to upload coverage image");
+        } catch (Exception e) {
+            logger.warn("No file input found to upload coverage image: {}", e.getMessage());
+        }
+    }
+
+    private void attachCoverageImage(Path imagePath) {
+        try {
+            Allure.addAttachment("Coverage image", Files.newInputStream(imagePath));
+        } catch (IOException e) {
+            logger.debug("Allure attachment failed: {}", e.getMessage());
         }
     }
 
     @Step("Set description")
     public void setDescription(String message) {
-        Locator desc = page.getByPlaceholder(DESC_PLACEHOLDER);
-        if (desc.count() > 0) {
-            desc.first().click();
-            String txt = message != null ? message : "Test";
-            // Some forms require a minimum length; pad to at least 15 chars
-            if (txt.length() < 15) {
-                txt = txt + " - automated run";
-            }
-            desc.first().fill(txt);
-            // Blur to trigger validation
-            desc.first().press("Tab");
-            logger.info("Filled description");
+        Locator desc = page.getByPlaceholder(DESC_PLACEHOLDER).first();
+        if (!safeIsVisible(desc)) {
+            logger.warn("Description field not visible; skipping");
+            return;
         }
+        desc.click();
+        String txt = message != null ? message : "Test";
+        // Some forms require a minimum length; pad to at least 15 chars
+        if (txt.length() < 15) {
+            txt = txt + " - automated run";
+        }
+        desc.fill(txt);
+        // Blur to trigger validation
+        desc.press("Tab");
+        logger.info("Filled description");
     }
 
     @Step("Submit and verify success")
     public void submitAndVerify() {
         waitUntilRegisterEnabled(ConfigReader.getDefaultTimeout());
-        Locator reg = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(REGISTER_BTN));
+        Locator reg = registerButton();
         reg.scrollIntoViewIfNeeded();
         clickWithRetry(reg.first(), 3, ConfigReader.getElementRetryDelay());
         // Wait for success
         waitVisible(page.getByText(SUCCESS_TOAST), ConfigReader.getVisibilityTimeout());
         Locator firstImg = page.locator(".ant-col > img").first();
-        if (firstImg.count() > 0) {
+        if (safeIsVisible(firstImg)) {
             waitVisible(firstImg, ConfigReader.getShortTimeout());
         }
         logger.info("Live scheduled successfully");
@@ -792,36 +777,36 @@ public class CreatorLivePage extends BasePage {
 
     @Step("Verify live started successfully")
     public void verifyLiveStarted() {
-        Locator successText = page.getByText("Your live will be started");
-        waitVisible(successText.first(), ConfigReader.getVisibilityTimeout());
+        Locator successText = page.getByText("Your live will be started").first();
+        waitVisible(successText, ConfigReader.getVisibilityTimeout());
         logger.info("Live started successfully - success message visible");
     }
 
     @Step("Ensure Access field is displayed")
     public void assertAccessFieldVisible() {
-        Locator accessText = page.getByText("Access");
-        waitVisible(accessText.first(), ConfigReader.getShortTimeout());
+        Locator accessText = page.getByText("Access").first();
+        waitVisible(accessText, ConfigReader.getShortTimeout());
         logger.info("Access field is displayed");
     }
 
     @Step("Ensure Price field is displayed")
     public void assertPriceFieldVisible() {
-        Locator priceText = page.getByText("Price");
-        waitVisible(priceText.first(), ConfigReader.getShortTimeout());
+        Locator priceText = page.getByText("Price").first();
+        waitVisible(priceText, ConfigReader.getShortTimeout());
         logger.info("Price field is displayed");
     }
 
     @Step("Ensure Chat field is displayed")
     public void assertChatFieldVisible() {
-        Locator chatText = page.getByText("Chat");
-        waitVisible(chatText.first(), ConfigReader.getShortTimeout());
+        Locator chatText = page.getByText("Chat").first();
+        waitVisible(chatText, ConfigReader.getShortTimeout());
         logger.info("Chat field is displayed");
     }
 
     @Step("Ensure 'When ?' field is displayed")
     public void assertWhenFieldVisible() {
-        Locator whenText = page.getByText("When ?");
-        waitVisible(whenText.first(), ConfigReader.getShortTimeout());
+        Locator whenText = page.getByText("When ?").first();
+        waitVisible(whenText, ConfigReader.getShortTimeout());
         logger.info("'When ?' field is displayed");
     }
 
@@ -875,14 +860,14 @@ public class CreatorLivePage extends BasePage {
 
     // Helpers
     private void handleConversionPromptIfPresent() {
-        if (page.getByText(CONVERSION_TOOLS_TEXT).count() > 0) {
+        if (safeIsVisible(page.getByText(CONVERSION_TOOLS_TEXT))) {
             clickIUnderstandIfPresent();
         }
     }
 
     private void clickIUnderstandIfPresent() {
         Locator understand = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(I_UNDERSTAND_BTN));
-        if (understand.count() > 0 && understand.first().isVisible()) {
+        if (safeIsVisible(understand)) {
             clickWithRetry(understand.first(), 2, ConfigReader.getElementRetryDelay());
         }
     }
