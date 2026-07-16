@@ -59,7 +59,7 @@ public class CreatorLoginPage extends BasePage {
     public boolean isLoginFormVisible() {
         Locator user = page.getByPlaceholder(usernamePlaceholder);
         Locator pass = page.getByPlaceholder(passwordPlaceholder);
-        boolean visible = user.isVisible() && pass.isVisible();
+        boolean visible = safeIsVisible(user) && safeIsVisible(pass);
         logger.info("Login form visible: {}", visible);
         return visible;
     }
@@ -68,18 +68,11 @@ public class CreatorLoginPage extends BasePage {
      * Verifies the user is on the login screen by ensuring Twizz logo and Login text are visible.
      */
     public boolean isLoginHeaderVisible() {
-        try {
-            Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(twizzLogoRoleName));
-            Locator loginText = page.getByText(loginTextExact, new Page.GetByTextOptions().setExact(true));
-            waitVisible(logo, ConfigReader.getVisibilityTimeout());
-            waitVisible(loginText, ConfigReader.getVisibilityTimeout());
-            boolean ok = logo.isVisible() && loginText.isVisible();
-            logger.info("Login header visible (logo and text): {}", ok);
-            return ok;
-        } catch (Exception e) {
-            logger.warn("Login header not visible: {}", e.getMessage());
-            return false;
-        }
+        Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(twizzLogoRoleName));
+        Locator loginText = page.getByText(loginTextExact, new Page.GetByTextOptions().setExact(true));
+        boolean ok = safeIsVisible(logo) && safeIsVisible(loginText);
+        logger.info("Login header visible (logo and text): {}", ok);
+        return ok;
     }
 
     public void login(String username, String password) {
@@ -87,13 +80,9 @@ public class CreatorLoginPage extends BasePage {
         
         // If already logged-in marker is visible, skip login
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        try {
-            if (plusImg.count() > 0 && plusImg.first().isVisible()) {
-                logger.info("Already logged in; skipping credential entry");
-                return;
-            }
-        } catch (Exception e) {
-            logger.debug("Already logged in check failed: {}", e.getMessage());
+        if (safeIsVisible(plusImg)) {
+            logger.info("Already logged in; skipping credential entry");
+            return;
         }
 
         // Fill credentials with robust waits to prevent race conditions
@@ -161,7 +150,8 @@ public class CreatorLoginPage extends BasePage {
         if (!visible) {
             // Final fallback: at least wait for DOM
             try {
-                page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+                page.waitForLoadState(LoadState.DOMCONTENTLOADED,
+                        new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
             } catch (Exception e) { logger.debug("DOM load fallback failed: {}", e.getMessage()); }
         }
         
@@ -172,16 +162,10 @@ public class CreatorLoginPage extends BasePage {
     }
 
     public boolean isHandleVisible(String handleWithAt) {
-        try {
-            Locator handle = page.getByText(handleWithAt, new Page.GetByTextOptions().setExact(true));
-            waitVisible(handle, ConfigReader.getVisibilityTimeout());
-            boolean visible = handle.isVisible();
-            logger.info("Handle '{}' visible: {}", handleWithAt, visible);
-            return visible;
-        } catch (Exception e) {
-            logger.warn("Handle '{}' not visible: {}", handleWithAt, e.getMessage());
-            return false;
-        }
+        Locator handle = page.getByText(handleWithAt, new Page.GetByTextOptions().setExact(true));
+        boolean visible = safeIsVisible(handle);
+        logger.info("Handle '{}' visible: {}", handleWithAt, visible);
+        return visible;
     }
 }
 
