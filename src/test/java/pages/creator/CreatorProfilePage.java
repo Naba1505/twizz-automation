@@ -57,7 +57,22 @@ public class CreatorProfilePage extends BasePage {
     @Step("Navigate to Creator Profile via URL")
     public void navigateToProfile() {
         // Navigate directly to stage profile URL per spec
-        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
+        String profileUrl = ConfigReader.getBaseUrl() + "/creator/profile";
+        RuntimeException last = null;
+        for (int attempt = 0; attempt <= ConfigReader.getElementRetryMax(); attempt++) {
+            try {
+                navigateAndWait(profileUrl);
+                page.waitForURL("**/creator/profile**", new Page.WaitForURLOptions()
+                        .setTimeout(ConfigReader.getMediumTimeout()));
+                return;
+            } catch (RuntimeException e) {
+                last = e;
+                logger.warn("Profile navigation attempt {}/{} ended at {}: {}", attempt + 1,
+                        ConfigReader.getElementRetryMax() + 1, page.url(), e.getMessage());
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception ignored) {}
+            }
+        }
+        throw last != null ? last : new RuntimeException("Unable to navigate to Creator Profile");
     }
 
     @Step("Assert URL contains /creator/profile")

@@ -32,6 +32,13 @@ public class BaseCreatorTest extends BaseTestClass {
         Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header not visible on creator login screen");
         Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible on creator login screen");
         loginPage.login(username, password);
+
+        if (page.url().contains("/auth/intro")) {
+            page.navigate(ConfigReader.getBaseUrl() + "/auth/signIn");
+            Assert.assertTrue(loginPage.isLoginHeaderVisible(), "Login header not visible after onboarding redirect");
+            Assert.assertTrue(loginPage.isLoginFormVisible(), "Login form is not visible after onboarding redirect");
+            loginPage.login(username, password);
+        }
     }
 
     @AfterMethod(alwaysRun = true)
