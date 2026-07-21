@@ -31,12 +31,14 @@ public class CreatorDiscoverPage extends BasePage {
         // Wait for URL to include the discover path
         page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         // And for at least one feed container to appear
-        Locator feeds = page.locator("xpath=" + FEED_XPATH);
-        waitVisible(feeds.first(), ConfigReader.getVisibilityTimeout());
+        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
+        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
     }
 
     @Step("Scroll through feeds top-to-bottom, ensuring each is visible")
     public int scrollDownEnsureFeeds() {
+        Locator visibleFeeds = page.locator(".hls-video-player:visible");
+        waitVisible(visibleFeeds.first(), ConfigReader.getVisibilityTimeout());
         Locator feeds = page.locator("xpath=" + FEED_XPATH);
         int total = Math.max(0, feeds.count());
         int seen = 0;
@@ -93,19 +95,31 @@ public class CreatorDiscoverPage extends BasePage {
     public void openRandomVisibleDiscoverProfile() {
         // Codegen: page.getByText("Discover profile").first().click();
         // Try to surface a "Discover profile" element by scrolling a few times
-        Locator profileText = page.getByText("Discover profile");
+        Locator visibleFeeds = page.locator(".hls-video-player:visible");
+        waitVisible(visibleFeeds.first(), ConfigReader.getVisibilityTimeout());
+
+        Locator target = null;
         int attempts = 0;
-        while (!safeIsVisible(profileText.first()) && attempts++ < 6) {
-            try { page.mouse().wheel(0, 1200); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            profileText = page.getByText("Discover profile");
+        while (target == null && attempts++ < ConfigReader.getMaxScrollAttempts()) {
+            Locator profileText = page.getByText("Discover profile");
+            for (int i = 0; i < profileText.count(); i++) {
+                Locator candidate = profileText.nth(i);
+                if (safeIsVisible(candidate)) {
+                    target = candidate;
+                    break;
+                }
+            }
+
+            if (target == null) {
+                try { page.mouse().wheel(0, ConfigReader.getScrollStepSize()); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+                try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            }
         }
 
-        if (profileText.count() == 0) {
-            throw new RuntimeException("No 'Discover profile' text found on Discover feed");
+        if (target == null) {
+            throw new RuntimeException("No visible 'Discover profile' text found on Discover feed");
         }
 
-        Locator target = profileText.first();
         try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
         clickWithRetry(target, 2, ConfigReader.getElementRetryDelay());
     }
