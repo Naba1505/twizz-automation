@@ -54,7 +54,7 @@ public class CreatorCollectionsHistoryPage extends BasePage {
         navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
@@ -113,9 +113,9 @@ public class CreatorCollectionsHistoryPage extends BasePage {
                 clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay());
             } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            if (safeIsVisible(profilePlusIcon())) return;
+            if (safeIsVisible(profilePlusIcon().first())) return;
         }
-        if (!safeIsVisible(profilePlusIcon())) {
+        if (!safeIsVisible(profilePlusIcon().first())) {
             logger.warn("Profile marker (plus icon) not visible after navigating back from collections history");
         }
     }
