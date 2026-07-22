@@ -25,7 +25,7 @@ public class CreatorFormationPage extends BasePage {
                 page.locator("img[alt='settings']"),
                 page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("settings")),
                 page.locator("[data-testid='settings']"),
-                page.locator("img[alt*='setting' i]"),
+                page.getByAltText("settings", new Page.GetByAltTextOptions().setExact(false)),
         };
         boolean clicked = false;
         for (Locator cand : candidates) {
