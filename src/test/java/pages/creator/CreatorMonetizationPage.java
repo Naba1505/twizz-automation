@@ -114,7 +114,7 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Assert on monetization URL")
     public void assertOnMonetizationUrl() {
-        page.waitForURL("**/creator/monetization**");
+        page.waitForURL("**/creator/monetization**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         if (!page.url().startsWith(MONETIZATION_URL)) {
             logger.warn("Expected monetization URL starting with {} but was {}", MONETIZATION_URL, page.url());
         }
@@ -236,13 +236,12 @@ public class CreatorMonetizationPage extends BasePage {
     public void clickContinue() {
         waitVisible(continueButton(), ConfigReader.getShortTimeout());
         // Wait for button to become enabled (it may be disabled if no changes were made)
-        long start = System.currentTimeMillis();
-        long timeoutMs = ConfigReader.getLongTimeout();
-        while (System.currentTimeMillis() - start < timeoutMs) {
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+        while (System.currentTimeMillis() < deadline) {
             try {
                 if (continueButton().isEnabled()) break;
             } catch (Throwable e) { logger.debug("Enabled check failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         if (!continueButton().isEnabled()) {
             logger.warn("Continue button still disabled after waiting; attempting click regardless");
