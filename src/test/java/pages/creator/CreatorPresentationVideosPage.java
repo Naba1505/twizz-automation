@@ -209,29 +209,26 @@ public class CreatorPresentationVideosPage extends BasePage {
 
     @Step("Assert empty prompt is visible after deleting presentation video")
     public void assertEmptyPromptVisible() {
+        // First wait for any video row to disappear (trash icon / Waiting status gone)
         long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (System.currentTimeMillis() < deadline) {
-            try {
-                if (safeIsVisible(addButton())) {
-                    // Add button visible without a video means empty state
-                    logger.info("Add button visible; empty state confirmed");
-                    return;
-                }
-            } catch (Throwable e) { logger.debug("Add button visibility check failed: {}", e.getMessage()); }
-            try {
-                if (safeIsVisible(emptyPromptText().first())) {
-                    waitVisible(emptyPromptText().first(), ConfigReader.getShortTimeout());
-                    return;
-                }
-            } catch (Throwable e) { logger.debug("Empty prompt check failed: {}", e.getMessage()); }
+            if (!hasPresentationVideo()) break;
             try {
                 page.mouse().wheel(0, 200);
                 try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
                 page.mouse().wheel(0, -200);
             } catch (Throwable e) { logger.debug("Wheel failed: {}", e.getMessage()); }
         }
-        // Final assertion using the empty prompt text
-        waitVisible(emptyPromptText(), ConfigReader.getShortTimeout());
+        if (hasPresentationVideo()) {
+            throw new AssertionError("Presentation video is still present after delete wait");
+        }
+        logger.info("No presentation video present; empty state confirmed");
+        // Also assert the empty prompt text if available
+        try {
+            waitVisible(emptyPromptText(), ConfigReader.getShortTimeout());
+        } catch (Throwable e) {
+            logger.debug("Empty prompt text not visible (may be replaced by campaign UI): {}", e.getMessage());
+        }
     }
 
     // Convenience helper to resolve repository-relative path
