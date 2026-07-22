@@ -42,12 +42,16 @@ public class CreatorLanguagePage extends BasePage {
     }
 
     private Locator optionEspanol() {
-        // As per provided selector idea: a div with exact text "Español", choose the second match (nth(1))
-        return page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^Español$"))).nth(1);
+        // Prefer the visible selectable row; fall back to the second div match
+        Locator row = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^Español$")));
+        if (row.count() > 1) return row.nth(1);
+        return row.first();
     }
 
     private Locator optionEnglish() {
-        return page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^English$"))).nth(1);
+        Locator row = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^English$")));
+        if (row.count() > 1) return row.nth(1);
+        return row.first();
     }
 
     private Locator backArrow() {
@@ -65,7 +69,7 @@ public class CreatorLanguagePage extends BasePage {
         navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
@@ -81,10 +85,15 @@ public class CreatorLanguagePage extends BasePage {
 
     @Step("Open Language screen")
     public void openLanguageScreen() {
-        waitVisible(languageMenuItem(), ConfigReader.getShortTimeout());
-        try { languageMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(languageMenuItem(), 1, ConfigReader.getElementRetryDelay());
-        waitVisible(languageMenuItem(), ConfigReader.getShortTimeout());
+        Locator menu = languageMenuItem();
+        waitVisible(menu, ConfigReader.getShortTimeout());
+        try { menu.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(menu, 1, ConfigReader.getElementRetryDelay());
+        waitVisible(languageTitleEnglish(), ConfigReader.getShortTimeout());
+    }
+
+    private Locator languageTitleEnglish() {
+        return page.getByText("Language");
     }
 
     @Step("Switch to Français and verify")
@@ -105,7 +114,7 @@ public class CreatorLanguagePage extends BasePage {
     public void switchToEnglishAndVerify() {
         waitVisible(optionEnglish(), ConfigReader.getShortTimeout());
         clickWithRetry(optionEnglish(), 1, ConfigReader.getElementRetryDelay());
-        waitVisible(languageMenuItem(), ConfigReader.getShortTimeout());
+        waitVisible(languageTitleEnglish(), ConfigReader.getShortTimeout());
     }
 
     @Step("Navigate back to profile (two back arrows)")
@@ -117,8 +126,8 @@ public class CreatorLanguagePage extends BasePage {
             } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        if (!safeIsVisible(profilePlusIcon())) {
-            for (int i = 0; i < 2 && !safeIsVisible(profilePlusIcon()); i++) {
+        if (!safeIsVisible(profilePlusIcon().first())) {
+            for (int i = 0; i < 2 && !safeIsVisible(profilePlusIcon().first()); i++) {
                 try { clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
                 try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
             }
