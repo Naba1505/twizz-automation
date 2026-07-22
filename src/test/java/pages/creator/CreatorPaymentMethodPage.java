@@ -67,8 +67,10 @@ public class CreatorPaymentMethodPage extends BasePage {
     }
 
     private Locator addMethodButton() {
-        // Use the concrete CSS selector observed in the UI for the Add method button
-        return page.locator("button.ant-btn.css-ixblex.ant-btn-default.authBtn");
+        // Prefer concrete selector, fallback to button text
+        Locator byCss = page.locator("button.ant-btn.ant-btn-default.authBtn");
+        if (byCss.count() > 0) return byCss;
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add method"));
     }
 
     private Locator successToast() {
@@ -135,7 +137,7 @@ public class CreatorPaymentMethodPage extends BasePage {
         navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
@@ -151,10 +153,11 @@ public class CreatorPaymentMethodPage extends BasePage {
 
     @Step("Open Payment method screen")
     public void openPaymentMethodScreen() {
-        waitVisible(paymentMethodMenuItem(), ConfigReader.getShortTimeout());
-        try { paymentMethodMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(paymentMethodMenuItem(), 1, ConfigReader.getElementRetryDelay());
-        waitVisible(paymentMethodMenuItem(), ConfigReader.getShortTimeout());
+        Locator menu = paymentMethodMenuItem();
+        waitVisible(menu, ConfigReader.getShortTimeout());
+        try { menu.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(menu, 1, ConfigReader.getElementRetryDelay());
+        waitVisible(addAnAccountButton(), ConfigReader.getShortTimeout());
     }
 
     @Step("Click 'Add an account'")
@@ -166,16 +169,13 @@ public class CreatorPaymentMethodPage extends BasePage {
     @Step("Fill bank account details")
     public void fillBankAccountDetails(String bankName, String swift, String iban, String countryQuery, String countryExact, String address, String postalCode, String city) {
         waitVisible(bankNameTextbox(), ConfigReader.getShortTimeout());
-        bankNameTextbox().click();
-        bankNameTextbox().fill(bankName == null ? "" : bankName);
+        typeAndAssert(bankNameTextbox(), bankName == null ? "" : bankName);
 
         waitVisible(swiftTextbox(), ConfigReader.getShortTimeout());
-        swiftTextbox().click();
-        swiftTextbox().fill(swift == null ? "" : swift);
+        typeAndAssert(swiftTextbox(), swift == null ? "" : swift);
 
         waitVisible(ibanTextbox(), ConfigReader.getShortTimeout());
-        ibanTextbox().click();
-        ibanTextbox().fill(iban == null ? "" : iban);
+        typeAndAssert(ibanTextbox(), iban == null ? "" : iban);
 
         try { countrySearchInput().click(); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
         try {
@@ -188,16 +188,13 @@ public class CreatorPaymentMethodPage extends BasePage {
         }
 
         waitVisible(addressTextbox(), ConfigReader.getShortTimeout());
-        addressTextbox().click();
-        addressTextbox().fill(address == null ? "" : address);
+        typeAndAssert(addressTextbox(), address == null ? "" : address);
 
         waitVisible(postalCodeTextbox(), ConfigReader.getShortTimeout());
-        postalCodeTextbox().click();
-        postalCodeTextbox().fill(postalCode == null ? "" : postalCode);
+        typeAndAssert(postalCodeTextbox(), postalCode == null ? "" : postalCode);
 
         waitVisible(cityTextbox(), ConfigReader.getShortTimeout());
-        cityTextbox().click();
-        cityTextbox().fill(city == null ? "" : city);
+        typeAndAssert(cityTextbox(), city == null ? "" : city);
     }
 
     @Step("Submit Add method")
@@ -286,17 +283,25 @@ public class CreatorPaymentMethodPage extends BasePage {
 
     @Step("Wait for UI to settle after card deletion")
     public void waitAfterDelete() {
-        try { page.waitForTimeout(ConfigReader.getMediumTimeout() / 10); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+        while (System.currentTimeMillis() < deadline) {
+            if (!safeIsVisible(revoCardImage().first())) {
+                logger.info("Payment card no longer visible after delete");
+                return;
+            }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        }
+        logger.warn("Payment card still visible after delete wait");
     }
 
     @Step("Navigate back to profile if needed")
     public void navigateBackToProfile() {
         for (int i = 0; i < 3; i++) {
-            if (safeIsVisible(profilePlusIcon())) return;
+            if (safeIsVisible(profilePlusIcon().first())) return;
             try { clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        if (!safeIsVisible(profilePlusIcon())) {
+        if (!safeIsVisible(profilePlusIcon().first())) {
             logger.warn("Profile marker (plus icon) not visible after navigating back from payment method");
         }
     }
