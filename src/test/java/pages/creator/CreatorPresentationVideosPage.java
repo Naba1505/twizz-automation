@@ -88,7 +88,9 @@ public class CreatorPresentationVideosPage extends BasePage {
     }
 
     private Locator deleteVideoButton() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete Video"));
+        Locator role = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete Video"));
+        if (role.count() > 0) return role;
+        return page.getByText("Delete Video", new Page.GetByTextOptions().setExact(false));
     }
 
     private Locator emptyPromptText() {
@@ -198,12 +200,29 @@ public class CreatorPresentationVideosPage extends BasePage {
         logger.info("Trash/delete icon visible; proceeding to delete presentation video");
         clickWithRetry(trash, 1, ConfigReader.getElementRetryDelay());
         try {
-            waitVisible(deleteConfirmMessage(), ConfigReader.getShortTimeout());
-            waitVisible(deleteVideoButton(), ConfigReader.getShortTimeout());
-            clickWithRetry(deleteVideoButton(), 1, ConfigReader.getElementRetryDelay());
+            Locator confirmMsg = deleteConfirmMessage();
+            Locator deleteBtn = deleteVideoButton();
+            waitVisible(confirmMsg, ConfigReader.getShortTimeout());
+            waitVisible(deleteBtn.first(), ConfigReader.getShortTimeout());
+            // Give the dialog button time to become clickable
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
+            // Use a direct enabled-element click to ensure the backend request fires
+            deleteBtn.first().click(new Locator.ClickOptions().setForce(false));
             logger.info("Presentation video delete confirmed");
+            // Wait for the confirmation dialog and the video card to leave the UI
+            waitForElementHidden(deleteBtn.first(), ConfigReader.getShortTimeout());
         } catch (Throwable e) {
             logger.warn("Delete confirmation did not appear as expected: {}", e.getMessage());
+        }
+    }
+
+    private void waitForElementHidden(Locator locator, long timeoutMs) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                if (!safeIsVisible(locator)) return;
+            } catch (Throwable t) { logger.debug("Hidden check failed: {}", t.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable t) { logger.debug("Wait failed: {}", t.getMessage()); }
         }
     }
 
@@ -222,7 +241,13 @@ public class CreatorPresentationVideosPage extends BasePage {
         if (hasPresentationVideo()) {
             throw new AssertionError("Presentation video is still present after delete wait");
         }
-        logger.info("No presentation video present; empty state confirmed");
+        // Reload to confirm deletion persisted on the backend, then verify again
+        logger.info("No presentation video present in UI; reloading to confirm deletion persisted");
+        navigateAndWait(page.url());
+        if (hasPresentationVideo()) {
+            throw new AssertionError("Presentation video reappeared after page reload; delete did not persist");
+        }
+        logger.info("No presentation video present after reload; empty state confirmed");
         // Also assert the empty prompt text if available
         try {
             waitVisible(emptyPromptText(), ConfigReader.getShortTimeout());
