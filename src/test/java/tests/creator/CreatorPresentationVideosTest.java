@@ -34,10 +34,20 @@ public class CreatorPresentationVideosTest extends BaseCreatorTest {
     @Test(priority = 2, description = "Creator can delete the created Presentation Video and see empty prompt")
     public void creatorCanDeletePresentationVideo() {
         CreatorPresentationVideosPage pvPage = new CreatorPresentationVideosPage(page);
+        CreatorMediaPushPage mediaPushUtils = new CreatorMediaPushPage(page);
 
         // Navigate to Presentation Videos page
         pvPage.openSettingsFromProfile();
         pvPage.openPresentationVideosScreen();
+
+        // Each test method gets a fresh browser context, so ensure a video exists to delete
+        if (!pvPage.hasPresentationVideo()) {
+            Path video = CreatorPresentationVideosPage.resolveVideoPath("src/test/resources/Videos/PresentationVideoA.mp4");
+            pvPage.uploadPresentationVideo(video);
+            mediaPushUtils.waitForUploadingMessageIfFast();
+            pvPage.clickPresentationVideoStickyButton();
+            pvPage.waitForWaitingStatus();
+        }
 
         // Delete and assert empty state
         pvPage.deletePresentationVideo();

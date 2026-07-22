@@ -39,27 +39,21 @@ public class CreatorUnlockHistoryPage extends BasePage {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
     }
 
+    private Locator unlockRows() {
+        return page.locator(".font-12-regular");
+    }
+
     private Locator firstUnlockRow() {
-        return page.locator(".font-12-regular").first();
-    }
-
-    // Provided deep selector for last item with safe fallbacks
-    private Locator providedLastUnlockSelector() {
-        return page.locator("div:nth-child(12) > div > .ant-row.w-full > .ant-col > div:nth-child(3) > .ant-typography > .font-12-regular");
-    }
-
-    private Locator anyUnlockItems() {
-        return page.locator(".font-12-regular, .ant-typography, .ant-row.w-full");
+        return unlockRows().first();
     }
 
     private Locator lastUnlockClickable() {
-        Locator provided = providedLastUnlockSelector();
-        if (provided.count() > 0) return provided;
-        Locator items = page.locator(".font-12-regular");
-        if (items.count() > 0) return items.last();
+        Locator rows = unlockRows();
+        if (rows.count() > 0) return rows.last();
+        // Fallback: any clickable text inside the unlock list
         Locator typos = page.locator(".ant-typography");
         if (typos.count() > 0) return typos.last();
-        return anyUnlockItems().last();
+        return page.locator(".ant-space-item").last();
     }
 
     // ---------- Steps ----------
@@ -69,7 +63,7 @@ public class CreatorUnlockHistoryPage extends BasePage {
         navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
@@ -93,12 +87,8 @@ public class CreatorUnlockHistoryPage extends BasePage {
 
     @Step("Open last unlock entry from the list")
     public void openLastUnlockEntry() {
-        // Nudge list and scroll to bottom to surface last item
-        try { anyUnlockItems().first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        for (int i = 0; i < 8; i++) {
-            try { page.mouse().wheel(0, 800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
-        }
+        // Wait for rows to render, then click the last one
+        waitVisible(unlockRows().first(), ConfigReader.getShortTimeout());
         Locator last = lastUnlockClickable();
         waitVisible(last.first(), ConfigReader.getShortTimeout());
         try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
@@ -132,15 +122,17 @@ public class CreatorUnlockHistoryPage extends BasePage {
         for (int i = 0; i < 5; i++) {
             try { clickBackArrow(); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-            if (safeIsVisible(plusImg)) {
-                return;
-            }
+            if (isOnProfileScreen()) return;
         }
+        if (!isOnProfileScreen()) {
+            logger.warn("Profile marker not visible after navigating back from unlock history; current URL: {}", page.url());
+        }
+    }
+
+    private boolean isOnProfileScreen() {
         Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        if (!safeIsVisible(plusImg)) {
-            logger.warn("Profile marker (plus icon) not visible after navigating back from unlock history");
-        }
+        if (safeIsVisible(plusImg.first())) return true;
+        return page.url().contains("/creator/profile");
     }
 }
 

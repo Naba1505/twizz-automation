@@ -39,29 +39,21 @@ public class CreatorPushHistoryPage extends BasePage {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
     }
 
+    private Locator historyRows() {
+        return page.locator(".ant-row.justify-content-between");
+    }
+
     private Locator firstHistoryRow() {
-        return page.locator(".ant-row.justify-content-between").first();
-    }
-
-    // Provided deep selector for the last item (will try first), with a safer fallback
-    private Locator providedLastItemSelector() {
-        return page.locator("div:nth-child(50) > .ant-space.css-ixblex.ant-space-horizontal.ant-space-align-center.gap-15 > .ant-space-item > .ant-typography");
-    }
-
-    private Locator anyHistoryItems() {
-        // Common containers that show items
-        return page.locator(".ant-space, .ant-list-item, .ant-row.justify-content-between");
+        return historyRows().first();
     }
 
     private Locator lastHistoryClickable() {
-        // Try the provided selector first; otherwise click the last of common rows/typographies
-        Locator provided = providedLastItemSelector();
-        if (provided.count() > 0) return provided;
-        Locator rows = page.locator(".ant-row.justify-content-between");
+        Locator rows = historyRows();
         if (rows.count() > 0) return rows.last();
+        // Fallback: any clickable typography/text inside the history list
         Locator typos = page.locator(".ant-typography");
         if (typos.count() > 0) return typos.last();
-        return anyHistoryItems().last();
+        return page.locator(".ant-space-item").last();
     }
 
     // ---------- Steps ----------
@@ -71,7 +63,7 @@ public class CreatorPushHistoryPage extends BasePage {
         navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
@@ -95,13 +87,8 @@ public class CreatorPushHistoryPage extends BasePage {
 
     @Step("Open last media push entry from the list")
     public void openLastMediaPushEntry() {
-        // Nudge the list to ensure items render
-        try { anyHistoryItems().first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        // Scroll to bottom by repeated wheel to surface last item
-        for (int i = 0; i < 8; i++) {
-            try { page.mouse().wheel(0, 800); } catch (Throwable e) { logger.debug("Wheel scroll failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
-        }
+        // Wait for rows to render, then scroll to the last one
+        waitVisible(historyRows().first(), ConfigReader.getShortTimeout());
         Locator last = lastHistoryClickable();
         waitVisible(last.first(), ConfigReader.getShortTimeout());
         try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
@@ -133,20 +120,22 @@ public class CreatorPushHistoryPage extends BasePage {
 
     @Step("Navigate back to profile screen")
     public void navigateBackToProfile() {
-        // Click back until we see a reliable profile marker (plus icon)
+        // Click back until we see a reliable profile marker (plus icon or profile URL)
         for (int i = 0; i < 3; i++) {
             try { clickBackArrow(); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
             try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-            if (safeIsVisible(plusImg)) {
-                return;
-            }
+            if (isOnProfileScreen()) return;
         }
         // Final check (non-throwing) to log state
-        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        if (!safeIsVisible(plusImg)) {
-            logger.warn("Profile marker (plus icon) not visible after navigating back");
+        if (!isOnProfileScreen()) {
+            logger.warn("Profile marker not visible after navigating back; current URL: {}", page.url());
         }
+    }
+
+    private boolean isOnProfileScreen() {
+        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+        if (safeIsVisible(plusImg.first())) return true;
+        return page.url().contains("/creator/profile");
     }
 }
 

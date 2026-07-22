@@ -24,7 +24,14 @@ public class CreatorHelpAndContactPage extends BasePage {
     }
 
     private Locator helpAndContactMenuItem() {
-        return page.getByText("Help and contact");
+        // Menu label casing can vary across builds
+        Locator exact = page.getByText("Help and contact", new Page.GetByTextOptions().setExact(false));
+        if (exact.count() > 0) return exact;
+        return page.getByText("Help & Contact", new Page.GetByTextOptions().setExact(false));
+    }
+
+    private Locator helpAndContactTitle() {
+        return page.getByText("Help and contact", new Page.GetByTextOptions().setExact(false));
     }
 
     private Locator subjectTextbox() {
@@ -50,7 +57,7 @@ public class CreatorHelpAndContactPage extends BasePage {
         navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
@@ -66,24 +73,23 @@ public class CreatorHelpAndContactPage extends BasePage {
 
     @Step("Open 'Help and contact' screen")
     public void openHelpAndContact() {
-        waitVisible(helpAndContactMenuItem(), ConfigReader.getShortTimeout());
-        try { helpAndContactMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(helpAndContactMenuItem(), 1, ConfigReader.getElementRetryDelay());
-        waitVisible(helpAndContactMenuItem(), ConfigReader.getShortTimeout());
+        Locator menuItem = helpAndContactMenuItem();
+        waitVisible(menuItem, ConfigReader.getShortTimeout());
+        try { menuItem.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+        clickWithRetry(menuItem, 1, ConfigReader.getElementRetryDelay());
+        waitVisible(helpAndContactTitle(), ConfigReader.getShortTimeout());
     }
 
     @Step("Fill Subject: {subject}")
     public void fillSubject(String subject) {
         waitVisible(subjectTextbox(), ConfigReader.getShortTimeout());
-        subjectTextbox().click();
-        subjectTextbox().fill(subject == null ? "" : subject);
+        typeAndAssert(subjectTextbox(), subject == null ? "" : subject);
     }
 
     @Step("Fill Message: {message}")
     public void fillMessage(String message) {
         waitVisible(messageTextbox(), ConfigReader.getShortTimeout());
-        messageTextbox().click();
-        messageTextbox().fill(message == null ? "" : message);
+        typeAndAssert(messageTextbox(), message == null ? "" : message);
     }
 
     @Step("Click Send button")
