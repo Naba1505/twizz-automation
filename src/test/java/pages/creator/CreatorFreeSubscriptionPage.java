@@ -93,13 +93,13 @@ public class CreatorFreeSubscriptionPage extends BasePage {
         String checkedBefore = toggle.getAttribute("aria-checked");
         logger.info("[FreeSubscription] Free subscription toggle state before click: aria-checked={}", checkedBefore);
         clickWithRetry(toggle, 1, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        waitForUiToSettle();
         String checkedAfter = toggle.getAttribute("aria-checked");
         logger.info("[FreeSubscription] Free subscription toggle state after click: aria-checked={}", checkedAfter);
         if (!"true".equals(checkedAfter)) {
             logger.warn("[FreeSubscription] Toggle may not have enabled, retrying click");
             clickWithRetry(toggle, 1, ConfigReader.getAnimationTimeout());
-            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            waitForUiToSettle();
             checkedAfter = toggle.getAttribute("aria-checked");
             logger.info("[FreeSubscription] Free subscription toggle state after retry: aria-checked={}", checkedAfter);
         }
@@ -122,7 +122,7 @@ public class CreatorFreeSubscriptionPage extends BasePage {
             return;
         }
         clickWithRetry(toggle, 1, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        waitForUiToSettle();
         String checkedAfter = toggle.getAttribute("aria-checked");
         logger.info("[FreeSubscription] Featured collection toggle state after click: aria-checked={}", checkedAfter);
     }
@@ -138,13 +138,13 @@ public class CreatorFreeSubscriptionPage extends BasePage {
             return;
         }
         clickWithRetry(toggle, 1, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        waitForUiToSettle();
         String checkedAfter = toggle.getAttribute("aria-checked");
         logger.info("[FreeSubscription] Free subscription toggle state after disable: aria-checked={}", checkedAfter);
         if (!"false".equals(checkedAfter)) {
             logger.warn("[FreeSubscription] Toggle may not have disabled, retrying click");
             clickWithRetry(toggle, 1, ConfigReader.getAnimationTimeout());
-            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            waitForUiToSettle();
             checkedAfter = toggle.getAttribute("aria-checked");
             logger.info("[FreeSubscription] Free subscription toggle state after retry: aria-checked={}", checkedAfter);
         }
@@ -161,7 +161,7 @@ public class CreatorFreeSubscriptionPage extends BasePage {
             return;
         }
         clickWithRetry(toggle, 1, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        waitForUiToSettle();
         String checkedAfter = toggle.getAttribute("aria-checked");
         logger.info("[FreeSubscription] Featured collection toggle state after disable: aria-checked={}", checkedAfter);
     }
@@ -179,7 +179,7 @@ public class CreatorFreeSubscriptionPage extends BasePage {
 
     @Step("Assert 'Updated Personal Information' success toast is visible")
     public void assertUpdatedPersonalInfoToast() {
-        waitVisible(updatedPersonalInfoToast(), ConfigReader.getPageLoadTimeout());
+        waitVisible(updatedPersonalInfoToast(), ConfigReader.getMediumTimeout());
         logger.info("[FreeSubscription] 'Updated Personal Information' success toast visible");
         // Dismiss toast if clickable
         try { clickWithRetry(updatedPersonalInfoToast(), 0, 0); } catch (Throwable e) { logger.debug("Toast dismiss failed: {}", e.getMessage()); }
