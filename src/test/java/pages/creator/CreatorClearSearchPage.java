@@ -39,33 +39,54 @@ public class CreatorClearSearchPage extends BasePage {
     @Step("Click on search field to open search interface")
     public void clickSearchField() {
         logger.info("Clicking on search field");
-        
-        // Click on the search field using filter with "Search" text
-        Locator searchField = page.locator("div")
-                .filter(new Locator.FilterOptions().setHasText("Search"))
-                .nth(5);
+
+        // Try multiple robust search field locators, fall back to the original codegen locator
+        Locator[] searchFieldCandidates = new Locator[] {
+                page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Search")),
+                page.getByPlaceholder("Search"),
+                page.locator("input[type='search']"),
+                page.locator("div")
+                        .filter(new Locator.FilterOptions().setHasText("Search"))
+                        .nth(5)
+        };
+
+        Locator searchField = null;
+        for (Locator candidate : searchFieldCandidates) {
+            if (safeIsVisible(candidate.first())) {
+                searchField = candidate.first();
+                break;
+            }
+        }
+
+        if (searchField == null) {
+            // Last resort: use the original codegen locator
+            searchField = page.locator("div")
+                    .filter(new Locator.FilterOptions().setHasText("Search"))
+                    .nth(5);
+        }
+
         waitVisible(searchField, ConfigReader.getShortTimeout());
         clickWithRetry(searchField, 1, ConfigReader.getElementRetryDelay());
 
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        waitForUiToSettle();
         logger.info("Clicked on search field");
     }
 
     @Step("Verify 'Recent' text is displayed")
     public boolean isRecentTextVisible() {
         logger.info("Verifying 'Recent' text is displayed");
-        
+
         Locator recentText = page.getByText("Recent");
-        boolean visible = recentText.count() > 0 && safeIsVisible(recentText.first());
-        
+        boolean visible = safeIsVisible(recentText.first());
+
         logger.info("'Recent' text visible: {}", visible);
         return visible;
     }
 
     @Step("Get count of recent search items")
     public int getRecentSearchCount() {
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
+        waitForUiToSettle();
+
         // Use exact codegen locator: page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Remove"))
         Locator removeIcons = page.getByRole(AriaRole.IMG, 
                 new Page.GetByRoleOptions().setName("Remove"));
@@ -95,8 +116,7 @@ public class CreatorClearSearchPage extends BasePage {
             Locator firstRemove = removeIcons.first();
             clickWithRetry(firstRemove, 1, ConfigReader.getElementRetryDelay());
 
-            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            
+            waitForUiToSettle();
             logger.info("Removed one recent search item");
             return true;
         } catch (Throwable e) {
@@ -130,8 +150,8 @@ public class CreatorClearSearchPage extends BasePage {
                 logger.warn("Failed to remove search, stopping");
                 break;
             }
-            
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+
+            waitForAnimation();
         }
         
         logger.info("Total recent searches cleared: {}", removedCount);
@@ -141,9 +161,9 @@ public class CreatorClearSearchPage extends BasePage {
     @Step("Verify all recent searches are cleared")
     public boolean verifyAllSearchesCleared() {
         logger.info("Verifying all recent searches are cleared");
-        
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
+
+        waitForUiToSettle();
+
         int remainingCount = getRecentSearchCount();
         boolean allCleared = remainingCount == 0;
         
