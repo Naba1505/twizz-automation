@@ -24,7 +24,7 @@ public class CreatorLogoutPage extends BasePage {
     }
 
     private Locator disconnectMenu() {
-        return page.getByText("Disconnect");
+        return page.getByText("Disconnect", new Page.GetByTextOptions().setExact(true));
     }
 
     private Locator twizzLogoOnIntro() {
@@ -34,6 +34,8 @@ public class CreatorLogoutPage extends BasePage {
     // ---------- Steps ----------
     @Step("Open Settings from profile (Logout)")
     public void openSettingsFromProfile() {
+        // Ensure we start from profile before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
         page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
