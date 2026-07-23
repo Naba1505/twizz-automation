@@ -103,9 +103,7 @@ public class CreatorScriptsPage extends BasePage {
         waitVisible(nameInput.first(), ConfigReader.getShortTimeout());
 
         String updatedName = buildUpdatedName(updatedBaseName);
-        nameInput.first().click();
-        nameInput.first().fill("");
-        nameInput.first().fill(updatedName);
+        typeAndAssert(nameInput.first(), updatedName);
 
         Locator cont = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Continue"));
@@ -123,8 +121,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator msg = page.getByRole(AriaRole.TEXTBOX,
                 new Page.GetByRoleOptions().setName("Your message..."));
         waitVisible(msg.first(), ConfigReader.getShortTimeout());
-        msg.first().click();
-        msg.first().fill("Test updated message");
+        typeAndAssert(msg.first(), "Test updated message");
 
         // Update note: in edit flows we might still be on a previous step; if the note box
         // is not visible yet, advance via a primary Next/Continue button once, then wait again.
@@ -132,7 +129,8 @@ public class CreatorScriptsPage extends BasePage {
                 new Page.GetByRoleOptions().setName("Write a note to not forget"));
         try {
             waitVisible(noteBox.first(), ConfigReader.getMediumTimeout());
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            logger.debug("Note box not visible yet, will try advancing via Next/Continue: {}", t.getMessage());
             Locator nextBtn = page.getByRole(AriaRole.BUTTON,
                     new Page.GetByRoleOptions().setName("Next"));
             if (nextBtn.count() == 0) {
@@ -152,14 +150,15 @@ public class CreatorScriptsPage extends BasePage {
             }
         }
 
-        noteBox.first().click();
-        noteBox.first().fill("Updated note");
+        typeAndAssert(noteBox.first(), "Updated note");
     }
 
     // ===== High level flow =====
 
     @Step("Open settings from profile header")
     public void openSettingsFromProfile() {
+        // Ensure we start from profile before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         Locator settingsIcon = page.getByRole(AriaRole.IMG,
                 new Page.GetByRoleOptions().setName("settings"));
         waitVisible(settingsIcon.first(), ConfigReader.getShortTimeout());
@@ -228,8 +227,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator nameInput = page.getByRole(AriaRole.TEXTBOX,
                 new Page.GetByRoleOptions().setName("My name"));
         waitVisible(nameInput.first(), ConfigReader.getShortTimeout());
-        nameInput.first().click();
-        nameInput.first().fill(unique);
+        typeAndAssert(nameInput.first(), unique);
         return unique;
     }
 
@@ -685,8 +683,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator msg = page.getByRole(AriaRole.TEXTBOX,
                 new Page.GetByRoleOptions().setName("Your message..."));
         waitVisible(msg.first(), ConfigReader.getShortTimeout());
-        msg.first().click();
-        msg.first().fill(message);
+        typeAndAssert(msg.first(), message);
         Locator nameTag = page.getByText("/name");
         waitVisible(nameTag.first(), ConfigReader.getShortTimeout());
         clickWithRetry(nameTag.first(), 1, ConfigReader.getElementRetryDelay());
@@ -710,8 +707,7 @@ public class CreatorScriptsPage extends BasePage {
             }
         }
         waitVisible(spin.first(), ConfigReader.getShortTimeout());
-        spin.first().fill("");
-        spin.first().fill(price);
+        typeAndAssert(spin.first(), price);
     }
 
     @Step("Enable promo slider with discount {discount} and unlimited validity")
@@ -723,9 +719,7 @@ public class CreatorScriptsPage extends BasePage {
 
         Locator discountInput = page.getByPlaceholder("0").first();
         waitVisible(discountInput, ConfigReader.getShortTimeout());
-        discountInput.click();
-        discountInput.fill("");
-        discountInput.fill(discount);
+        typeAndAssert(discountInput, discount);
 
         Locator unlimitedBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Unlimited"));
@@ -749,9 +743,7 @@ public class CreatorScriptsPage extends BasePage {
 
         Locator discountInput = page.getByPlaceholder("0").nth(1);
         waitVisible(discountInput, ConfigReader.getShortTimeout());
-        discountInput.click();
-        discountInput.fill("");
-        discountInput.fill(discountPercent);
+        typeAndAssert(discountInput, discountPercent);
 
         Locator sevenDaysBtn = page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("7 days"));
@@ -764,8 +756,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator noteBox = page.getByRole(AriaRole.TEXTBOX,
                 new Page.GetByRoleOptions().setName("Write a note to not forget"));
         waitVisible(noteBox.first(), ConfigReader.getShortTimeout());
-        noteBox.first().click();
-        noteBox.first().fill(note);
+        typeAndAssert(noteBox.first(), note);
     }
 
     private Locator resolveConfirmButton() {
@@ -799,7 +790,7 @@ public class CreatorScriptsPage extends BasePage {
         Locator success = page.getByText(Pattern.compile("script.*created", Pattern.CASE_INSENSITIVE));
         Locator noBookmark = page.getByText("No bookmark assigned to this script");
 
-        long deadline = System.currentTimeMillis() + 90_000L;
+        long deadline = System.currentTimeMillis() + ConfigReader.getLongTimeout();
         boolean seenSuccess = false;
         boolean bookmarkRetried = false;
         while (System.currentTimeMillis() < deadline) {
