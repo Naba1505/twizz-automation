@@ -31,8 +31,11 @@ public class CreatorRegistrationPage extends BasePage {
 
     // Third Page Locators
     private final String thirdPageHeader = "Subscription price";
-    private final String subscriptionToggle = "text='euro per month' >> role=switch >> span.ant-switch-inner";
     private final String priceInput = "[placeholder='0.00€']";
+
+    private Locator subscriptionToggle() {
+        return page.getByRole(AriaRole.SWITCH).first();
+    }
 
     // Fourth Page Locators
     private final String fourthPageHeader = "Your status";
@@ -292,9 +295,8 @@ public class CreatorRegistrationPage extends BasePage {
 
     public void selectGender(String gender) {
         String normalizedGender = gender.substring(0, 1).toUpperCase() + gender.substring(1).toLowerCase();
-        Locator option = page.getByText(normalizedGender, new Page.GetByTextOptions().setExact(true));
-        option.scrollIntoViewIfNeeded();
-        option.click();
+        Locator option = page.getByText(normalizedGender, new Page.GetByTextOptions().setExact(true)).first();
+        clickWithRetry(option, 1, ConfigReader.getElementRetryDelay());
         logger.info("Selected gender: {}", normalizedGender);
     }
 
@@ -302,43 +304,34 @@ public class CreatorRegistrationPage extends BasePage {
                                      String dob, String email, String password, String phoneNumber,
                                      String instagramUrl, String gender) {
 
-        page.locator(nameInput).fill(name);
+        typeAndAssert(page.locator(nameInput).first(), name);
         logger.info("Filled name: {}", name);
 
-        page.locator(usernameInput).fill(username);
+        typeAndAssert(page.locator(usernameInput).first(), username);
         logger.info("Filled username: {}", username);
 
-        page.locator(firstNameInput).fill(firstName);
+        typeAndAssert(page.locator(firstNameInput).first(), firstName);
         logger.info("Filled first name: {}", firstName);
 
-        page.locator(lastNameInput).fill(lastName);
+        typeAndAssert(page.locator(lastNameInput).first(), lastName);
         logger.info("Filled last name: {}", lastName);
 
         selectDateOfBirth(dob);
         logger.info("Filled date of birth: {}", dob);
-        // Ensure focus is on email field and picker is not obstructing
-        try {
-            Locator emailLoc = page.locator(emailInput).first();
-            emailLoc.click();
-            // Best-effort ensure no dropdown overlays
-            Locator dd = page.locator(".ant-picker-dropdown:visible");
-            if (dd.count() > 0) {
-                page.keyboard().press("Escape");
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
-            }
-            emailLoc.fill(email);
-        } catch (Exception e) {
-            logger.warn("Email fill encountered overlay; retrying after blur: {}", e.getMessage());
-            try { page.evaluate("() => document.activeElement && document.activeElement.blur() "); } catch (Exception ex) { logger.debug("Blur evaluation failed: {}", ex.getMessage()); }
-            page.locator(emailInput).first().click();
-            page.locator(emailInput).first().fill(email);
+
+        // Ensure any calendar overlay is closed before typing email
+        Locator openDropdown = page.locator(".ant-picker-dropdown:visible");
+        if (safeIsVisible(openDropdown)) {
+            try { page.keyboard().press("Escape"); } catch (Exception e) { logger.debug("Escape key press failed: {}", e.getMessage()); }
+            waitForAnimation();
         }
+        typeAndAssert(page.locator(emailInput).first(), email);
         logger.info("Filled email: {}", email);
 
-        page.locator(passwordInput).fill(password);
+        typeAndAssert(page.locator(passwordInput).first(), password);
         logger.info("Filled password: [HIDDEN]");
 
-        page.locator(phoneNumberInput).fill(phoneNumber);
+        typeAndAssert(page.locator(phoneNumberInput).first(), phoneNumber);
         logger.info("Filled phone number: {}", phoneNumber);
 
         // Optional Instagram field – fill only when value is provided
@@ -346,8 +339,7 @@ public class CreatorRegistrationPage extends BasePage {
             try {
                 Locator insta = page.getByRole(AriaRole.TEXTBOX,
                         new Page.GetByRoleOptions().setName(instagramTextboxName));
-                insta.click();
-                insta.fill(instagramUrl);
+                typeAndAssert(insta.first(), instagramUrl);
                 logger.info("Filled Instagram: {}", instagramUrl);
             } catch (Exception e) {
                 logger.warn("Failed to fill Instagram field, proceeding without it: {}", e.getMessage());
@@ -377,13 +369,12 @@ public class CreatorRegistrationPage extends BasePage {
             logger.warn("Registration button wait encountered issue: {}", e.getMessage());
         }
 
-        regButton.scrollIntoViewIfNeeded();
-        regButton.click();
+        clickWithRetry(regButton, 1, ConfigReader.getElementRetryDelay());
         logger.info("Clicked Registration button");
         try {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.LOAD,
                     new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-            page.waitForTimeout(ConfigReader.getElementRetryDelay());
+            waitForAnimation();
         } catch (Exception e) {
             logger.warn("Post-submit load wait timed out or not applicable: {}", e.getMessage());
         }
@@ -397,20 +388,20 @@ public class CreatorRegistrationPage extends BasePage {
 
     public void fillSecondPageForm(String[] contentTypes) {
         for (String contentType : contentTypes) {
-            page.getByText(contentType, new Page.GetByTextOptions().setExact(true)).click();
+            Locator option = page.getByText(contentType, new Page.GetByTextOptions().setExact(true)).first();
+            clickWithRetry(option, 1, ConfigReader.getElementRetryDelay());
             logger.info("Selected content type: {}", contentType);
         }
     }
 
     public void submitSecondPage() {
         Locator btn = continueButton();
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
+        clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
         logger.info("Clicked Continue button on second page");
         try {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.LOAD,
                     new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-            page.waitForTimeout(ConfigReader.getElementRetryDelay());
+            waitForAnimation();
         } catch (Exception e) {
             logger.warn("Post second-page submit wait encountered issue: {}", e.getMessage());
         }
@@ -420,23 +411,22 @@ public class CreatorRegistrationPage extends BasePage {
         return isPageVisible(thirdPageHeader,
                 page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(thirdPageHeader)),
                 page.locator(priceInput).first(),
-                page.locator(subscriptionToggle));
+                subscriptionToggle());
     }
 
     public void fillThirdPageForm(String subscriptionPrice) {
-        page.locator(priceInput).first().fill(subscriptionPrice);
+        typeAndAssert(page.locator(priceInput).first(), subscriptionPrice);
         logger.info("Filled subscription price: {}", subscriptionPrice);
     }
 
     public void submitThirdPage() {
         Locator btn = continueButton();
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
+        clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
         logger.info("Clicked Continue button on third page");
         try {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.LOAD,
                     new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-            page.waitForTimeout(ConfigReader.getElementRetryDelay());
+            waitForAnimation();
         } catch (Exception e) {
             logger.warn("Post third-page submit wait encountered issue: {}", e.getMessage());
         }
@@ -450,27 +440,19 @@ public class CreatorRegistrationPage extends BasePage {
     }
 
     public void fillFourthPageForm() {
-        try {
-            Locator option = page.getByText(privateIndividualOption, new Page.GetByTextOptions().setExact(true));
-            option.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(ConfigReader.getShortTimeout()));
-            option.click();
-            logger.info("Selected status: {}", privateIndividualOption);
-        } catch (Exception e) {
-            logger.warn("Failed to click known status option directly: {}. Trying label fallback...", e.getMessage());
-            page.locator("label").filter(new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^" + java.util.regex.Pattern.quote(privateIndividualOption) + "$"))).click();
-            logger.info("Selected status via label filter: {}", privateIndividualOption);
-        }
+        Locator option = page.getByText(privateIndividualOption, new Page.GetByTextOptions().setExact(true)).first();
+        clickWithRetry(option, 1, ConfigReader.getElementRetryDelay());
+        logger.info("Selected status: {}", privateIndividualOption);
     }
 
     public void submitFourthPage() {
         Locator btn = continueButton();
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
+        clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
         logger.info("Clicked Continue button on fourth page");
         try {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.LOAD,
                     new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-            page.waitForTimeout(ConfigReader.getElementRetryDelay());
+            waitForAnimation();
         } catch (Exception e) {
             logger.warn("Post fourth-page submit wait encountered issue: {}", e.getMessage());
         }
@@ -485,7 +467,7 @@ public class CreatorRegistrationPage extends BasePage {
 
     public void uploadDocuments(String identityFilePath, String selfieFilePath) {
         // Brief stabilization before file upload
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        waitForAnimation();
 
         // Drive the underlying Ant Upload file inputs directly to avoid native OS dialogs.
         Locator inputs = page.locator(".ant-upload input[type='file']");
@@ -507,8 +489,7 @@ public class CreatorRegistrationPage extends BasePage {
 
     public void submitFifthPage() {
         Locator btn = finishButton();
-        btn.scrollIntoViewIfNeeded();
-        btn.click();
+        clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
         logger.info("Clicked FINISH button on fifth page");
     }
 
