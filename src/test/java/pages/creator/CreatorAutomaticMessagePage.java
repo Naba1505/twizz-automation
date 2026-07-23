@@ -24,6 +24,12 @@ public class CreatorAutomaticMessagePage extends BasePage {
     public void clickSaveOnly() {
         waitVisible(saveButton(), ConfigReader.getShortTimeout());
         clickWithRetry(saveButton(), 1, ConfigReader.getElementRetryDelay());
+        // Wait for the modification screen to close and Modify buttons to reappear
+        try {
+            waitVisible(modifyButtonVisibleAgain(), ConfigReader.getMediumTimeout());
+        } catch (Throwable e) {
+            logger.debug("Modify button did not reappear quickly after save: {}", e.getMessage());
+        }
     }
 
     // -------- Locators --------
@@ -167,7 +173,12 @@ public class CreatorAutomaticMessagePage extends BasePage {
             for (String label : labels) {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
                 if (btn.count() > 0 && btn.first().isVisible()) {
-                    try { clickWithRetry(btn.first(), 1, ConfigReader.getElementRetryDelay()); return true; } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
+                    try {
+                        btn.first().click(new Locator.ClickOptions().setForce(true));
+                        return true;
+                    } catch (Throwable e) {
+                        logger.debug("Force confirm delete click failed: {}", e.getMessage());
+                    }
                 }
             }
             try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
@@ -178,9 +189,11 @@ public class CreatorAutomaticMessagePage extends BasePage {
     // -------- Steps --------
     @Step("Open Settings from profile (Automatic Message)")
     public void openSettingsFromProfile() {
+        // Ensure we start from profile before looking for the settings icon
+        navigateAndWait(ConfigReader.getBaseUrl() + "/creator/profile");
         waitVisible(settingsIcon(), ConfigReader.getShortTimeout());
         clickWithRetry(settingsIcon(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForURL("**" + SETTINGS_URL_PART + "**");
+        page.waitForURL("**" + SETTINGS_URL_PART + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
         if (!page.url().contains(SETTINGS_URL_PART)) {
             logger.warn("Expected settings URL to contain '{}' but was {}", SETTINGS_URL_PART, page.url());
         }
@@ -308,17 +321,15 @@ public class CreatorAutomaticMessagePage extends BasePage {
     @Step("Fill message and set price to 15€")
     public void fillMessageAndSetPrice(String message) {
         waitVisible(messageTextbox(), ConfigReader.getShortTimeout());
-        clickWithRetry(messageTextbox(), 1, ConfigReader.getElementRetryDelay());
-        messageTextbox().fill(message);
+        typeAndAssert(messageTextbox(), message);
         waitVisible(priceLabel15(), ConfigReader.getShortTimeout());
         clickWithRetry(priceLabel15(), 1, ConfigReader.getElementRetryDelay());
     }
-    
+
     @Step("Fill message and set price to Free")
     public void fillMessageAndSetPriceFree(String message) {
         waitVisible(messageTextbox(), ConfigReader.getShortTimeout());
-        clickWithRetry(messageTextbox(), 1, ConfigReader.getElementRetryDelay());
-        messageTextbox().fill(message);
+        typeAndAssert(messageTextbox(), message);
         waitVisible(priceLabelFree(), ConfigReader.getShortTimeout());
         clickWithRetry(priceLabelFree(), 1, ConfigReader.getElementRetryDelay());
     }
@@ -343,8 +354,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
             try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         waitVisible(discountTextboxSecond(), ConfigReader.getShortTimeout());
-        clickWithRetry(discountTextboxSecond(), 1, ConfigReader.getElementRetryDelay());
-        discountTextboxSecond().fill(discount);
+        typeAndAssert(discountTextboxSecond(), discount);
     }
 
     @Step("Save auto message and wait for upload to finish")
@@ -421,16 +431,22 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     @Step("Delete all visible media items via delete buttons (with verification)")
     public void deleteAllVisibleMedia() {
-        // Wait up to SHORT_TIMEOUT for at least one delete button to appear
         Locator deleteBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("delete"));
         try { deleteBtn.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getShortTimeout())); } catch (Throwable e) { logger.debug("No delete button appeared: {}", e.getMessage()); return; }
-        // Click delete button one at a time until none remain (reference pattern)
-        for (int guard = 0; guard < 20; guard++) {
+
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+        while (System.currentTimeMillis() < deadline) {
             int count = 0;
             try { count = deleteBtn.count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
             if (count <= 0) break;
-            try { deleteBtn.first().click(); } catch (Throwable e) { logger.debug("Delete click failed: {}", e.getMessage()); break; }
-            try { clickAnyConfirmDeleteInline(); } catch (Throwable e) { logger.debug("Confirm delete failed: {}", e.getMessage()); }
+
+            try {
+                deleteBtn.first().click(new Locator.ClickOptions().setForce(true));
+                clickAnyConfirmDeleteInline();
+            } catch (Throwable e) {
+                logger.debug("Delete click failed (will retry): {}", e.getMessage());
+                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
+            }
         }
     }
 
