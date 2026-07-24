@@ -18,25 +18,21 @@ public class FanRegistrationPage extends BasePage {
 
     public void navigate() {
         String url = ConfigReader.getFanSignupUrl();
-        page.navigate(url, new Page.NavigateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        page.waitForLoadState();
-        logger.info("Navigated to Fan Registration page: {}", url);
+        navigateAndWait(url);
     }
 
     public boolean isFanRegistrationFormVisible() {
-        try {
-            // Primary: look for visible text 'Registration'
-            Locator regText = getByTextExact("Registration");
-            waitVisible(regText, ConfigReader.getShortTimeout());
+        // Primary: look for visible text 'Registration'
+        Locator regText = getByTextExact("Registration").first();
+        if (safeIsVisible(regText)) {
             logger.info("Fan registration form visible via text 'Registration'");
             return true;
-        } catch (Exception e) {
-            // Fallback: registration button visibility
-            Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Registration"));
-            boolean btnVisible = btn.count() > 0 && safeIsVisible(btn.first());
-            logger.info("Fan registration form button visibility: {}", btnVisible);
-            return btnVisible;
         }
+        // Fallback: registration button visibility
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Registration")).first();
+        boolean btnVisible = safeIsVisible(btn);
+        logger.info("Fan registration form button visibility: {}", btnVisible);
+        return btnVisible;
     }
 
     public void fillFanRegistrationForm(String firstName, String lastName, String username, String email, String password) {
@@ -56,9 +52,15 @@ public class FanRegistrationPage extends BasePage {
     }
 
     public void submitFanRegistration() {
-        clickButtonByName("Registration");
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Registration")).first();
+        clickWithRetry(btn, 1, ConfigReader.getElementRetryDelay());
         logger.info("Clicked Registration button (fan)");
-        page.waitForLoadState();
+        try {
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.LOAD,
+                    new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
+        } catch (Exception e) {
+            logger.debug("Post-submit load wait: {}", e.getMessage());
+        }
     }
 
     public boolean isHomeVisibleForUser(String username) {
@@ -76,11 +78,8 @@ public class FanRegistrationPage extends BasePage {
     }
 
     public void assertHomeVisible() {
-        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
-        waitVisible(homeIcon.first(), ConfigReader.getShortTimeout());
-        if (!safeIsVisible(homeIcon.first())) {
-            throw new AssertionError("Fan did not land on home after registration - Home icon not visible. Actual URL: " + page.url());
-        }
+        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon")).first();
+        waitVisible(homeIcon, ConfigReader.getShortTimeout());
         logger.info("Home icon visible after registration (URL: {})", page.url());
     }
 
