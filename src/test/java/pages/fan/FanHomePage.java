@@ -14,54 +14,71 @@ public class FanHomePage extends BasePage {
 
     public FanHomePage(Page page) { super(page); }
 
-    @Step("Ensure fan is on Home screen (Home icon visible)")
+    @Step("Ensure fan is on Home screen (click Home icon and assert /fan/home URL)")
     public void assertOnHomeUrl() {
-        // Fan may land on /fan/home or /common/discover, so use Home icon visibility as success indicator
-        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
-        homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
-        logger.info("[Fan] On home screen - Home icon visible (URL: {})", page.url());
+        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon")).first();
+        waitVisible(homeIcon, ConfigReader.getVisibilityTimeout());
+        clickWithRetry(homeIcon, 1, ConfigReader.getElementRetryDelay());
+        page.waitForURL(Pattern.compile(".*/fan/home.*"),
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
+        logger.info("[Fan] On home screen URL: {}", page.url());
     }
 
     @Step("Click Home icon to navigate to home feed screen")
     public void clickHomeIcon() {
-        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
-        homeIcon.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getShortTimeout()).setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
-        homeIcon.first().click();
+        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon")).first();
+        waitVisible(homeIcon, ConfigReader.getShortTimeout());
+        clickWithRetry(homeIcon, 1, ConfigReader.getElementRetryDelay());
         logger.info("[Fan] Clicked Home icon to navigate to home feed screen");
-        page.waitForLoadState();
+        try {
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.LOAD,
+                    new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
+        } catch (Exception e) {
+            logger.debug("[Fan] Home icon click load wait: {}", e.getMessage());
+        }
     }
 
     @Step("Ensure popcorn logo displayed beside fan username")
     public void assertUsernameBadgeLogo() {
-        Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("twizz-popcorn"));
-        waitVisible(logo.first(), DEFAULT_WAIT);
+        Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("twizz-popcorn")).first();
+        waitVisible(logo, ConfigReader.getShortTimeout());
     }
 
     @Step("Scroll down to first video and play it")
     public void scrollToFirstVideoAndPlay() {
         Locator firstThumb = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("video thumbnail")).first();
         // Scroll until visible
-        for (int i = 0; i < 15 && !safeIsVisible(firstThumb); i++) {
-            page.mouse().wheel(0, 800);
-            page.waitForTimeout(200);
+        int maxAttempts = ConfigReader.getMaxScrollAttempts();
+        for (int i = 0; i < maxAttempts && !safeIsVisible(firstThumb); i++) {
+            page.mouse().wheel(0, ConfigReader.getScrollStepSize());
+            waitForAnimation();
         }
         waitVisible(firstThumb, DEFAULT_WAIT);
         try {
-            Locator playBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Play"));
-            if (playBtn.count() > 0 && safeIsVisible(playBtn.first())) { playBtn.first().click(); return; }
+            Locator playBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Play")).first();
+            if (safeIsVisible(playBtn)) {
+                clickWithRetry(playBtn, 1, ConfigReader.getElementRetryDelay());
+                return;
+            }
         } catch (Throwable ignored) {}
-        try { page.locator("path").nth(4).click(); } catch (Throwable ignored) {}
+        try {
+            Locator fallbackPlay = page.locator("path").nth(4);
+            clickWithRetry(fallbackPlay, 1, ConfigReader.getElementRetryDelay());
+        } catch (Throwable ignored) {}
     }
 
     @Step("Scroll to top to the first feed and ensure it is visible by username {username}")
     public void scrollToTopFirstFeed(String username) {
-        for (int i = 0; i < 10; i++) {
-            page.mouse().wheel(0, -1200);
-            page.waitForTimeout(200);
+        int maxAttempts = ConfigReader.getMaxScrollAttempts();
+        for (int i = 0; i < maxAttempts; i++) {
+            page.mouse().wheel(0, -ConfigReader.getScrollStepSize() * 2);
+            waitForAnimation();
         }
-        Locator topFeedByUser = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^" + Pattern.quote(username) + "$")));
-        if (topFeedByUser.count() > 0) {
-            waitVisible(topFeedByUser.first(), DEFAULT_WAIT);
+        Locator topFeedByUser = page.locator("div")
+                .filter(new Locator.FilterOptions().setHasText(Pattern.compile("^" + Pattern.quote(username) + "$")))
+                .first();
+        if (safeIsVisible(topFeedByUser)) {
+            waitVisible(topFeedByUser, DEFAULT_WAIT);
         }
     }
 
@@ -69,20 +86,21 @@ public class FanHomePage extends BasePage {
     public void likeFirstFeed() {
         Locator likeBtn = firstVisibleIcon("likeFill", "like", "heart");
         int attempts = 0;
-        while ((likeBtn == null || likeBtn.count() == 0 || !safeIsVisible(likeBtn.first())) && attempts < 8) {
-            page.mouse().wheel(0, 600);
-            page.waitForTimeout(150);
+        int maxAttempts = ConfigReader.getMaxScrollAttempts();
+        while ((likeBtn == null || !safeIsVisible(likeBtn)) && attempts < maxAttempts) {
+            page.mouse().wheel(0, ConfigReader.getScrollStepSize());
+            waitForAnimation();
             likeBtn = firstVisibleIcon("likeFill", "like", "heart");
             attempts++;
         }
-        if (likeBtn != null && likeBtn.count() > 0) {
-            waitVisible(likeBtn.first(), DEFAULT_WAIT);
+        if (likeBtn != null) {
+            waitVisible(likeBtn, DEFAULT_WAIT);
             // Use force click to bypass video container overlay interception
             try {
-                likeBtn.first().click(new Locator.ClickOptions().setForce(true));
+                likeBtn.click(new Locator.ClickOptions().setForce(true));
             } catch (Throwable e) {
                 logger.warn("Force click failed, retrying with standard click: {}", e.getMessage());
-                clickWithRetry(likeBtn.first(), 1, 150);
+                clickWithRetry(likeBtn, 1, ConfigReader.getElementRetryDelay());
             }
         }
     }
@@ -91,20 +109,21 @@ public class FanHomePage extends BasePage {
     public void bookmarkFirstVisibleFeed() {
         Locator bookmark = firstVisibleIcon("bookmark", "save");
         int attempts = 0;
-        while ((bookmark == null || bookmark.count() == 0 || !safeIsVisible(bookmark.first())) && attempts < 8) {
-            page.mouse().wheel(0, 600);
-            page.waitForTimeout(150);
+        int maxAttempts = ConfigReader.getMaxScrollAttempts();
+        while ((bookmark == null || !safeIsVisible(bookmark)) && attempts < maxAttempts) {
+            page.mouse().wheel(0, ConfigReader.getScrollStepSize());
+            waitForAnimation();
             bookmark = firstVisibleIcon("bookmark", "save");
             attempts++;
         }
-        if (bookmark != null && bookmark.count() > 0) {
-            waitVisible(bookmark.first(), DEFAULT_WAIT);
+        if (bookmark != null) {
+            waitVisible(bookmark, DEFAULT_WAIT);
             // Use force click to bypass video container overlay interception
             try {
-                bookmark.first().click(new Locator.ClickOptions().setForce(true));
+                bookmark.click(new Locator.ClickOptions().setForce(true));
             } catch (Throwable e) {
                 logger.warn("Force click failed on bookmark, retrying with standard click: {}", e.getMessage());
-                clickWithRetry(bookmark.first(), 1, 150);
+                clickWithRetry(bookmark, 1, ConfigReader.getElementRetryDelay());
             }
         }
     }
@@ -112,49 +131,68 @@ public class FanHomePage extends BasePage {
     @Step("Open feed action menu and cancel")
     public void openThreeDotsAndCancel() {
         Locator threeDots = page.locator(".d-flex.dots-gap").first();
-        clickWithRetry(threeDots, 1, 150);
+        clickWithRetry(threeDots, 1, ConfigReader.getElementRetryDelay());
         waitVisible(page.getByText("What action do you want to").first(), DEFAULT_WAIT);
-        clickWithRetry(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel")).first(), 1, 150);
+        clickWithRetry(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel")).first(),
+                1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Search from home and navigate back from a subscriber profile")
     public void searchFromHomeAndBack(String searchText, String expectedProfileText) {
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("search").setExact(true)).click();
-        page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search")).fill(searchText);
-        Locator match = getByTextExact(expectedProfileText);
-        waitVisible(match.first(), DEFAULT_WAIT);
-        match.first().click();
+        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("search").setExact(true)).first();
+        clickWithRetry(searchIcon, 1, ConfigReader.getElementRetryDelay());
+
+        Locator searchBox = page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search")).first();
+        typeAndAssert(searchBox, searchText);
+
+        Locator match = getByTextExact(expectedProfileText).first();
+        waitVisible(match, DEFAULT_WAIT);
+        clickWithRetry(match, 1, ConfigReader.getElementRetryDelay());
+
         // Ensure Subscriber button then go back
-        waitVisible(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber")).first(), DEFAULT_WAIT);
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        Locator subscriberBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber")).first();
+        waitVisible(subscriberBtn, DEFAULT_WAIT);
+
+        Locator backArrow = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).first();
+        clickWithRetry(backArrow, 1, ConfigReader.getElementRetryDelay());
     }
 
     @Step("Search by handle and open subscriber, verify last name exact and navigate back")
     public void searchSubscriberAndBack(String handle, String lastNameExact) {
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("search").setExact(true)).click();
-        page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search")).fill(handle);
+        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("search").setExact(true)).first();
+        clickWithRetry(searchIcon, 1, ConfigReader.getElementRetryDelay());
+
+        Locator searchBox = page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search")).first();
+        typeAndAssert(searchBox, handle);
+
         // Click exact handle text
-        Locator handleText = getByTextExact(handle);
-        waitVisible(handleText.first(), DEFAULT_WAIT);
-        handleText.first().click();
+        Locator handleText = getByTextExact(handle).first();
+        waitVisible(handleText, DEFAULT_WAIT);
+        clickWithRetry(handleText, 1, ConfigReader.getElementRetryDelay());
+
         // Ensure on profile by exact last name text
-        Locator lastName = page.getByText(lastNameExact, new Page.GetByTextOptions().setExact(true));
-        waitVisible(lastName.first(), DEFAULT_WAIT);
+        Locator lastName = page.getByText(lastNameExact, new Page.GetByTextOptions().setExact(true)).first();
+        waitVisible(lastName, DEFAULT_WAIT);
+
         // Ensure Subscriber button
-        waitVisible(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber")).first(), DEFAULT_WAIT);
+        Locator subscriberBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Subscriber")).first();
+        waitVisible(subscriberBtn, DEFAULT_WAIT);
+
         // Navigate back
-        page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
+        Locator backArrow = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).first();
+        clickWithRetry(backArrow, 1, ConfigReader.getElementRetryDelay());
+
         // Back on home URL
         assertOnHomeUrl();
     }
 
     private Locator firstVisibleIcon(String primary, String... alternates) {
         try {
-            Locator byRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(primary));
-            if (byRole.count() > 0 && safeIsVisible(byRole.first())) return byRole.first();
+            Locator byRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(primary)).first();
+            if (safeIsVisible(byRole)) return byRole;
             for (String alt : alternates) {
-                Locator altLoc = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(alt));
-                if (altLoc.count() > 0 && safeIsVisible(altLoc.first())) return altLoc.first();
+                Locator altLoc = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(alt)).first();
+                if (safeIsVisible(altLoc)) return altLoc;
             }
         } catch (Throwable ignored) {}
         return null;
