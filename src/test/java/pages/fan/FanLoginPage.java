@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-import com.microsoft.playwright.options.LoadState;
 
 import utils.ConfigReader;
 
@@ -25,9 +24,7 @@ public class FanLoginPage extends BasePage {
 
     public void navigate() {
         String url = ConfigReader.getLoginUrl();
-        page.navigate(url, new Page.NavigateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        logger.info("[Fan] Navigated to Fan Login page: {}", url);
+        navigateAndWait(url);
     }
 
     public boolean isLoginHeaderVisible() {
@@ -44,26 +41,33 @@ public class FanLoginPage extends BasePage {
     }
 
     public boolean isLoginFormVisible() {
-        return page.getByPlaceholder(usernamePlaceholder).isVisible()
-                && page.getByPlaceholder(passwordPlaceholder).isVisible();
+        Locator userField = page.getByPlaceholder(usernamePlaceholder).first();
+        Locator passField = page.getByPlaceholder(passwordPlaceholder).first();
+        try {
+            waitVisible(userField, ConfigReader.getShortTimeout());
+            waitVisible(passField, ConfigReader.getShortTimeout());
+            return safeIsVisible(userField) && safeIsVisible(passField);
+        } catch (Exception e) {
+            logger.warn("[Fan] Login form not visible: {}", e.getMessage());
+            return false;
+        }
     }
 
     public void login(String username, String password) {
         logger.info("[Fan] Login attempt for: {}", username);
-        fillByPlaceholder(usernamePlaceholder, username);
-        fillByPlaceholder(passwordPlaceholder, password);
-        Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true));
-        clickWithRetry(connectBtn.first(), 1, ConfigReader.getElementRetryDelay());
+        typeAndAssert(page.getByPlaceholder(usernamePlaceholder).first(), username);
+        typeAndAssert(page.getByPlaceholder(passwordPlaceholder).first(), password);
+        Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).first();
+        clickWithRetry(connectBtn, 1, ConfigReader.getElementRetryDelay());
         waitForHomeIconVisible(ConfigReader.getShortTimeout());
     }
 
     public boolean isHomeIconVisible(long timeoutMs) {
+        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon")).first();
         try {
-            Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
-            waitVisible(homeIcon.first(), timeoutMs);
-            boolean visible = safeIsVisible(homeIcon.first());
-            logger.info("[Fan] Login successful - Home icon visible: {} (URL: {})", visible, page.url());
-            return visible;
+            waitVisible(homeIcon, timeoutMs);
+            logger.info("[Fan] Login successful - Home icon visible (URL: {})", page.url());
+            return true;
         } catch (Exception e) {
             logger.warn("[Fan] Home icon not visible within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
             return false;
