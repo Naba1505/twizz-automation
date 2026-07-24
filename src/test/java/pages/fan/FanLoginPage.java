@@ -2,7 +2,7 @@ package pages.fan;
 
 import pages.common.BasePage;
 
-import java.util.regex.Pattern;
+import java.util.List;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -57,7 +57,9 @@ public class FanLoginPage extends BasePage {
         logger.info("[Fan] Login attempt for: {}", username);
         typeAndAssert(page.getByPlaceholder(usernamePlaceholder).first(), username);
         typeAndAssert(page.getByPlaceholder(passwordPlaceholder).first(), password);
-        Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).first();
+        Locator connectBtn = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName(connectButtonName).setExact(true))
+                .filter(new Locator.FilterOptions().setVisible(true)).first();
         clickConnectButton(connectBtn);
         waitForFanDiscoverUrl(ConfigReader.getMediumTimeout());
         if (!isHomeIconVisible(ConfigReader.getShortTimeout())) {
@@ -66,23 +68,36 @@ public class FanLoginPage extends BasePage {
     }
 
     private void clickConnectButton(Locator connectBtn) {
-        try {
-            connectBtn.scrollIntoViewIfNeeded();
-            connectBtn.click(new Locator.ClickOptions().setForce(true));
-            logger.info("[Fan] Clicked Connect button");
-        } catch (Throwable e) {
-            logger.debug("[Fan] Connect click failed: {}", e.getMessage());
+        List<Locator> buttons = connectBtn.locator("xpath=..")
+                .locator("xpath=.")
+                .page()
+                .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true))
+                .filter(new Locator.FilterOptions().setVisible(true))
+                .all();
+        if (buttons.isEmpty()) {
+            buttons = java.util.Collections.singletonList(connectBtn);
         }
-        long deadline = System.currentTimeMillis() + 2000;
-        while (System.currentTimeMillis() < deadline) {
-            if (!page.url().contains("/auth/signIn")) {
-                return;
+        for (int i = 0; i < buttons.size(); i++) {
+            try {
+                buttons.get(i).evaluate("el => { el.scrollIntoView({behavior: 'instant', block: 'center'}); el.click(); }");
+                logger.info("[Fan] Clicked Connect button #{} via JS", i + 1);
+                waitForAnimation();
+                if (!page.url().contains("/auth/signIn")) {
+                    return;
+                }
+            } catch (Throwable e) {
+                logger.debug("[Fan] Connect button #{} JS click failed: {}", i + 1, e.getMessage());
             }
-            waitForAnimation();
         }
         if (page.url().contains("/auth/signIn")) {
             logger.warn("[Fan] Falling back to pressing Enter to submit login");
-            page.keyboard().press("Enter");
+            try {
+                Locator passField = page.getByPlaceholder(passwordPlaceholder).first();
+                passField.focus();
+                page.keyboard().press("Enter");
+            } catch (Throwable e) {
+                logger.debug("[Fan] Enter fallback failed: {}", e.getMessage());
+            }
         }
     }
 
@@ -111,15 +126,16 @@ public class FanLoginPage extends BasePage {
     }
 
     public boolean isOnFanDiscoverUrl(long timeoutMs) {
-        try {
-            page.waitForURL(Pattern.compile(".*common/discover.*"), new Page.WaitForURLOptions().setTimeout(timeoutMs));
-            boolean ok = page.url().contains("/common/discover");
-            logger.info("[Fan] Login landed on URL: {} (ok={})", page.url(), ok);
-            return ok;
-        } catch (Exception e) {
-            logger.warn("[Fan] Did not reach /common/discover within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
-            return false;
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            if (page.url().contains("/common/discover")) {
+                logger.info("[Fan] Login landed on URL: {} (ok=true)", page.url());
+                return true;
+            }
+            waitForAnimation();
         }
+        logger.warn("[Fan] Did not reach /common/discover within {} ms (actual URL: {})", timeoutMs, page.url());
+        return false;
     }
 
     public void waitForFanDiscoverUrl(long timeoutMs) {

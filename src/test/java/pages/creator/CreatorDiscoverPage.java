@@ -22,7 +22,7 @@ public class CreatorDiscoverPage extends BasePage {
     @Step("Navigate to Discover screen via Search icon")
     public void navigateToDiscover() {
         Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), ConfigReader.getShortTimeout());
+        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(searchIcon.first(), 2, ConfigReader.getElementRetryDelay());
     }
 
