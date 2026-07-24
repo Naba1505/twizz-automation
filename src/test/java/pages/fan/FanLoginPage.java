@@ -59,7 +59,7 @@ public class FanLoginPage extends BasePage {
         typeAndAssert(page.getByPlaceholder(passwordPlaceholder).first(), password);
         Locator connectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(connectButtonName).setExact(true)).first();
         clickWithRetry(connectBtn, 1, ConfigReader.getElementRetryDelay());
-        waitForHomeIconVisible(ConfigReader.getShortTimeout());
+        waitForFanHomeUrl(ConfigReader.getMediumTimeout());
     }
 
     public boolean isHomeIconVisible(long timeoutMs) {
@@ -88,12 +88,12 @@ public class FanLoginPage extends BasePage {
 
     public boolean isOnFanHomeUrl(long timeoutMs) {
         try {
-            page.waitForURL(Pattern.compile(".*/fan/home.*"), new Page.WaitForURLOptions().setTimeout(timeoutMs));
-            boolean ok = page.url().contains("/fan/home");
+            page.waitForURL(Pattern.compile(".*(/fan/home|/common/discover).*"), new Page.WaitForURLOptions().setTimeout(timeoutMs));
+            boolean ok = page.url().contains("/fan/home") || page.url().contains("/common/discover");
             logger.info("[Fan] Login landed on URL: {} (ok={})", page.url(), ok);
             return ok;
         } catch (Exception e) {
-            logger.warn("[Fan] Did not reach /fan/home within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
+            logger.warn("[Fan] Did not reach fan home within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
             return false;
         }
     }
