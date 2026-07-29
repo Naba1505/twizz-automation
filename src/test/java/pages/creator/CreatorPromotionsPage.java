@@ -116,15 +116,15 @@ public class CreatorPromotionsPage extends BasePage {
     private void nudgeLazyLoad() {
         try {
             page.mouse().wheel(0, 600);
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e2) { logger.debug("Lazy load wait failed: {}", e2.getMessage()); }
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
             page.mouse().wheel(0, -600);
         } catch (Throwable e) { logger.debug("Wheel failed: {}", e.getMessage()); }
     }
 
     private void scrollToEndAndBack() {
         try {
-            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, 800); try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e2) { logger.debug("Scroll wait failed: {}", e2.getMessage()); } }
-            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, -800); try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e2) { logger.debug("Scroll wait failed: {}", e2.getMessage()); } }
+            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, 800); page.waitForTimeout(ConfigReader.getElementRetryDelay()); }
+            for (int i = 0; i < 6; i++) { page.mouse().wheel(0, -800); page.waitForTimeout(ConfigReader.getAnimationTimeout()); }
         } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
     }
 
@@ -163,7 +163,7 @@ public class CreatorPromotionsPage extends BasePage {
                 try {
                     waitVisible(deletePromoButton(), ConfigReader.getShortTimeout());
                     clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
-                    try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Post-delete wait failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getPageLoadTimeout());
                 } catch (Throwable e) { logger.debug("Delete button not found/clicked: {}", e.getMessage()); }
                 try {
                     waitVisible(yesDeleteButton(), ConfigReader.getShortTimeout());
@@ -176,7 +176,7 @@ public class CreatorPromotionsPage extends BasePage {
                         int now = automationSpans().count();
                         if (now < beforeCount) { countDecreased = true; break; }
                     } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 }
                 int afterCount;
                 try { afterCount = automationSpans().count(); } catch (Throwable e) { afterCount = 0; logger.debug("Count failed: {}", e.getMessage()); }
@@ -190,7 +190,7 @@ public class CreatorPromotionsPage extends BasePage {
                     }
                 } else {
                     try {
-                        waitVisible(deleteSuccessToast(), ConfigReader.getUiSettleTimeout());
+                        waitVisible(deleteSuccessToast(), ConfigReader.getAnimationTimeout());
                         try { clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
                     } catch (Throwable e) { logger.debug("Toast wait failed: {}", e.getMessage()); }
                 }
@@ -198,13 +198,13 @@ public class CreatorPromotionsPage extends BasePage {
                     logger.warn("Promo count did not decrease after deletion; attempting to refresh view");
                     scrollToEndAndBack();
                 }
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
             int remaining = getAutomationPromoCount();
             if (remaining > 0) {
                 logger.warn("Validation: {} 'AUTOMATION' promos still visible after first pass; attempting second pass", remaining);
                 scrollToEndAndBack();
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 try {
                     clickWithRetry(promoMenuItem(), 1, ConfigReader.getElementRetryDelay());
                     waitVisible(promoTitleExact(), ConfigReader.getShortTimeout());
@@ -222,7 +222,7 @@ public class CreatorPromotionsPage extends BasePage {
                     try {
                         waitVisible(deletePromoButton(), ConfigReader.getShortTimeout());
                         clickWithRetry(deletePromoButton(), 1, ConfigReader.getElementRetryDelay());
-                        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Post-delete wait failed: {}", e.getMessage()); }
+                        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
                     } catch (Throwable e) { logger.debug("Delete button not found/clicked: {}", e.getMessage()); }
                     try {
                         waitVisible(yesDeleteButton(), ConfigReader.getShortTimeout());
@@ -233,16 +233,16 @@ public class CreatorPromotionsPage extends BasePage {
                     while (System.currentTimeMillis() - startCheck < ConfigReader.getShortTimeout()) {
                         try { after = automationSpans().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
                         if (after < before) break;
-                        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                        page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     }
                     try { after = automationSpans().count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
                     boolean lastNow = after == 0;
                     if (lastNow) {
                         try { waitVisible(deleteSuccessToast(), ConfigReader.getMediumTimeout()); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable e) { logger.debug("Toast handling failed: {}", e.getMessage()); }
                     } else {
-                        try { waitVisible(deleteSuccessToast(), ConfigReader.getUiSettleTimeout()); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable e) { logger.debug("Toast handling failed: {}", e.getMessage()); }
+                        try { waitVisible(deleteSuccessToast(), ConfigReader.getAnimationTimeout()); clickWithRetry(deleteSuccessToast(), 0, 0); } catch (Throwable e) { logger.debug("Toast handling failed: {}", e.getMessage()); }
                     }
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 }
                 int finalRemain = getAutomationPromoCount();
                 if (finalRemain > 0) {
@@ -263,7 +263,7 @@ public class CreatorPromotionsPage extends BasePage {
         try { promoMenuItem().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
         clickWithRetry(promoMenuItem(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(promoTitleExact(), ConfigReader.getShortTimeout());
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Promo settle wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         try {
             page.waitForSelector("span.creatorCodePromoName", new Page.WaitForSelectorOptions().setTimeout(ConfigReader.getAnimationTimeout()));
             logger.info("Promo code items found on screen");
@@ -361,7 +361,7 @@ public class CreatorPromotionsPage extends BasePage {
                 if (count > 0) break;
                 try {
                     page.mouse().wheel(0, 600);
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e2) { logger.debug("Scroll wait failed: {}", e2.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     page.mouse().wheel(0, -600);
                 } catch (Throwable e) { logger.debug("Wheel failed: {}", e.getMessage()); }
             }
