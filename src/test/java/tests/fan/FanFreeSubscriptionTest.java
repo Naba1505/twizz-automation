@@ -170,7 +170,7 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         // ===== STEP 5: Back to fan - accept creator's price and pay =====
         page.bringToFront();
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
 
         // Assert price row visible and click Accept
         fanPage.assertPriceRowAndAccept();
@@ -259,17 +259,17 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
      * The SEO team defaults language to French, so tests need English.
      */
     private void switchLanguageToEnglish() {
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Settings icon")).click();
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         page.getByText("Langue").click();
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         page.locator("div:nth-child(2) > .ant-row > .ant-col.circle").click();
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")).click();
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("Switched language to English after registration");
     }
 }

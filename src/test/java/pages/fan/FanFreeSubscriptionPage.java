@@ -86,9 +86,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         } catch (Throwable e) {
             logger.debug("[FanFreeSub] Dismiss overlay JS failed: {}", e.getMessage());
         }
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) {
-            logger.debug("[FanFreeSub] Dismiss overlay wait failed: {}", e.getMessage());
-        }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
     }
 
     // ===== Actions & Asserts =====
@@ -111,7 +109,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         Locator search = searchBox();
         waitVisible(search, ConfigReader.getShortTimeout());
         search.fill(creatorUsername);
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Search wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[FanFreeSub] Filled search with: {}", creatorUsername);
     }
 
@@ -120,7 +118,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         Locator result = page.getByText(creatorUsername);
         waitVisible(result.first(), ConfigReader.getShortTimeout());
         clickWithRetry(result.first(), 1, ConfigReader.getAnimationTimeout());
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Creator result wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked on creator result: {}", creatorUsername);
     }
 
@@ -132,7 +130,7 @@ public class FanFreeSubscriptionPage extends BasePage {
             if (clickHere.count() > 0 && safeIsVisible(clickHere.first())) {
                 clickWithRetry(clickHere.first(), 1, ConfigReader.getAnimationTimeout());
                 logger.info("[FanFreeSub] Clicked 'Click here to see the creator'");
-                try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Skip intro wait failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getPageLoadTimeout());
             }
         } catch (Throwable e) {
             logger.debug("[FanFreeSub] Skip intro 'Click here' failed: {}", e.getMessage());
@@ -144,7 +142,7 @@ public class FanFreeSubscriptionPage extends BasePage {
             if (andHere.count() > 0 && safeIsVisible(andHere.first())) {
                 clickWithRetry(andHere.first(), 1, ConfigReader.getAnimationTimeout());
                 logger.info("[FanFreeSub] Clicked 'And here to see their'");
-                try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Skip intro wait failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getPageLoadTimeout());
             }
         } catch (Throwable e) {
             logger.debug("[FanFreeSub] Skip intro 'And here' failed: {}", e.getMessage());
@@ -161,8 +159,8 @@ public class FanFreeSubscriptionPage extends BasePage {
             logger.debug("[FanFreeSub] scrollIntoViewIfNeeded failed: {}", e.getMessage());
         }
         dismissOverlay();
-        clickWithRetry(btn, 2, ConfigReader.getPageLoadTimeout());
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Subscribe wait failed: {}", e.getMessage()); }
+        clickWithRetry(btn, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked Subscribe button");
     }
 
@@ -200,7 +198,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
         waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, ConfigReader.getAnimationTimeout());
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Continue wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked 'Continue' button");
     }
 
@@ -210,7 +208,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         Locator btn = buyCollectionButton();
         waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, ConfigReader.getAnimationTimeout());
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Buy collection wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked 'Buy a collection' button");
     }
 
@@ -220,7 +218,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         Locator collection = page.locator(".collection-img");
         waitVisible(collection.first(), ConfigReader.getShortTimeout());
         clickWithRetry(collection.first(), 1, ConfigReader.getAnimationTimeout());
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Collection item wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked on collection item");
     }
 
@@ -230,7 +228,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         Locator btn = payToSeeButton();
         waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, ConfigReader.getAnimationTimeout());
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Pay to see wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked 'Pay to see' button");
     }
 
@@ -288,7 +286,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         Locator btn = confirmButton();
         waitVisible(btn, ConfigReader.getShortTimeout());
         clickWithRetry(btn, 1, ConfigReader.getAnimationTimeout());
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Confirm wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked Confirm button");
     }
 
@@ -326,7 +324,7 @@ public class FanFreeSubscriptionPage extends BasePage {
             throw new RuntimeException("Unable to find or click payment selection button");
         }
         
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Payment card wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Payment card selected successfully");
     }
 
@@ -523,7 +521,7 @@ public class FanFreeSubscriptionPage extends BasePage {
     public void assertCollectionBuySuccess() {
         logger.info("[FanFreeSub] Verifying collection buy success");
         
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Collection buy success wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         
         // Try multiple variations of collection text
         Locator[] collectionTextVariations = {
@@ -656,7 +654,7 @@ public class FanFreeSubscriptionPage extends BasePage {
             // Try browser back as fallback
             try {
                 page.goBack();
-                try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Go back wait failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getPageLoadTimeout());
                 logger.info("[FanFreeSub] Used browser back navigation");
                 clicked = true;
             } catch (Exception e) {
@@ -668,7 +666,7 @@ public class FanFreeSubscriptionPage extends BasePage {
             throw new RuntimeException("Unable to find or click back button");
         }
         
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Back wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked back icon");
     }
 
@@ -677,7 +675,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         String profileUrl = ConfigReader.getBaseUrl() + "/profile/" + username;
         page.navigate(profileUrl);
         page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Profile load wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
 
         // Verify we're actually on the creator profile, not redirected to discover
         String currentUrl = page.url();
@@ -694,7 +692,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         }
 
         // Wait for backend subscription state to sync
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[FanFreeSub] Subscription sync wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
     }
 
     @Step("Assert 'Subscriber' button visible (subscription confirmed)")
