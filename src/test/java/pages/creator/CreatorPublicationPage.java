@@ -369,7 +369,7 @@ private void confirmDeletionPopup() {
     waitVisible(yesDelete, ConfigReader.getShortTimeout());
     clickWithRetry(yesDelete, 2, ConfigReader.getElementRetryDelay());
     logger.info("Confirmed publication deletion");
-    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Post-confirm wait failed: {}", e.getMessage()); }
+    page.waitForTimeout(ConfigReader.getAnimationTimeout());
 }
 
 // Loop delete until none remain
@@ -405,7 +405,7 @@ private void confirmDeletionPopup() {
                         .setTimeout(ConfigReader.getNavigationTimeout()));
                 page.waitForLoadState(LoadState.NETWORKIDLE,
                         new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getShortTimeout()));
-                page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             } catch (Exception e) {
                 logger.warn("Failed to reload page after deletion: {}", e.getMessage());
             }
