@@ -56,7 +56,7 @@ public class FanClearSearchPage extends BasePage {
         }
         waitVisible(searchField, DEFAULT_WAIT);
         clickWithRetry(searchField, 1, ConfigReader.getAnimationTimeout());
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("Clicked on search field");
     }
 
@@ -74,7 +74,7 @@ public class FanClearSearchPage extends BasePage {
     @Step("Get count of recent search items")
     public int getRecentSearchCount() {
         // Wait for search interface to fully load
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         
         // Use exact codegen locator: page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Remove"))
         Locator removeIcons = page.getByRole(AriaRole.IMG, 
@@ -107,7 +107,7 @@ public class FanClearSearchPage extends BasePage {
             clickWithRetry(firstRemove, 1, ConfigReader.getAnimationTimeout());
             
             // Wait for UI to update
-            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
             
             logger.info("Removed one recent search item");
             return true;
@@ -144,7 +144,7 @@ public class FanClearSearchPage extends BasePage {
             }
             
             // Wait between removals
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         
         logger.info("Total recent searches cleared: {}", removedCount);
@@ -156,7 +156,7 @@ public class FanClearSearchPage extends BasePage {
         logger.info("Verifying all recent searches are cleared");
         
         // Wait a bit for UI to update
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         
         int remainingCount = getRecentSearchCount();
         boolean allCleared = remainingCount == 0;
