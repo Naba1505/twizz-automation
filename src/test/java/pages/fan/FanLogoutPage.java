@@ -78,7 +78,7 @@ public class FanLogoutPage extends BasePage {
             logger.debug("[Fan][Logout] scrollIntoViewIfNeeded failed: {}", e.getMessage());
         }
         clickWithRetry(disconnect, 2, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("[Fan][Logout] Logout wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[Fan][Logout] Clicked Disconnect button");
     }
 
