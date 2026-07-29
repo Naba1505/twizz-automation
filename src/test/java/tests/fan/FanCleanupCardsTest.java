@@ -28,6 +28,12 @@ public class FanCleanupCardsTest extends BaseFanTest {
         logger.info("[Cleanup Cards] Cleaning up all existing saved cards");
         cards.deleteAllExistingCards();
 
+        // Refresh page and verify no cards exist
+        logger.info("[Cleanup Cards] Refreshing page to verify cleanup");
+        page.reload();
+        cards.assertOnSavedCards();
+        cards.assertNoCardsExist();
+
         logger.info("[Cleanup Cards] Test passed: All existing cards cleaned up successfully");
     }
 }

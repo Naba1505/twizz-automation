@@ -29,7 +29,7 @@ public class FanSavedCardsPage extends BasePage {
         waitVisible(savedCards.first(), ConfigReader.getShortTimeout());
         clickWithRetry(savedCards.first(), 1, ConfigReader.getAnimationTimeout());
         assertOnSavedCards();
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         
         // Check for "No Card Found!" message
         Locator noCardMsg = page.getByText("No Card Found!").first();
@@ -162,57 +162,65 @@ public class FanSavedCardsPage extends BasePage {
     public void deleteAllExistingCards() {
         logger.info("[Saved Cards] Starting to delete all existing cards");
         
-        // First check if "No Card Found!" message is already visible
         Locator noCardMessage = page.getByText("No Card Found!").first();
         if (safeIsVisible(noCardMessage)) {
             logger.info("[Saved Cards] 'No Card Found!' message is already visible - no cards to delete");
             return;
         }
         
-        // Keep deleting until no more cards are found
         int deletedCount = 0;
-        int maxAttempts = 10; // Prevent infinite loop
-        int attempts = 0;
+        int maxAttempts = 10;
         
-        while (attempts < maxAttempts) {
+        for (int attempts = 0; attempts < maxAttempts; attempts++) {
+            if (safeIsVisible(noCardMessage)) {
+                logger.info("[Saved Cards] 'No Card Found!' appeared after {} deletion(s)", deletedCount);
+                break;
+            }
+            
             try {
-                // Follow exact codegen approach - click on the card div
-                page.locator("div").nth(4).click();
+                String firstName = ConfigReader.getProperty("fan.card.firstName", "Test");
+                String lastName = ConfigReader.getProperty("fan.card.lastName", "Card");
+                String fullName = firstName + " " + lastName;
                 
-                // Click Delete button
-                page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete")).click();
-                
-                // Confirm deletion - follow exact codegen sequence
-                page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete")).click();
-                
-                // Ensure popup is displayed
-                waitVisible(page.getByText("Do you really want to delete").first(), ConfigReader.getShortTimeout());
-                
-                // Click on "Yes delete" button
-                page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes delete")).click();
-                
-                // Wait for "No Card Found!" to be visible
-                try {
-                    waitVisible(page.getByText("No Card Found!").first(), ConfigReader.getShortTimeout());
-                    logger.info("[Saved Cards] 'No Card Found!' message appeared after deletion");
+                Locator cardByName = page.getByText(fullName);
+                if (safeIsVisible(cardByName.first())) {
+                    logger.info("[Saved Cards] Found card by config name: {}", fullName);
+                    deleteCard(fullName);
                     deletedCount++;
-                    break;
-                } catch (Exception e) {
-                    logger.info("[Saved Cards] 'No Card Found!' not yet visible, more cards remain");
-                    deletedCount++;
-                    attempts++;
+                    continue;
                 }
                 
+                // Fallback: find any text that looks like a cardholder name (2+ words, not UI labels)
+                Locator allText = page.locator("text=/^[A-Z][a-z]+ [A-Z][a-z]+/");
+                for (int i = 0; i < allText.count(); i++) {
+                    String text = allText.nth(i).textContent().trim();
+                    if (text.equals("No Card Found!") || text.equals("Saved Cards") || text.equals("Add a card") || 
+                        text.equals("Card information") || text.contains("Efficient payment")) {
+                        continue;
+                    }
+                    if (safeIsVisible(allText.nth(i))) {
+                        logger.info("[Saved Cards] Found potential card name: {}", text);
+                        deleteCard(text);
+                        deletedCount++;
+                        break;
+                    }
+                }
+                
+                if (deletedCount > attempts) {
+                    continue;
+                }
+                
+                logger.info("[Saved Cards] No more card entries found, stopping deletion");
+                break;
             } catch (Exception e) {
-                logger.info("[Saved Cards] No more cards to delete or error occurred: {}", e.getMessage());
+                logger.warn("[Saved Cards] Deletion iteration {} failed: {}", attempts + 1, e.getMessage());
                 break;
             }
         }
         
         logger.info("[Saved Cards] Completed deletion, removed {} cards", deletedCount);
         
-        // Final verification
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         if (safeIsVisible(noCardMessage)) {
             logger.info("[Saved Cards] Verified 'No Card Found!' message is displayed");
         } else if (deletedCount == 0) {
@@ -226,19 +234,16 @@ public class FanSavedCardsPage extends BasePage {
     public void assertNoCardsExist() {
         logger.info("[Saved Cards] Checking if any saved cards exist");
         
-        // Try to find any card entry
-        Locator anyCard = page.locator("button[type='button'] span").first();
-        
         // Wait for page to stabilize
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         
-        // Check if any cards are visible
-        if (anyCard.count() > 0 && safeIsVisible(anyCard)) {
-            String cardText = anyCard.textContent();
-            throw new AssertionError("Expected no saved cards, but found card: " + cardText);
+        // Check for "No Card Found!" message
+        Locator noCardMessage = page.getByText("No Card Found!").first();
+        if (!safeIsVisible(noCardMessage)) {
+            throw new AssertionError("Expected 'No Card Found!' message to be visible, but it was not found");
         }
         
-        logger.info("[Saved Cards] Verified: No saved cards exist");
+        logger.info("[Saved Cards] Verified: 'No Card Found!' message is displayed - no saved cards exist");
     }
 
     @Step("Assert card not present for holder name: {fullName}")
