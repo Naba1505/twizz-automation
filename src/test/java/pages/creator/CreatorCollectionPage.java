@@ -45,7 +45,7 @@ public class CreatorCollectionPage extends BasePage {
         waitVisible(plusImg.first(), ConfigReader.getVisibilityTimeout());
         
         // Small stabilization to ensure icon is clickable
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         
         // Some builds require clicking the nested svg
         Locator svg = plusImg.locator("svg").first();
@@ -77,7 +77,7 @@ public class CreatorCollectionPage extends BasePage {
                     continue;
                 }
                 clickTileRobust(tile);
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 // Quick check: are we on a details-like screen?
                 if (!isDetailsMarkersPresentQuick(ConfigReader.getMediumTimeout())) {
                     logger.warn("[Cleanup] Details markers not present after opening tile index {}; going back", i);
@@ -121,7 +121,7 @@ public class CreatorCollectionPage extends BasePage {
                 try { loc.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
                 try { page.keyboard().press("PageDown"); } catch (Throwable e) { logger.debug("PageDown failed: {}", e.getMessage()); }
                 try { page.mouse().wheel(0, SCROLL_WHEEL_AMOUNT); } catch (Throwable e) { logger.debug("Mouse wheel failed: {}", e.getMessage()); }
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             } catch (Throwable e) { logger.debug("Scroll iteration failed: {}", e.getMessage()); }
         }
         try { return loc.count() > 0 && loc.first().isVisible(); } catch (Throwable e) { return false; }
@@ -245,7 +245,7 @@ public class CreatorCollectionPage extends BasePage {
         for (int pass = 0; pass < 3; pass++) {
             try { page.keyboard().press("Home"); } catch (Exception e) { logger.debug("Home key failed: {}", e.getMessage()); }
             try { page.mouse().wheel(0, 0); } catch (Exception e) { logger.debug("Mouse wheel reset failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
             Locator any = page.locator("xpath=(//*[self::a or self::button or @role='button' or @role='tab'][contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'collection')])");
             int n = any.count();
             for (int i = 0; i < Math.min(n, 5); i++) {
@@ -258,7 +258,7 @@ public class CreatorCollectionPage extends BasePage {
                 if (WaitUtils.waitForVisible(tilesRole, ConfigReader.getDefaultTimeout()) || WaitUtils.waitForVisible(tilesXpath, ConfigReader.getDefaultTimeout())) return;
             }
             try { page.mouse().wheel(0, 1200); } catch (Exception e) { logger.debug("Scroll down failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         throw new RuntimeException("Failed to open Collections list using available selectors");
     }
@@ -276,7 +276,7 @@ public class CreatorCollectionPage extends BasePage {
         waitVisible(candidate, ConfigReader.getShortTimeout());
         try { candidate.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
         clickWithRetry(candidate, 2, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Animation wait failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
         return true;
     }
 
@@ -380,7 +380,7 @@ public class CreatorCollectionPage extends BasePage {
             if (actions.count() == 0 || !actions.first().isVisible()) return;
         } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
         // As last resort, short wait to allow list refresh
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
     }
 
     // ==============================
@@ -446,7 +446,7 @@ public class CreatorCollectionPage extends BasePage {
             deleteCurrentCollectionFromDetails();
             // Return to list for next iteration
             clickBackArrowIfPresent();
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         logger.warn("[Cleanup] Guard exhausted while deleting collections via files icon");
     }
@@ -463,7 +463,7 @@ public class CreatorCollectionPage extends BasePage {
         for (int s = 0; s < steps; s++) {
             try { page.keyboard().press("PageDown"); } catch (Throwable e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             try { page.mouse().wheel(0, wheel); } catch (Throwable e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(pause); } catch (Throwable e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(pause);
         }
     }
 
@@ -542,10 +542,10 @@ public class CreatorCollectionPage extends BasePage {
             } catch (Exception e) {
                 // Fallback to back then try again
                 safeReturnToCollectionsList();
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception ignored2) {}
+                page.waitForTimeout(ConfigReader.getElementRetryDelay());
                 ensureCollectionsList();
             }
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         }
         logger.warn("[Cleanup] Guard exhausted while deleting collections via collection-img tiles");
     }
@@ -626,7 +626,7 @@ public class CreatorCollectionPage extends BasePage {
                 return;
             }
             try { page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout())); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
             
             // Check if empty state is visible - all collections deleted
             try {
@@ -673,7 +673,7 @@ public class CreatorCollectionPage extends BasePage {
             try { targetCollection.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             logger.info("[Cleanup] Clicking collection image to open details");
             clickTileRobust(targetCollection);
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Post-click wait failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
             
             // Wait for details screen to load - check for "Details" text or back arrow
             boolean detailsLoaded = false;
@@ -709,13 +709,13 @@ public class CreatorCollectionPage extends BasePage {
                 waitVisible(menuIcon, ConfigReader.getLongTimeout());
                 logger.info("[Cleanup] Clicking menu icon (nth(1)) on details screen");
                 clickWithRetry(menuIcon, 2, ConfigReader.getElementRetryDelay());
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             } catch (Exception e) {
                 logger.warn("[Cleanup] Menu icon nth(1) not found; trying .right-icon > img");
                 Locator altMenu = page.locator(".right-icon > img");
                 if (altMenu.count() > 0) {
                     clickWithRetry(altMenu.first(), 2, ConfigReader.getElementRetryDelay());
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e2) { logger.debug("Optional action failed: {}", e2.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 } else {
                     logger.warn("[Cleanup] No menu icon found; returning to list");
                     safeReturnToCollectionsList();
@@ -751,7 +751,7 @@ public class CreatorCollectionPage extends BasePage {
             logger.info("[Cleanup] Collection deleted successfully, returning to list");
             // Return to collections list for next iteration
             safeReturnToCollectionsList();
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         // After exhausting guard (or finishing deletions), verify empty state to ensure a clean end
         try {
@@ -835,7 +835,7 @@ public class CreatorCollectionPage extends BasePage {
                 safeReturnToCollectionsList();
             }
             // Small wait to allow list to refresh
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
             openCollectionsList();
         }
     }
@@ -847,7 +847,7 @@ public class CreatorCollectionPage extends BasePage {
             Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
             if (arrowLeft.count() > 0 && safeIsVisible(arrowLeft.first())) {
                 clickWithRetry(arrowLeft.first(), 1, ConfigReader.getElementRetryDelay());
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 return;
             }
         } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
@@ -856,16 +856,16 @@ public class CreatorCollectionPage extends BasePage {
             Locator backIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("back"));
             if (safeIsVisible(backIcon.first())) {
                 clickWithRetry(backIcon.first(), 1, ConfigReader.getElementRetryDelay());
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 return;
             }
         } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
         // Last resort: browser back twice to get to profile
         try {
             page.goBack();
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
             page.goBack();
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
     }
 
@@ -889,7 +889,7 @@ public class CreatorCollectionPage extends BasePage {
             }
             deleteOneCollectionIfAny();
             // Small wait and re-check
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         logger.warn("[Cleanup] Guard exhausted while waiting for contentinfo to appear");
     }
@@ -948,7 +948,7 @@ public class CreatorCollectionPage extends BasePage {
                     break;
                 }
             } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
         // If still disabled, trigger validations on Title by blur and small edits
         if (!safeIsEnabled(create.first())) {
@@ -958,11 +958,11 @@ public class CreatorCollectionPage extends BasePage {
                     title.first().click();
                     // Nudge validation by appending and removing a space
                     try { title.first().press("Space"); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     try { page.keyboard().press("Backspace"); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                     // Blur via Tab
                     try { page.keyboard().press("Tab"); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 }
             } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
         }
@@ -1014,7 +1014,7 @@ public class CreatorCollectionPage extends BasePage {
         try {
             for (int i = 0; i < 5; i++) {
                 try { page.mouse().wheel(0, 700); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
         } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
 
@@ -1035,7 +1035,7 @@ public class CreatorCollectionPage extends BasePage {
                 Locator thumbsFast = page.locator(".select-quick-file-media-thumb");
                 long startFast = System.currentTimeMillis();
                 while (thumbsFast.count() == 0 && System.currentTimeMillis() - startFast < ConfigReader.getDefaultTimeout()) {
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 }
                 if (thumbsFast.count() > 0) {
                     // Non-empty album found; use it and stop
@@ -1047,7 +1047,7 @@ public class CreatorCollectionPage extends BasePage {
                     Locator cancelBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
                     if (cancelBtn.count() > 0) {
                         clickWithRetry(cancelBtn.first(), 1, ConfigReader.getElementRetryDelay());
-                        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                        page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     }
 
                     Locator plusIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
@@ -1059,7 +1059,7 @@ public class CreatorCollectionPage extends BasePage {
                     if (quickFilesBtn.count() > 0) {
                         clickWithRetry(quickFilesBtn.first(), 1, ConfigReader.getElementRetryDelay());
                     }
-                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getElementRetryDelay());
                 } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             }
         } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
@@ -1100,7 +1100,7 @@ public class CreatorCollectionPage extends BasePage {
                 Locator thumbs = page.locator(".select-quick-file-media-thumb");
                 long start = System.currentTimeMillis();
                 while (thumbs.count() == 0 && System.currentTimeMillis() - start < ConfigReader.getDefaultTimeout()) {
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 }
                 if (thumbs.count() > 0) {
                     // Non-empty album found
@@ -1116,7 +1116,7 @@ public class CreatorCollectionPage extends BasePage {
                     }
 
                     // small wait to ensure dialog closes
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
 
                     // 2) Click plus icon again
                     Locator plusIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
@@ -1131,7 +1131,7 @@ public class CreatorCollectionPage extends BasePage {
                     }
 
                     // brief settle for album list to reappear
-                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getElementRetryDelay());
                 } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             } catch (Exception e) {
                 logger.debug("Album candidate click/navigation failed: {}", e.getMessage());
@@ -1156,7 +1156,7 @@ public class CreatorCollectionPage extends BasePage {
                     waitVisible(icon, ConfigReader.getShortTimeout());
                     try { icon.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                     clickWithRetry(icon, 1, ConfigReader.getAnimationTimeout());
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                    page.waitForTimeout(ConfigReader.getAnimationTimeout());
                     picked++;
                 } catch (Exception e) { logger.debug("Select icon click failed at index {}: {}", i, e.getMessage()); }
             }
@@ -1179,7 +1179,7 @@ public class CreatorCollectionPage extends BasePage {
             try {
                 try { thumb.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
                 clickWithRetry(thumb, 1, ConfigReader.getAnimationTimeout());
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
                 picked++;
             } catch (Exception e) { logger.debug("Thumbnail click failed at index {}: {}", i, e.getMessage()); }
         }
