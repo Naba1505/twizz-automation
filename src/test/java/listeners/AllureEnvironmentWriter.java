@@ -27,7 +27,41 @@ public class AllureEnvironmentWriter implements IExecutionListener {
 
     @Override
     public void onExecutionFinish() {
-        // No action needed on finish
+        snapshotCurrentResults();
+    }
+
+    /**
+     * Copies the current run's allure-results to a timestamped snapshot directory
+     * so every run is permanently preserved for future reference.
+     */
+    private void snapshotCurrentResults() {
+        try {
+            String allureResultsPath = System.getProperty("allure.results.directory", "target/allure-results");
+            Path resultsDir = Paths.get(allureResultsPath);
+            if (!Files.exists(resultsDir) || !Files.isDirectory(resultsDir)) {
+                return;
+            }
+            try (var files = Files.list(resultsDir)) {
+                if (files.findAny().isEmpty()) return;
+            }
+            String timestamp = java.time.LocalDateTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            Path snapshotDir = resultsDir.resolveSibling("allure-results_" + timestamp);
+            Files.createDirectories(snapshotDir);
+            try (var files = Files.list(resultsDir)) {
+                files.forEach(file -> {
+                    try {
+                        Files.copy(file, snapshotDir.resolve(file.getFileName()),
+                                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        logger.warn("Failed to copy allure result file '{}': {}", file, e.getMessage());
+                    }
+                });
+            }
+            logger.info("Snapshot of current allure-results saved to: {}", snapshotDir);
+        } catch (Exception e) {
+            logger.warn("Failed to snapshot current allure-results: {}", e.getMessage());
+        }
     }
 
     /**
