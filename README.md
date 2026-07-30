@@ -10,7 +10,7 @@ End-to-end UI automation framework for the **Twizz** platform — covering Creat
 | **Reporting** | Allure TestNG 2.29.1 |
 | **Logging** | SLF4J + Logback |
 | **Build** | Maven 3.9+ / Surefire 3.2.5 |
-| **Total Tests** | 138+ automated scenarios |
+| **Total Tests** | 169 automated scenarios |
 
 ---
 
@@ -210,6 +210,29 @@ allure open target/allure-report
 
 > **Note**: Always use `target/allure-results` (not root-level `allure-results/`). The `target/` directory is automatically cleaned by `mvn clean`.
 
+### Timestamped Snapshots
+
+At the end of every test suite execution, the `AllureEnvironmentWriter` listener automatically copies the current `target/allure-results/` to a timestamped snapshot directory:
+
+```
+target/allure-results_20260730_122500/
+```
+
+This preserves every run's results for historical reference. To view any past run:
+
+```bash
+# List all snapshots (macOS/Linux)
+ls target/ | grep allure-results_
+
+# List all snapshots (Windows PowerShell)
+Get-ChildItem target/ -Name | Where-Object { $_ -like "allure-results_*" }
+
+# Serve a specific historical run
+allure serve target/allure-results_20260730_122500
+```
+
+This works across all suite files (`testng.xml`, `testng-parallel.xml`, `business-testng.xml`, `business-testng-parallel.xml`).
+
 ### Report Contents
 
 | Artifact | When Captured |
@@ -252,9 +275,14 @@ twizz-automation/
 ├── src/main/
 │   ├── java/utils/
 │   │   ├── ConfigReader.java           # Loads config.properties
+│   │   ├── ConfigValidator.java        # Validates config at startup
 │   │   ├── BrowserFactory.java         # ThreadLocal Playwright/Browser/Context/Page
 │   │   ├── WaitUtils.java              # Wait helpers
 │   │   ├── RetryAnalyzer.java          # Centralized retry with logging
+│   │   ├── DataGenerator.java          # Unique test data generation
+│   │   ├── TestDataManager.java        # Cross-test data sharing (ThreadLocal + file)
+│   │   ├── TearDownHelper.java         # Screenshot/HTML/trace capture + Allure attach
+│   │   ├── DateTimeUtils.java          # Date/time helpers for scheduling
 │   │   └── AnnotationTransformer.java
 │   └── resources/
 │       └── config.properties           # All environment & test configuration
@@ -262,7 +290,8 @@ twizz-automation/
 └── src/test/
     ├── java/
     │   ├── listeners/
-    │   │   └── AllureEnvironmentWriter.java  # Auto-generates environment.properties
+    │   │   ├── AllureEnvironmentWriter.java  # Env properties + timestamped snapshots
+    │   │   └── AllureAttachments.java        # Screenshot/HTML/text attachments
     │   │
     │   ├── pages/
     │   │   ├── common/                 # BasePage, BaseTestClass, LandingPage
@@ -303,7 +332,7 @@ The full suite runs in the following order (via `testng.xml`):
 | Module | Tests | Coverage |
 |--------|------:|----------|
 | **Creator** | 30+ | Registration, Login, Profile, Messaging (13 scenarios), Scripts (12 scenarios), Publications, Collections, Quick Files, Media Push (19 scenarios), Live, Revenues, Promotions, Payment Method, Presentation Videos, Settings (Language, Legal, Help, Logout, etc.) |
-| **Fan** | 17+ | Registration, Login, Home Screen, Discover, Bookmarks, Subscription (3DS payment), Free Subscription (3 flows), Messaging (4 scenarios), Live Events (instant + scheduled), Settings (Language, Personal Info, Email Notifications, Terms, Help, Bug Report, Logout, Clear Search, My Creators) |
+| **Fan** | 19 | Registration, Login, Home Screen, Discover, Bookmarks, Subscription (3DS payment), Free Subscription (3 flows), Messaging (4 scenarios), Live Events (instant + scheduled), Settings (Language, Personal Info, Email Notifications, Terms, Help, Bug Report, Logout, Clear Search, My Creators) |
 | **Admin** | 1 | Creator approval on admin dashboard |
 | **Business** | 11 | Landing page, Manager signup/login/language/agency management (invite, accept, reject, delete for both creators and employees), Employee signup/login |
 | **Cleanup** | 5+ | Scripts cleanup, Promo codes cleanup, Quick Files cleanup, Collection cleanup, Disable free subscription |
@@ -377,7 +406,8 @@ and try again.
 |----------|---------|-------------|
 | `timeout.default` | `60000` | Default wait timeout (ms) |
 | `retry.max` | `2` | Auto-retry failed tests |
-| `retry.delay.ms` | `0` | Delay between retries |
+| `element.retry.max` | `3` | Max retry attempts for element interactions |
+| `element.retry.delay` | `200` | Delay between element retries (ms) |
 
 ### Reporting
 
