@@ -166,30 +166,28 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Assert 'Subscription is free when' text is visible")
     public void assertFreeSubscriptionTextVisible() {
-        // Try multiple variations of free subscription text
         Locator[] freeTextVariations = {
             page.getByText("Subscription is free when"),
             page.getByText("Subscription is free"),
             page.getByText("Free subscription"),
             page.getByText("Free")
         };
-        
-        boolean found = false;
-        for (Locator text : freeTextVariations) {
-            try {
-                if (text.count() > 0 && safeIsVisible(text.first())) {
-                    logger.info("[FanFreeSub] Free subscription text found: {}", text.first().textContent());
-                    found = true;
-                    break;
+
+        long deadline = System.currentTimeMillis() + ConfigReader.getVisibilityTimeout();
+        while (System.currentTimeMillis() < deadline) {
+            for (Locator text : freeTextVariations) {
+                try {
+                    if (text.count() > 0 && safeIsVisible(text.first())) {
+                        logger.info("[FanFreeSub] Free subscription text found: {}", text.first().textContent());
+                        return;
+                    }
+                } catch (Exception e) {
+                    logger.debug("[FanFreeSub] Free text variation check failed: {}", e.getMessage());
                 }
-            } catch (Exception e) {
-                logger.debug("[FanFreeSub] Free text variation failed: {}", e.getMessage());
             }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        
-        if (!found) {
-            logger.warn("[FanFreeSub] Free subscription text not found, but continuing...");
-        }
+        logger.warn("[FanFreeSub] Free subscription text not found after waiting, but continuing...");
     }
 
     @Step("Click 'Continue' button for direct free subscription")
@@ -206,8 +204,9 @@ public class FanFreeSubscriptionPage extends BasePage {
     public void clickBuyCollection() {
         dismissOverlay();
         Locator btn = buyCollectionButton();
-        waitVisible(btn, ConfigReader.getShortTimeout());
-        clickWithRetry(btn, 1, ConfigReader.getAnimationTimeout());
+        try { btn.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("[FanFreeSub] scrollIntoViewIfNeeded failed: {}", e.getMessage()); }
+        waitVisible(btn, ConfigReader.getVisibilityTimeout());
+        clickWithRetry(btn, 2, ConfigReader.getAnimationTimeout());
         page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanFreeSub] Clicked 'Buy a collection' button");
     }

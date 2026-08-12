@@ -43,8 +43,8 @@ public class CreatorRegistrationPage extends BasePage {
 
     // Fifth Page Locators
     private final String fifthPageHeader = "Identity verification";
-    // Final Confirmation
-    private final String finalConfirmationText = "Thank you for your interest!";
+    // Final Step (before WhatsApp redirect)
+    private final String finalStepHeader = "Final step";
 
     private Locator registrationButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Registration"));
@@ -493,9 +493,25 @@ public class CreatorRegistrationPage extends BasePage {
         logger.info("Clicked FINISH button on fifth page");
     }
 
-    public boolean isFinalConfirmationVisible() {
-        return isPageVisible(finalConfirmationText,
-                page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(finalConfirmationText)));
+    public boolean isFinalStepVisible() {
+        return isPageVisible(finalStepHeader,
+                page.getByText("Your account manager ("),
+                page.getByText("1.Click on the button below.2"),
+                continueButton());
+    }
+
+    /**
+     * Clicks Continue on the final step and waits for the WhatsApp Web popup.
+     * Returns the popup Page so the caller can verify and close it.
+     */
+    public Page clickContinueAndWaitForWhatsApp() {
+        Page popup = page.waitForPopup(() -> {
+            continueButton().click();
+        });
+        logger.info("WhatsApp popup opened: {}", popup.url());
+        popup.waitForLoadState(com.microsoft.playwright.options.LoadState.LOAD,
+                new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
+        return popup;
     }
 
     /**

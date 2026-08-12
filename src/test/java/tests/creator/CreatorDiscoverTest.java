@@ -46,6 +46,7 @@ public class CreatorDiscoverTest extends BaseCreatorTest {
 
         logger.info("[Discover->Profile] Open a random visible discover profile");
         discover.openRandomVisibleDiscoverProfile();
+        discover.dismissSearchOnboarding();
         discover.ensureOnCreatorProfileScreen();
 
         logger.info("[Discover->Profile] Navigate back and assert Discover screen");
@@ -68,6 +69,7 @@ public class CreatorDiscoverTest extends BaseCreatorTest {
 
         logger.info("[Discover->Search] Click search result 'igor test'");
         discover.clickSearchResult("igor test");
+        discover.dismissSearchOnboarding();
         discover.ensureOnCreatorProfileScreen();
 
         logger.info("[Discover->Search] Navigate back and assert Discover screen");

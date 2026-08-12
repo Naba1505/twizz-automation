@@ -164,41 +164,37 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
 
     @Step("Assert 'Subscription is free when' text is visible")
     public void assertFreeSubscriptionTextVisible() {
-        // Try multiple variations of free subscription text
         Locator[] freeTextVariations = {
             page.getByText("Subscription is free when"),
             page.getByText("Free subscription"),
-            page.getByText("Free"),
-            page.locator("*:has-text('Subscription is free')"),
-            page.locator("*:has-text('Free subscription')"),
-            page.locator("*:has-text('Free')")
+            page.getByText("Free")
         };
-        
-        boolean found = false;
-        for (Locator text : freeTextVariations) {
-            try {
-                if (text.count() > 0 && safeIsVisible(text.first())) {
-                    logger.info("[FanPrivMedia] Free subscription text found: {}", text.first().textContent());
-                    found = true;
-                    break;
+
+        long deadline = System.currentTimeMillis() + ConfigReader.getVisibilityTimeout();
+        while (System.currentTimeMillis() < deadline) {
+            for (Locator text : freeTextVariations) {
+                try {
+                    if (text.count() > 0 && safeIsVisible(text.first())) {
+                        logger.info("[FanPrivMedia] Free subscription text found: {}", text.first().textContent());
+                        return;
+                    }
+                } catch (Exception e) {
+                    logger.debug("[FanPrivMedia] Free text variation check failed: {}", e.getMessage());
                 }
-            } catch (Exception e) {
-                logger.debug("[FanPrivMedia] Free text variation failed: {}", e.getMessage());
             }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
-        
-        if (!found) {
-            logger.warn("[FanPrivMedia] Free subscription text not found, but continuing...");
-        }
+        logger.warn("[FanPrivMedia] Free subscription text not found after waiting, but continuing...");
     }
 
     @Step("Click 'Request private media' button")
     public void clickRequestPrivateMedia() {
         dismissOverlay();
         Locator btn = requestPrivateMediaButton();
-        waitVisible(btn, ConfigReader.getShortTimeout());
-        clickWithRetry(btn, 1, 150);
-        page.waitForTimeout(2000);
+        try { btn.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("[FanPrivMedia] scrollIntoViewIfNeeded failed: {}", e.getMessage()); }
+        waitVisible(btn, ConfigReader.getVisibilityTimeout());
+        clickWithRetry(btn, 2, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanPrivMedia] Clicked 'Request private media' button");
     }
 

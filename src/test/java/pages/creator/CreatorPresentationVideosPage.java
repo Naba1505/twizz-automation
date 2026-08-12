@@ -6,6 +6,7 @@ import utils.ConfigReader;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.WaitUntilState;
 import io.qameta.allure.Step;
 
 import java.nio.file.Path;
@@ -199,21 +200,23 @@ public class CreatorPresentationVideosPage extends BasePage {
         }
         logger.info("Trash/delete icon visible; proceeding to delete presentation video");
         clickWithRetry(trash, 1, ConfigReader.getElementRetryDelay());
+
+        Locator confirmMsg = deleteConfirmMessage();
+        Locator deleteBtn = deleteVideoButton();
+        waitVisible(confirmMsg, ConfigReader.getMediumTimeout());
+        waitVisible(deleteBtn.first(), ConfigReader.getShortTimeout());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
+        deleteBtn.first().click(new Locator.ClickOptions().setForce(false));
+        logger.info("Presentation video delete confirmed");
+
+        // Wait for the confirmation dialog to close
+        waitForElementHidden(deleteBtn.first(), ConfigReader.getMediumTimeout());
+
+        // Wait for network to settle after delete API call
         try {
-            Locator confirmMsg = deleteConfirmMessage();
-            Locator deleteBtn = deleteVideoButton();
-            waitVisible(confirmMsg, ConfigReader.getShortTimeout());
-            waitVisible(deleteBtn.first(), ConfigReader.getShortTimeout());
-            // Give the dialog button time to become clickable
-            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
-            // Use a direct enabled-element click to ensure the backend request fires
-            deleteBtn.first().click(new Locator.ClickOptions().setForce(false));
-            logger.info("Presentation video delete confirmed");
-            // Wait for the confirmation dialog and the video card to leave the UI
-            waitForElementHidden(deleteBtn.first(), ConfigReader.getShortTimeout());
-        } catch (Throwable e) {
-            logger.warn("Delete confirmation did not appear as expected: {}", e.getMessage());
-        }
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE,
+                    new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout()));
+        } catch (Throwable e) { logger.debug("Network idle wait after delete failed: {}", e.getMessage()); }
     }
 
     private void waitForElementHidden(Locator locator, long timeoutMs) {
@@ -228,26 +231,54 @@ public class CreatorPresentationVideosPage extends BasePage {
 
     @Step("Assert empty prompt is visible after deleting presentation video")
     public void assertEmptyPromptVisible() {
-        // First wait for any video row to disappear (trash icon / Waiting status gone)
-        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+        // Wait for any video row to disappear (trash icon / Waiting status gone)
+        long deadline = System.currentTimeMillis() + ConfigReader.getLongTimeout();
         while (System.currentTimeMillis() < deadline) {
             if (!hasPresentationVideo()) break;
-            try {
-                page.mouse().wheel(0, 200);
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Scroll wait failed: {}", e.getMessage()); }
-                page.mouse().wheel(0, -200);
-            } catch (Throwable e) { logger.debug("Wheel failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
         }
         if (hasPresentationVideo()) {
             throw new AssertionError("Presentation video is still present after delete wait");
         }
-        // Reload to confirm deletion persisted on the backend, then verify again
+
+        // Give the backend a moment to persist the delete before reloading
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout() * 2); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
+
+        // Reload to confirm deletion persisted on the backend; allow a few retries
+        // because the delete API can be asynchronous on stage.
         logger.info("No presentation video present in UI; reloading to confirm deletion persisted");
-        navigateAndWait(page.url());
-        if (hasPresentationVideo()) {
+        boolean confirmed = false;
+        int attempts = 0;
+        int maxAttempts = 3;
+        while (!confirmed && attempts < maxAttempts) {
+            attempts++;
+            try {
+                page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.NETWORKIDLE));
+                logger.info("Reload attempt {} complete", attempts);
+            } catch (Throwable e) {
+                logger.warn("Page reload failed ({}); trying navigation fallback", e.getMessage());
+                navigateAndWait(page.url());
+            }
+
+            long innerDeadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+            while (System.currentTimeMillis() < innerDeadline) {
+                if (!hasPresentationVideo()) {
+                    confirmed = true;
+                    break;
+                }
+                try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
+            }
+
+            if (!confirmed && attempts < maxAttempts) {
+                logger.warn("Presentation video still present after reload attempt {}; retrying", attempts);
+            }
+        }
+
+        if (!confirmed) {
             throw new AssertionError("Presentation video reappeared after page reload; delete did not persist");
         }
         logger.info("No presentation video present after reload; empty state confirmed");
+
         // Also assert the empty prompt text if available
         try {
             waitVisible(emptyPromptText(), ConfigReader.getShortTimeout());

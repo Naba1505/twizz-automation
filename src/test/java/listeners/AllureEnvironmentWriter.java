@@ -27,12 +27,16 @@ public class AllureEnvironmentWriter implements IExecutionListener {
 
     @Override
     public void onExecutionFinish() {
-        snapshotCurrentResults();
+        Runtime.getRuntime().addShutdownHook(new Thread(this::snapshotCurrentResults, "allure-snapshot"));
     }
 
     /**
      * Copies the current run's allure-results to a timestamped snapshot directory
      * so every run is permanently preserved for future reference.
+     * <p>
+     * The snapshot is written outside {@code target/} (default: project-root
+     * {@code allure-history/}) so that {@code mvn clean} cannot delete historical
+     * results. Override the location with {@code -Dallure.history.dir=<path>}.
      */
     private void snapshotCurrentResults() {
         try {
@@ -46,7 +50,8 @@ public class AllureEnvironmentWriter implements IExecutionListener {
             }
             String timestamp = java.time.LocalDateTime.now()
                     .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            Path snapshotDir = resultsDir.resolveSibling("allure-results_" + timestamp);
+            String historyDirPath = System.getProperty("allure.history.dir", "allure-history");
+            Path snapshotDir = Paths.get(historyDirPath, "allure-results_" + timestamp);
             Files.createDirectories(snapshotDir);
             try (var files = Files.list(resultsDir)) {
                 files.forEach(file -> {

@@ -9,6 +9,9 @@ target/
 # Allure results (now in target/allure-results, already covered by target/)
 # allure-results/
 
+# Allure historical snapshots (survives mvn clean; stored outside target/)
+allure-history/
+
 # Playwright traces and screenshots (configurable via config.properties)
 traces/
 screenshots/

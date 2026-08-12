@@ -1,5 +1,6 @@
 package tests.creator;
 
+import com.microsoft.playwright.Page;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.common.BaseTestClass;
@@ -42,11 +43,19 @@ public class CreatorRegistrationTest extends BaseTestClass {
             data.selfiePath
         );
 
-        // Verify success
+        // Verify final step is displayed
         Assert.assertTrue(
-            registrationPage.isFinalConfirmationVisible(),
-            "Registration confirmation not displayed"
+            registrationPage.isFinalStepVisible(),
+            "Final step page not displayed after registration"
         );
+
+        // Click Continue and verify WhatsApp Web popup opens
+        Page whatsAppPopup = registrationPage.clickContinueAndWaitForWhatsApp();
+        Assert.assertTrue(
+            whatsAppPopup.url().contains("web.whatsapp.com") || whatsAppPopup.url().contains("wa.me"),
+            "Expected WhatsApp Web redirect but got: " + whatsAppPopup.url()
+        );
+        whatsAppPopup.close();
 
         // Share username with dependent tests
         TestDataManager.saveCreatorUsername(data.username);

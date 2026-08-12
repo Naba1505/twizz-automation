@@ -9,6 +9,8 @@ import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
 
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
 public class CreatorDiscoverPage extends BasePage {
 
     private static final String DISCOVER_PATH_FRAGMENT = "/common/discover";
@@ -134,8 +136,47 @@ public class CreatorDiscoverPage extends BasePage {
     public void navigateBackToDiscover() {
         Locator back = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
         waitVisible(back.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(back.first(), 1, ConfigReader.getElementRetryDelay());
-        // Wait URL back on discover
+
+        // The profile may open as an overlay (fan-profile-overlay) that intercepts
+        // the back chevron. Use a short timeout and escalate through force/JS/browser back.
+        boolean navigated = false;
+        try {
+            back.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+            navigated = true;
+        } catch (Exception e) {
+            logger.warn("Normal back arrow click failed ({}); trying to dismiss overlay", e.getMessage());
+        }
+
+        if (!navigated) {
+            try {
+                page.keyboard().press("Escape");
+                page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+                back.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+                navigated = true;
+            } catch (Exception e) {
+                logger.warn("Overlay dismiss + back arrow click failed ({}); trying force click", e.getMessage());
+            }
+        }
+
+        if (!navigated) {
+            try {
+                back.first().click(new Locator.ClickOptions().setForce(true).setTimeout(ConfigReader.getShortTimeout()));
+                navigated = true;
+            } catch (Exception e) {
+                logger.warn("Force back arrow click failed ({}); falling back to browser back", e.getMessage());
+            }
+        }
+
+        if (!navigated) {
+            try {
+                page.goBack(new Page.GoBackOptions().setTimeout(ConfigReader.getShortTimeout()));
+                navigated = true;
+            } catch (Exception e) {
+                logger.warn("Browser back navigation failed: {}", e.getMessage());
+            }
+        }
+
+        // Wait URL back on discover regardless of which navigation method succeeded
         page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
     }
 
@@ -159,5 +200,18 @@ public class CreatorDiscoverPage extends BasePage {
         waitVisible(res.first(), ConfigReader.getShortTimeout());
         clickWithRetry(res.first(), 1, ConfigReader.getElementRetryDelay());
     }
-}
 
+    @Step("Dismiss creator profile onboarding tutorial")
+    public void dismissSearchOnboarding() {
+        // Newly added onboarding flow that appears when opening a creator profile.
+        Locator firstHint = page.getByText("Click here to see the creator's collections");
+        if (firstHint.count() == 0 || !safeIsVisible(firstHint.first())) {
+            logger.debug("Profile onboarding hint not visible; skipping dismissal");
+            return;
+        }
+        assertThat(firstHint.first()).isVisible();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).click();
+        assertThat(page.getByText("And here to see their")).isVisible();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Finished")).click();
+    }
+}

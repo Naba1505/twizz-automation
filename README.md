@@ -212,26 +212,28 @@ allure open target/allure-report
 
 ### Timestamped Snapshots
 
-At the end of every test suite execution, the `AllureEnvironmentWriter` listener automatically copies the current `target/allure-results/` to a timestamped snapshot directory:
+At the end of every test suite execution, the `AllureEnvironmentWriter` listener automatically copies the current `target/allure-results/` to a timestamped snapshot directory **outside `target/`** so it survives `mvn clean`:
 
 ```
-target/allure-results_20260730_122500/
+allure-history/allure-results_20260730_122500/
 ```
 
 This preserves every run's results for historical reference. To view any past run:
 
 ```bash
 # List all snapshots (macOS/Linux)
-ls target/ | grep allure-results_
+ls allure-history/ | grep allure-results_
 
 # List all snapshots (Windows PowerShell)
-Get-ChildItem target/ -Name | Where-Object { $_ -like "allure-results_*" }
+Get-ChildItem allure-history/ -Name | Where-Object { $_ -like "allure-results_*" }
 
 # Serve a specific historical run
-allure serve target/allure-results_20260730_122500
+allure serve allure-history/allure-results_20260730_122500
 ```
 
 This works across all suite files (`testng.xml`, `testng-parallel.xml`, `business-testng.xml`, `business-testng-parallel.xml`).
+
+> **Note**: The snapshot directory location can be overridden via `-Dallure.history.dir=<path>`. Since `allure-history/` is gitignored (like `traces/`/`screenshots/`), it's local-only; back it up separately if you need to preserve history across machines.
 
 ### Report Contents
 
