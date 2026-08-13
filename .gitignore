@@ -12,6 +12,9 @@ target/
 # Allure historical snapshots (survives mvn clean; stored outside target/)
 allure-history/
 
+# Allure installation directory (created by mvn allure:serve)
+.allure/
+
 # Playwright traces and screenshots (configurable via config.properties)
 traces/
 screenshots/
