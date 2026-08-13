@@ -766,6 +766,19 @@ public class CreatorMediaPushPage extends BasePage {
     public void ensureMessageTitle() {
         logger.info("Ensuring message textbox is visible");
         
+        // Wait for page to stabilize after auto-advance
+        try {
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE,
+                    new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout()));
+        } catch (Exception e) {
+            logger.debug("Network idle wait failed: {}", e.getMessage());
+        }
+        
+        // Additional wait for UI to settle
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception e) { 
+            logger.debug("UI settle wait failed: {}", e.getMessage()); 
+        }
+        
         // Try multiple selector strategies for message textbox
         Locator[] messageLocators = {
             page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(MESSAGE_PLACEHOLDER)),
@@ -774,28 +787,66 @@ public class CreatorMediaPushPage extends BasePage {
             page.locator("textarea[placeholder*='message']"),
             page.locator("input[placeholder*='message']"),
             page.getByText("Your message"),
-            page.locator("[placeholder*='Your message']")
+            page.locator("[placeholder*='Your message']"),
+            // Additional fallback strategies for auto-advanced page
+            page.locator("textarea").first(),
+            page.locator("input[type='text']").first(),
+            page.locator(".ant-input").first(),
+            page.locator("[role='textbox']").first(),
+            page.locator("textarea, input[type='text']").first()
         };
         
         boolean found = false;
-        for (Locator locator : messageLocators) {
-            try {
-                if (locator.count() > 0) {
-                    logger.info("Found message textbox with count: {}", locator.count());
-                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
-                    found = true;
-                    break;
+        for (int attempt = 0; attempt < 2; attempt++) {  // Try twice with different timeouts
+            for (Locator locator : messageLocators) {
+                try {
+                    if (locator.count() > 0) {
+                        logger.info("Found message textbox with count: {} (attempt {})", locator.count(), attempt + 1);
+                        long timeout = (attempt == 0) ? ConfigReader.getMediumTimeout() : ConfigReader.getLongTimeout();
+                        waitVisible(locator.first(), timeout);
+                        found = true;
+                        break;
+                    }
+                } catch (Exception e) {
+                    logger.debug("Message locator strategy failed (attempt {}): {}", attempt + 1, e.getMessage());
+                    continue;
                 }
-            } catch (Exception e) {
-                logger.debug("Message locator strategy failed: {}", e.getMessage());
-                continue;
+            }
+            if (found) break;
+            
+            // If first attempt failed, wait and retry
+            if (!found && attempt == 0) {
+                logger.warn("First attempt to find message textbox failed, waiting before retry...");
+                try { page.waitForTimeout(2000); } catch (Exception e) { 
+                    logger.debug("Retry wait failed: {}", e.getMessage()); 
+                }
             }
         }
         
         if (!found) {
             String currentUrl = page.url();
-            logger.error("Failed to find message textbox. Current URL: {}", currentUrl);
-            throw new RuntimeException("Unable to locate message textbox with any selector strategy");
+            logger.error("Failed to find message textbox after all strategies. Current URL: {}", currentUrl);
+            
+            // Log all visible textboxes/inputs for debugging
+            try {
+                Locator allInputs = page.locator("input, textarea");
+                logger.error("Found {} input/textarea elements on page", allInputs.count());
+                for (int i = 0; i < Math.min(5, allInputs.count()); i++) {
+                    try {
+                        Locator input = allInputs.nth(i);
+                        String placeholder = input.getAttribute("placeholder");
+                        String type = input.getAttribute("type");
+                        String role = input.getAttribute("role");
+                        logger.error("Input {}: placeholder='{}', type='{}', role='{}'", i, placeholder, type, role);
+                    } catch (Exception e) {
+                        logger.debug("Failed to inspect input {}: {}", i, e.getMessage());
+                    }
+                }
+            } catch (Exception e) {
+                logger.debug("Failed to log input elements: {}", e.getMessage());
+            }
+            
+            throw new RuntimeException("Unable to locate message textbox with any selector strategy. URL: " + currentUrl);
         }
         
         logger.info("Message textbox is visible");
@@ -1034,7 +1085,12 @@ public class CreatorMediaPushPage extends BasePage {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE,
                     new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout()));
         } catch (Exception e) { logger.debug("Network idle wait failed: {}", e.getMessage()); }
-        waitVisible(page.getByText(MESSAGING_TITLE).first(), ConfigReader.getLongTimeout());
+        
+        // Increased timeout for stage environment (180s = 3 minutes)
+        // Stage environment can be slow, especially after media uploads
+        long messagingTimeout = 180000;
+        logger.info("Waiting for Messaging screen with {}ms timeout", messagingTimeout);
+        waitVisible(page.getByText(MESSAGING_TITLE).first(), messagingTimeout);
     }
 
     @Step("Select Quick Files album and media")

@@ -1,5 +1,7 @@
 package tests.creator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -10,6 +12,8 @@ import utils.ConfigReader;
 
 public class BaseCreatorTest extends BaseTestClass {
 
+    private static final Logger logger = LoggerFactory.getLogger(BaseCreatorTest.class);
+
     private static final int LOGIN_MAX_RETRIES = 3;
 
     @BeforeMethod(alwaysRun = true)
@@ -17,6 +21,12 @@ public class BaseCreatorTest extends BaseTestClass {
         String username = ConfigReader.getProperty("creator.username", null);
         String password = ConfigReader.getProperty("creator.password", null);
         if (username == null || password == null) throw new RuntimeException("creator.username / creator.password not set in config.properties");
+
+        // Check if already logged in to avoid unnecessary login attempts
+        if (isAlreadyLoggedIn()) {
+            logger.info("Already logged in as creator, skipping login");
+            return;
+        }
 
         Exception lastException = null;
 
@@ -68,6 +78,31 @@ public class BaseCreatorTest extends BaseTestClass {
 
         // All retries exhausted
         Assert.fail("Creator login failed after " + LOGIN_MAX_RETRIES + " attempts: " + lastException.getMessage());
+    }
+
+    /**
+     * Check if user is already logged in to avoid redundant login attempts during retries
+     */
+    private boolean isAlreadyLoggedIn() {
+        try {
+            // Check for profile elements that indicate logged-in state
+            com.microsoft.playwright.Locator profileIndicators = page.locator(
+                "img[name='settings'], img[name='plus'], [data-testid='profile'], img[alt='profile']");
+            if (profileIndicators.count() > 0 && profileIndicators.first().isVisible()) {
+                logger.debug("Profile indicator found, user appears logged in");
+                return true;
+            }
+            
+            // Check URL - if on creator pages (not auth pages), likely logged in
+            String url = page.url();
+            if (url.contains("/creator/") && !url.contains("/auth/")) {
+                logger.debug("On creator page ({}), user appears logged in", url);
+                return true;
+            }
+        } catch (Exception e) {
+            logger.debug("Error checking login state: {}", e.getMessage());
+        }
+        return false;
     }
 
     @AfterMethod(alwaysRun = true)
