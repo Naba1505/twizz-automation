@@ -172,11 +172,11 @@ public class BusinessManagerAddEmployeePage extends BasePage {
     }
 
     
-    @Step("Verify 'Twizz identity Card' heading is visible")
+    @Step("Verify 'User' image is visible (identity card section)")
     public boolean isTwizzIdentityCardHeadingVisible() {
-        Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Twizz identity Card"));
-        boolean isVisible = heading.isVisible();
-        logger.info("[Manager Add Employee] 'Twizz identity Card' heading visibility: {}", isVisible);
+        Locator userImage = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("User"));
+        boolean isVisible = userImage.isVisible();
+        logger.info("[Manager Add Employee] 'User' image visibility (identity card section): {}", isVisible);
         return isVisible;
     }
 

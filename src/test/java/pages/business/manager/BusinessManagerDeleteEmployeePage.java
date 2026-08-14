@@ -44,11 +44,11 @@ public class BusinessManagerDeleteEmployeePage extends BasePage {
         logger.info("[Manager Delete Employee] Clicked on employee info element");
     }
 
-    @Step("Verify 'Twizz identity Card' heading is visible")
+    @Step("Verify 'User' image is visible (identity card section)")
     public boolean isTwizzIdentityCardHeadingVisible() {
-        Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Twizz identity Card"));
-        boolean isVisible = heading.isVisible();
-        logger.info("[Manager Delete Employee] 'Twizz identity Card' heading visibility: {}", isVisible);
+        Locator userImage = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("User"));
+        boolean isVisible = userImage.isVisible();
+        logger.info("[Manager Delete Employee] 'User' image visibility (identity card section): {}", isVisible);
         return isVisible;
     }
 
