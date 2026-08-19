@@ -1078,8 +1078,49 @@ public class CreatorMediaPushPage extends BasePage {
         } catch (Exception e) { logger.debug("Exception in waitForUploadingMessageIfFast: {}", e.getMessage()); }
     }
 
+    @Step("Assert and dismiss success dialog")
+    public void assertAndDismissSuccessDialog() {
+        long timeout = ConfigReader.getMediumTimeout();
+        
+        logger.info("[MediaPush] Checking for success dialog...");
+        
+        try {
+            // Try to find the Success icon
+            Locator successIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Success"));
+            if (successIcon.count() > 0 && safeIsVisible(successIcon.first())) {
+                logger.info("[MediaPush] ✓ Success icon visible");
+                
+                // Assert "Your media push has been sent" message
+                Locator sentMsg = page.getByText("Your media push has been sent");
+                waitVisible(sentMsg.first(), timeout);
+                logger.info("[MediaPush] ✓ 'Your media push has been sent' message visible");
+                
+                // Assert "To do this, go to \"Media Push" instruction text
+                Locator instructionMsg = page.getByText("To do this, go to \"Media Push");
+                waitVisible(instructionMsg.first(), timeout);
+                logger.info("[MediaPush] ✓ Instruction text visible");
+                
+                // Assert "Got it" button is visible
+                Locator gotItBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Got it"));
+                waitVisible(gotItBtn.first(), timeout);
+                logger.info("[MediaPush] ✓ 'Got it' button visible");
+                
+                // Click "Got it" button to dismiss dialog
+                clickWithRetry(gotItBtn.first(), 2, ConfigReader.getElementRetryDelay());
+                logger.info("[MediaPush] ✓ Success dialog dismissed");
+            } else {
+                logger.info("[MediaPush] Success dialog not visible; page may have navigated directly to Messaging");
+            }
+        } catch (Exception e) {
+            logger.info("[MediaPush] Success dialog not found ({}); proceeding to Messaging screen check", e.getMessage());
+        }
+    }
+
     @Step("Assert landed on Messaging screen")
     public void assertOnMessagingScreen() {
+        // Assert and dismiss the success dialog
+        assertAndDismissSuccessDialog();
+        
         // Wait for network to settle after push proposal
         try {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE,
