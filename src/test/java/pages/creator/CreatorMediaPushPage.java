@@ -1095,8 +1095,8 @@ public class CreatorMediaPushPage extends BasePage {
                 waitVisible(sentMsg.first(), timeout);
                 logger.info("[MediaPush] ✓ 'Your media push has been sent' message visible");
                 
-                // Assert "To do this, go to \"Media Push" instruction text
-                Locator instructionMsg = page.getByText("To do this, go to \"Media Push");
+                // Assert "To delete the media push, go" instruction text (updated UI)
+                Locator instructionMsg = page.getByText("To delete the media push, go");
                 waitVisible(instructionMsg.first(), timeout);
                 logger.info("[MediaPush] ✓ Instruction text visible");
                 
