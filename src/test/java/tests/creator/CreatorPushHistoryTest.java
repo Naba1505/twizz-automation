@@ -16,18 +16,32 @@ public class CreatorPushHistoryTest extends BaseCreatorTest {
         // Open History of pushes and verify title
         historyPage.openHistoryOfPushes();
 
-        // Open last media push entry and assert Performance screen
-        historyPage.openLastMediaPushEntry();
-        historyPage.assertPerformanceVisible();
+        // Assert Total income is visible
+        historyPage.assertTotalIncomeVisible();
 
-        // Navigate back
-        historyPage.clickBackArrow();
+        // Assert Media Push image is visible
+        historyPage.assertMediaPushImageVisible();
 
-        // Open first media push entry and assert Performance screen again
-        historyPage.openFirstMediaPushEntry();
-        historyPage.assertPerformanceVisible();
+        // Scroll down to view more content
+        historyPage.scrollDown();
 
-        // Navigate back until profile (plus icon) is visible
-        historyPage.navigateBackToProfile();
+        // Assert loader is visible at end
+        historyPage.assertLoaderVisible();
+
+        // Scroll back to top
+        historyPage.scrollToTop();
+
+        // Click on first visible Media Push image
+        historyPage.clickFirstMediaPushImage();
+
+        // Assert dialog elements are visible
+        historyPage.assertPricePerUnitVisible();
+        historyPage.assertSummaryOfPushVisible();
+
+        // Close the dialog
+        historyPage.closeDialog();
+
+        // Assert back on History Media push screen
+        historyPage.assertBackOnHistoryMediaPushScreen();
     }
 }
