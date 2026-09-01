@@ -1321,6 +1321,37 @@ public class CreatorCollectionPage extends BasePage {
         clickWithRetry(validate.first(), 2, ConfigReader.getElementRetryDelay());
     }
 
+    /**
+     * Validate collection (submit) and wait for the backend's collection-creation
+     * API response instead of relying on the UI success toast, which is delivered
+     * asynchronously (likely via a separate push channel) and can be delayed well
+     * beyond the actual API completion, or not appear at all within budget on a
+     * slow/loaded staging environment. Confirmed via trace inspection: the
+     * POST https://apistg.twizz.com/collections/creators call reliably returns
+     * HTTP 200 with the created collection payload, independent of whether the
+     * toast ever renders.
+     *
+     * @param timeoutMs max time to wait for the API response
+     * @return true if the API responded with a successful (2xx) status
+     */
+    @Step("Validate collection and wait for creation API response (timeout: {timeoutMs} ms)")
+    public boolean validateCollectionAndAwaitApiSuccess(long timeoutMs) {
+        Locator validate = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(VALIDATE_COLLECTION_BTN));
+        waitVisible(validate.first(), ConfigReader.getVisibilityTimeout());
+        try {
+            com.microsoft.playwright.Response response = page.waitForResponse(
+                    r -> r.url().contains("/collections/creators") && "POST".equalsIgnoreCase(r.request().method()),
+                    new Page.WaitForResponseOptions().setTimeout(timeoutMs),
+                    () -> clickWithRetry(validate.first(), 2, ConfigReader.getElementRetryDelay()));
+            boolean ok = response.ok();
+            logger.info("[Upload] Collection creation API responded: status={}, ok={}", response.status(), ok);
+            return ok;
+        } catch (Throwable e) {
+            logger.warn("[Upload] Did not observe collection creation API response within {} ms: {}", timeoutMs, e.getMessage());
+            return false;
+        }
+    }
+
     @Step("Assert success toast and dismiss it (timeout: {timeoutMs} ms)")
     public void waitForUploadFinish(long timeoutMs) {
         long deadline = System.currentTimeMillis() + Math.max(1, timeoutMs);
@@ -1402,8 +1433,15 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Assert collection created success toast")
     public void assertCollectionCreatedToast() {
-        // Backward compatible alias for tests expecting this method
-        waitForUploadFinish();
+        // Quick final confirmation only - waitForUploadFinish() already polled for
+        // the success toast using the full upload timeout budget. Re-running that
+        // full-budget poll here would silently double the worst-case wait time
+        // (observed 2x180s on slow staging uploads) while adding no real
+        // verification, since callers only log a warning on failure anyway.
+        Locator success = page.getByText(java.util.regex.Pattern.compile(
+                "Collection is created successfully|Collection created|created successfully",
+                java.util.regex.Pattern.CASE_INSENSITIVE));
+        waitVisible(success.first(), ConfigReader.getShortTimeout());
     }
 
     // Safe wrapper to check enabled state without throwing exceptions

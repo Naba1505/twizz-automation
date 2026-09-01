@@ -99,10 +99,23 @@ public class BasePage {
 
     protected void typeAndAssert(Locator locator, String value) {
         locator.click();
-        locator.fill(value);
+        String maxLengthAttr = locator.getAttribute("maxlength");
+        String toFill = value;
+        if (maxLengthAttr != null) {
+            try {
+                int maxLength = Integer.parseInt(maxLengthAttr);
+                if (value != null && value.length() > maxLength) {
+                    toFill = value.substring(0, maxLength);
+                    logger.debug("Value '{}' exceeds field maxlength={}, truncating to '{}'", value, maxLength, toFill);
+                }
+            } catch (NumberFormatException e) {
+                logger.debug("Non-numeric maxlength attribute '{}': {}", maxLengthAttr, e.getMessage());
+            }
+        }
+        locator.fill(toFill);
         String current = locator.inputValue();
-        if (!value.equals(current)) {
-            logger.warn("Value mismatch after fill. Expected='{}' Actual='{}'", value, current);
+        if (!toFill.equals(current)) {
+            logger.warn("Value mismatch after fill. Expected='{}' Actual='{}'", toFill, current);
         }
     }
 

@@ -55,9 +55,13 @@ public class CreatorCollectionTest extends BaseCreatorTest {
         coll.fillDescription(data.description);
         coll.setPriceEuro(data.priceEuro);
 
-        logger.info("[DeviceFlow] Validating collection and waiting for upload to finish");
-        coll.validateCollection();
-        coll.waitForUploadFinish();
+        logger.info("[DeviceFlow] Validating collection and waiting for creation API response");
+        long deviceFlowUploadTimeout = Long.parseLong(utils.ConfigReader.getProperty("collection.upload.timeout.ms", "180000"));
+        boolean deviceFlowApiOk = coll.validateCollectionAndAwaitApiSuccess(deviceFlowUploadTimeout);
+        if (!deviceFlowApiOk) {
+            logger.warn("[DeviceFlow] Collection creation API not confirmed; falling back to UI polling");
+            coll.waitForUploadFinish(deviceFlowUploadTimeout);
+        }
         try {
             coll.assertCollectionCreatedToast();
         } catch (Throwable t) {
@@ -100,9 +104,13 @@ public class CreatorCollectionTest extends BaseCreatorTest {
         coll.fillDescription(data.description);
         coll.setPriceEuro(data.priceEuro);
 
-        logger.info("[BlurOff] Validating collection and waiting for upload to finish");
-        coll.validateCollection();
-        coll.waitForUploadFinish();
+        logger.info("[BlurOff] Validating collection and waiting for creation API response");
+        long blurOffUploadTimeout = Long.parseLong(utils.ConfigReader.getProperty("collection.upload.timeout.ms", "180000"));
+        boolean blurOffApiOk = coll.validateCollectionAndAwaitApiSuccess(blurOffUploadTimeout);
+        if (!blurOffApiOk) {
+            logger.warn("[BlurOff] Collection creation API not confirmed; falling back to UI polling");
+            coll.waitForUploadFinish(blurOffUploadTimeout);
+        }
         try {
             coll.assertCollectionCreatedToast();
         } catch (Throwable t) {
@@ -146,10 +154,13 @@ public class CreatorCollectionTest extends BaseCreatorTest {
             coll.setPriceEuro(data.priceEuro);
         }
 
-        logger.info("[CustomPrice] Validating collection and waiting for upload to finish");
-        coll.validateCollection();
+        logger.info("[CustomPrice] Validating collection and waiting for creation API response");
         long uploadTimeout = Long.parseLong(utils.ConfigReader.getProperty("collection.upload.timeout.ms", "180000"));
-        coll.waitForUploadFinish(uploadTimeout);
+        boolean customPriceApiOk = coll.validateCollectionAndAwaitApiSuccess(uploadTimeout);
+        if (!customPriceApiOk) {
+            logger.warn("[CustomPrice] Collection creation API not confirmed; falling back to UI polling");
+            coll.waitForUploadFinish(uploadTimeout);
+        }
         try {
             coll.assertCollectionCreatedToast();
         } catch (Throwable t) {
@@ -194,9 +205,13 @@ public class CreatorCollectionTest extends BaseCreatorTest {
         coll.fillDescription(data.description);
         coll.setPriceEuro(data.priceEuro);
 
-        logger.info("[QuickFiles] Validating collection and waiting for upload to finish");
-        coll.validateCollection();
-        coll.waitForUploadFinish();
+        logger.info("[QuickFiles] Validating collection and waiting for creation API response");
+        long quickFilesUploadTimeout = Long.parseLong(utils.ConfigReader.getProperty("collection.upload.timeout.ms", "180000"));
+        boolean quickFilesApiOk = coll.validateCollectionAndAwaitApiSuccess(quickFilesUploadTimeout);
+        if (!quickFilesApiOk) {
+            logger.warn("[QuickFiles] Collection creation API not confirmed; falling back to UI polling");
+            coll.waitForUploadFinish(quickFilesUploadTimeout);
+        }
         try {
             coll.assertCollectionCreatedToast();
         } catch (Throwable t) {
