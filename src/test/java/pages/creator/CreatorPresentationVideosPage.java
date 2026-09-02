@@ -66,7 +66,11 @@ public class CreatorPresentationVideosPage extends BasePage {
     }
 
     private Locator waitingStatusSpan() {
-        return page.getByText("Waiting", new Page.GetByTextOptions().setExact(false));
+        // Use exact match: substring matching (exact=false) would also match unrelated
+        // text like "Your video is awaiting validation" (which contains "waiting" as a
+        // substring), causing hasPresentationVideo() to false-positive on that banner
+        // text even when the actual "Waiting" status badge isn't present.
+        return page.getByText("Waiting", new Page.GetByTextOptions().setExact(true));
     }
 
     private Locator trashIcon() {
@@ -206,17 +210,30 @@ public class CreatorPresentationVideosPage extends BasePage {
         waitVisible(confirmMsg, ConfigReader.getMediumTimeout());
         waitVisible(deleteBtn.first(), ConfigReader.getShortTimeout());
         try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
-        deleteBtn.first().click(new Locator.ClickOptions().setForce(false));
+
+        // Wait on the actual DELETE API response instead of just polling UI state
+        // afterward. UI polling proved unreliable/slow on staging (mirrors the same
+        // issue found with the Collection creation toast): the delete can genuinely
+        // succeed server-side while the UI takes a long, inconsistent time to reflect
+        // it, or a single confirmation click can silently not register at all under
+        // load. Waiting on the network response gives a deterministic ground truth.
+        try {
+            com.microsoft.playwright.Response response = page.waitForResponse(
+                    r -> "DELETE".equalsIgnoreCase(r.request().method()) && r.url().contains("/discover/"),
+                    new Page.WaitForResponseOptions().setTimeout(ConfigReader.getMediumTimeout()),
+                    () -> deleteBtn.first().click(new Locator.ClickOptions().setForce(false)));
+            logger.info("Presentation video delete API responded: status={}, ok={}", response.status(), response.ok());
+            if (!response.ok()) {
+                logger.warn("Delete API returned non-2xx status={}; UI state may not update", response.status());
+            }
+        } catch (Throwable e) {
+            logger.warn("Did not observe delete API response within timeout; falling back to UI-only confirmation: {}", e.getMessage());
+            try { deleteBtn.first().click(new Locator.ClickOptions().setForce(false)); } catch (Throwable ignored) { /* dialog may already be gone */ }
+        }
         logger.info("Presentation video delete confirmed");
 
         // Wait for the confirmation dialog to close
         waitForElementHidden(deleteBtn.first(), ConfigReader.getMediumTimeout());
-
-        // Wait for network to settle after delete API call
-        try {
-            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE,
-                    new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout()));
-        } catch (Throwable e) { logger.debug("Network idle wait after delete failed: {}", e.getMessage()); }
     }
 
     private void waitForElementHidden(Locator locator, long timeoutMs) {
