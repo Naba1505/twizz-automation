@@ -51,13 +51,18 @@ public class CreatorPushHistoryPage extends BasePage {
     }
 
     private Locator historyRows() {
-        // Primary: ant-row with justify-content-between class
-        Locator primary = page.locator(".ant-row.justify-content-between");
+        // Primary: entry rows have a class specific to this list (border-bottom-history-push)
+        // that the page's own title/header row never has. The previously used
+        // ".ant-row.justify-content-between" selector was found (via live debugging) to
+        // sometimes transiently match the page header instead of an actual entry row,
+        // intermittently causing clicks to land on the header (a no-op) instead of an
+        // entry. Scoping to the entry-specific class avoids that ambiguity entirely.
+        Locator primary = page.locator(".ant-row.border-bottom-history-push");
         if (primary.count() > 0) {
             return primary;
         }
-        // Fallback 1: any ant-row that might contain history items
-        Locator fallback1 = page.locator(".ant-row");
+        // Fallback 1: previous class combination, in case markup changes again
+        Locator fallback1 = page.locator(".ant-row.justify-content-between");
         if (fallback1.count() > 0) {
             return fallback1;
         }
@@ -112,23 +117,29 @@ public class CreatorPushHistoryPage extends BasePage {
         waitVisible(historyMediaPushTitle(), ConfigReader.getShortTimeout());
     }
 
-    @Step("Assert Total income is visible")
-    public void assertTotalIncomeVisible() {
-        waitVisible(page.getByText("Total income"), ConfigReader.getShortTimeout());
-        logger.info("Total income visible");
+    @Step("Assert push history entries are visible on the list screen")
+    public void assertHistoryEntriesVisible() {
+        // Current UI shows a plain list of push entries (date / subscriber count / price)
+        // rather than a "Total income" summary card - that element no longer exists on
+        // this screen (confirmed via live DOM inspection). Verify the list itself instead.
+        waitVisible(historyRows().first(), ConfigReader.getShortTimeout());
+        logger.info("Push history entries visible");
+    }
+
+    @Step("Assert 'Income generated' is visible on the Performance detail page")
+    public void assertIncomeGeneratedVisible() {
+        // Renamed/relocated from the old "Total income" summary: it now appears on the
+        // per-push Performance detail page (after opening an entry), not the list screen.
+        waitVisible(page.getByText("Income generated"), ConfigReader.getShortTimeout());
+        logger.info("Income generated visible");
     }
 
     @Step("Assert loader is visible")
     public void assertLoaderVisible() {
-        waitVisible(page.locator(".loader"), ConfigReader.getShortTimeout());
+        // Current UI uses Ant Design's spinner class for the infinite-scroll loader,
+        // not a ".loader" element (which no longer exists in the current markup).
+        waitVisible(page.locator(".ant-spin").first(), ConfigReader.getShortTimeout());
         logger.info("Loader visible");
-    }
-
-    @Step("Assert Media Push image is visible")
-    public void assertMediaPushImageVisible() {
-        Locator mediaPushImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Media Push")).first();
-        waitVisible(mediaPushImg, ConfigReader.getShortTimeout());
-        logger.info("Media Push image visible");
     }
 
     @Step("Scroll down to view more content")
@@ -155,38 +166,34 @@ public class CreatorPushHistoryPage extends BasePage {
         logger.info("Scrolled back to top");
     }
 
-    @Step("Click on first visible Media Push image")
-    public void clickFirstMediaPushImage() {
-        Locator mediaPushImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Media Push")).first();
-        waitVisible(mediaPushImg, ConfigReader.getShortTimeout());
-        clickWithRetry(mediaPushImg, 1, ConfigReader.getElementRetryDelay());
-        logger.info("Clicked on first Media Push image");
-    }
-
-    @Step("Assert Price per unit is visible in dialog")
+    @Step("Assert Price per unit is visible on the Performance detail page")
     public void assertPricePerUnitVisible() {
         waitVisible(page.getByText("Price per unit"), ConfigReader.getShortTimeout());
         logger.info("Price per unit visible");
     }
 
-    @Step("Assert Summary of the Push is visible in dialog")
+    @Step("Assert Summary of the Push is visible on the Performance detail page")
     public void assertSummaryOfPushVisible() {
         waitVisible(page.getByText("Summary of the Push"), ConfigReader.getShortTimeout());
         logger.info("Summary of the Push visible");
     }
 
-    @Step("Close the dialog")
-    public void closeDialog() {
-        Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("close"));
-        waitVisible(closeBtn, ConfigReader.getShortTimeout());
-        clickWithRetry(closeBtn, 1, ConfigReader.getElementRetryDelay());
-        logger.info("Dialog closed");
+    @Step("Navigate back from Performance detail page to History Media push list")
+    public void navigateBackFromPerformancePage() {
+        // The old UI opened push details in a modal dialog with a "close" button;
+        // the current UI instead navigates to a full Performance detail page, which
+        // is dismissed via the same back arrow used elsewhere (no "close" button
+        // exists on this page - confirmed via live DOM inspection).
+        clickBackArrow();
+        logger.info("Navigated back from Performance detail page");
     }
 
     @Step("Assert back on History Media push screen")
     public void assertBackOnHistoryMediaPushScreen() {
-        Locator heading = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("History Media push"));
-        waitVisible(heading, ConfigReader.getShortTimeout());
+        // The "History Media push" title is a plain <span> with no ARIA heading role,
+        // so a role-based HEADING locator never matches it. Use a text locator instead,
+        // consistent with historyMediaPushTitle() used elsewhere in this page object.
+        waitVisible(historyMediaPushTitle(), ConfigReader.getShortTimeout());
         logger.info("Back on History Media push screen");
     }
 
