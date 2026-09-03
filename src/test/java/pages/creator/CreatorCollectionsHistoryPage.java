@@ -32,7 +32,12 @@ public class CreatorCollectionsHistoryPage extends BasePage {
     }
 
     private Locator firstCollectionIcon() {
-        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection")).first();
+        // Collection thumbnails have dynamic, per-item accessible names (e.g. "Créateur fan",
+        // "vidéo exclusif Créateur") rather than a fixed "collection" label - confirmed via
+        // live DOM inspection that no image on this screen ever has that literal accessible
+        // name, so a role-based lookup by name="collection" can never match. The thumbnail
+        // element does reliably carry a stable "collection-img" class, so use that instead.
+        return page.locator(".collection-img").first();
     }
 
     private Locator detailsTitle() {
@@ -84,6 +89,7 @@ public class CreatorCollectionsHistoryPage extends BasePage {
             waitVisible(collectionIcon, ConfigReader.getShortTimeout());
             try { collectionIcon.scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
             clickWithRetry(collectionIcon, 1, ConfigReader.getElementRetryDelay());
+            logger.info("Opened first collection; current URL: {}", page.url());
         } catch (Exception e) {
             logger.warn("No collections found in history - this is acceptable if user hasn't created any collections yet");
             // Don't fail the test - it's valid to have no collections
@@ -102,6 +108,7 @@ public class CreatorCollectionsHistoryPage extends BasePage {
     @Step("Assert Details screen is visible and wait briefly")
     public void assertDetailsVisibleAndWait() {
         waitVisible(detailsTitle(), ConfigReader.getShortTimeout());
+        logger.info("Collection Details screen is visible for URL: {}", page.url());
         try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
