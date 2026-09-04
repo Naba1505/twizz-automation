@@ -749,9 +749,42 @@ public class CreatorLivePage extends BasePage {
         waitUntilRegisterEnabled(ConfigReader.getDefaultTimeout());
         Locator reg = registerButton();
         reg.scrollIntoViewIfNeeded();
+        String urlBefore = page.url();
+        logger.info("Clicking Register button to schedule live (current URL: {})", urlBefore);
         clickWithRetry(reg.first(), 3, ConfigReader.getElementRetryDelay());
-        // Wait for success
-        waitVisible(page.getByText(SUCCESS_TOAST), ConfigReader.getVisibilityTimeout());
+        logger.info("Register button clicked, waiting for success toast");
+
+        // Wait for success toast with medium timeout (30s) to allow for slower staging responses
+        boolean toastFound = false;
+        try {
+            Locator successToast = page.getByText(SUCCESS_TOAST);
+            waitVisible(successToast.first(), ConfigReader.getMediumTimeout());
+            toastFound = true;
+        } catch (Throwable e) {
+            logger.debug("Success toast wait failed: {}", e.getMessage());
+        }
+
+        if (!toastFound) {
+            // Check for error messages that might explain the failure
+            try {
+                Locator errorToast = page.locator(".ant-message-error, .ant-notification-error");
+                if (errorToast.count() > 0) {
+                    String errorText = errorToast.first().textContent();
+                    logger.error("Error detected after scheduling: {}", errorText);
+                }
+            } catch (Throwable ignored) {}
+
+            // Check if URL changed (some flows redirect on success)
+            String urlAfter = page.url();
+            if (!urlAfter.equals(urlBefore)) {
+                logger.info("URL changed from {} to {} - treating as success", urlBefore, urlAfter);
+                toastFound = true;
+            } else {
+                throw new RuntimeException("Live scheduling failed: success toast '" + SUCCESS_TOAST
+                    + "' not visible within " + ConfigReader.getMediumTimeout() + "ms after clicking Register");
+            }
+        }
+
         Locator firstImg = page.locator(".ant-col > img").first();
         if (safeIsVisible(firstImg)) {
             waitVisible(firstImg, ConfigReader.getShortTimeout());

@@ -273,52 +273,49 @@ public class FanLivePage extends BasePage {
         
         try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
 
-        // Try multiple approaches for the Select button
+        // Wait for the Select button to appear (it may take time to render after filling card details)
         boolean clicked = false;
-        
-        // Strategy 1: Original Select button
+
+        // Strategy 1: Wait for Select button with timeout
         try {
-                Locator selectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SELECT_BTN));
-                if (selectBtn.count() > 0) {
-                    waitVisible(selectBtn.first(), ConfigReader.getShortTimeout());
-                    clickWithRetry(selectBtn.first(), 2, ConfigReader.getElementRetryDelay());
+            Locator selectBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SELECT_BTN));
+            if (waitVisibleSafe(selectBtn.first(), ConfigReader.getShortTimeout())) {
+                clickWithRetry(selectBtn.first(), 2, ConfigReader.getElementRetryDelay());
+                clicked = true;
+                logger.info("[Fan][Live] Selected payment card via Select button");
+            }
+        } catch (Exception e) {
+            logger.debug("[Fan][Live] Select button failed: {}", e.getMessage());
+        }
+
+        // Strategy 2: Try Continue button
+        if (!clicked) {
+            try {
+                Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+                if (waitVisibleSafe(continueBtn.first(), ConfigReader.getShortTimeout())) {
+                    clickWithRetry(continueBtn.first(), 2, ConfigReader.getElementRetryDelay());
                     clicked = true;
-                    logger.info("[Fan][Live] Selected payment card via Select button");
+                    logger.info("[Fan][Live] Selected payment card via Continue button");
                 }
             } catch (Exception e) {
-                logger.debug("[Fan][Live] Select button failed: {}", e.getMessage());
+                logger.debug("[Fan][Live] Continue button failed: {}", e.getMessage());
             }
-            
-            // Strategy 2: Try Continue button
-            if (!clicked) {
-                try {
-                    Locator continueBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
-                    if (continueBtn.count() > 0) {
-                        waitVisible(continueBtn.first(), ConfigReader.getShortTimeout());
-                        clickWithRetry(continueBtn.first(), 2, ConfigReader.getElementRetryDelay());
-                        clicked = true;
-                        logger.info("[Fan][Live] Selected payment card via Continue button");
-                    }
-                } catch (Exception e) {
-                    logger.debug("[Fan][Live] Continue button failed: {}", e.getMessage());
+        }
+
+        // Strategy 3: Try Pay button (as seen in screenshot)
+        if (!clicked) {
+            try {
+                Locator payBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Pay"));
+                if (waitVisibleSafe(payBtn.first(), ConfigReader.getShortTimeout())) {
+                    clickWithRetry(payBtn.first(), 2, ConfigReader.getElementRetryDelay());
+                    clicked = true;
+                    logger.info("[Fan][Live] Selected payment card via Pay button");
                 }
+            } catch (Exception e) {
+                logger.debug("[Fan][Live] Pay button failed: {}", e.getMessage());
             }
-            
-            // Strategy 3: Try Pay button (as seen in screenshot)
-            if (!clicked) {
-                try {
-                    Locator payBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Pay"));
-                    if (payBtn.count() > 0) {
-                        waitVisible(payBtn.first(), ConfigReader.getShortTimeout());
-                        clickWithRetry(payBtn.first(), 2, ConfigReader.getElementRetryDelay());
-                        clicked = true;
-                        logger.info("[Fan][Live] Selected payment card via Pay button");
-                    }
-                } catch (Exception e) {
-                    logger.debug("[Fan][Live] Pay button failed: {}", e.getMessage());
-                }
-            }
-        
+        }
+
         // Strategy 4: Try any submit button
         if (!clicked) {
             try {
@@ -333,14 +330,16 @@ public class FanLivePage extends BasePage {
                 logger.debug("[Fan][Live] Submit button failed: {}", e.getMessage());
             }
         }
-        
-        // Strategy 5: Fallback - try any button that looks like a payment button
+
+        // Strategy 5: Fallback - try any button that looks like a payment selection button
+        // NOTE: "confirm" is intentionally excluded here - it's the payment submission button,
+        // not a card selection button. Clicking it prematurely submits the form.
         if (!clicked) {
             try {
-                logger.info("[Fan][Live] Trying fallback - any button with payment-related text");
+                logger.info("[Fan][Live] Trying fallback - any button with payment-related text (excluding Confirm)");
                 Locator allButtons = page.locator("button");
                 int buttonCount = allButtons.count();
-                
+
                 for (int i = 0; i < buttonCount; i++) {
                     try {
                         String buttonText = allButtons.nth(i).textContent();
@@ -349,9 +348,8 @@ public class FanLivePage extends BasePage {
                             buttonText.toLowerCase().contains("select") ||
                             buttonText.toLowerCase().contains("continue") ||
                             buttonText.toLowerCase().contains("submit") ||
-                            buttonText.toLowerCase().contains("confirm") ||
                             buttonText.toLowerCase().contains("proceed"))) {
-                            
+
                             allButtons.nth(i).scrollIntoViewIfNeeded();
                             allButtons.nth(i).click();
                             clicked = true;
@@ -455,26 +453,39 @@ public class FanLivePage extends BasePage {
     @Step("Confirm payment")
     public void confirmPayment() {
         logger.info("[Fan][Live] Looking for confirm button");
-        
+
+        // Wait for any loading spinner to disappear before trying to click
+        try {
+            Locator spinner = page.locator(".ant-spin-spinning");
+            if (spinner.count() > 0) {
+                logger.info("[Fan][Live] Loading spinner detected, waiting for it to disappear");
+                for (int i = 0; i < 10 && spinner.count() > 0; i++) {
+                    try { page.waitForTimeout(1000); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+                }
+                logger.info("[Fan][Live] Spinner wait completed");
+            }
+        } catch (Throwable e) {
+            logger.debug("[Fan][Live] Spinner check failed: {}", e.getMessage());
+        }
+
         // Try multiple button name variations
         String[] confirmVariations = {
             CONFIRM_BTN, // "Confirm"
             "Pay",
-            "Continue", 
+            "Continue",
             "Submit",
             "Proceed",
             "Complete",
             "Done"
         };
-        
+
         boolean clicked = false;
         for (String variation : confirmVariations) {
             logger.info("[Fan][Live] Trying confirm button variation: '{}'", variation);
-            
+
             try {
                 Locator confirmBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(variation));
-                if (confirmBtn.count() > 0) {
-                    waitVisible(confirmBtn.first(), ConfigReader.getShortTimeout());
+                if (waitVisibleSafe(confirmBtn.first(), ConfigReader.getShortTimeout())) {
                     clickWithRetry(confirmBtn.first(), 2, ConfigReader.getElementRetryDelay());
                     clicked = true;
                     logger.info("[Fan][Live] Confirmed payment via '{}' button", variation);
@@ -765,10 +776,32 @@ public class FanLivePage extends BasePage {
 
     @Step("Click on creator tile by name: {creatorName}")
     public void clickCreatorTile(String creatorName) {
-        Locator creatorTile = page.getByText(creatorName);
-        waitVisible(creatorTile.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(creatorTile.first(), 2, ConfigReader.getElementRetryDelay());
-        logger.info("[Fan][Live] Clicked on creator tile: {}", creatorName);
+        // Try multiple name variations since the tile may display the name differently
+        String[] nameVariations = {
+            creatorName,
+            creatorName.replace("_", " "),
+            creatorName.replace("_", ""),
+            creatorName.substring(0, 1).toUpperCase() + creatorName.substring(1),
+        };
+
+        boolean clicked = false;
+        for (String variation : nameVariations) {
+            try {
+                Locator creatorTile = page.getByText(variation);
+                if (waitVisibleSafe(creatorTile.first(), ConfigReader.getMediumTimeout())) {
+                    clickWithRetry(creatorTile.first(), 2, ConfigReader.getElementRetryDelay());
+                    clicked = true;
+                    logger.info("[Fan][Live] Clicked on creator tile: {} (variation: {})", creatorName, variation);
+                    break;
+                }
+            } catch (Exception e) {
+                logger.debug("[Fan][Live] Creator tile variation '{}' failed: {}", variation, e.getMessage());
+            }
+        }
+
+        if (!clicked) {
+            throw new RuntimeException("Creator tile not found for: " + creatorName);
+        }
     }
 
     @Step("Verify exclusive live show text is displayed")
@@ -853,7 +886,17 @@ public class FanLivePage extends BasePage {
     @Step("Buy ticket for scheduled live event - creator: {creatorName}")
     public void buyTicketForScheduledLive(String creatorName) {
         clickEventsTab(); // Switch to Events tab for scheduled lives
-        
+
+        // Wait for event tiles to load on the Events tab
+        try {
+            Locator eventTiles = page.locator("[class*='Live'], [class*='Event'], .todayLiveTitle, .live-event");
+            if (!waitVisibleSafe(eventTiles.first(), ConfigReader.getMediumTimeout())) {
+                logger.warn("[Fan][Live] No event tiles detected on Events tab after waiting");
+            }
+        } catch (Throwable e) {
+            logger.debug("[Fan][Live] Event tile wait failed: {}", e.getMessage());
+        }
+
         // Try to find the specific creator first, if not found, click any available live event
         try {
             clickCreatorTile(creatorName);
@@ -862,7 +905,7 @@ public class FanLivePage extends BasePage {
             logger.warn("[Fan][Live] Specific creator '{}' not found, clicking any available live event", creatorName);
             clickAnyAvailableLiveEvent();
         }
-        
+
         assertExclusiveLiveTextVisible();
         clickGetTicket();
         completeTicketPayment();
@@ -872,18 +915,18 @@ public class FanLivePage extends BasePage {
     @Step("Click on any available live event")
     private void clickAnyAvailableLiveEvent() {
         logger.info("[Fan][Live] Looking for any available live event to click");
-        
-        // Try multiple strategies to find clickable live events
+
+        // Use specific selectors first, then broader ones
         String[] liveEventSelectors = {
             ".todayLiveTitle",
-            "[class*='Live']",
             ".live-event",
-            "[class*='live']",
-            "div:has-text('Live')",
-            "span:has-text('Live')",
-            "*:has-text('Live')"
+            "[class*='LiveCard']",
+            "[class*='EventCard']",
+            "[class*='event-card']",
+            "[class*='live-card']",
+            "[class*='Live']"
         };
-        
+
         boolean clicked = false;
         for (String selector : liveEventSelectors) {
             try {
@@ -913,25 +956,12 @@ public class FanLivePage extends BasePage {
                 logger.debug("[Fan][Live] Selector {} failed: {}", selector, e.getMessage());
             }
         }
-        
-        if (!clicked) {
-            // As last resort, try to click anywhere that has "Live" text
-            try {
-                Locator liveTextElements = page.locator("*:has-text('Live')");
-                if (liveTextElements.count() > 0) {
-                    liveTextElements.first().click(new Locator.ClickOptions().setForce(true));
-                    clicked = true;
-                    logger.info("[Fan][Live] Clicked on element with 'Live' text as last resort");
-                }
-            } catch (Exception e) {
-                logger.error("[Fan][Live] Could not find any clickable live event");
-            }
-        }
-        
+
         if (!clicked) {
             throw new RuntimeException("No available live events found to click");
         }
-        
+
+        // Wait for navigation to event detail page
         try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 

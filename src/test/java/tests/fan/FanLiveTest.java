@@ -194,6 +194,28 @@ public class FanLiveTest extends BaseTestClass {
         creatorLive.navigateToLive();
         logger.info("[FanLive] Creator on Live screen");
 
+        // Pre-test cleanup: delete any leftover scheduled live events from previous failed runs
+        logger.info("[FanLive] Step 1b: Cleaning up any leftover scheduled live events");
+        try {
+            creatorPage.navigate(ConfigReader.getBaseUrl() + "/creator/profile");
+            try { creatorPage.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { creatorPage.waitForTimeout(ConfigReader.getMediumTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            boolean deleted = creatorLive.tryDeleteLatestLiveEvent();
+            if (deleted) {
+                logger.info("[FanLive] Leftover scheduled live event deleted");
+                try { creatorPage.waitForTimeout(ConfigReader.getShortTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            } else {
+                logger.info("[FanLive] No leftover scheduled live events found");
+            }
+        } catch (Throwable e) {
+            logger.warn("[FanLive] Pre-test cleanup encountered an issue: {}", e.getMessage());
+        }
+
+        // Navigate back to Live screen for scheduling
+        creatorLive.openPlusMenu();
+        creatorLive.navigateToLive();
+        logger.info("[FanLive] Creator back on Live screen for scheduling");
+
         // Schedule live event
         logger.info("[FanLive] Step 2: Creator scheduling live event (Everyone, 15€)");
 
@@ -241,8 +263,8 @@ public class FanLiveTest extends BaseTestClass {
             fanLive.assertOnLivesScreen();
             logger.info("[FanLive] Fan on Lives screen");
 
-            // Buy ticket for scheduled live - use "John_smith" as shown on tile (not handle)
-            String creatorTileName = "John_smith";
+            // Buy ticket for scheduled live - use display name from config (handle without @)
+            String creatorTileName = creatorDisplayName;
             logger.info("[FanLive] Step 4: Fan buying ticket for scheduled live by: {}", creatorTileName);
             fanLive.buyTicketForScheduledLive(creatorTileName);
             logger.info("[FanLive] Fan successfully purchased ticket");
