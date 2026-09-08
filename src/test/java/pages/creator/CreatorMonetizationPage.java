@@ -236,12 +236,13 @@ public class CreatorMonetizationPage extends BasePage {
     public void clickContinue() {
         waitVisible(continueButton(), ConfigReader.getShortTimeout());
         // Wait for button to become enabled (it may be disabled if no changes were made)
-        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
-        while (System.currentTimeMillis() < deadline) {
+        long start = System.currentTimeMillis();
+        long timeoutMs = ConfigReader.getLongTimeout();
+        while (System.currentTimeMillis() - start < timeoutMs) {
             try {
                 if (continueButton().isEnabled()) break;
             } catch (Throwable e) { logger.debug("Enabled check failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
         if (!continueButton().isEnabled()) {
             logger.warn("Continue button still disabled after waiting; attempting click regardless");
