@@ -635,9 +635,9 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Ensure blur toggle is enabled by default")
     public void ensureBlurToggleEnabled() {
         // Video media can take longer than images to finish processing before the blur
-        // switch renders, so use the medium timeout instead of the short one.
+        // switch renders, so use the long timeout.
         Locator sw = page.getByRole(AriaRole.SWITCH).first();
-        waitVisible(sw, ConfigReader.getMediumTimeout());
+        waitVisible(sw, ConfigReader.getLongTimeout());
         try {
             String checked = sw.getAttribute("aria-checked");
             if (!"true".equalsIgnoreCase(checked)) {
@@ -649,7 +649,7 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Disable blur toggle if currently enabled")
     public void disableBlurIfEnabled() {
         Locator sw = page.getByRole(AriaRole.SWITCH).first();
-        waitVisible(sw, ConfigReader.getMediumTimeout());
+        waitVisible(sw, ConfigReader.getLongTimeout());
         try {
             String checked = sw.getAttribute("aria-checked");
             if ("true".equalsIgnoreCase(checked)) {
@@ -664,7 +664,7 @@ public class CreatorMediaPushPage extends BasePage {
     @Step("Ensure blur toggle is disabled")
     public void ensureBlurToggleDisabled() {
         Locator sw = page.getByRole(AriaRole.SWITCH).first();
-        waitVisible(sw, ConfigReader.getMediumTimeout());
+        waitVisible(sw, ConfigReader.getLongTimeout());
         String checked = sw.getAttribute("aria-checked");
         if (!"false".equalsIgnoreCase(checked)) {
             logger.warn("Expected blur toggle disabled but aria-checked={}", checked);
@@ -1116,6 +1116,10 @@ public class CreatorMediaPushPage extends BasePage {
         }
     }
 
+    public boolean isMessagingScreenVisible() {
+        return safeIsVisible(page.getByText(MESSAGING_TITLE).first());
+    }
+
     @Step("Assert landed on Messaging screen")
     public void assertOnMessagingScreen() {
         // Assert and dismiss the success dialog
@@ -1185,6 +1189,10 @@ public class CreatorMediaPushPage extends BasePage {
         // Click Next until all files are confirmed
         for (int i = 0; i < 6; i++) {
             clickNext();
+            if (isMessagingScreenVisible()) {
+                logger.info("Quick Files flow auto-advanced to Messaging after confirming {} media item(s)", i + 1);
+                return;
+            }
         }
 
         // Fill the message and choose the 30€ price

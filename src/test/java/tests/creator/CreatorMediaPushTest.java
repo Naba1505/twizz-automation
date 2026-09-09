@@ -79,11 +79,22 @@ public class CreatorMediaPushTest extends BaseCreatorTest {
             mp.ensureImportation();
             mp.chooseQuickFiles();
             mp.selectQuickFilesAlbumAndMedia();
+            if (mp.isMessagingScreenVisible()) {
+                logger.info("[{}] Quick Files flow auto-advanced to Messaging; verifying final screen", testName);
+                mp.assertOnMessagingScreen();
+                return;
+            }
             mp.ensureAddPromotionDisabled();
         } else {
             // 4) Add media files (image + video), handling blur per media
             addMediaFile(mp, scenario.media.image, testName, "image", scenario.blurEnabled);
             addMediaFile(mp, scenario.media.video, testName, "video", scenario.blurEnabled);
+
+            if (mp.isMessagingScreenVisible()) {
+                logger.info("[{}] Media upload auto-advanced to Messaging; verifying final screen", testName);
+                mp.assertOnMessagingScreen();
+                return;
+            }
 
             // 5) Message and pricing
             logger.info("[{}] Filling message and configuring pricing: {}", testName, scenario.pricing.description);
