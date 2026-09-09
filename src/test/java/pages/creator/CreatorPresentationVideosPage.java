@@ -195,12 +195,27 @@ public class CreatorPresentationVideosPage extends BasePage {
         waitVisible(waitingStatusSpan(), ConfigReader.getShortTimeout());
     }
 
+    @Step("Click on the uploaded presentation video tile to open it")
+    public void clickOnVideoTile() {
+        // Click on the Waiting status text which is part of the video tile
+        Locator waitingStatus = waitingStatusSpan();
+        waitVisible(waitingStatus.first(), ConfigReader.getShortTimeout());
+        logger.info("Clicking on Waiting status to open video tile detail view");
+        clickWithRetry(waitingStatus.first(), 1, ConfigReader.getElementRetryDelay());
+        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
+    }
+
     @Step("Delete the presentation video via trash icon and confirm")
     public void deletePresentationVideo() {
+        // Wait for trash icon to become visible (video must be in Waiting status)
+        long deadline = System.currentTimeMillis() + ConfigReader.getLongTimeout();
         Locator trash = trashIcon();
+        while (System.currentTimeMillis() < deadline) {
+            if (safeIsVisible(trash)) break;
+            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
+        }
         if (!safeIsVisible(trash)) {
-            logger.info("No trash/delete icon visible; skipping delete (video may not exist)");
-            return;
+            throw new AssertionError("Trash/delete icon never became visible; video may not be in Waiting status");
         }
         logger.info("Trash/delete icon visible; proceeding to delete presentation video");
         clickWithRetry(trash, 1, ConfigReader.getElementRetryDelay());
@@ -217,12 +232,14 @@ public class CreatorPresentationVideosPage extends BasePage {
         // succeed server-side while the UI takes a long, inconsistent time to reflect
         // it, or a single confirmation click can silently not register at all under
         // load. Waiting on the network response gives a deterministic ground truth.
+        boolean deleteSucceeded = false;
         try {
             com.microsoft.playwright.Response response = page.waitForResponse(
                     r -> "DELETE".equalsIgnoreCase(r.request().method()) && r.url().contains("/discover/"),
                     new Page.WaitForResponseOptions().setTimeout(ConfigReader.getMediumTimeout()),
                     () -> deleteBtn.first().click(new Locator.ClickOptions().setForce(false)));
             logger.info("Presentation video delete API responded: status={}, ok={}", response.status(), response.ok());
+            deleteSucceeded = response.ok();
             if (!response.ok()) {
                 logger.warn("Delete API returned non-2xx status={}; UI state may not update", response.status());
             }
@@ -234,6 +251,14 @@ public class CreatorPresentationVideosPage extends BasePage {
 
         // Wait for the confirmation dialog to close
         waitForElementHidden(deleteBtn.first(), ConfigReader.getMediumTimeout());
+        
+        // If delete API succeeded, reload immediately to force UI sync instead of waiting 120s
+        if (deleteSucceeded) {
+            logger.info("Delete API succeeded; reloading page to force UI sync");
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
+            page.reload();
+            try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Page load wait failed: {}", e.getMessage()); }
+        }
     }
 
     private void waitForElementHidden(Locator locator, long timeoutMs) {
@@ -248,14 +273,9 @@ public class CreatorPresentationVideosPage extends BasePage {
 
     @Step("Assert empty prompt is visible after deleting presentation video")
     public void assertEmptyPromptVisible() {
-        // Wait for any video row to disappear (trash icon / Waiting status gone)
-        long deadline = System.currentTimeMillis() + ConfigReader.getLongTimeout();
-        while (System.currentTimeMillis() < deadline) {
-            if (!hasPresentationVideo()) break;
-            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
-        }
+        // After delete API succeeds and page reloads, verify the video is gone
         if (hasPresentationVideo()) {
-            throw new AssertionError("Presentation video is still present after delete wait");
+            throw new AssertionError("Presentation video is still present after delete and reload");
         }
 
         // Give the backend a moment to persist the delete before reloading
