@@ -66,6 +66,11 @@ public class BusinessManagerLanguageTest extends BusinessBaseTestClass {
         logger.info("[Manager Language] Language changed to French - 'Langue' heading visible");
         
         // Switch to Spanish
+        businessManagerLanguagePage.switchToEnglish();
+        Assert.assertTrue(businessManagerLanguagePage.isLanguageHeadingVisible(),
+            "'Language' heading is not visible after switching from French");
+        logger.info("[Manager Language] Switched from French back to English");
+
         businessManagerLanguagePage.switchToSpanish();
         logger.info("[Manager Language] Switched to Spanish");
         

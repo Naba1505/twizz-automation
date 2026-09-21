@@ -101,19 +101,34 @@ public class BusinessLandingPageTest extends BusinessBaseTestClass {
     @Test(priority = 3, description = "Verify Business landing page language switching")
     public void testBusinessLandingPageLanguageSwitch() {
         // Switch to French
-        businessLandingPage.switchToFrench();
-        Assert.assertTrue(businessLandingPage.isFrenchHeadingVisible(), 
-            "French heading 'Conçu pour les manageurs' is not visible after language switch");
+        Assert.assertTrue(businessLandingPage.isLanguageSelected("Français"),
+            "French is not selected by default");
+
+        businessLandingPage.switchFromFrenchToEnglish();
+        Assert.assertTrue(businessLandingPage.isLanguageSelected("English"),
+            "English is not selected after switching from French");
+        Assert.assertTrue(businessLandingPage.isMainHeadingVisible(),
+            "English heading 'Designed for managers' is not visible after language switch");
         
         // Switch to Spanish
-        businessLandingPage.switchToSpanish();
+        businessLandingPage.switchFromEnglishToSpanish();
+        Assert.assertTrue(businessLandingPage.isLanguageSelected("Español"),
+            "Spanish is not selected after switching from English");
         Assert.assertTrue(businessLandingPage.isSpanishHeadingVisible(), 
             "Spanish heading 'Diseñado para los managers' is not visible after language switch");
         
         // Switch back to English
-        businessLandingPage.switchToEnglish();
-        Assert.assertTrue(businessLandingPage.isMainHeadingVisible(), 
+        businessLandingPage.switchFromSpanishToEnglish();
+        Assert.assertTrue(businessLandingPage.isLanguageSelected("English"),
+            "English is not selected after switching from Spanish");
+        Assert.assertTrue(businessLandingPage.isMainHeadingVisible(),
             "English heading 'Designed for managers' is not visible after language switch");
+
+        businessLandingPage.switchFromEnglishToFrench();
+        Assert.assertTrue(businessLandingPage.isLanguageSelected("Français"),
+            "French is not selected after switching from English");
+        Assert.assertTrue(businessLandingPage.isFrenchHeadingVisible(),
+            "French heading 'Conçu pour les manageurs' is not visible after language switch");
         
         logger.info("Language switch successful");
     }

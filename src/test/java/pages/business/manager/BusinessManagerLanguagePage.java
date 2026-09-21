@@ -76,31 +76,29 @@ public class BusinessManagerLanguagePage extends BasePage {
         return isVisible;
     }
 
+    private void switchLanguage(String language, String expectedHeading) {
+        Locator languageItem = page.locator(".language-item")
+                .filter(new Locator.FilterOptions().setHasText(language))
+                .first();
+        languageItem.waitFor();
+        languageItem.click();
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(expectedHeading).setExact(true)).waitFor();
+        logger.info("[Manager Language] Switched to {} language", language);
+    }
+
     @Step("Switch to French language")
     public void switchToFrench() {
-        Locator languageSelector = page.locator(".language-selector").first();
-        languageSelector.click();
-        page.waitForLoadState(LoadState.LOAD);
-        page.waitForTimeout(1000);
-        logger.info("[Manager Language] Switched to French language");
+        switchLanguage("Français", "Langue");
     }
 
     @Step("Switch to Spanish language")
     public void switchToSpanish() {
-        Locator languageSelector = page.locator("div:nth-child(3) > .language-selector");
-        languageSelector.click();
-        page.waitForLoadState(LoadState.LOAD);
-        page.waitForTimeout(1000);
-        logger.info("[Manager Language] Switched to Spanish language");
+        switchLanguage("Español", "Idioma");
     }
 
     @Step("Switch back to English language")
     public void switchToEnglish() {
-        Locator languageSelector = page.locator("div:nth-child(2) > .language-selector");
-        languageSelector.click();
-        page.waitForLoadState(LoadState.LOAD);
-        page.waitForTimeout(1000);
-        logger.info("[Manager Language] Switched back to English language");
+        switchLanguage("English", "Language");
     }
 
     @Step("Complete language switching flow")

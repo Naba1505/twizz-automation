@@ -372,61 +372,52 @@ public class BusinessLandingPage extends BasePage {
     }
 
     // Wrapper methods for complete language switching
-    
-    @Step("Switch to French language")
-    public void switchToFrench() {
-        // Scroll to bottom
+
+    private void switchLanguage(String currentLanguage, String targetLanguage, String expectedHeading) {
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-        page.waitForTimeout(1000);
-        
-        // Click language dropdown using exact locator from specification
-        page.locator("div").filter(new Locator.FilterOptions().setHasText("English")).nth(5).click();
-        page.waitForTimeout(500);
-        
-        // Click French option
-        page.getByText("Français").click();
-        page.waitForTimeout(500);
-        
-        // Verify by scrolling to French heading
-        page.getByText("Conçu pour les manageurs").scrollIntoViewIfNeeded();
-        logger.info("[Business] Switched to French language");
+        Locator selectedLanguage = page.locator("#root")
+                .getByTitle(currentLanguage, new Locator.GetByTitleOptions().setExact(true));
+        selectedLanguage.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getDefaultTimeout()));
+        selectedLanguage.click();
+
+        Locator option = page.getByText(targetLanguage, new Page.GetByTextOptions().setExact(true)).last();
+        option.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getDefaultTimeout()));
+        option.click();
+
+        Locator selectedTarget = page.locator("#root")
+                .getByTitle(targetLanguage, new Locator.GetByTitleOptions().setExact(true));
+        selectedTarget.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getDefaultTimeout()));
+
+        Locator heading = page.getByText(expectedHeading, new Page.GetByTextOptions().setExact(true));
+        heading.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getDefaultTimeout()));
+        heading.scrollIntoViewIfNeeded();
+        logger.info("[Business] Switched language from {} to {}", currentLanguage, targetLanguage);
     }
 
-    @Step("Switch to Spanish language")
-    public void switchToSpanish() {
-        // Scroll to bottom
-        page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-        page.waitForTimeout(1000);
-        
-        // Click language dropdown (now showing Français)
-        page.locator("div").filter(new Locator.FilterOptions().setHasText("Français")).nth(5).click();
-        page.waitForTimeout(500);
-        
-        // Click Spanish option
-        page.getByText("Español").click();
-        page.waitForTimeout(500);
-        
-        // Verify by scrolling to Spanish heading
-        page.getByText("Diseñado para los managers").scrollIntoViewIfNeeded();
-        logger.info("[Business] Switched to Spanish language");
+    @Step("Verify selected landing page language")
+    public boolean isLanguageSelected(String language) {
+        return page.locator("#root")
+                .getByTitle(language, new Locator.GetByTitleOptions().setExact(true))
+                .isVisible();
     }
 
-    @Step("Switch to English language")
-    public void switchToEnglish() {
-        // Scroll to bottom
-        page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-        page.waitForTimeout(1000);
-        
-        // Click language dropdown (now showing Español)
-        page.locator("div").filter(new Locator.FilterOptions().setHasText("Español")).nth(5).click();
-        page.waitForTimeout(500);
-        
-        // Click English option
-        page.getByText("English").click();
-        page.waitForTimeout(500);
-        
-        // Verify by scrolling to English heading
-        page.getByText("Designed for managers").scrollIntoViewIfNeeded();
-        logger.info("[Business] Switched to English language");
+    @Step("Switch from French to English")
+    public void switchFromFrenchToEnglish() {
+        switchLanguage("Français", "English", "Designed for managers");
+    }
+
+    @Step("Switch from English to Spanish")
+    public void switchFromEnglishToSpanish() {
+        switchLanguage("English", "Español", "Diseñado para los managers");
+    }
+
+    @Step("Switch from Spanish to English")
+    public void switchFromSpanishToEnglish() {
+        switchLanguage("Español", "English", "Designed for managers");
+    }
+
+    @Step("Switch from English to French")
+    public void switchFromEnglishToFrench() {
+        switchLanguage("English", "Français", "Conçu pour les manageurs");
     }
 }
