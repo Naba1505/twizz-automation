@@ -225,6 +225,30 @@ public class CreatorRevenuesPage extends BasePage {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("change"));
     }
 
+    // The change-icon dropdown can stay closed if the click lands during a
+    // rerender after the previous selection; retry icon-click -> option-visible
+    // a few times so a missed open is recovered instead of timing out.
+    private void selectViaChangeIcon(String option) {
+        logger.info("[Revenues] Selecting '{}' via change icon", option);
+        Locator opt = page.getByText(option);
+        for (int attempt = 0; attempt < 4; attempt++) {
+            try {
+                waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
+                clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
+                opt.first().waitFor(new Locator.WaitForOptions()
+                        .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
+                        .setTimeout(3_000));
+                clickWithRetry(opt.first(), 1, ConfigReader.getElementRetryDelay());
+                return;
+            } catch (RuntimeException e) {
+                logger.debug("[Revenues] Change-icon attempt {} for '{}' did not open the menu: {}",
+                        attempt + 1, option, e.getMessage());
+            }
+        }
+        waitVisible(opt.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(opt.first(), 1, ConfigReader.getElementRetryDelay());
+    }
+
     private void scrollIntoViewWithAttempts(Locator target, int attempts, int deltaY) {
         int tries = Math.max(1, attempts);
         for (int i = 0; i < tries; i++) {
@@ -343,33 +367,10 @@ public class CreatorRevenuesPage extends BasePage {
         clickWithRetry(collectionOpt, 1, ConfigReader.getElementRetryDelay());
 
         // Now use change icon to iterate Medias push, Private medias, Live, Decrypt
-        logger.info("[Revenues] Selecting 'Medias push' via change icon");
-        waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
-        Locator mediasPush = page.getByText("Medias push");
-        waitVisible(mediasPush, ConfigReader.getShortTimeout());
-        clickWithRetry(mediasPush, 1, ConfigReader.getElementRetryDelay());
-
-        logger.info("[Revenues] Selecting 'Private medias' via change icon");
-        waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
-        Locator privateMedias = page.getByText("Private medias");
-        waitVisible(privateMedias, ConfigReader.getShortTimeout());
-        clickWithRetry(privateMedias, 1, ConfigReader.getElementRetryDelay());
-
-        logger.info("[Revenues] Selecting 'Live' via change icon");
-        waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
-        Locator liveOpt = page.getByText("Live");
-        waitVisible(liveOpt, ConfigReader.getShortTimeout());
-        clickWithRetry(liveOpt, 1, ConfigReader.getElementRetryDelay());
-
-        logger.info("[Revenues] Selecting 'Decrypt' via change icon");
-        waitVisible(changeIcon().first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeIcon().first(), 1, ConfigReader.getElementRetryDelay());
-        Locator decryptOpt = page.getByText("Decrypt");
-        waitVisible(decryptOpt, ConfigReader.getShortTimeout());
-        clickWithRetry(decryptOpt, 1, ConfigReader.getElementRetryDelay());
+        selectViaChangeIcon("Medias push");
+        selectViaChangeIcon("Private medias");
+        selectViaChangeIcon("Live");
+        selectViaChangeIcon("Decrypt");
 
         // 4) After completing filter interactions, scroll to top and assert Revenues visible
         scrollToTopUntilRevenuesVisible();
