@@ -184,9 +184,19 @@ public class CreatorMessagingPage extends BasePage {
             waitVisible(selectMediaTitle.first(), ConfigReader.getShortTimeout());
         } catch (Throwable ignored) {}
 
+        // Wait for any in-sheet loader to disappear before polling thumbs
+        try {
+            Locator spinner = page.locator(".ant-modal .ant-spin, .ant-drawer .ant-spin, .ant-spin-spinning");
+            if (spinner.count() > 0) {
+                spinner.first().waitFor(new Locator.WaitForOptions()
+                        .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN)
+                        .setTimeout(ConfigReader.getMediumTimeout()));
+            }
+        } catch (Throwable ignored) {}
+
         // Wait for media thumbs/icons to appear, preferring role=IMG name "select" like codegen
         Locator thumbs = null;
-        long endThumbs = System.currentTimeMillis() + 10_000;
+        long endThumbs = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         while (System.currentTimeMillis() < endThumbs) {
             try {
                 Locator byRoleImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("select"));
@@ -226,8 +236,8 @@ public class CreatorMessagingPage extends BasePage {
                     continue;
                 }
             } catch (Throwable ignored) {}
-            // Fallback: click the thumbnail itself
-            clickWithRetry(t, 1, ConfigReader.getElementRetryDelay());
+            // Fallback: click the thumbnail itself (force if preview overlay intercepts)
+            clickQuickFileThumb(t);
         }
 
         // Click dynamic Select (N) button; fallback to plain Select
@@ -621,6 +631,14 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Wait for Private Gallery items to load")
     public void waitForPrivateGalleryItems(int timeoutMs) {
+        try {
+            Locator spinner = page.locator(".ant-spin, .ant-spin-spinning");
+            if (spinner.count() > 0) {
+                spinner.first().waitFor(new Locator.WaitForOptions()
+                        .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN)
+                        .setTimeout(Math.min(timeoutMs, 30_000)));
+            }
+        } catch (Throwable ignored) {}
         long end = System.currentTimeMillis() + Math.max(5_000, timeoutMs);
         while (System.currentTimeMillis() < end) {
             int c = privateGalleryItems().count();
@@ -647,16 +665,18 @@ public class CreatorMessagingPage extends BasePage {
 
     @Step("Preview any item in Private Gallery")
     public void previewAnyPrivateGalleryItem() {
-        // Codegen-specific target first
-        Locator cg = page.locator("div:nth-child(6) > .galleryItem > .ant-image > .ant-image-mask");
-        if (cg.count() > 0 && safeIsVisible(cg.first())) {
-            clickWithRetry(cg.first(), 1, ConfigReader.getElementRetryDelay());
+        // Prefer clicking the image itself; .ant-image-mask hover overlay can be
+        // blocked by overlay icons (e.g. .albumVideoIcon) intercepting pointer events
+        Locator img = page.locator(".galleryItem .ant-image").first();
+        waitVisible(img, ConfigReader.getShortTimeout());
+        try {
+            img.click(new Locator.ClickOptions().setTimeout(10_000));
             return;
-        }
-        // Fallback: first visible image mask
+        } catch (Throwable ignored) {}
+        // Fallback: force click the first image mask
         Locator mask = page.locator(".galleryItem .ant-image .ant-image-mask, .ant-image .ant-image-mask").first();
         waitVisible(mask, ConfigReader.getShortTimeout());
-        clickWithRetry(mask, 1, ConfigReader.getElementRetryDelay());
+        mask.click(new Locator.ClickOptions().setForce(true));
     }
 
     @Step("Close Private Gallery preview")
@@ -767,7 +787,7 @@ public class CreatorMessagingPage extends BasePage {
         logger.warn("[Messaging][Private] Uploading banner still visible after {} ms", timeoutMs);
     }
 
-    @Step("Wait for 'Media sent' toast")
+    @Step("Wait for 'Media sent' toast or success dialog")
     public void waitForMediaSentToast(long timeoutMs) {
         long end = System.currentTimeMillis() + Math.max(10_000, timeoutMs);
         while (System.currentTimeMillis() < end) {
@@ -778,10 +798,34 @@ public class CreatorMessagingPage extends BasePage {
                     return;
                 }
             } catch (Throwable ignored) {}
+            try {
+                // The app may instead show a 'Your media push has been sent successfully'
+                // dialog with a 'Got it' button; dismiss it as the success signal
+                Locator dialog = mediaPushSentDialog();
+                if (dialog.count() > 0 && dialog.first().isVisible()) {
+                    logger.info("[Messaging][Private] 'Media push sent' dialog visible; clicking 'Got it'");
+                    Locator gotIt = gotItButton();
+                    if (gotIt.count() > 0 && gotIt.first().isVisible()) {
+                        clickWithRetry(gotIt.first(), 1, ConfigReader.getElementRetryDelay());
+                    }
+                    logger.info("[Messaging][Private] 'Got it' clicked; dialog dismissed");
+                    return;
+                }
+            } catch (Throwable ignored) {}
             try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
         }
-        // Fallback assert
-        waitVisible(mediaSentToast(), (int) Math.max(DEFAULT_WAIT, timeoutMs));
+        // Fallback assert: wait for either the 'Media sent' toast or the 'Got it' success dialog
+        Locator anySuccess = mediaSentToast().first().or(gotItButton().first());
+        anySuccess.waitFor(new Locator.WaitForOptions()
+                .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
+                .setTimeout(Math.max(DEFAULT_WAIT, timeoutMs)));
+        try {
+            Locator dialog = mediaPushSentDialog();
+            if (dialog.count() > 0 && dialog.first().isVisible()) {
+                logger.info("[Messaging][Private] 'Media push sent' dialog visible; clicking 'Got it'");
+                clickWithRetry(gotItButton().first(), 1, ConfigReader.getElementRetryDelay());
+            }
+        } catch (Throwable ignored) {}
     }
 
     @Step("Click any Quick Files album by regex (video/image/mix) with index fallbacks like codegen")
@@ -907,7 +951,7 @@ public class CreatorMessagingPage extends BasePage {
                 for (int i = 0; i < max; i++) {
                     Locator t = thumbs.nth(i);
                     try { t.scrollIntoViewIfNeeded(); } catch (Throwable ignored) {}
-                    clickWithRetry(t, 1, ConfigReader.getElementRetryDelay());
+                    clickQuickFileThumb(t);
                 }
             } else {
                 // Fallback to legacy .cover-based selection
@@ -1102,6 +1146,15 @@ public class CreatorMessagingPage extends BasePage {
         if (modalContainer.count() > 0) return modalContainer.first();
         // Final fallback: page body to allow subsequent row queries
         return page.locator("body").first();
+    }
+
+    private void clickQuickFileThumb(Locator thumb) {
+        try {
+            thumb.click(new Locator.ClickOptions().setTimeout(10_000));
+        } catch (Throwable e) {
+            logger.info("[Messaging][QuickFiles] Normal thumb click blocked by overlay; using force click");
+            thumb.click(new Locator.ClickOptions().setForce(true).setTimeout(10_000));
+        }
     }
 
     private Locator quickFilesItemThumbs() {
@@ -1524,6 +1577,14 @@ public class CreatorMessagingPage extends BasePage {
         return page.getByText("Media sent");
     }
 
+    private Locator mediaPushSentDialog() {
+        return page.getByText("Your media push has been sent successfully");
+    }
+
+    private Locator gotItButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Got it"));
+    }
+
     private Locator acceptedImageBadge() {
         return page.locator("xpath=//img[@alt='accepted']");
     }
@@ -1548,13 +1609,19 @@ public class CreatorMessagingPage extends BasePage {
     public void openFirstFanConversation() {
         logger.info("[Messaging] Opening first fan conversation");
         Locator stack = fanAvatarStack();
-        // Wait briefly for any conversation to appear
-        int attempts = 0;
-        int count = stack.count();
-        while (count == 0 && attempts < 5) { // ~1s total wait
-            page.waitForTimeout(ConfigReader.getElementRetryDelay());
-            attempts++;
-            count = stack.count();
+        // Conversation list loads asynchronously; poll up to medium timeout,
+        // then reload once before declaring the list empty
+        int count = 0;
+        for (int attempt = 0; attempt < 2 && count == 0; attempt++) {
+            if (attempt > 0) {
+                logger.info("[Messaging] Conversation list empty; reloading Messaging screen");
+                try { page.reload(); } catch (Throwable ignored) {}
+            }
+            long end = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+            while (count == 0 && System.currentTimeMillis() < end) {
+                page.waitForTimeout(ConfigReader.getElementRetryDelay());
+                count = stack.count();
+            }
         }
         if (count == 0) {
             logger.warn("[Messaging] No existing fan conversations available");

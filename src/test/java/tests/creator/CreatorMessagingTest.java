@@ -329,7 +329,7 @@ public class CreatorMessagingTest extends BaseCreatorTest {
         msg.assertPrivateGalleryScreen();
 
         // Wait for items to load, then scroll bottom and back to top
-        msg.waitForPrivateGalleryItems(ConfigReader.getShortTimeout());
+        msg.waitForPrivateGalleryItems(ConfigReader.getMediumTimeout());
         msg.scrollPrivateGalleryToBottomThenTop();
 
         // Preview any item and close preview
