@@ -56,60 +56,6 @@ public class CreatorCollectionPage extends BasePage {
         }
     }
 
-    @Step("Delete a single collection if any are present")
-    public void deleteOneCollectionIfAny() {
-        openCollectionsList();
-        Locator collections = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-        int count = collections.count();
-        logger.info("[Cleanup] Collections available: {}", count);
-        if (count == 0) {
-            logger.info("[Cleanup] No collections found; nothing to delete");
-            return;
-        }
-        // Iterate through first few tiles to find a valid details page
-        int max = Math.min(count, 10);
-        for (int i = 0; i < max; i++) {
-            Locator tile = collections.nth(i);
-            try {
-                // Bring tile into view reliably (handles virtualized lists)
-                if (!makeVisibleWithScroll(tile, ConfigReader.getDefaultTimeout())) {
-                    logger.warn("[Cleanup] Tile index {} not visible after scroll attempts; skipping", i);
-                    continue;
-                }
-                clickTileRobust(tile);
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
-                // Quick check: are we on a details-like screen?
-                if (!isDetailsMarkersPresentQuick(ConfigReader.getMediumTimeout())) {
-                    logger.warn("[Cleanup] Details markers not present after opening tile index {}; going back", i);
-                    safeReturnToCollectionsList();
-                    continue;
-                }
-                // Try opening actions menu quickly; if successful, proceed to delete flow
-                if (!openActionsMenuQuick(ConfigReader.getMediumTimeout())) {
-                    // Fallback to the normal method which waits longer
-                    try {
-                        openActionsMenu();
-                    } catch (Exception e) {
-                        logger.warn("[Cleanup] Actions menu not available for tile index {}: {}", i, e.getMessage());
-                        safeReturnToCollectionsList();
-                        continue;
-                    }
-                }
-                chooseDeleteCollection();
-                confirmDeletion();
-                assertCollectionDeletedToast();
-                // After successful deletion, attempt to return to list
-                safeReturnToCollectionsList();
-                return;
-            } catch (Exception e) {
-                logger.warn("[Cleanup] Failed to open details for tile index {}: {}", i, e.getMessage());
-                // Try to go back to list if we navigated somewhere
-                safeReturnToCollectionsList();
-            }
-        }
-        logger.warn("[Cleanup] Could not open any collection details among first {} tiles", max);
-    }
-
     // Attempt to make an element visible by scrolling the page; returns true if visible
     private boolean makeVisibleWithScroll(Locator loc, long timeoutMs) {
         long deadline = System.currentTimeMillis() + Math.max(0, timeoutMs);
@@ -155,202 +101,6 @@ public class CreatorCollectionPage extends BasePage {
     // Collections Deletion
     // =====================
 
-    @Step("Open Collections list from creator profile screen")
-    public void openCollectionsList() {
-        // Ensure any overlay is dismissed before attempting navigation
-        clickIUnderstandIfPresent();
-
-        // Strategy 1: dedicated collections icon (preferred)
-        try {
-            Locator collectionsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collections icon"));
-            waitVisible(collectionsIcon.first(), ConfigReader.getShortTimeout());
-            clickWithRetry(collectionsIcon.first(), 2, ConfigReader.getElementRetryDelay());
-            try { page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout())); } catch (Exception e) { logger.debug("waitForLoadState failed: {}", e.getMessage()); }
-            waitForIdle();
-            try { page.mouse().wheel(0, 600); } catch (Exception e) { logger.debug("Mouse wheel failed: {}", e.getMessage()); }
-            // Wait for grid to render at least one tile
-            Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-            Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-            if (!(WaitUtils.waitForVisible(tilesRole, ConfigReader.getMediumTimeout()) || WaitUtils.waitForVisible(tilesXpath, ConfigReader.getMediumTimeout()))) {
-                logger.warn("Collections tiles not visible after clicking collections icon; continuing with fallbacks");
-            } else {
-                return;
-            }
-        } catch (Exception e) {
-            logger.warn("Collections icon not visible within timeout; trying fallback strategies");
-        }
-
-        // Strategy 2: click by visible text 'Collection' (exact)
-        try {
-            Locator txt = page.getByText(COLLECTION, new Page.GetByTextOptions().setExact(true));
-            waitVisible(txt.first(), ConfigReader.getShortTimeout());
-            clickWithRetry(txt.first(), 2, ConfigReader.getElementRetryDelay());
-            waitForIdle();
-            Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-            Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-            if (WaitUtils.waitForVisible(tilesRole, ConfigReader.getMediumTimeout()) || WaitUtils.waitForVisible(tilesXpath, ConfigReader.getMediumTimeout())) return;
-        } catch (RuntimeException e) { logger.debug("Collections text strategy failed: {}", e.getMessage()); }
-
-        // Strategy 3: Link or Tab role named 'Collection'
-        try {
-            Locator link = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(COLLECTION));
-            if (safeIsVisible(link.first())) {
-                clickWithRetry(link.first(), 1, ConfigReader.getElementRetryDelay());
-                Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-                Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-                if (WaitUtils.waitForVisible(tilesRole, ConfigReader.getMediumTimeout()) || WaitUtils.waitForVisible(tilesXpath, ConfigReader.getMediumTimeout())) return;
-            }
-        } catch (Exception e) { logger.debug("Collections link strategy failed: {}", e.getMessage()); }
-        try {
-            Locator tab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(COLLECTION));
-            if (safeIsVisible(tab.first())) {
-                clickWithRetry(tab.first(), 1, ConfigReader.getElementRetryDelay());
-                Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-                Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-                if (WaitUtils.waitForVisible(tilesRole, ConfigReader.getMediumTimeout()) || WaitUtils.waitForVisible(tilesXpath, ConfigReader.getMediumTimeout())) return;
-            }
-        } catch (Exception e) { logger.debug("Collections tab strategy failed: {}", e.getMessage()); }
-
-        // Strategy 4: Plural text 'Collections' or general contains (case-insensitive)
-        try {
-            Locator pluralExact = page.getByText("Collections", new Page.GetByTextOptions().setExact(true));
-            if (safeIsVisible(pluralExact.first())) {
-                clickWithRetry(pluralExact.first(), 1, ConfigReader.getElementRetryDelay());
-                Locator tiles = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-                if (WaitUtils.waitForVisible(tiles, ConfigReader.getMediumTimeout())) return;
-            }
-        } catch (Exception e) { logger.debug("Collections plural text strategy failed: {}", e.getMessage()); }
-        try {
-            Locator ciContains = page.locator("xpath=(//*[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'collection')])");
-            if (ciContains.count() > 0) {
-                Locator cand = ciContains.first();
-                try { cand.scrollIntoViewIfNeeded(); } catch (Exception e2) { logger.debug("ScrollIntoView failed: {}", e2.getMessage()); }
-                try {
-                    clickWithRetry(cand, 1, ConfigReader.getElementRetryDelay());
-                } catch (Exception e1) {
-                    try {
-                        Locator clickableAncestor = cand.locator("xpath=ancestor-or-self::*[self::a or self::button or @role='button' or contains(@class,'tab') or contains(@class,'nav')][1]");
-                        if (clickableAncestor.count() > 0 && safeIsVisible(clickableAncestor.first())) {
-                            clickWithRetry(clickableAncestor.first(), 1, ConfigReader.getElementRetryDelay());
-                        }
-                    } catch (Exception e3) { logger.debug("Ancestor click fallback failed: {}", e3.getMessage()); }
-                }
-                Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-                Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-                if (WaitUtils.waitForVisible(tilesRole, ConfigReader.getMediumTimeout()) || WaitUtils.waitForVisible(tilesXpath, ConfigReader.getMediumTimeout())) return;
-            }
-        } catch (Exception e) { logger.debug("Collections CI-contains strategy failed: {}", e.getMessage()); }
-
-        // Strategy 5: Generic navigation scan with scrolling passes
-        for (int pass = 0; pass < 3; pass++) {
-            try { page.keyboard().press("Home"); } catch (Exception e) { logger.debug("Home key failed: {}", e.getMessage()); }
-            try { page.mouse().wheel(0, 0); } catch (Exception e) { logger.debug("Mouse wheel reset failed: {}", e.getMessage()); }
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
-            Locator any = page.locator("xpath=(//*[self::a or self::button or @role='button' or @role='tab'][contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'collection')])");
-            int n = any.count();
-            for (int i = 0; i < Math.min(n, 5); i++) {
-                Locator el = any.nth(i);
-                if (!safeIsVisible(el)) continue;
-                try { el.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
-                try { clickWithRetry(el, 1, ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Click failed: {}", e.getMessage()); }
-                Locator tilesRole = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-                Locator tilesXpath = page.locator("xpath=//img[@class='collection-img']");
-                if (WaitUtils.waitForVisible(tilesRole, ConfigReader.getDefaultTimeout()) || WaitUtils.waitForVisible(tilesXpath, ConfigReader.getDefaultTimeout())) return;
-            }
-            try { page.mouse().wheel(0, 1200); } catch (Exception e) { logger.debug("Scroll down failed: {}", e.getMessage()); }
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        }
-        throw new RuntimeException("Failed to open Collections list using available selectors");
-    }
-
-    @Step("Open first visible collection from the list")
-    public boolean openFirstVisibleCollection() {
-        Locator collections = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-        int count = collections.count();
-        logger.info("Collections visible in list: {}", count);
-        if (count == 0) {
-            return false;
-        }
-        // Prefer clicking the second tile if present (nth(1)), to avoid a potential 'create new' tile at index 0
-        Locator candidate = count > 1 ? collections.nth(1) : collections.first();
-        waitVisible(candidate, ConfigReader.getShortTimeout());
-        try { candidate.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
-        clickWithRetry(candidate, 2, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        return true;
-    }
-
-    @Step("Ensure collection details screen is visible")
-    public void ensureDetailsScreen() {
-        // Primary marker: 'Details' text
-        try {
-            Locator details = page.getByText("Details");
-            waitVisible(details.first(), ConfigReader.getShortTimeout());
-            return;
-        } catch (RuntimeException primary) {
-            logger.warn("Details text not visible yet; trying alternate markers");
-        }
-        // Alternate marker 1: back arrow present on details
-        try {
-            Locator backArrow = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
-            waitVisible(backArrow.first(), ConfigReader.getShortTimeout());
-            return;
-        } catch (RuntimeException e) { logger.debug("Back arrow check failed: {}", e.getMessage()); }
-        Locator menuIcon = page.locator(".right-icon > img");
-        waitVisible(menuIcon.first(), ConfigReader.getShortTimeout());
-    }
-
-    @Step("Open actions menu (three dots) on collection details")
-    public void openActionsMenu() {
-        Locator menuIcon = page.locator(".right-icon > img");
-        waitVisible(menuIcon.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(menuIcon.first(), 2, ConfigReader.getElementRetryDelay());
-        // Ensure popup
-        Locator popupTitle = page.getByText("What do you want to do?");
-        waitVisible(popupTitle.first(), ConfigReader.getShortTimeout());
-    }
-
-    // Quick, non-throwing checks to speed up iteration
-    private boolean isDetailsMarkersPresentQuick(long timeoutMs) {
-        try {
-            if (WaitUtils.waitForVisible(page.getByText("Details"), timeoutMs)) return true;
-        } catch (Exception e) { logger.debug("Details text check failed: {}", e.getMessage()); }
-        try {
-            if (WaitUtils.waitForVisible(page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left")), timeoutMs)) return true;
-        } catch (Exception e) { logger.debug("Arrow left check failed: {}", e.getMessage()); }
-        try {
-            if (WaitUtils.waitForVisible(page.locator(".right-icon > img"), timeoutMs)) return true;
-        } catch (Exception e) { logger.debug("Right-icon check failed: {}", e.getMessage()); }
-        return false;
-    }
-
-    private boolean openActionsMenuQuick(long timeoutMs) {
-        Locator menuIcon = page.locator(".right-icon > img");
-        if (WaitUtils.waitForVisible(menuIcon, timeoutMs)) {
-            try {
-                clickWithRetry(menuIcon.first(), 2, ConfigReader.getElementRetryDelay());
-                Locator popupTitle = page.getByText("What do you want to do?");
-                return WaitUtils.waitForVisible(popupTitle, ConfigReader.getMediumTimeout());
-            } catch (Exception e) { logger.debug("Actions menu popup check failed: {}", e.getMessage()); }
-        }
-        return false;
-    }
-
-    @Step("Choose Delete collection option")
-    public void chooseDeleteCollection() {
-        Locator deleteBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete collection"));
-        waitVisible(deleteBtn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(deleteBtn.first(), 2, ConfigReader.getElementRetryDelay());
-    }
-
-    @Step("Confirm deletion in confirmation dialog")
-    public void confirmDeletion() {
-        Locator confirmText = page.getByText("Are you sure you want to delete the collection? All linked data will be lost");
-        waitVisible(confirmText.first(), ConfigReader.getShortTimeout());
-        Locator yesDelete = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
-        clickWithRetry(yesDelete.first(), 2, ConfigReader.getElementRetryDelay());
-    }
-
     @Step("Assert collection deletion success or fallback to UI state checks")
     public void assertCollectionDeletedToast() {
         // Try common toast texts first
@@ -383,193 +133,8 @@ public class CreatorCollectionPage extends BasePage {
         page.waitForTimeout(ConfigReader.getAnimationTimeout());
     }
 
-    // ==============================
-    // Files-icon driven delete flow
-    // ==============================
-
-    private Locator filesIconOnCollections() {
-        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("files"));
-    }
-
-    @Step("Open first collection details via top 'files' icon")
-    public void openFirstCollectionViaFilesIcon() {
-        openCollectionsList();
-        Locator files = filesIconOnCollections();
-        waitVisible(files.first(), ConfigReader.getVisibilityTimeout());
-        try { files.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-        clickWithRetry(files.first(), 2, ConfigReader.getElementRetryDelay());
-        ensureDetailsScreen();
-    }
-
-    @Step("Delete current collection via three-dot menu and confirm")
-    public void deleteCurrentCollectionFromDetails() {
-        openActionsMenu();
-        chooseDeleteCollection();
-        confirmDeletion();
-        assertCollectionDeletedToast();
-    }
-
-    private void clickBackArrowIfPresent() {
-        try {
-            Locator backArrow = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
-            if (safeIsVisible(backArrow.first())) {
-                clickWithRetry(backArrow.first(), 1, ConfigReader.getElementRetryDelay());
-            }
-        } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-    }
-
-    @Step("Delete all collections using 'files' icon loop")
-    public void deleteAllCollectionsUsingFilesIcon(int maxIterations) {
-        int guard = Math.max(1, maxIterations);
-        for (int i = 0; i < guard; i++) {
-            openCollectionsList();
-            Locator files = filesIconOnCollections();
-            if (files.count() == 0) {
-                logger.info("[Cleanup] No 'files' icons found; assuming no collections remain");
-                return;
-            }
-            if (!safeIsVisible(files.first())) {
-                logger.info("[Cleanup] 'files' icon not visible; stopping loop");
-                return;
-            }
-            // Navigate to details
-            try {
-                waitVisible(files.first(), ConfigReader.getShortTimeout());
-                try { files.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                clickWithRetry(files.first(), 2, ConfigReader.getElementRetryDelay());
-            } catch (Exception e) {
-                logger.warn("[Cleanup] Failed clicking 'files' icon on iteration {}: {}", i, e.getMessage());
-                continue;
-            }
-            // Ensure details and delete
-            ensureDetailsScreen();
-            deleteCurrentCollectionFromDetails();
-            // Return to list for next iteration
-            clickBackArrowIfPresent();
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        }
-        logger.warn("[Cleanup] Guard exhausted while deleting collections via files icon");
-    }
-
-    // ==============================================
-    // Image-tile driven delete flow (collection-img)
-    // ==============================================
-
-    // Scroll down the Collections list multiple times to trigger lazy-load/virtualized tiles
-    private void scrollToLoadCollections(int maxScrolls, int perStepWheel, int waitMs) {
-        int steps = Math.max(1, maxScrolls);
-        int wheel = perStepWheel <= 0 ? 800 : perStepWheel;
-        int pause = waitMs <= 0 ? ConfigReader.getElementRetryDelay() : waitMs;
-        for (int s = 0; s < steps; s++) {
-            try { page.keyboard().press("PageDown"); } catch (Throwable e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-            try { page.mouse().wheel(0, wheel); } catch (Throwable e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-            page.waitForTimeout(pause);
-        }
-    }
-
-    @Step("Delete all collections by clicking each //img[@class='collection-img'] tile")
-    public void deleteAllCollectionsByImageTiles(int maxIterations) {
-        int guard = Math.max(1, maxIterations);
-        for (int i = 0; i < guard; i++) {
-            // Ensure we're on the Collections list each iteration
-            ensureCollectionsList();
-
-            // Proactively scroll to load tiles if needed
-            Locator tiles = page.locator("xpath=//img[@class='collection-img']");
-            int count = tiles.count();
-            if (count == 0) {
-                logger.info("[Cleanup] No tiles visible yet; scrolling to load collections");
-                scrollToLoadCollections(8, 900, ConfigReader.getElementRetryDelay());
-                count = tiles.count();
-            }
-            logger.info("[Cleanup] collection-img tiles found: {}", count);
-            if (count == 0) {
-                logger.info("[Cleanup] No collection images found; assuming no collections remain");
-                return;
-            }
-
-            // Prefer Playwright role IMG 'collection' second tile (nth(1)), per user flow
-            boolean clicked = false;
-            try {
-                Locator roleTiles = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-                int rc = roleTiles.count();
-                if (rc > 1) {
-                    Locator second = roleTiles.nth(1);
-                    if (!makeVisibleWithScroll(second, ConfigReader.getDefaultTimeout())) {
-                        try { second.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                    }
-                    clickTileRobust(second);
-                    clicked = true;
-                }
-            } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-
-            // If not clicked via role, fallback to xpath tiles with passes
-            // Try up to 3 scan passes; if not clickable, scroll more and retry
-            for (int pass = 0; pass < 3 && !clicked; pass++) {
-                int currentCount = tiles.count();
-                for (int t = 0; t < currentCount; t++) {
-                    Locator tile = tiles.nth(t);
-                    try {
-                        if (!makeVisibleWithScroll(tile, ConfigReader.getDefaultTimeout())) continue;
-                        clickTileRobust(tile);
-                        clicked = true;
-                        break;
-                    } catch (Exception e) {
-                        logger.warn("[Cleanup] Failed clicking collection-img at index {}: {}", t, e.getMessage());
-                    }
-                }
-                if (!clicked) {
-                    scrollToLoadCollections(4, 900, ConfigReader.getElementRetryDelay());
-                }
-            }
-
-            if (!clicked) {
-                logger.warn("[Cleanup] Unable to click any collection-img tiles; stopping");
-                return;
-            }
-
-            // On details, perform deletion
-            try {
-                ensureDetailsScreen();
-                deleteCurrentCollectionFromDetails();
-            } catch (Exception e) {
-                logger.warn("[Cleanup] Deletion flow failed after opening details: {}", e.getMessage());
-            }
-
-            // Ensure we are back on Collections list by clicking the Collections icon again (more robust than back)
-            try {
-                ensureCollectionsList();
-            } catch (Exception e) {
-                // Fallback to back then try again
-                safeReturnToCollectionsList();
-                page.waitForTimeout(ConfigReader.getElementRetryDelay());
-                ensureCollectionsList();
-            }
-            page.waitForTimeout(ConfigReader.getElementRetryDelay());
-        }
-        logger.warn("[Cleanup] Guard exhausted while deleting collections via collection-img tiles");
-    }
-
-    @Step("Ensure Collections list is visible by (re)clicking the Collections entry/icon")
-    public void ensureCollectionsList() {
-        // Proactively dismiss overlay
-        clickIUnderstandIfPresent();
-        // First try the dedicated icon path
-        try {
-            Locator collectionsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collections icon"));
-            if (collectionsIcon.count() > 0) {
-                if (!safeIsVisible(collectionsIcon.first())) {
-                    try { collectionsIcon.first().scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                }
-                clickWithRetry(collectionsIcon.first(), 2, ConfigReader.getElementRetryDelay());
-            }
-        } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-        // Use the existing robust openCollectionsList() which includes many fallbacks
-        openCollectionsList();
-    }
-
     // ============================
-    // User exact flow (code-gen)
+    // Collections cleanup exact flow
     // ============================
 
     private boolean clickCollectionsIconResilient() {
@@ -653,11 +218,21 @@ public class CreatorCollectionPage extends BasePage {
             }
             
             // Click a collection image to open details
-            // Based on screenshot: img.collection-img with alt like "john smith - Vidéos et photos"
-            Locator collectionImg = page.locator("img.collection-img");
+            // Prefer the stable .collection-img class (matches History of Collections DOM);
+            // fall back to role/name selectors if absent.
+            Locator collectionImg = page.locator(".collection-img");
             int collCount = collectionImg.count();
-            logger.info("[Cleanup] Found {} collection images (img.collection-img)", collCount);
-            
+            logger.info("[Cleanup] Found {} collection images (.collection-img)", collCount);
+            if (collCount == 0) {
+                collectionImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
+                collCount = collectionImg.count();
+                logger.info("[Cleanup] Found {} collection images (role='img' name='collection')", collCount);
+            }
+            if (collCount == 0) {
+                collectionImg = page.locator("img.collection-img");
+                collCount = collectionImg.count();
+                logger.info("[Cleanup] Found {} collection images (img.collection-img)", collCount);
+            }
             if (collCount == 0) {
                 logger.info("[Cleanup] No collection images found; checking empty state");
                 try {
@@ -668,7 +243,7 @@ public class CreatorCollectionPage extends BasePage {
                     continue;
                 }
             }
-            
+
             Locator targetCollection = collectionImg.first();
             try { targetCollection.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
             logger.info("[Cleanup] Clicking collection image to open details");
@@ -798,48 +373,6 @@ public class CreatorCollectionPage extends BasePage {
         }
     }
 
-    @Step("Check 'No publication' icon visible on profile")
-    public boolean isNoPublicationVisible() {
-        try {
-            Locator noPub = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("No publication"));
-            return noPub.count() > 0 && noPub.first().isVisible();
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @Step("Delete all collections available for the creator")
-    public void deleteAllCollections() {
-        openCollectionsList();
-        int guard = 0;
-        while (guard++ < 100) { // guard to avoid infinite loops
-            Locator collections = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("collection"));
-            int count = collections.count();
-            logger.info("[Cleanup] Collections remaining: {}", count);
-            if (count == 0) {
-                break;
-            }
-            if (!openFirstVisibleCollection()) {
-                // No visible collection; break as safe fallback
-                break;
-            }
-            // Delete the opened collection using current details flow
-            try {
-                ensureDetailsScreen();
-                deleteCurrentCollectionFromDetails();
-                // After deletion, return to collections list
-                safeReturnToCollectionsList();
-            } catch (Exception e) {
-                logger.warn("[Cleanup] Deletion flow encountered an issue: {}", e.getMessage());
-                // Attempt to return to list and continue
-                safeReturnToCollectionsList();
-            }
-            // Small wait to allow list to refresh
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
-            openCollectionsList();
-        }
-    }
-
     private void safeReturnToCollectionsList() {
         // Try common patterns: back button, header back arrow, or browser back
         // First try arrow left (back arrow on details screen)
@@ -867,31 +400,6 @@ public class CreatorCollectionPage extends BasePage {
             page.goBack();
             page.waitForTimeout(ConfigReader.getAnimationTimeout());
         } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-    }
-
-    @Step("Check if contentinfo region is visible")
-    public boolean isContentInfoVisible() {
-        try {
-            Locator contentInfo = page.getByRole(AriaRole.CONTENTINFO);
-            return contentInfo.count() > 0 && contentInfo.first().isVisible();
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @Step("Delete collections until contentinfo is visible or guard exhausted")
-    public void deleteUntilContentInfoVisible(int maxIterations) {
-        int guard = Math.max(1, maxIterations);
-        for (int i = 0; i < guard; i++) {
-            if (isContentInfoVisible()) {
-                logger.info("[Cleanup] Contentinfo visible; stopping delete loop");
-                return;
-            }
-            deleteOneCollectionIfAny();
-            // Small wait and re-check
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        }
-        logger.warn("[Cleanup] Guard exhausted while waiting for contentinfo to appear");
     }
 
     @Step("Dismiss 'I understand' dialog if present")
@@ -1312,13 +820,6 @@ public class CreatorCollectionPage extends BasePage {
         spin.first().fill(Integer.toString(euro));
         // Optional: blur to apply
         try { page.keyboard().press("Tab"); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-    }
-
-    @Step("Validate collection (submit)")
-    public void validateCollection() {
-        Locator validate = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(VALIDATE_COLLECTION_BTN));
-        waitVisible(validate.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(validate.first(), 2, ConfigReader.getElementRetryDelay());
     }
 
     /**

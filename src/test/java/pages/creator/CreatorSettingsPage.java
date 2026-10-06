@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory;
 import io.qameta.allure.Step;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,9 +22,6 @@ import java.util.stream.Collectors;
 public class CreatorSettingsPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(CreatorSettingsPage.class);
     private static final int LONG_WAIT = ConfigReader.getMediumTimeout();
-    
-    // All timeouts now use ConfigReader for consistency
-    private static final int GUARD_LIMIT = 100;          // Loop guard limit
 
     public CreatorSettingsPage(Page page) {
         super(page);
@@ -168,175 +163,6 @@ public class CreatorSettingsPage extends BasePage {
     public void ensureOnQuickFiles() {
         waitForUrlContains(QUICK_LINK_URL);
         waitVisible(page.getByText(QUICK_FILES_TEXT), DEFAULT_WAIT);
-    }
-
-    @Step("Delete all Quick Files albums via trash icon with confirmation")
-    public void deleteAllQuickFileAlbums() {
-        // Navigate to Quick Files first to ensure correct context
-        navigateToQuickFilesDirect();
-        ensureOnQuickFiles();
-        waitForAlbumGrid();
-
-        int guard = 0;
-        while (true) {
-            Locator trashes = getTrashIcons();
-            int count = trashes.count();
-            log.info("Found {} trash icon(s) on Quick Files page", count);
-            if (count == 0) {
-                // Try per-card hover-and-delete as a fallback
-                if (!tryDeleteViaCards()) {
-                    log.info("No trash icons found on page or within cards; nothing to delete.");
-                    break;
-                }
-                // After per-card attempt, continue loop to re-count
-                continue;
-            }
-            // Click the last icon (deleting from bottom up is often more stable)
-            try {
-                Locator target = trashes.nth(count - 1);
-                // Some UIs render the trash only on hover; ensure visibility
-                try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                try { target.hover(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                try {
-                    clickWithRetry(target, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                } catch (RuntimeException primary) {
-                    // force click as fallback
-                    try { target.click(new Locator.ClickOptions().setForce(true)); }
-                    catch (Exception forceErr) { throw primary; }
-                }
-            } catch (RuntimeException e) {
-                log.warn("Failed to click trash icon: {}", e.getMessage());
-                break;
-            }
-
-            // Confirm modal
-            boolean confirmed = clickAnyConfirmDelete();
-            if (!confirmed) {
-                log.warn("Could not find a known confirm delete button; aborting deletion loop.");
-                break;
-            }
-
-            // brief settle for DOM update
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Click retry delay failed: {}", e.getMessage()); }
-            // Wait for the number of trash icons to decrease
-            long end = System.currentTimeMillis() + DEFAULT_WAIT;
-            while (System.currentTimeMillis() < end) {
-                int now = getTrashIcons().count();
-                if (now < count) break;
-                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
-            }
-
-            guard++;
-            if (guard > GUARD_LIMIT) {
-                log.warn("Stopping delete loop after {} iterations to avoid infinite loop.", guard);
-                break;
-            }
-        }
-    }
-
-    @Step("Directly navigate to Quick Files URL and ensure page is visible")
-    public void navigateToQuickFilesDirect() {
-        navigateAndWait(QUICK_LINK_URL);
-        ensureOnQuickFiles();
-    }
-
-    public int quickFilesTrashIconCount() {
-        return getTrashIcons().count();
-    }
-
-    private Locator getTrashIcons() {
-        // Try role=img name=trash (exact)
-        Locator imgTrash = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("trash").setExact(true));
-        if (imgTrash.count() > 0) return imgTrash;
-        // Try role=img name=Trash (capitalized)
-        Locator imgTrashCap = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Trash").setExact(true));
-        if (imgTrashCap.count() > 0) return imgTrashCap;
-        // Try role=button name=trash
-        Locator btnTrash = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("trash").setExact(true));
-        if (btnTrash.count() > 0) return btnTrash;
-        // Try role=button name=Trash
-        Locator btnTrashCap = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Trash").setExact(true));
-        if (btnTrashCap.count() > 0) return btnTrashCap;
-        // Fallback: CSS class often present on the icon
-        return page.locator(".trashIcon");
-    }
-
-    private boolean clickAnyConfirmDelete() {
-        String[] labels = new String[]{"Yes, delete", "Yes, Delete", "Delete", "Yes"};
-        long end = System.currentTimeMillis() + DEFAULT_WAIT;
-        while (System.currentTimeMillis() < end) {
-            for (String label : labels) {
-                Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label)).first();
-                if (safeIsVisible(btn)) {
-                    try {
-                        clickWithRetry(btn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                        return true;
-                    } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                }
-            }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
-        }
-        return false;
-    }
-
-    private void waitForAlbumGrid() {
-        // Wait for any of the expected containers or any trash icon to appear
-        long end = System.currentTimeMillis() + DEFAULT_WAIT;
-        while (System.currentTimeMillis() < end) {
-            if (safeIsVisible(getTrashIcons().first())) return;
-            if (safeIsVisible(getAlbumCards().first())) return;
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
-        }
-    }
-
-    private Locator getAlbumCards() {
-        // Common Ant Design patterns and potential testid
-        Locator cards = page.locator("[data-testid='album-card'], .ant-card, .ant-card-body, .ql-card, .albumCard");
-        return cards;
-    }
-
-    private boolean tryDeleteViaCards() {
-        Locator cards = getAlbumCards();
-        int total = cards.count();
-        if (total == 0) return false;
-        for (int i = total - 1; i >= 0; i--) {
-            Locator card = cards.nth(i);
-            try { card.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-            try { card.hover(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-            Locator trash = card.getByRole(AriaRole.IMG, new Locator.GetByRoleOptions().setName("trash").setExact(true));
-            if (trash.count() == 0) {
-                trash = card.getByRole(AriaRole.IMG, new Locator.GetByRoleOptions().setName("Trash").setExact(true));
-            }
-            if (trash.count() == 0) {
-                trash = card.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("trash").setExact(true));
-            }
-            if (trash.count() == 0) {
-                trash = card.locator(".trashIcon");
-            }
-            if (trash.count() > 0) {
-                Locator target = trash.first();
-                try { target.hover(); } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
-                try {
-                    clickWithRetry(target, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                } catch (Exception e) {
-                    try { target.click(new Locator.ClickOptions().setForce(true)); } catch (Exception e2) { logger.debug("Optional action failed: {}", e2.getMessage()); continue; }
-                }
-                // Confirm
-                if (!clickAnyConfirmDelete()) {
-                    continue;
-                }
-                // Wait for at least one album/trash to disappear
-                long end = System.currentTimeMillis() + DEFAULT_WAIT;
-                while (System.currentTimeMillis() < end) {
-                    if (getTrashIcons().count() < total || getAlbumCards().count() < total) {
-                        return true;
-                    }
-                    try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Polling wait failed: {}", e.getMessage()); }
-                }
-                return true; // best effort
-            }
-        }
-        return false;
     }
 
     @Step("Start creating a new album")
@@ -1055,9 +881,5 @@ public class CreatorSettingsPage extends BasePage {
         clickWithRetry(plusBtn, 2, ConfigReader.getElementRetryDelay());
     }
 
-    // Convenience helper to build Paths from resource-relative strings
-    public static List<Path> resourcePaths(String... relativePaths) {
-        return Arrays.stream(relativePaths).map(Paths::get).toList();
-    }
 }
 
