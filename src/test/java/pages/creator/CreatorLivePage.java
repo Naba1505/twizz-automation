@@ -228,18 +228,6 @@ public class CreatorLivePage extends BasePage {
         logger.info("Delete success toast visible");
     }
 
-    @Step("Delete latest scheduled live event")
-    public void deleteLatestLiveEvent() {
-        if (!isLiveLogoVisibleOnProfile()) {
-            throw new AssertionError("Expected live logo on profile indicating a live event exists");
-        }
-        openEditEvent();
-        ensureScheduledLiveScreen();
-        clickDeleteEvent();
-        confirmDeleteYes();
-        verifyDeleteSuccessToast();
-    }
-
     /**
      * Attempts to delete the latest scheduled live event if present.
      * Returns true if a delete was performed, false if no event was found.
@@ -442,104 +430,6 @@ public class CreatorLivePage extends BasePage {
         logger.info("Date picked: {}-{}-{}", yearStr, monthName, dayText);
     }
 
-    @Step("Pick time for {when}")
-    public void pickTime(LocalDateTime when) {
-        // Normalize target: if selecting today and time is in the past, clamp to next sensible future slot first
-        boolean today = when.toLocalDate().isEqual(LocalDate.now());
-        LocalDateTime now = LocalDateTime.now();
-        if (today && !when.isAfter(now.plusMinutes(1))) {
-            int minute = now.getMinute();
-            int toNext30 = ((minute < 30) ? (30 - minute) : (60 - minute));
-            when = now.plusMinutes(toNext30);
-            logger.info("Requested past/near-past time; clamped to next slot: {}", when.format(DateTimeFormatter.ofPattern("HH:mm")));
-        }
-
-        String hhmm12 = when.format(DateTimeFormatter.ofPattern("hh:mm"));
-        String hhmm12AmPm = when.format(DateTimeFormatter.ofPattern("hh:mm a"));
-        String hhmm24 = when.format(DateTimeFormatter.ofPattern("HH:mm"));
-
-        // If a date dropdown is still open, close it to avoid overlay blocking time dropdown
-        if (page.locator(".ant-picker-dropdown:visible").count() > 0) {
-            try { page.keyboard().press("Escape"); } catch (Exception e) { logger.debug("Escape key failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception e) { logger.debug("Escape wait failed: {}", e.getMessage()); }
-        }
-
-        // Try opening the time select near the Date field (robust against rc_select_* changes)
-        boolean opened = false;
-        try {
-            Locator dateInput = page.getByPlaceholder(DATE_PLACEHOLDER).first();
-            Locator timeSelector = dateInput.locator("xpath=ancestor::div[contains(@class,'ant-form-item')][1]//following::div[contains(@class,'ant-select')][1]//div[contains(@class,'ant-select-selector')]");
-            if (timeSelector.count() > 0) {
-                timeSelector.first().click();
-                opened = true;
-            }
-            if (!opened) {
-                Locator anySelector = page.locator(".ant-select-selector");
-                if (anySelector.count() > 0) {
-                    anySelector.first().click();
-                    opened = true;
-                }
-            }
-        } catch (Exception e) { logger.debug("Time selector open failed: {}", e.getMessage()); }
-        if (!opened) {
-            logger.warn("Time dropdown not found via relative selector; clicking Date field to reveal");
-            page.getByPlaceholder(DATE_PLACEHOLDER).click();
-        }
-
-        // Wait for dropdown to become visible
-        WaitUtils.waitForDropdownVisible(page, ConfigReader.getMediumTimeout());
-
-        // Try to pick time within the visible dropdown by role/name or text/title (12h, 12h AM/PM, then 24h)
-        Locator dropdown = page.locator(".ant-select-dropdown:visible").first();
-        Locator opt = dropdown.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(hhmm12).setExact(true));
-        if (opt.count() == 0)
-            opt = dropdown.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(hhmm12AmPm).setExact(true));
-        if (opt.count() == 0)
-            opt = dropdown.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(hhmm24).setExact(true));
-        if (opt.count() == 0)
-            opt = dropdown.getByText(hhmm12, new Locator.GetByTextOptions().setExact(true));
-        if (opt.count() == 0)
-            opt = dropdown.getByText(hhmm12AmPm, new Locator.GetByTextOptions().setExact(true));
-        if (opt.count() == 0)
-            opt = dropdown.getByText(hhmm24, new Locator.GetByTextOptions().setExact(true));
-        if (opt.count() == 0)
-            opt = dropdown.locator("[title='" + hhmm12 + "']");
-        if (opt.count() == 0)
-            opt = dropdown.locator("[title='" + hhmm12AmPm + "']");
-        if (opt.count() == 0)
-            opt = dropdown.locator("[title='" + hhmm24 + "']");
-
-        if (opt.count() > 0) {
-            // ensure visible
-            WaitUtils.waitForVisible(opt.first(), ConfigReader.getShortTimeout());
-            clickWithRetry(opt.first(), 2, ConfigReader.getElementRetryDelay());
-            logger.info("Picked time {}", opt.first().innerText());
-            return;
-        }
-
-        // If not found, try future candidates derived from the adjusted base time
-        if (today) {
-            String[] candidates = buildFutureTimeCandidates(now);
-            logger.info("Initial time in the past; trying candidates: {}", String.join(", ", candidates));
-            pickTimeCandidates(candidates);
-        } else {
-            logger.warn("Time option not found for {} or {}", hhmm12, hhmm24);
-        }
-    }
-
-    private String[] buildFutureTimeCandidates(LocalDateTime base) {
-        // Build a few future slots (rounded to next 30 minutes) so that Register can enable
-        LocalDateTime t0 = base.plusMinutes(5);
-        int minute = t0.getMinute();
-        int toNext30 = ((minute < 30) ? (30 - minute) : (60 - minute));
-        LocalDateTime s1 = t0.plusMinutes(toNext30);
-        LocalDateTime s2 = s1.plusMinutes(30);
-        LocalDateTime s3 = s2.plusMinutes(30);
-        DateTimeFormatter f24 = DateTimeFormatter.ofPattern("HH:mm");
-        return new String[]{s1.format(f24), s2.format(f24), s3.format(f24)};
-    }
-
-    // Optional helper if callers want to specify explicit time strings (e.g., 18:30 -> 19:00 fallback)
     @Step("Pick time candidates: {times}")
     public void pickTimeCandidates(String... times) {
         // Open the time select near the Date field (robust against rc_select_* changes)

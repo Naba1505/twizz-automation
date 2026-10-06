@@ -80,13 +80,6 @@ public class LandingPage extends BasePage {
         super(page);
     }
 
-    public void navigate() {
-        String landingPageUrl = ConfigReader.getLandingPageUrl();
-        page.navigate(landingPageUrl);
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
-        logger.info("Navigated to landing page: {}", landingPageUrl);
-    }
-
     public void waitForPageToLoad() {
         Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(TWIZZ_LOGO_NAME));
         logo.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));

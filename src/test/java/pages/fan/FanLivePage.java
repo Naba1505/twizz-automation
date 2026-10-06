@@ -691,9 +691,40 @@ public class FanLivePage extends BasePage {
         }
     }
 
+    @Step("Dismiss Apple Pay modal if present")
+    private void dismissApplePayIfPresent() {
+        try {
+            Locator applePayText = page.getByText("Scan Code with iPhone");
+            if (applePayText.count() == 0) {
+                applePayText = page.getByText("Apple Pay");
+            }
+            if (applePayText.count() == 0 || !safeIsVisible(applePayText.first())) {
+                return;
+            }
+
+            logger.info("[Fan][Live] Apple Pay modal detected; attempting to dismiss");
+
+            // Try the modal's close button first
+            Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
+            if (safeIsVisible(closeBtn.first())) {
+                clickWithRetry(closeBtn.first(), 2, ConfigReader.getElementRetryDelay());
+                logger.info("[Fan][Live] Dismissed Apple Pay modal via Close button");
+                return;
+            }
+
+            // Fallback: press Escape
+            page.keyboard().press("Escape");
+            logger.info("[Fan][Live] Dismissed Apple Pay modal via Escape key");
+        } catch (Exception e) {
+            logger.debug("[Fan][Live] Apple Pay modal not present or dismiss failed: {}", e.getMessage());
+        }
+    }
+
     @Step("Complete payment flow for live access")
     public void completePaymentForLive() {
+        dismissApplePayIfPresent();
         selectPaymentCard();
+        dismissApplePayIfPresent();
         confirmPayment();
         
         // Handle 3DS if it appears

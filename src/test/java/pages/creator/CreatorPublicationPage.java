@@ -111,18 +111,6 @@ public class CreatorPublicationPage extends BasePage {
         logger.info("Clicked CaptionOK");
     }
 
-    public void ensureBlurSwitchEnabled() {
-        Locator sw = page.getByRole(AriaRole.SWITCH);
-        waitVisible(sw, ConfigReader.getShortTimeout());
-        String ariaChecked = sw.getAttribute("aria-checked");
-        if (!"true".equalsIgnoreCase(ariaChecked)) {
-            logger.warn("Blur switch not enabled by default. Enabling now.");
-            clickWithRetry(sw, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-        } else {
-            logger.info("Blur switch is enabled by default");
-        }
-    }
-
     private boolean getBlurSwitchState() {
         Locator sw = page.getByRole(AriaRole.SWITCH);
         waitVisible(sw, ConfigReader.getShortTimeout());

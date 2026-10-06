@@ -6,8 +6,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
-import com.microsoft.playwright.options.WaitUntilState;
-
 import utils.ConfigReader;
 
 public class CreatorLoginPage extends BasePage {
@@ -39,20 +37,6 @@ public class CreatorLoginPage extends BasePage {
                 logger.warn("Navigation attempt {} failed, retrying...", i + 1);
                 page.waitForTimeout(ConfigReader.getRetryDelay());
             }
-        }
-    }
-
-    /**
-     * Clear session cookies and reload page - use this explicitly when needed for retry scenarios
-     */
-    public void clearSessionAndReload() {
-        try {
-            page.context().clearCookies();
-            page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-            page.waitForTimeout(ConfigReader.getUiSettleTimeout());
-            logger.info("Cleared session and reloaded page for clean state");
-        } catch (Exception e) {
-            logger.warn("Failed to clear session/refresh: {}", e.getMessage());
         }
     }
 
