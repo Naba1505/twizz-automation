@@ -8,6 +8,8 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Step;
 
+import java.util.regex.Pattern;
+
 /**
  * Page object for Creator -> Settings -> History of pushes flow
  */
@@ -31,10 +33,6 @@ public class CreatorPushHistoryPage extends BasePage {
         return page.getByText("History Media push");
     }
 
-    private Locator performanceTitle() {
-        return page.getByText("Performance");
-    }
-
     private Locator backArrow() {
         // Try arrow left first
         Locator arrowLeft = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
@@ -51,41 +49,43 @@ public class CreatorPushHistoryPage extends BasePage {
     }
 
     private Locator historyRows() {
-        // Primary: entry rows have a class specific to this list (border-bottom-history-push)
-        // that the page's own title/header row never has. The previously used
-        // ".ant-row.justify-content-between" selector was found (via live debugging) to
-        // sometimes transiently match the page header instead of an actual entry row,
-        // intermittently causing clicks to land on the header (a no-op) instead of an
-        // entry. Scoping to the entry-specific class avoids that ambiguity entirely.
+        // Primary: every entry row shows a fan-count like "88 Fans". Matching on that
+        // text is stable across markup/class changes; clicking the text element still
+        // triggers the row's click handler via event bubbling.
+        Locator byFans = page.getByText(Pattern.compile("Fans", Pattern.CASE_INSENSITIVE));
+        if (byFans.count() > 0) {
+            return byFans;
+        }
+        // Fallback 1: entry-specific class used by older markup
         Locator primary = page.locator(".ant-row.border-bottom-history-push");
         if (primary.count() > 0) {
             return primary;
         }
-        // Fallback 1: previous class combination, in case markup changes again
+        // Fallback 2: previous class combination, in case markup changes again
         Locator fallback1 = page.locator(".ant-row.justify-content-between");
         if (fallback1.count() > 0) {
             return fallback1;
         }
-        // Fallback 2: ant-space-item (common Ant Design list item container)
-        Locator fallback2 = page.locator(".ant-space-item");
-        if (fallback2.count() > 0) {
-            return fallback2;
-        }
-        // Fallback 3: any clickable list item
-        return page.locator("[role='listitem'], .list-item, [class*='item']");
+        // Fallback 3: ant-space-item (common Ant Design list item container)
+        return page.locator(".ant-space-item");
     }
 
     private Locator firstHistoryRow() {
-        return historyRows().first();
+        return waitForHistoryRows().first();
     }
 
-    private Locator lastHistoryClickable() {
-        Locator rows = historyRows();
-        if (rows.count() > 0) return rows.last();
-        // Fallback: any clickable typography/text inside the history list
-        Locator typos = page.locator(".ant-typography");
-        if (typos.count() > 0) return typos.last();
-        return page.locator(".ant-space-item").last();
+    // The list renders asynchronously; count() evaluated once at call time can be 0
+    // mid-load and pick the wrong fallback. Poll until a row locator actually matches.
+    private Locator waitForHistoryRows() {
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+        while (System.currentTimeMillis() < deadline) {
+            Locator rows = historyRows();
+            try {
+                if (rows.count() > 0) return rows;
+            } catch (Throwable e) { logger.debug("Row count check failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable e) { logger.debug("Poll wait failed: {}", e.getMessage()); }
+        }
+        return historyRows();
     }
 
     // ---------- Steps ----------
@@ -122,7 +122,7 @@ public class CreatorPushHistoryPage extends BasePage {
         // Current UI shows a plain list of push entries (date / subscriber count / price)
         // rather than a "Total income" summary card - that element no longer exists on
         // this screen (confirmed via live DOM inspection). Verify the list itself instead.
-        waitVisible(historyRows().first(), ConfigReader.getShortTimeout());
+        waitVisible(waitForHistoryRows().first(), ConfigReader.getShortTimeout());
         logger.info("Push history entries visible");
     }
 
@@ -202,25 +202,6 @@ public class CreatorPushHistoryPage extends BasePage {
         logger.info("Back on History Media push screen");
     }
 
-    @Step("Open last media push entry from the list")
-    public void openLastMediaPushEntry() {
-        // Wait for rows to render, then scroll to the last one
-        long timeout = ConfigReader.getShortTimeout();
-        try {
-            waitVisible(historyRows().first(), timeout);
-        } catch (Exception e) {
-            logger.warn("History rows not visible within timeout; retrying with longer timeout");
-            try { page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE, 
-                    new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout())); } 
-            catch (Exception e2) { logger.debug("Network idle wait failed: {}", e2.getMessage()); }
-            waitVisible(historyRows().first(), ConfigReader.getMediumTimeout());
-        }
-        Locator last = lastHistoryClickable();
-        waitVisible(last.first(), timeout);
-        try { last.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-        clickWithRetry(last.first(), 1, ConfigReader.getElementRetryDelay());
-    }
-
     @Step("Open first media push entry from the list")
     public void openFirstMediaPushEntry() {
         // Scroll to top first to ensure first item is interactable
@@ -233,64 +214,11 @@ public class CreatorPushHistoryPage extends BasePage {
         clickWithRetry(firstHistoryRow(), 1, ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Assert Performance screen is visible")
-    public void assertPerformanceVisible() {
-        // Wait for network to settle after navigation
-        try {
-            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE,
-                    new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout()));
-        } catch (Exception e) { logger.debug("Network idle wait failed: {}", e.getMessage()); }
-        
-        // Wait for either Performance title or History Media push title (UI updated)
-        long timeout = ConfigReader.getMediumTimeout();
-        try {
-            // Try Performance title first
-            Locator performanceTitle = performanceTitle();
-            if (performanceTitle.count() > 0 && safeIsVisible(performanceTitle)) {
-                logger.info("Performance screen visible");
-                return;
-            }
-            
-            // Fallback: Look for "History Media push" title (updated UI)
-            Locator historyMediaPushTitle = page.getByText("History Media push");
-            if (historyMediaPushTitle.count() > 0 && safeIsVisible(historyMediaPushTitle)) {
-                logger.info("History Media push screen visible (updated UI)");
-                return;
-            }
-            
-            // If neither found, wait for Performance with extended timeout
-            waitVisible(performanceTitle(), timeout);
-            logger.info("Performance screen visible");
-        } catch (Exception e) {
-            logger.warn("Performance/History screen not found. Current URL: {}", page.url());
-            throw e;
-        }
-    }
-
     @Step("Navigate back via arrow left")
     public void clickBackArrow() {
         waitVisible(backArrow(), ConfigReader.getShortTimeout());
         clickWithRetry(backArrow(), 1, ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Navigate back to profile screen")
-    public void navigateBackToProfile() {
-        // Click back until we see a reliable profile marker (plus icon or profile URL)
-        for (int i = 0; i < 3; i++) {
-            try { clickBackArrow(); } catch (Throwable e) { logger.debug("Back arrow click failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            if (isOnProfileScreen()) return;
-        }
-        // Final check (non-throwing) to log state
-        if (!isOnProfileScreen()) {
-            logger.warn("Profile marker not visible after navigating back; current URL: {}", page.url());
-        }
-    }
-
-    private boolean isOnProfileScreen() {
-        Locator plusImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
-        if (safeIsVisible(plusImg.first())) return true;
-        return page.url().contains("/creator/profile");
-    }
 }
 
