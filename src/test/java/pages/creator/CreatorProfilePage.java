@@ -234,15 +234,6 @@ public class CreatorProfilePage extends BasePage {
         try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
     }
 
-    @Step("Wait for 'Updated Personal Information Successfully.' toast")
-    public void waitForProfileUpdatedToast() {
-        Locator toast = page.getByText("Updated Personal Information Successfully.");
-        waitVisible(toast.first(), ConfigReader.getMediumTimeout());
-        // Allow a brief pause even when toast is visible, then dismiss
-        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        try { clickWithRetry(toast.first(), 0, 0); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
-    }
-
     @Step("Soft wait for 'Updated Personal Information Successfully.' toast (timeout: {timeoutMs}ms)")
     public boolean waitForProfileUpdatedToastSoft(int timeoutMs) {
         Locator toast = page.getByText("Updated Personal Information Successfully.");
