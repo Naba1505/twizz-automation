@@ -73,10 +73,6 @@ public class CreatorPaymentMethodPage extends BasePage {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add method"));
     }
 
-    private Locator successToast() {
-        return page.locator("div").filter(new Locator.FilterOptions().setHasText("Banking setting successfully"));
-    }
-
     private Locator revoCardImage() {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("RevoCard"));
     }
@@ -201,18 +197,6 @@ public class CreatorPaymentMethodPage extends BasePage {
     public void submitAddMethod() {
         waitVisible(addMethodButton(), ConfigReader.getShortTimeout());
         clickWithRetry(addMethodButton(), 1, ConfigReader.getElementRetryDelay());
-    }
-
-    @Step("Assert success toast and card visible")
-    public void assertSuccessAndCardVisible() {
-        // Wait up to 60s for any toast containing the expected text
-        try {
-            waitVisible(successToast().first(), ConfigReader.getMediumTimeout());
-        } catch (Throwable t) {
-            logger.warn("Success toast (Banking setting successfully) not detected within medium timeout: {}", t.getMessage());
-        }
-
-        waitVisible(revoCardImage().first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Open added payment card")
