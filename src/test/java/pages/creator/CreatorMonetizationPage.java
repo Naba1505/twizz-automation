@@ -155,8 +155,7 @@ public class CreatorMonetizationPage extends BasePage {
     public void enableQuarterlyToggleIfNeeded() {
         waitVisible(quarterlyToggle(), ConfigReader.getShortTimeout());
         try {
-            String aria = quarterlyToggle().getAttribute("aria-checked");
-            boolean isOn = aria != null ? Boolean.parseBoolean(aria) : quarterlyToggle().isChecked();
+            boolean isOn = isQuarterlyOnSafe();
             if (!isOn) {
                 logger.info("Quarterly toggle is OFF, enabling it now.");
                 clickWithRetry(quarterlyToggle(), 1, ConfigReader.getElementRetryDelay());
@@ -170,6 +169,19 @@ public class CreatorMonetizationPage extends BasePage {
     }
 
     private boolean isQuarterlyOnSafe() {
+        try {
+            Object state = quarterlyToggle().evaluate(
+                    "el => { const inp = el.tagName === 'INPUT' ? el : el.querySelector('input');"
+                            + " if (inp) return !!inp.checked;"
+                            + " const aria = el.getAttribute('aria-checked');"
+                            + " if (aria !== null) return aria === 'true';"
+                            + " return !!el.checked; }");
+            if (state instanceof Boolean) {
+                return (Boolean) state;
+            }
+        } catch (Throwable t) {
+            logger.debug("JS toggle state read failed: {}", t.getMessage());
+        }
         try {
             String aria = quarterlyToggle().getAttribute("aria-checked");
             return aria != null ? Boolean.parseBoolean(aria) : quarterlyToggle().isChecked();
@@ -234,6 +246,7 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Click Continue to save monetization changes")
     public void clickContinue() {
+        dismissBlockingOverlays();
         waitVisible(continueButton(), ConfigReader.getShortTimeout());
         // Wait for button to become enabled (it may be disabled if no changes were made)
         long start = System.currentTimeMillis();
@@ -248,12 +261,36 @@ public class CreatorMonetizationPage extends BasePage {
             logger.warn("Continue button still disabled after waiting; attempting click regardless");
         }
         clickWithRetry(continueButton(), 2, ConfigReader.getElementRetryDelay());
+        dismissBlockingOverlays();
     }
 
     @Step("Wait for monetization updated toast")
     public void waitForMonetizationUpdatedToast() {
-        waitVisible(monetizationUpdatedPopup(), ConfigReader.getMediumTimeout());
+        if (!waitVisibleQuiet(monetizationUpdatedPopup(), ConfigReader.getMediumTimeout())) {
+            // First click may have been swallowed by a lingering overlay; retry the save once
+            logger.warn("Updated toast not seen; retrying Continue click once");
+            clickContinue();
+            waitVisible(monetizationUpdatedPopup(), ConfigReader.getMediumTimeout());
+        }
         try { clickWithRetry(monetizationUpdatedPopup(), 0, 0); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
+    }
+
+    private boolean waitVisibleQuiet(Locator locator, int timeoutMs) {
+        try {
+            waitVisible(locator, timeoutMs);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private void dismissBlockingOverlays() {
+        try { page.keyboard().press("Escape"); } catch (Throwable e) { logger.debug("Escape failed: {}", e.getMessage()); }
+        try {
+            if (monthlyCannotTurnOffPopup().count() > 0) {
+                clickWithRetry(monthlyCannotTurnOffPopup().first(), 1, ConfigReader.getElementRetryDelay());
+            }
+        } catch (Throwable e) { logger.debug("Popup dismiss failed: {}", e.getMessage()); }
     }
 }
 
