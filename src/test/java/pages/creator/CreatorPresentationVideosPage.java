@@ -195,16 +195,6 @@ public class CreatorPresentationVideosPage extends BasePage {
         waitVisible(waitingStatusSpan(), ConfigReader.getShortTimeout());
     }
 
-    @Step("Click on the uploaded presentation video tile to open it")
-    public void clickOnVideoTile() {
-        // Click on the Waiting status text which is part of the video tile
-        Locator waitingStatus = waitingStatusSpan();
-        waitVisible(waitingStatus.first(), ConfigReader.getShortTimeout());
-        logger.info("Clicking on Waiting status to open video tile detail view");
-        clickWithRetry(waitingStatus.first(), 1, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Settle wait failed: {}", e.getMessage()); }
-    }
-
     @Step("Delete the presentation video via trash icon and confirm")
     public void deletePresentationVideo() {
         // Wait for trash icon to become visible (video must be in Waiting status)
