@@ -27,6 +27,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.fillMessageAndSetPrice(message);
         amPage.clickSaveOnly();
         amPage.waitBriefly();
+        amPage.assertSavedMedia(0);
     }
 
     @Test(priority = 2, description = "Verify Automatic Message - Renew subscriber modify with free price")
@@ -53,6 +54,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.waitBriefly();
         amPage.assertAutomationTitleVisible();
         amPage.waitBriefly();
+        amPage.assertSavedMedia(1);
     }
 
         @Test(priority = 3, description = "Verify Automatic Message - Unsubscribe modify with free price")
@@ -80,6 +82,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.waitBriefly();
         amPage.assertAutomationTitleVisible();
         amPage.waitBriefly();
+        amPage.assertSavedMedia(2);
     }
 
         @Test(priority = 4, description = "Verify Automatic Message - Re-subscription modify with 15€ and promotion")
@@ -108,6 +111,7 @@ public class CreatorAutomaticMessageTest extends BaseCreatorTest {
         amPage.waitBriefly();
         amPage.assertAutomationTitleVisible();
         amPage.waitBriefly();
+        amPage.assertSavedMedia(3);
     }
 
         @Test(priority = 5, description = "Verify Automatic Message - Delete added media and disable all messages")

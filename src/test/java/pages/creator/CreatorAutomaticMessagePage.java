@@ -3,6 +3,7 @@ package pages.creator;
 import pages.common.BasePage;
 import utils.ConfigReader;
 
+import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
 
 public class CreatorAutomaticMessagePage extends BasePage {
     private static final String SETTINGS_URL_PART = "/common/setting";
+    private boolean uploadPending;
 
     public CreatorAutomaticMessagePage(Page page) {
         super(page);
@@ -22,14 +24,13 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     @Step("Save auto message (no waits)")
     public void clickSaveOnly() {
+        if (uploadPending) {
+            waitForUploadToFinish();
+            uploadPending = false;
+        }
         waitVisible(saveButton(), ConfigReader.getShortTimeout());
         clickWithRetry(saveButton(), 1, ConfigReader.getElementRetryDelay());
-        // Wait for the modification screen to close and Modify buttons to reappear
-        try {
-            waitVisible(modifyButtonVisibleAgain(), ConfigReader.getMediumTimeout());
-        } catch (Throwable e) {
-            logger.debug("Modify button did not reappear quickly after save: {}", e.getMessage());
-        }
+        waitVisible(modifyButtonVisibleAgain(), ConfigReader.getMediumTimeout());
     }
 
     // -------- Locators --------
@@ -137,25 +138,16 @@ public class CreatorAutomaticMessagePage extends BasePage {
         return page.getByText("Stay on page during uploading");
     }
 
-    private Locator genericAlerts() {
-        // Common UI containers for transient banners/toasts
-        return page.locator(".ant-message, .ant-notification, [role='alert']");
-    }
-
     private Locator modifyButtonVisibleAgain() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Modify"));
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Modify")).first();
     }
 
-    private Locator firstSwitchToggle() {
-        return page.getByRole(AriaRole.SWITCH).first();
+    private Locator deleteButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("delete"));
     }
 
-    private Locator mainBannerRole() {
-        return page.getByRole(AriaRole.MAIN);
-    }
-
-    private Locator modalOrDrawerMasks() {
-        return page.locator(".ant-modal-mask, .ant-drawer-mask");
+    private Locator myDeviceButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("My Device"));
     }
 
     private Locator importationCancelButton() {
@@ -168,7 +160,7 @@ public class CreatorAutomaticMessagePage extends BasePage {
 
     private boolean clickAnyConfirmDeleteInline() {
         String[] labels = new String[]{"Yes, delete", "Yes, Delete", "Delete", "Yes"};
-        long end = System.currentTimeMillis() + ConfigReader.getShortTimeout();
+        long end = System.currentTimeMillis() + ConfigReader.getUiSettleTimeout();
         while (System.currentTimeMillis() < end) {
             for (String label : labels) {
                 Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
@@ -292,16 +284,29 @@ public class CreatorAutomaticMessagePage extends BasePage {
             throw new RuntimeException("Media file not found: " + file);
         }
 
-        // Prefer ant-upload file inputs inside Importation dialog
-        Locator inputs = page.locator(".ant-upload input[type='file']");
-        if (inputs.count() == 0) {
-            inputs = page.locator("input[type='file']");
+        boolean uploaded = false;
+        try {
+            FileChooser chooser = page.waitForFileChooser(
+                    new Page.WaitForFileChooserOptions().setTimeout(ConfigReader.getShortTimeout()),
+                    () -> clickWithRetry(myDeviceButton(), 1, ConfigReader.getElementRetryDelay()));
+            chooser.setFiles(file);
+            uploaded = true;
+        } catch (Throwable e) { logger.debug("File chooser upload failed: {}", e.getMessage()); }
+
+        if (!uploaded) {
+            // Prefer ant-upload file inputs inside Importation dialog
+            Locator inputs = page.locator(".ant-upload input[type='file']");
+            if (inputs.count() == 0) {
+                inputs = page.locator("input[type='file']");
+            }
+            if (inputs.count() == 0) {
+                throw new RuntimeException("No file input found for media upload in Importation dialog");
+            }
+            Locator target = inputs.nth(inputs.count() - 1);
+            target.setInputFiles(file);
         }
-        if (inputs.count() == 0) {
-            throw new RuntimeException("No file input found for media upload in Importation dialog");
-        }
-        Locator target = inputs.nth(inputs.count() - 1);
-        target.setInputFiles(file);
+        waitForUploadToFinish();
+        uploadPending = true;
 
         // Optionally dismiss Importation sheet if a Cancel button is present
         try {
@@ -310,6 +315,23 @@ public class CreatorAutomaticMessagePage extends BasePage {
                 clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
             }
         } catch (Exception e) { logger.debug("Cancel click failed: {}", e.getMessage()); }
+    }
+
+    private void waitForUploadToFinish() {
+        try {
+            uploadStayMessage().waitFor(new Locator.WaitForOptions()
+                    .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
+                    .setTimeout(ConfigReader.getAnimationTimeout()));
+        } catch (Throwable e) { logger.debug("Upload message did not appear: {}", e.getMessage()); }
+        try {
+            uploadStayMessage().waitFor(new Locator.WaitForOptions()
+                    .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN)
+                    .setTimeout(ConfigReader.getLongTimeout()));
+        } catch (Throwable e) { logger.debug("Upload completion message wait failed: {}", e.getMessage()); }
+        try {
+            page.waitForLoadState(LoadState.NETWORKIDLE,
+                    new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout()));
+        } catch (Throwable e) { logger.debug("Network idle wait failed: {}", e.getMessage()); }
     }
 
     @Step("Click Next in auto message flow")
@@ -357,92 +379,36 @@ public class CreatorAutomaticMessagePage extends BasePage {
         typeAndAssert(discountTextboxSecond(), discount);
     }
 
-    @Step("Save auto message and wait for upload to finish")
-    public void clickSaveAndWaitUploadComplete() {
-        waitVisible(saveButton(), ConfigReader.getShortTimeout());
-        clickWithRetry(saveButton(), 1, ConfigReader.getElementRetryDelay());
-        for (int i = 0; i < 60; i++) {
-            boolean uploadingVisible = safeIsVisible(uploadStayMessage());
-            boolean mainVisible = safeIsVisible(mainBannerRole());
-            boolean alertsVisible = false;
-            try { alertsVisible = genericAlerts().count() > 0 && genericAlerts().isVisible(); } catch (Throwable e) { logger.debug("Alert check failed: {}", e.getMessage()); }
-            if (!uploadingVisible && !mainVisible && !alertsVisible) break;
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        }
-        try { page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getMediumTimeout())); } catch (Throwable e) { logger.debug("Network idle wait failed: {}", e.getMessage()); }
-        try {
-            waitVisible(modifyButtonVisibleAgain(), ConfigReader.getMediumTimeout());
-        } catch (Throwable firstWait) {
-            try {
-                if (modalOrDrawerMasks().count() > 0 && modalOrDrawerMasks().isVisible()) {
-                    clickWithRetry(modalOrDrawerMasks().first(), 1, ConfigReader.getAnimationTimeout());
-                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-                }
-            } catch (Throwable e) { logger.debug("Mask dismiss failed: {}", e.getMessage()); }
-            try {
-                if (genericAlerts().count() > 0 && genericAlerts().isVisible()) {
-                    clickWithRetry(genericAlerts().first(), 1, ConfigReader.getAnimationTimeout());
-                    try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-                }
-            } catch (Throwable e) { logger.debug("Alert dismiss failed: {}", e.getMessage()); }
-            try {
-                Locator genericDiv = page.locator("div").nth(4);
-                clickWithRetry(genericDiv, 1, ConfigReader.getAnimationTimeout());
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            } catch (Throwable e) { logger.debug("Generic div click failed: {}", e.getMessage()); }
-            waitVisible(modifyButtonVisibleAgain(), ConfigReader.getShortTimeout());
-        }
-        try {
-            if (genericAlerts().count() > 0 && genericAlerts().isVisible()) {
-                clickWithRetry(genericAlerts().first(), 1, ConfigReader.getAnimationTimeout());
-            } else if (modalOrDrawerMasks().count() > 0 && modalOrDrawerMasks().isVisible()) {
-                clickWithRetry(modalOrDrawerMasks().first(), 1, ConfigReader.getAnimationTimeout());
-            } else {
-                page.keyboard().press("Escape");
-            }
-        } catch (Throwable e) { logger.debug("Banner close failed: {}", e.getMessage()); }
-        try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        waitVisible(modifyButtonVisibleAgain(), ConfigReader.getShortTimeout());
-    }
-
-    @Step("Assert first toggle is enabled")
-    public void assertFirstToggleEnabled() {
-        waitVisible(firstSwitchToggle(), ConfigReader.getShortTimeout());
-        boolean checked = firstSwitchToggle().isChecked();
-        if (!checked) {
-            try { clickWithRetry(firstSwitchToggle(), 1, ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Click failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            checked = firstSwitchToggle().isChecked();
-        }
-        if (!checked) {
-            throw new AssertionError("New subscriber automatic message toggle is not enabled");
-        }
-    }
-
-    @Step("Assert Modify button is visible (back on Automatic Message)")
-    public void assertModifyVisible() {
-        waitVisible(modifyButtonVisibleAgain(), ConfigReader.getShortTimeout());
-    }
-
     @Step("Assert Automation title visible on Automatic Message screen")
     public void assertAutomationTitleVisible() {
         waitVisible(automationTitle(), ConfigReader.getShortTimeout());
     }
 
+    @Step("Assert saved media is present for automatic message section {sectionIndex}")
+    public void assertSavedMedia(int sectionIndex) {
+        Locator modifyButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Modify")).nth(sectionIndex);
+        waitVisible(modifyButton, ConfigReader.getShortTimeout());
+        clickWithRetry(modifyButton, 1, ConfigReader.getElementRetryDelay());
+        waitVisible(deleteButton().first(), ConfigReader.getMediumTimeout());
+    }
+
     @Step("Delete all visible media items via delete buttons (with verification)")
     public void deleteAllVisibleMedia() {
-        Locator deleteBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("delete"));
+        Locator deleteBtn = deleteButton();
         try { deleteBtn.first().waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getShortTimeout())); } catch (Throwable e) { logger.debug("No delete button appeared: {}", e.getMessage()); return; }
 
         long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
-        while (System.currentTimeMillis() < deadline) {
-            int count = 0;
-            try { count = deleteBtn.count(); } catch (Throwable e) { logger.debug("Count failed: {}", e.getMessage()); }
-            if (count <= 0) break;
-
+        while (System.currentTimeMillis() < deadline && safeIsVisible(deleteBtn.first())) {
             try {
+                int previousCount = deleteBtn.count();
                 deleteBtn.first().click(new Locator.ClickOptions().setForce(true));
                 clickAnyConfirmDeleteInline();
+                long removalDeadline = System.currentTimeMillis() + ConfigReader.getShortTimeout();
+                while (System.currentTimeMillis() < removalDeadline
+                        && safeIsVisible(deleteBtn.first())
+                        && deleteBtn.count() >= previousCount) {
+                    page.waitForTimeout(ConfigReader.getPollInterval());
+                }
             } catch (Throwable e) {
                 logger.debug("Delete click failed (will retry): {}", e.getMessage());
                 try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Throwable ignored) {}
