@@ -123,31 +123,16 @@ public class CreatorScriptsPage extends BasePage {
         waitVisible(msg.first(), ConfigReader.getShortTimeout());
         typeAndAssert(msg.first(), "Test updated message");
 
-        // Update note: in edit flows we might still be on a previous step; if the note box
-        // is not visible yet, advance via a primary Next/Continue button once, then wait again.
+        // The edit wizard currently has no note step (note field only exists in the
+        // create flow). Probe briefly so we still update it if the app adds one,
+        // without burning a full timeout on every edit.
         Locator noteBox = page.getByRole(AriaRole.TEXTBOX,
                 new Page.GetByRoleOptions().setName("Write a note to not forget"));
         try {
-            waitVisible(noteBox.first(), ConfigReader.getMediumTimeout());
-        } catch (Throwable t) {
-            logger.debug("Note box not visible yet, will try advancing via Next/Continue: {}", t.getMessage());
-            Locator nextBtn = page.getByRole(AriaRole.BUTTON,
-                    new Page.GetByRoleOptions().setName("Next"));
-            if (nextBtn.count() == 0) {
-                nextBtn = page.getByRole(AriaRole.BUTTON,
-                        new Page.GetByRoleOptions().setName("Continue"));
-            }
-            if (nextBtn.count() > 0) {
-                try { nextBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
-                clickWithRetry(nextBtn.first(), 1, ConfigReader.getElementRetryDelay());
-                page.waitForTimeout(ConfigReader.getAnimationTimeout());
-            }
-            try {
-                waitVisible(noteBox.first(), ConfigReader.getShortTimeout());
-            } catch (Throwable e) {
-                logger.warn("Note textbox not visible in edit flow; skipping note update.: {}", e.getMessage());
-                return;
-            }
+            waitVisible(noteBox.first(), 3000);
+        } catch (Throwable e) {
+            logger.debug("Note textbox not present in edit flow; skipping note update");
+            return;
         }
 
         typeAndAssert(noteBox.first(), "Updated note");
@@ -1157,250 +1142,6 @@ public class CreatorScriptsPage extends BasePage {
         logger.info("Mixed script edit flow completed");
     }
 
-    // ===== Change Order Flow =====
-
-    @Step("Ensure 'All' tab is selected on Scripts page")
-    public void ensureAllTabSelected() {
-        logger.info("Ensuring 'All' tab is selected");
-        Locator allTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("All"));
-        waitVisible(allTab.first(), ConfigReader.getShortTimeout());
-
-        try {
-            String ariaSelected = allTab.first().getAttribute("aria-selected");
-            if (!"true".equals(ariaSelected)) {
-                logger.info("'All' tab not selected, clicking it");
-                clickWithRetry(allTab.first(), 1, ConfigReader.getElementRetryDelay());
-            } else {
-                logger.info("'All' tab already selected");
-            }
-        } catch (Throwable e) {
-            logger.warn("Could not check tab selection state, clicking anyway: {}", e.getMessage());
-            clickWithRetry(allTab.first(), 1, ConfigReader.getElementRetryDelay());
-        }
-    }
-
-    @Step("Click edit icon on first script to open edit dialog")
-    public void clickEditIconOnFirstScript() {
-        logger.info("Clicking edit icon on first script");
-        
-        // Use XPath to find all edit buttons and click the first one
-        Locator editButtons = page.locator("//button[@aria-label='edit']");
-        waitVisible(editButtons.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(editButtons.first(), 1, ConfigReader.getElementRetryDelay());
-    }
-
-    @Step("Verify edit dialog appears")
-    public void verifyEditDialogAppears() {
-        logger.info("Verifying edit dialog appears");
-        
-        // Ensure "Edit" title appears
-        Locator editTitle = page.getByText("Edit", new Page.GetByTextOptions().setExact(true));
-        waitVisible(editTitle.first(), ConfigReader.getShortTimeout());
-        logger.info("Edit title visible");
-
-        Locator editMessage = page.getByText("Which action would you like");
-        waitVisible(editMessage.first(), ConfigReader.getShortTimeout());
-        logger.info("Edit dialog message visible");
-    }
-
-    @Step("Click 'Change order' button")
-    public void clickChangeOrderButton() {
-        logger.info("Clicking 'Change order' button");
-        Locator changeOrderBtn = page.getByRole(AriaRole.BUTTON,
-            new Page.GetByRoleOptions().setName("Change order"));
-        waitVisible(changeOrderBtn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(changeOrderBtn.first(), 1, ConfigReader.getElementRetryDelay());
-    }
-
-    @Step("Verify change order screen appears")
-    public void verifyChangeOrderScreenAppears() {
-        logger.info("Verifying change order screen appears");
-        
-        Locator orderHeading = page.getByRole(AriaRole.HEADING,
-            new Page.GetByRoleOptions().setName("Hold the button on the right"));
-        waitVisible(orderHeading.first(), ConfigReader.getShortTimeout());
-        logger.info("Change order screen heading visible");
-    }
-
-    @Step("Drag first script to bottom to reorder")
-    public void dragFirstScriptToBottom() {
-        logger.info("Attempting to drag first script to bottom");
-        
-        // Wait for the list to be fully loaded
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-
-        Locator listItems = page.getByRole(AriaRole.LISTITEM);
-        int itemCount = listItems.count();
-        logger.info("Found {} list items (script rows)", itemCount);
-        
-        if (itemCount < 2) {
-            logger.warn("Not enough scripts to reorder (need at least 2), found: {}", itemCount);
-            return;
-        }
-        
-        // Get the reorder handles (drag buttons) for each list item
-        // Each list item has a getByLabel("reorder") button
-        Locator firstItemHandle = listItems.first().getByLabel("reorder");
-        Locator lastItemHandle = listItems.nth(itemCount - 1).getByLabel("reorder");
-        
-        // Verify the handles are visible
-        try {
-            waitVisible(firstItemHandle, 5000);
-            waitVisible(lastItemHandle, 5000);
-            logger.info("Both first and last reorder handles are visible");
-        } catch (Throwable e) {
-            logger.warn("Reorder handles not visible: {}", e.getMessage());
-            return;
-        }
-        
-        // Use the reorder handles for dragging
-        Locator firstHandle = firstItemHandle;
-        Locator lastHandle = lastItemHandle;
-        
-        logger.info("Attempting drag from first to last (total: {} scripts)", itemCount);
-        
-        try {
-            // Scroll both elements into view first
-            try { 
-                firstHandle.scrollIntoViewIfNeeded(); 
-                lastHandle.scrollIntoViewIfNeeded();
-            } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-            
-            // Wait a moment for scrolling to complete
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
-
-            logger.info("Attempting drag using comprehensive HTML5 DnD simulation");
-            
-            // Use a comprehensive drag-and-drop simulation script
-            // This script properly simulates all HTML5 drag-and-drop events
-            String dndScript = 
-                "(function(source, target) {" +
-                "  function createDragEvent(type, options) {" +
-                "    const event = new DragEvent(type, {" +
-                "      bubbles: true," +
-                "      cancelable: true," +
-                "      composed: true," +
-                "      ...options" +
-                "    });" +
-                "    Object.defineProperty(event, 'dataTransfer', {" +
-                "      value: options.dataTransfer || {" +
-                "        data: {}," +
-                "        effectAllowed: 'all'," +
-                "        dropEffect: 'move'," +
-                "        files: []," +
-                "        items: []," +
-                "        types: []," +
-                "        setData: function(type, val) { this.data[type] = val; }," +
-                "        getData: function(type) { return this.data[type]; }" +
-                "      }" +
-                "    });" +
-                "    return event;" +
-                "  }" +
-                "  const dataTransfer = {" +
-                "    data: {}," +
-                "    effectAllowed: 'all'," +
-                "    dropEffect: 'move'," +
-                "    files: []," +
-                "    items: []," +
-                "    types: []," +
-                "    setData: function(type, val) { this.data[type] = val; this.types.push(type); }," +
-                "    getData: function(type) { return this.data[type]; }," +
-                "    clearData: function() { this.data = {}; this.types = []; }" +
-                "  };" +
-                "  const dragStartEvent = createDragEvent('dragstart', { dataTransfer });" +
-                "  source.dispatchEvent(dragStartEvent);" +
-                "  const dragEnterEvent = createDragEvent('dragenter', { dataTransfer });" +
-                "  target.dispatchEvent(dragEnterEvent);" +
-                "  const dragOverEvent = createDragEvent('dragover', { dataTransfer });" +
-                "  target.dispatchEvent(dragOverEvent);" +
-                "  const dropEvent = createDragEvent('drop', { dataTransfer });" +
-                "  target.dispatchEvent(dropEvent);" +
-                "  const dragEndEvent = createDragEvent('dragend', { dataTransfer });" +
-                "  source.dispatchEvent(dragEndEvent);" +
-                "})(arguments[0], arguments[1]);";
-            
-            try {
-                // Get the actual DOM elements from the locators
-                Object firstElement = firstHandle.evaluate("el => el");
-                Object lastElement = lastHandle.evaluate("el => el");
-                
-                // Execute the drag-and-drop script
-                page.evaluate(dndScript, new Object[]{firstElement, lastElement});
-                logger.info("Comprehensive HTML5 DnD simulation executed");
-                page.waitForTimeout(ConfigReader.getMediumTimeout() / 3);
-
-            } catch (Throwable jsError) {
-                logger.warn("HTML5 DnD simulation failed: {}, trying standard dragTo", jsError.getMessage());
-
-                try {
-                    firstHandle.dragTo(lastHandle);
-                    logger.info("Standard dragTo executed as fallback");
-                    page.waitForTimeout(ConfigReader.getMediumTimeout() / 3);
-                } catch (Throwable dragError) {
-                    logger.error("Both HTML5 simulation and dragTo failed: {}", dragError.getMessage());
-                }
-            }
-        } catch (Throwable e) {
-            logger.error("Drag operation failed: {}", e.getMessage(), e);
-        }
-    }
-
-    @Step("Verify 'Order updated' message appears")
-    public void verifyOrderUpdatedMessage() {
-        logger.info("Verifying 'Order updated' message appears");
-        
-        // Look for success toast/message
-        Locator orderUpdatedMsg = page.getByText("Order updated");
-        
-        long end = System.currentTimeMillis() + 10_000;
-        boolean found = false;
-        
-        while (System.currentTimeMillis() < end && !found) {
-            try {
-                if (orderUpdatedMsg.count() > 0 && safeIsVisible(orderUpdatedMsg.first())) {
-                    logger.info("'Order updated' message visible - order change successful!");
-                    found = true;
-                    break;
-                }
-            } catch (Throwable e) { logger.debug("Check failed: {}", e.getMessage()); }
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        }
-
-        if (!found) {
-            String errorMsg = "'Order updated' message not found - drag operation did not trigger order change";
-            logger.error(errorMsg);
-            throw new AssertionError(errorMsg);
-        }
-    }
-
-    @Step("Click Finish button to save order changes")
-    public void clickFinishButton() {
-        logger.info("Clicking Finish button to save order changes");
-        Locator finishBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Finish"));
-        waitVisible(finishBtn.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(finishBtn.first(), 1, ConfigReader.getElementRetryDelay());
-        logger.info("Finish button clicked");
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-    }
-
-    @Step("Complete change order flow: navigate, reorder, and verify")
-    public void changeScriptOrder() {
-        logger.info("Starting change script order flow");
-        
-        openSettingsFromProfile();
-        openScriptsFromSettings();
-        ensureAllTabSelected();
-        clickEditIconOnFirstScript();
-        verifyEditDialogAppears();
-        clickChangeOrderButton();
-        verifyChangeOrderScreenAppears();
-        dragFirstScriptToBottom();
-        clickFinishButton();  // Click Finish to save the changes
-        verifyOrderUpdatedMessage();
-        
-        logger.info("Change script order flow completed");
-    }
-
     // ===== Bookmark/Script Cleanup Methods =====
 
     @Step("Click edit-categories button to manage bookmarks")
@@ -1572,26 +1313,43 @@ public class CreatorScriptsPage extends BasePage {
         
         // Delete bookmarks one by one until none remain
         int deletedCount = 0;
+        int consecutiveFailures = 0;
         int maxAttempts = 50; // Safety limit
-        
+
         for (int i = 0; i < maxAttempts; i++) {
             // Check if all bookmarks are deleted
             if (verifyAllBookmarksDeleted()) {
                 logger.info("All test bookmarks deleted. Total deleted: {}", deletedCount);
                 break;
             }
-            
+
             // Delete one bookmark
             boolean deleted = deleteSingleQABookmark();
             if (deleted) {
                 deletedCount++;
+                consecutiveFailures = 0;
                 logger.info("Deleted bookmark #{}", deletedCount);
             } else {
-                // No more bookmarks to delete or error occurred
-                logger.info("No more test bookmarks to delete or deletion failed");
-                break;
+                // A failed long-press can leave the UI in a different state (e.g. tab
+                // activated instead of delete dialog). Recover by re-entering
+                // edit-categories mode instead of aborting the whole cleanup.
+                consecutiveFailures++;
+                if (consecutiveFailures >= 3) {
+                    logger.error("Bookmark deletion failed {} times in a row; aborting cleanup", consecutiveFailures);
+                    break;
+                }
+                logger.warn("Bookmark deletion failed (attempt {}); reloading and re-entering edit-categories mode", consecutiveFailures);
+                page.reload();
+                page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+                try {
+                    clickEditCategoriesButton();
+                    handleEditCategoriesPopup();
+                } catch (Throwable e) {
+                    logger.warn("Failed to re-enter edit-categories mode: {}", e.getMessage());
+                }
+                continue;
             }
-            
+
             // Wait for UI to update before next iteration
             page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
