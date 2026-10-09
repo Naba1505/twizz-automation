@@ -68,42 +68,6 @@ public class FanMyCreatorsPage extends BasePage {
 
     // ===== Creator Details Methods =====
 
-    @Step("Check if any creators are listed")
-    public boolean hasCreatorsListed() {
-        logger.info("Checking if any creators are listed");
-        try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        
-        Locator arrowRight = page.getByRole(AriaRole.IMG, 
-                new Page.GetByRoleOptions().setName("arrow right"));
-        int count = arrowRight.count();
-        logger.info("Found {} creator arrow(s) on My Creators screen", count);
-        return count > 0;
-    }
-
-    @Step("Click on first creator to view details")
-    public void clickFirstCreatorArrow() {
-        logger.info("Clicking on first creator arrow to view details");
-        
-        Locator arrowRight = page.getByRole(AriaRole.IMG, 
-                new Page.GetByRoleOptions().setName("arrow right")).first();
-        waitVisible(arrowRight, DEFAULT_WAIT);
-        clickWithRetry(arrowRight, 1, ConfigReader.getElementRetryDelay());
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        logger.info("Clicked on first creator arrow");
-    }
-
-    @Step("Click Cancel button to navigate back")
-    public void clickCancelButton() {
-        logger.info("Clicking Cancel button");
-        
-        Locator cancelButton = page.getByRole(AriaRole.BUTTON, 
-                new Page.GetByRoleOptions().setName("Cancel").setExact(true));
-        waitVisible(cancelButton.first(), DEFAULT_WAIT);
-        clickWithRetry(cancelButton.first(), 1, ConfigReader.getElementRetryDelay());
-        waitForAnimation();
-        logger.info("Clicked Cancel button");
-    }
-
     @Step("Click See all results to load more creators (optional)")
     public void clickSeeAllResults() {
         logger.info("Attempting to click 'See all results' if present");
@@ -189,10 +153,5 @@ public class FanMyCreatorsPage extends BasePage {
         logger.info("Navigated back to home screen");
     }
 
-    @Step("Pause to view details")
-    public void pauseToViewDetails(int milliseconds) {
-        logger.info("Pausing for {} ms to view details", milliseconds);
-        try { page.waitForTimeout(milliseconds); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-    }
 }
 
