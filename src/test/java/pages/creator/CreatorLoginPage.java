@@ -30,6 +30,10 @@ public class CreatorLoginPage extends BasePage {
             try {
                 page.navigate(url, new Page.NavigateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
                 page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getDefaultTimeout()));
+                waitVisible(page.getByPlaceholder(usernamePlaceholder), ConfigReader.getVisibilityTimeout());
+                waitVisible(page.getByPlaceholder(passwordPlaceholder), ConfigReader.getVisibilityTimeout());
+                waitVisible(page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName(twizzLogoRoleName)), ConfigReader.getVisibilityTimeout());
+                waitVisible(page.getByText(loginTextExact, new Page.GetByTextOptions().setExact(true)), ConfigReader.getVisibilityTimeout());
                 logger.info("Navigated to Creator Login page: {}", url);
                 return;
             } catch (Exception e) {
