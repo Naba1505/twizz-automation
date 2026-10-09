@@ -64,23 +64,6 @@ public class FanMessagingPage extends BasePage {
     private Locator registeredCardOption() {
         return page.getByText("Registered card");
     }
-    
-    // Manual payment fields
-    Locator cardNumberInput() {
-        return page.getByPlaceholder("Card number");
-    }
-    
-    Locator expiryDateInput() {
-        return page.getByPlaceholder("MM / YY");
-    }
-    
-    Locator cvvInput() {
-        return page.getByPlaceholder("CVV");
-    }
-    
-    Locator cardholderNameInput() {
-        return page.getByPlaceholder("Cardholder name");
-    }
 
     // Confirm button
     private Locator confirmButton() {
@@ -308,38 +291,77 @@ public class FanMessagingPage extends BasePage {
     @Step("Click Registered card option")
     public void clickRegisteredCard() {
         page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        
+
+        // Poll for the Registered card option - it can render after the title appears
         Locator registeredCard = registeredCardOption();
-        
+        for (int i = 0; i < 15 && (registeredCard.count() == 0 || !safeIsVisible(registeredCard.first())); i++) {
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        }
+
         if (registeredCard.count() == 0 || !safeIsVisible(registeredCard.first())) {
             registeredCard = page.getByText("Registered").first();
         }
-        if (registeredCard.count() == 0 || !safeIsVisible(registeredCard.first())) {
-            registeredCard = page.locator("[class*='card'], [class*='payment']").filter(
-                new Locator.FilterOptions().setHasText("Registered")).first();
-        }
-        if (registeredCard.count() == 0 || !safeIsVisible(registeredCard.first())) {
-            registeredCard = page.locator("label, div[role='radio'], .ant-radio-wrapper").first();
-            logger.info("[Fan][Messaging] Using first payment option as fallback");
-        }
-        
+
         if (registeredCard.count() > 0 && safeIsVisible(registeredCard.first())) {
-            waitVisible(registeredCard.first(), ConfigReader.getShortTimeout());
             clickWithRetry(registeredCard.first(), 2, ConfigReader.getAnimationTimeout());
             logger.info("[Fan][Messaging] Clicked Registered card option");
-            
+
             page.waitForTimeout(ConfigReader.getAnimationTimeout());
-            
+
             String cvv = ConfigReader.getProperty("payment.card.cvc", "657");
-            Locator cvvField = page.locator("input[placeholder*='CVV'], input[placeholder*='cvv']").first();
+            Locator cvvField = page.locator("input[placeholder*='CVV'], input[placeholder*='cvv'], input[placeholder*='CVC']").first();
             if (safeIsVisible(cvvField)) {
                 cvvField.fill(cvv);
                 logger.info("[Fan][Messaging] Filled CVV for registered card");
                 page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
-        } else {
-            logger.warn("[Fan][Messaging] Registered card option not found, waiting for payment form to appear");
-            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            return;
+        }
+
+        // Manual card-entry fallback: reveal the form if needed, then fill it
+        logger.info("[Fan][Messaging] Registered card option not found, using manual card form");
+        Locator cardNumber = page.getByPlaceholder("Card number");
+        if (cardNumber.count() == 0 || !safeIsVisible(cardNumber.first())) {
+            Locator firstOption = page.locator("label, div[role='radio'], .ant-radio-wrapper").first();
+            if (firstOption.count() > 0 && safeIsVisible(firstOption)) {
+                clickWithRetry(firstOption, 2, ConfigReader.getAnimationTimeout());
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            }
+        }
+        fillManualCardForm();
+    }
+
+    private void fillManualCardForm() {
+        Locator cardNumber = page.getByPlaceholder("Card number");
+        if (cardNumber.count() == 0 || !safeIsVisible(cardNumber.first())) {
+            logger.warn("[Fan][Messaging] No manual card form detected, payment may not be completable");
+            return;
+        }
+        cardNumber.first().fill(ConfigReader.getProperty("fan.card.number", "4242 4242 4242 4242"));
+        logger.info("[Fan][Messaging] Filled card number");
+
+        Locator expiryField = page.getByPlaceholder("MM / YY").first();
+        if (safeIsVisible(expiryField)) {
+            expiryField.fill(ConfigReader.getProperty("fan.card.expiry", "12/28"));
+            logger.info("[Fan][Messaging] Filled expiry date");
+        }
+
+        Locator cvcField = page.locator("input[placeholder*='CVC'], input[placeholder*='CVV'], input[placeholder*='cvv']").first();
+        if (safeIsVisible(cvcField)) {
+            cvcField.fill(ConfigReader.getProperty("payment.card.cvc", "657"));
+            logger.info("[Fan][Messaging] Filled CVC");
+        }
+
+        Locator termsCheckbox = page.getByRole(AriaRole.CHECKBOX).first();
+        if (termsCheckbox.count() > 0 && safeIsVisible(termsCheckbox)) {
+            try {
+                if (!termsCheckbox.isChecked()) {
+                    termsCheckbox.check();
+                }
+            } catch (Throwable e) {
+                try { termsCheckbox.click(); } catch (Throwable ignored) {}
+            }
+            logger.info("[Fan][Messaging] Accepted payment terms checkbox");
         }
     }
 
@@ -489,32 +511,12 @@ public class FanMessagingPage extends BasePage {
         logger.info("[Fan][Messaging] Clicked most recent preview icon for media");
     }
 
-    @Step("Click to preview media")
-    public void clickToPreviewImage() {
-        logger.info("[Fan][Messaging] Looking for Preview icon to click (most recent)");
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        Locator preview = page.locator("span[aria-label='eye']").last();
-        waitVisible(preview, ConfigReader.getShortTimeout());
-        clickWithRetry(preview, 2, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        logger.info("[Fan][Messaging] Clicked to preview media");
-    }
-
     @Step("Close image preview")
     public void closeImagePreview() {
         waitVisible(closePreviewButton(), ConfigReader.getShortTimeout());
         clickWithRetry(closePreviewButton(), 2, ConfigReader.getAnimationTimeout());
         page.waitForTimeout(ConfigReader.getAnimationTimeout());
         logger.info("[Fan][Messaging] Closed image preview");
-    }
-
-    @Step("Verify video play icon is visible")
-    public void verifyVideoPlayIconVisible() {
-        logger.info("[Fan][Messaging] Looking for video play icon");
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        Locator playIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("play")).nth(2);
-        waitVisible(playIcon, ConfigReader.getShortTimeout());
-        logger.info("[Fan][Messaging] Video play icon is visible - video received successfully");
     }
 
     @Step("Verify audio element is visible for message: {messageTimestamp}")
@@ -591,41 +593,6 @@ public class FanMessagingPage extends BasePage {
         logger.info("[Fan][Messaging] Audio element is visible");
 
         logger.info("[Fan][Messaging] Mixed media verified successfully - image, video, and audio received");
-    }
-
-    // ================= Complete Flow Methods =================
-
-    /**
-     * Step 1: Fan sends initial message to creator.
-     */
-    @Step("Fan sends message to creator")
-    public void fanSendsMessageToCreator(String creatorName, String message) {
-        navigateToMessaging();
-        clickOnCreatorConversation(creatorName);
-        sendMessageToCreator(message);
-        logger.info("[Fan][Messaging] Fan sent message '{}' to creator '{}'", message, creatorName);
-    }
-
-    /**
-     * Step 3: Fan accepts paid message and completes payment.
-     */
-    @Step("Fan accepts paid message and pays")
-    public void fanAcceptsPaidMessageAndPays(String creatorMessage) {
-        verifyMessageVisible(creatorMessage);
-        clickAcceptMedia();
-        completePaymentForMedia();
-        logger.info("[Fan][Messaging] Fan accepted and paid for message");
-    }
-
-    /**
-     * Step 5: Fan views media sent by creator.
-     */
-    @Step("Fan views media from creator")
-    public void fanViewsMediaFromCreator(String creatorMessage) {
-        verifyMessageVisible(creatorMessage);
-        clickToPreviewImage();
-        closeImagePreview();
-        logger.info("[Fan][Messaging] Fan viewed media from creator");
     }
 }
 

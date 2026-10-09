@@ -1843,10 +1843,31 @@ public class CreatorMessagingPage extends BasePage {
             }
         } catch (Throwable e) { logger.debug("Suppressed: {}", e.getMessage()); }
 
-        Locator plus = page.locator(".addCircleGreen:not(.disabled) > img[alt='plus']").first();
-        if (plus.count() == 0 || !safeIsVisible(plus)) {
-            plus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus")).first();
+        // Prefer composer plus controls; poll briefly while the composer renders
+        Locator plus = page.locator(".addCircleGreen:not(.disabled) > img[alt='plus'], .addCircleGreen:not(.disabled), .addCircle:not(.disabled) > img[alt='plus'], .addCircle:not(.disabled)").first();
+        long composerWaitEnd = System.currentTimeMillis() + 5_000;
+        while ((plus.count() == 0 || !safeIsVisible(plus)) && System.currentTimeMillis() < composerWaitEnd) {
+            page.waitForTimeout(ConfigReader.getElementRetryDelay());
         }
+
+        if (plus.count() == 0 || !safeIsVisible(plus)) {
+            // Role fallback - skip plus icons inside the app footer (they open the create menu, not Importation)
+            Locator rolePlus = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("plus"));
+            for (int i = 0; i < rolePlus.count(); i++) {
+                Locator cand = rolePlus.nth(i);
+                if (!safeIsVisible(cand)) continue;
+                boolean inFooter = false;
+                try {
+                    Object res = cand.evaluate("el => { let n = el; while (n) { if (n.className && typeof n.className === 'string' && n.className.toLowerCase().indexOf('footer') !== -1) return true; n = n.parentElement; } return false; }");
+                    inFooter = Boolean.TRUE.equals(res);
+                } catch (Throwable ignored) {}
+                if (!inFooter) {
+                    plus = cand;
+                    break;
+                }
+            }
+        }
+
         waitVisible(plus, DEFAULT_WAIT);
         clickWithRetry(plus, 2, ConfigReader.getElementRetryDelay());
         page.waitForTimeout(ConfigReader.getAnimationTimeout());
@@ -1965,9 +1986,10 @@ public class CreatorMessagingPage extends BasePage {
                 }
             }
             
-            Locator sendBtn = page.locator(".sendMediaButton, button.sendMediaButton");
-            if (sendBtn.count() > 0 && safeIsVisible(sendBtn.first())) {
-                String disabled = sendBtn.first().getAttribute("disabled");
+            // The most recent media card is at the bottom - check its Send button, not the first stale one
+            Locator sendBtn = page.locator(".sendMediaButton, button.sendMediaButton").last();
+            if (sendBtn.count() > 0 && safeIsVisible(sendBtn)) {
+                String disabled = sendBtn.getAttribute("disabled");
                 if (disabled == null) {
                     logger.info("[Messaging] Upload complete - Send button enabled after {} iterations", i);
                     uploadComplete = true;
@@ -2058,10 +2080,11 @@ public class CreatorMessagingPage extends BasePage {
         
         // Wait for button to be visible
         waitVisible(sendBtn.first(), DEFAULT_WAIT);
-        
+
+        // The most recent media card is at the bottom - target the last Send button, not a stale earlier one
         boolean enabled = false;
         for (int i = 0; i < 30; i++) {
-            String disabled = sendBtn.first().getAttribute("disabled");
+            String disabled = sendBtn.last().getAttribute("disabled");
             if (disabled == null) {
                 enabled = true;
                 logger.info("[Messaging] Send button for media is enabled after {} iterations", i);
@@ -2072,12 +2095,12 @@ public class CreatorMessagingPage extends BasePage {
             }
             page.waitForTimeout(ConfigReader.getAnimationTimeout());
         }
-        
+
         if (enabled) {
-            clickWithRetry(sendBtn.first(), 2, ConfigReader.getElementRetryDelay());
+            clickWithRetry(sendBtn.last(), 2, ConfigReader.getElementRetryDelay());
         } else {
             logger.warn("[Messaging] Send button still disabled after polling, attempting force click");
-            sendBtn.first().click(new Locator.ClickOptions().setForce(true));
+            sendBtn.last().click(new Locator.ClickOptions().setForce(true));
         }
         logger.info("[Messaging] Clicked Send button for media");
         
