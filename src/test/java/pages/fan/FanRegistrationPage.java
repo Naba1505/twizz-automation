@@ -63,24 +63,19 @@ public class FanRegistrationPage extends BasePage {
         }
     }
 
-    public boolean isHomeVisibleForUser(String username) {
-        // Use Home icon visibility as success indicator (fan may land on /fan/home or /common/discover)
+    public boolean isDiscoverVisibleForUser(String username) {
         try {
-            Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon"));
-            waitVisible(homeIcon.first(), ConfigReader.getShortTimeout());
-            boolean visible = safeIsVisible(homeIcon.first());
-            logger.info("Fan '{}' registration successful - Home icon visible: {} (URL: {})", username, visible, page.url());
+            page.waitForURL("**/common/discover**",
+                    new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
+            Locator discoverIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
+            waitVisible(discoverIcon.first(), ConfigReader.getShortTimeout());
+            boolean visible = safeIsVisible(discoverIcon.first());
+            logger.info("Fan '{}' registration successful - Discover icon visible: {} (URL: {})", username, visible, page.url());
             return visible;
         } catch (Exception e) {
-            logger.warn("Fan '{}' Home icon not visible within timeout: {} (actual URL: {})", username, e.getMessage(), page.url());
+            logger.warn("Fan '{}' Discover icon not visible within timeout: {} (actual URL: {})", username, e.getMessage(), page.url());
             return false;
         }
-    }
-
-    public void assertHomeVisible() {
-        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon")).first();
-        waitVisible(homeIcon, ConfigReader.getShortTimeout());
-        logger.info("Home icon visible after registration (URL: {})", page.url());
     }
 
     public void completeFanRegistrationFlow(String firstName, String lastName, String username, String email, String password) {
@@ -91,8 +86,8 @@ public class FanRegistrationPage extends BasePage {
         }
         fillFanRegistrationForm(firstName, lastName, username, email, password);
         submitFanRegistration();
-        if (!isHomeVisibleForUser(username)) {
-            throw new IllegalStateException("Fan registration failed - Home icon not visible. Actual URL: " + page.url());
+        if (!isDiscoverVisibleForUser(username)) {
+            throw new IllegalStateException("Fan registration failed - Discover icon not visible. Actual URL: " + page.url());
         }
         TestDataManager.saveFanUsername(username);
         logger.info("Fan registration flow completed successfully for username: {}", username);
