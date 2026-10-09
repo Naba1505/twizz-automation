@@ -233,30 +233,5 @@ public class FanPersonalInfoPage extends BasePage {
         verifyFanAccountTypeSelected();
         logger.info("[Fan][PersonalInfo] All fields verified visible");
     }
-
-    /**
-     * Update email and phone number, then save.
-     */
-    @Step("Update personal information and save")
-    public void updateAndSavePersonalInfo(String email, String phoneNumber) {
-        updateEmail(email);
-        updatePhoneNumber(phoneNumber);
-        clickRegisterButton();
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        verifySuccessMessage();
-        logger.info("[Fan][PersonalInfo] Personal information updated and saved successfully");
-    }
-
-    /**
-     * Complete flow: Navigate to Personal Info, verify fields, update and save.
-     */
-    @Step("Complete personal information verification and update flow")
-    public void completePersonalInfoFlow(String email, String phoneNumber) {
-        clickPersonalInfoMenu();
-        assertOnPersonalInfoScreen();
-        verifyAllFieldsVisible();
-        updateAndSavePersonalInfo(email, phoneNumber);
-        logger.info("[Fan][PersonalInfo] Complete personal information flow finished");
-    }
 }
 
