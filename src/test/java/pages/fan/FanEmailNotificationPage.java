@@ -59,56 +59,12 @@ public class FanEmailNotificationPage extends BasePage {
         return page.getByRole(AriaRole.SWITCH).nth(index);
     }
 
-    /**
-     * Check if toggle at index is currently enabled (checked).
-     * Checks multiple attributes and CSS classes to determine state.
-     */
-    private boolean isToggleEnabled(int index) {
-        Locator toggle = toggleSwitch(index);
-        waitVisible(toggle, ConfigReader.getShortTimeout());
-        
-        // Try aria-checked first
-        String ariaChecked = toggle.getAttribute("aria-checked");
-        if (ariaChecked != null) {
-            boolean enabled = "true".equals(ariaChecked);
-            logger.info("[Fan][EmailNotification] Toggle at index {} aria-checked={} -> {}", index, ariaChecked, enabled ? "ENABLED" : "DISABLED");
-            return enabled;
-        }
-        
-        // Try data-state attribute (common in modern UI frameworks)
-        String dataState = toggle.getAttribute("data-state");
-        if (dataState != null) {
-            boolean enabled = "checked".equals(dataState);
-            logger.info("[Fan][EmailNotification] Toggle at index {} data-state={} -> {}", index, dataState, enabled ? "ENABLED" : "DISABLED");
-            return enabled;
-        }
-        
-        // Try checked attribute
-        String checked = toggle.getAttribute("checked");
-        if (checked != null) {
-            logger.info("[Fan][EmailNotification] Toggle at index {} checked attr present -> ENABLED", index);
-            return true;
-        }
-        
-        // Log all attributes for debugging
-        logger.warn("[Fan][EmailNotification] Toggle at index {} - could not determine state, assuming DISABLED", index);
-        return false;
-    }
-
     private Locator disableConfirmationDialog() {
         return page.getByText("Do you want to disable this");
     }
 
-    private Locator enableConfirmationDialog() {
-        return page.getByText("Do you want to enable this");
-    }
-
     private Locator yesDisableButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, disable"));
-    }
-
-    private Locator yesEnableButton() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, enable"));
     }
 
     // ================= Navigation =================
@@ -199,62 +155,12 @@ public class FanEmailNotificationPage extends BasePage {
         logger.info("[Fan][EmailNotification] Clicked toggle at index {}", index);
     }
 
-    @Step("Assert disable confirmation dialog visible")
-    public void assertDisableConfirmationVisible() {
-        waitVisible(disableConfirmationDialog(), ConfigReader.getVisibilityTimeout());
-        logger.info("[Fan][EmailNotification] Disable confirmation dialog visible");
-    }
-
-    @Step("Assert enable confirmation dialog visible")
-    public void assertEnableConfirmationVisible() {
-        waitVisible(enableConfirmationDialog(), ConfigReader.getVisibilityTimeout());
-        logger.info("[Fan][EmailNotification] Enable confirmation dialog visible");
-    }
-
     @Step("Click 'Yes, disable' button")
     public void clickYesDisable() {
         waitVisible(yesDisableButton(), ConfigReader.getVisibilityTimeout());
         clickWithRetry(yesDisableButton(), 2, ConfigReader.getAnimationTimeout());
         try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         logger.info("[Fan][EmailNotification] Clicked 'Yes, disable' button");
-    }
-
-    @Step("Click 'Yes, enable' button")
-    public void clickYesEnable() {
-        waitVisible(yesEnableButton(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(yesEnableButton(), 2, ConfigReader.getAnimationTimeout());
-        try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        logger.info("[Fan][EmailNotification] Clicked 'Yes, enable' button");
-    }
-
-    // ================= Disable Toggle Helper =================
-
-    @Step("Disable toggle at index {index} with confirmation")
-    public void disableToggle(int index) {
-        // Check if toggle is already disabled - skip if so
-        if (!isToggleEnabled(index)) {
-            logger.info("[Fan][EmailNotification] Toggle at index {} already disabled, skipping", index);
-            return;
-        }
-        clickToggle(index);
-        assertDisableConfirmationVisible();
-        clickYesDisable();
-        logger.info("[Fan][EmailNotification] Toggle at index {} disabled", index);
-    }
-
-    // ================= Enable Toggle Helper =================
-
-    @Step("Enable toggle at index {index} with confirmation")
-    public void enableToggle(int index) {
-        // Check if toggle is already enabled - skip if so
-        if (isToggleEnabled(index)) {
-            logger.info("[Fan][EmailNotification] Toggle at index {} already enabled, skipping", index);
-            return;
-        }
-        clickToggle(index);
-        assertEnableConfirmationVisible();
-        clickYesEnable();
-        logger.info("[Fan][EmailNotification] Toggle at index {} enabled", index);
     }
 
     // ================= Complete Flows =================
@@ -315,21 +221,6 @@ public class FanEmailNotificationPage extends BasePage {
         forceEnableToggle(4);
 
         logger.info("[Fan][EmailNotification] All 5 toggles enabled successfully");
-    }
-
-    /**
-     * Simple enable toggle - just click without confirmation dialog.
-     */
-    @Step("Simple enable toggle at index {index}")
-    public void simpleEnableToggle(int index) {
-        // Check if toggle is already enabled - skip if so
-        if (isToggleEnabled(index)) {
-            logger.info("[Fan][EmailNotification] Toggle at index {} already enabled, skipping", index);
-            return;
-        }
-        clickToggle(index);
-        try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
-        logger.info("[Fan][EmailNotification] Toggle at index {} enabled (simple click)", index);
     }
 
     /**
