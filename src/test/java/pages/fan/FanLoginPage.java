@@ -62,8 +62,8 @@ public class FanLoginPage extends BasePage {
                 .filter(new Locator.FilterOptions().setVisible(true)).first();
         clickConnectButton(connectBtn);
         waitForFanDiscoverUrl(ConfigReader.getMediumTimeout());
-        if (!isHomeIconVisible(ConfigReader.getShortTimeout())) {
-            throw new IllegalStateException("Fan login succeeded but Home icon not visible. Actual URL: " + page.url());
+        if (!isDiscoverIconVisible(ConfigReader.getShortTimeout())) {
+            throw new IllegalStateException("Fan login succeeded but Discover icon not visible. Actual URL: " + page.url());
         }
     }
 
@@ -101,31 +101,19 @@ public class FanLoginPage extends BasePage {
         }
     }
 
-    public boolean isHomeIconVisible(long timeoutMs) {
-        Locator homeIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Home icon")).first();
+    private boolean isDiscoverIconVisible(long timeoutMs) {
+        Locator discoverIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon")).first();
         try {
-            waitVisible(homeIcon, timeoutMs);
-            logger.info("[Fan] Login successful - Home icon visible (URL: {})", page.url());
+            waitVisible(discoverIcon, timeoutMs);
+            logger.info("[Fan] Login successful - Discover icon visible (URL: {})", page.url());
             return true;
         } catch (Exception e) {
-            logger.warn("[Fan] Home icon not visible within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
+            logger.warn("[Fan] Discover icon not visible within {} ms: {} (actual URL: {})", timeoutMs, e.getMessage(), page.url());
             return false;
         }
     }
 
-    public void waitForHomeIconVisible(long timeoutMs) {
-        if (!isHomeIconVisible(timeoutMs)) {
-            throw new IllegalStateException("Fan login failed - Home icon not visible. Actual URL: " + page.url());
-        }
-    }
-
-    public void assertHomeIconVisible() {
-        if (!isHomeIconVisible(ConfigReader.getShortTimeout())) {
-            throw new AssertionError("Fan login failed - Home icon not visible. Actual URL: " + page.url());
-        }
-    }
-
-    public boolean isOnFanDiscoverUrl(long timeoutMs) {
+    private boolean isOnFanDiscoverUrl(long timeoutMs) {
         long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
             if (page.url().contains("/common/discover")) {
@@ -138,7 +126,7 @@ public class FanLoginPage extends BasePage {
         return false;
     }
 
-    public void waitForFanDiscoverUrl(long timeoutMs) {
+    private void waitForFanDiscoverUrl(long timeoutMs) {
         if (!isOnFanDiscoverUrl(timeoutMs)) {
             throw new IllegalStateException("Fan did not land on /common/discover after login. Actual URL: " + page.url());
         }

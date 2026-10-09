@@ -8,7 +8,7 @@ import utils.ConfigReader;
 
 public class FanLoginTest extends BaseTestClass {
 
-    @Test(priority = 1, description = "Verify fan can login and lands on fan home URL")
+    @Test(priority = 1, description = "Verify fan can login and lands on Discover")
     public void testFanLogin() {
         String username = ConfigReader.getProperty("fan.username", "TwizzFan@proton.me");
         String password = ConfigReader.getProperty("fan.password", ConfigReader.getProperty("fan.default.password", "Twizz$123"));
@@ -18,6 +18,5 @@ public class FanLoginTest extends BaseTestClass {
         Assert.assertTrue(pageObj.isLoginHeaderVisible(), "Login header not visible on fan login screen");
         Assert.assertTrue(pageObj.isLoginFormVisible(), "Login form is not visible on fan login screen");
         pageObj.login(username, password);
-        pageObj.assertHomeIconVisible();
     }
 }
