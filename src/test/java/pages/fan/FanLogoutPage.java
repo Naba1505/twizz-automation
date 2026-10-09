@@ -87,15 +87,5 @@ public class FanLogoutPage extends BasePage {
         waitVisible(loginText(), ConfigReader.getVisibilityTimeout());
         logger.info("[Fan][Logout] Login text visible - user logged out successfully");
     }
-
-    /**
-     * Complete logout flow: Click Disconnect and verify Login page.
-     */
-    @Step("Perform logout and verify")
-    public void performLogout() {
-        clickDisconnect();
-        verifyOnLoginPage();
-        logger.info("[Fan][Logout] Logout completed successfully");
-    }
 }
 
