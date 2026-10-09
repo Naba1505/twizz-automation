@@ -252,17 +252,5 @@ public class FanTermsAndPoliciesPage extends BasePage {
         logger.info("[Fan][TermsAndPolicies] Content Policy verified successfully");
     }
 
-    // ================= Complete Flow =================
-
-    /**
-     * Verify all three policies: Terms and Conditions, Community Regulations, Content Policy.
-     */
-    @Step("Verify all Terms and Policies")
-    public void verifyAllTermsAndPolicies() {
-        verifyTermsAndConditions();
-        verifyCommunityRegulations();
-        verifyContentPolicy();
-        logger.info("[Fan][TermsAndPolicies] All Terms and Policies verified successfully");
-    }
 }
 

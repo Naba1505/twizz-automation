@@ -232,16 +232,5 @@ public class FanLanguagePage extends BasePage {
         logger.info("[Fan][Language] On Settings screen with English language");
     }
 
-    /**
-     * Complete flow: Switch through all languages (English → French → Spanish → English).
-     */
-    @Step("Switch through all languages")
-    public void switchThroughAllLanguages() {
-        switchToFrench();
-        switchToSpanish();
-        switchToEnglish();
-        assertOnSettingsScreenEnglish();
-        logger.info("[Fan][Language] All language switches completed successfully");
-    }
 }
 
