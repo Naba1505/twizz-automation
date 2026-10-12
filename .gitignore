@@ -22,6 +22,9 @@ screenshots/
 # Playwright HTML report
 playwright-report/
 
+# Playwright MCP browser inspection artifacts
+.playwright-mcp/
+
 # TestNG default output directory
 test-output/
 
