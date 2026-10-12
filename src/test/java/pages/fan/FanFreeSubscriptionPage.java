@@ -91,6 +91,59 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     // ===== Actions & Asserts =====
 
+    // The <apple-pay-modal> element is re-created by the payment form whenever a card
+    // field gains focus, so it must be removed immediately before each interaction.
+    private void removeApplePayModal() {
+        try {
+            page.evaluate("document.querySelectorAll('apple-pay-modal').forEach(el => el.remove())");
+        } catch (Throwable e) { logger.debug("[FanFreeSub] apple-pay-modal removal failed: {}", e.getMessage()); }
+    }
+
+    @Step("Dismiss Apple Pay modal if present")
+    public void dismissApplePayIfPresent() {
+        try {
+            // The modal can appear a moment after the payment screen renders - poll briefly
+            Locator applePayText = null;
+            for (int i = 0; i < 5; i++) {
+                applePayText = page.getByText("Scan Code with iPhone");
+                if (applePayText.count() == 0) {
+                    applePayText = page.getByText("Apple Pay");
+                }
+                if (applePayText.count() > 0 && safeIsVisible(applePayText.first())) {
+                    break;
+                }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            }
+            if (applePayText == null || applePayText.count() == 0 || !safeIsVisible(applePayText.first())) {
+                return;
+            }
+            logger.info("[FanFreeSub] Apple Pay modal detected; attempting to dismiss");
+
+            // Deterministic: remove the <apple-pay-modal> overlay element from the DOM
+            try {
+                page.evaluate("document.querySelectorAll('apple-pay-modal').forEach(el => el.remove())");
+                if (page.getByText("Scan Code with iPhone").count() == 0) {
+                    logger.info("[FanFreeSub] Dismissed Apple Pay modal via DOM removal");
+                    return;
+                }
+            } catch (Throwable e) { logger.debug("[FanFreeSub] apple-pay-modal removal failed: {}", e.getMessage()); }
+
+            // Try the modal's close button next
+            Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
+            if (closeBtn.count() > 0 && safeIsVisible(closeBtn.first())) {
+                clickWithRetry(closeBtn.first(), 2, ConfigReader.getElementRetryDelay());
+                logger.info("[FanFreeSub] Dismissed Apple Pay modal via Close button");
+                return;
+            }
+
+            // Fallback: press Escape
+            page.keyboard().press("Escape");
+            logger.info("[FanFreeSub] Dismissed Apple Pay modal via Escape key");
+        } catch (Throwable e) {
+            logger.debug("[FanFreeSub] Apple Pay modal not present or dismiss failed: {}", e.getMessage());
+        }
+    }
+
     @Step("Assert Search icon is visible on dashboard")
     public void assertSearchIconVisible() {
         waitVisible(searchIcon(), ConfigReader.getVisibilityTimeout());
@@ -99,9 +152,24 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Click on Search icon to open search")
     public void clickSearchIcon() {
-        Locator icon = page.locator("div").nth(5);
-        clickWithRetry(icon, 1, ConfigReader.getAnimationTimeout());
-        logger.info("[FanFreeSub] Clicked on search icon");
+        // Ensure on the Discover screen (footer Search icon navigates there)
+        if (!page.url().contains("/common/discover")) {
+            Locator footerIcon = searchIcon().first();
+            waitVisible(footerIcon, ConfigReader.getVisibilityTimeout());
+            clickWithRetry(footerIcon, 1, ConfigReader.getElementRetryDelay());
+            page.waitForURL("**/common/discover**",
+                    new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        }
+
+        // Click the top search magnifier to open the search overlay
+        Locator magnifier = page.getByRole(AriaRole.IMG,
+                new Page.GetByRoleOptions().setName("Search")).first();
+        waitVisible(magnifier, ConfigReader.getShortTimeout());
+        clickWithRetry(magnifier, 1, ConfigReader.getElementRetryDelay());
+
+        // Wait for the searchbox to appear
+        waitVisible(searchBox().first(), ConfigReader.getShortTimeout());
+        logger.info("[FanFreeSub] Clicked on search icon - search panel opened");
     }
 
     @Step("Search for creator: {creatorUsername}")
@@ -192,6 +260,7 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Click 'Continue' button for direct free subscription")
     public void clickContinue() {
+        dismissApplePayIfPresent();
         dismissOverlay();
         Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
         waitVisible(btn, ConfigReader.getShortTimeout());
@@ -211,18 +280,19 @@ public class FanFreeSubscriptionPage extends BasePage {
         logger.info("[FanFreeSub] Clicked 'Buy a collection' button");
     }
 
-    @Step("Click on visible collection item")
+    @Step("Click first priced content tile on creator profile")
     public void clickCollectionItem() {
-        dismissOverlay();
-        Locator collection = page.locator(".collection-img");
-        waitVisible(collection.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(collection.first(), 1, ConfigReader.getAnimationTimeout());
+        // New UI: priced PPV tiles on the profile carry an img[alt='price'] badge
+        Locator priced = page.locator("img[alt='price']").first();
+        waitVisible(priced, ConfigReader.getVisibilityTimeout());
+        clickWithRetry(priced, 1, ConfigReader.getAnimationTimeout());
         page.waitForTimeout(ConfigReader.getPageLoadTimeout());
-        logger.info("[FanFreeSub] Clicked on collection item");
+        logger.info("[FanFreeSub] Clicked priced content tile");
     }
 
     @Step("Click 'Pay to see' button")
     public void clickPayToSee() {
+        dismissApplePayIfPresent();
         dismissOverlay();
         Locator btn = payToSeeButton();
         waitVisible(btn, ConfigReader.getShortTimeout());
@@ -234,11 +304,13 @@ public class FanFreeSubscriptionPage extends BasePage {
     @Step("Assert 'Secure payment' screen is visible")
     public void assertSecurePaymentVisible() {
         waitVisible(securePaymentText(), ConfigReader.getVisibilityTimeout());
+        dismissApplePayIfPresent();
         logger.info("[FanFreeSub] 'Secure payment' screen is visible");
     }
 
     @Step("Fill card number: {cardNumber}")
     public void fillCardNumber(String cardNumber) {
+        removeApplePayModal();
         Locator field = cardNumberField();
         waitVisible(field, ConfigReader.getShortTimeout());
         field.click();
@@ -248,6 +320,7 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Click on Expiration date area")
     public void clickExpirationDateArea() {
+        removeApplePayModal();
         Locator area = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^Expiration date$"))).nth(2);
         clickWithRetry(area, 1, ConfigReader.getAnimationTimeout());
         logger.info("[FanFreeSub] Clicked on Expiration date area");
@@ -277,6 +350,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         clickExpirationDateArea();
         fillExpiry(expiry);
         fillCvc(cvc);
+        dismissApplePayIfPresent();
         logger.info("[FanFreeSub] Payment details filled");
     }
 
@@ -307,6 +381,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         for (Locator btn : paymentButtons) {
             try {
                 if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                    removeApplePayModal();
                     btn.first().scrollIntoViewIfNeeded();
                     waitVisible(btn.first(), ConfigReader.getShortTimeout());
                     clickWithRetry(btn.first(), 1, ConfigReader.getAnimationTimeout());
@@ -344,6 +419,7 @@ public class FanFreeSubscriptionPage extends BasePage {
         for (Locator btn : confirmButtons) {
             try {
                 if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                    removeApplePayModal();
                     btn.first().scrollIntoViewIfNeeded();
                     waitVisible(btn.first(), ConfigReader.getShortTimeout());
                     clickWithRetry(btn.first(), 1, ConfigReader.getAnimationTimeout());
@@ -671,14 +747,15 @@ public class FanFreeSubscriptionPage extends BasePage {
 
     @Step("Navigate directly to creator profile: {username}")
     public void navigateToCreatorProfile(String username) {
-        String profileUrl = ConfigReader.getBaseUrl() + "/profile/" + username;
+        // New public profile URL format is /p/<username>
+        String profileUrl = ConfigReader.getBaseUrl() + "/p/" + username;
         page.navigate(profileUrl);
         page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
         page.waitForTimeout(ConfigReader.getPageLoadTimeout());
 
         // Verify we're actually on the creator profile, not redirected to discover
         String currentUrl = page.url();
-        if (!currentUrl.contains("/profile/") && !currentUrl.contains(username)) {
+        if (!currentUrl.contains("/p/") && !currentUrl.contains(username)) {
             logger.warn("[FanFreeSub] Redirected away from profile to: {}. Searching for creator again.", currentUrl);
             // Fallback: search for creator
             assertSearchIconVisible();

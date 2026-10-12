@@ -25,28 +25,37 @@ public class FanClearSearchTest extends BaseFanTest {
         FanClearSearchPage clearSearch = new FanClearSearchPage(page);
         clearSearch.navigateToDiscover();
 
-        // Click on search field to open search interface
+        // Click on search icon to open search interface
         logger.info("[Fan Clear Search] Opening search interface");
         clearSearch.clickSearchField();
+
+        // Try to seed recent searches via profile visits (fan UI currently does not record recents)
+        if (clearSearch.getRecentSearchCount() < 2) {
+            for (String query : new String[] { "igor", "star" }) {
+                if (clearSearch.getRecentSearchCount() >= 2) {
+                    break;
+                }
+                clearSearch.fillSearch(query);
+                clearSearch.clickFirstSearchResult();
+                clearSearch.navigateBackToDiscover();
+                clearSearch.clickSearchField();
+            }
+        }
 
         // Get initial count of recent searches first
         int initialCount = clearSearch.getRecentSearchCount();
         logger.info("[Fan Clear Search] Found {} recent searches", initialCount);
-        
-        // Verify "Recent" text is displayed only if there are recent searches
-        if (initialCount > 0) {
-            logger.info("[Fan Clear Search] Verifying 'Recent' text is displayed");
-            boolean recentVisible = clearSearch.isRecentTextVisible();
-            Assert.assertTrue(recentVisible, "Expected 'Recent' text to be visible in search interface when recent searches exist");
-        } else {
-            logger.info("[Fan Clear Search] No recent searches found, skipping 'Recent' text verification");
-        }
 
-        // If no recent searches, skip the test
+        // Fan search UI currently exposes no recents/Remove icons - skip when empty
         if (initialCount == 0) {
-            logger.info("[Fan Clear Search] No recent searches found, test passed (nothing to clear)");
+            logger.info("[Fan Clear Search] No recent searches on fan search UI, nothing to clear");
             return;
         }
+
+        // Verify "Recent" text is displayed when recent searches exist
+        logger.info("[Fan Clear Search] Verifying 'Recent' text is displayed");
+        boolean recentVisible = clearSearch.isRecentTextVisible();
+        Assert.assertTrue(recentVisible, "Expected 'Recent' text to be visible in search interface when recent searches exist");
 
         // Clear all recent searches
         logger.info("[Fan Clear Search] Clearing all recent searches");

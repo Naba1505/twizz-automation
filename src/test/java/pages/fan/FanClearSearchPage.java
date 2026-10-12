@@ -45,19 +45,81 @@ public class FanClearSearchPage extends BasePage {
         logger.info("Navigated to Discover screen");
     }
 
-    @Step("Click on search field to open search interface")
+    private Locator topSearchIcon() {
+        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search")).first();
+    }
+
+    private Locator searchBox() {
+        return page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search"));
+    }
+
+    private Locator backControl() {
+        // Publication viewer back chevron has empty alt; profile back uses alt="arrow left"
+        return page.locator(".discover-publication-header-hit img[src*='chevron-back'], img[alt='arrow left']").first();
+    }
+
+    @Step("Click on search icon to open search interface")
     public void clickSearchField() {
-        logger.info("Clicking on search field");
-        
-        // Click on the search field (use div filter with fallback for robustness)
-        Locator searchField = page.locator("div").filter(new Locator.FilterOptions().setHasText("Search")).nth(5);
-        if (searchField.count() == 0) {
-            searchField = page.locator("div").nth(5);
+        logger.info("Clicking on search icon");
+
+        waitVisible(topSearchIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(topSearchIcon(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(searchBox(), ConfigReader.getShortTimeout());
+
+        logger.info("Search interface opened");
+    }
+
+    @Step("Fill search query: {query}")
+    public void fillSearch(String query) {
+        waitVisible(searchBox(), ConfigReader.getShortTimeout());
+        searchBox().fill(query == null ? "" : query);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+    }
+
+    @Step("Click the first search result row")
+    public void clickFirstSearchResult() {
+        // Result rows contain an img.avatar; fan rows use different classes than creator's .row-recent-search
+        Locator firstResult = page.locator(".row-recent-search, img.avatar").first();
+        waitVisible(firstResult, ConfigReader.getShortTimeout());
+        clickWithRetry(firstResult, 1, ConfigReader.getElementRetryDelay());
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+        logger.info("Clicked first search result");
+    }
+
+    @Step("Navigate back to Discover from opened profile")
+    public void navigateBackToDiscover() {
+        waitVisible(backControl(), ConfigReader.getShortTimeout());
+        boolean navigated = false;
+        try {
+            backControl().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+            navigated = true;
+        } catch (Exception e) {
+            logger.warn("Normal back click failed ({}); trying overlay dismiss + retry", e.getMessage());
         }
-        waitVisible(searchField, DEFAULT_WAIT);
-        clickWithRetry(searchField, 1, ConfigReader.getAnimationTimeout());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        logger.info("Clicked on search field");
+        if (!navigated) {
+            try {
+                page.keyboard().press("Escape");
+                page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+                backControl().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+                navigated = true;
+            } catch (Exception e) {
+                logger.warn("Overlay dismiss + back click failed ({}); trying force click", e.getMessage());
+            }
+        }
+        if (!navigated) {
+            try {
+                backControl().click(new Locator.ClickOptions().setForce(true).setTimeout(ConfigReader.getShortTimeout()));
+                navigated = true;
+            } catch (Exception e) {
+                logger.warn("Force back click failed ({}); falling back to browser back", e.getMessage());
+            }
+        }
+        if (!navigated) {
+            page.goBack(new Page.GoBackOptions().setTimeout(ConfigReader.getShortTimeout()));
+        }
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**",
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
     }
 
     @Step("Verify 'Recent' text is displayed")

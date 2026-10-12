@@ -23,7 +23,7 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
     private static final Logger logger = LoggerFactory.getLogger(FanFreeSubscriptionTest.class);
 
-    @Test(priority = 1, description = "New fan registers, searches creator john_smith, does free subscription by buying a collection")
+    @Test(priority = 1, description = "New fan registers, searches creator createur, buys a priced collection tile via Pay to see")
     public void fanCanDoFreeSubscriptionByBuyingCollection() {
         // Step 1: Register a new fan
         FanRegistrationPage fanReg = new FanRegistrationPage(page);
@@ -38,7 +38,7 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         switchLanguageToEnglish();
 
-        // Step 2: Search for creator and subscribe
+        // Step 2: Search for creator 'createur' (has priced PPV tiles; john_smith has none on new UI)
         FanFreeSubscriptionPage freeSub = new FanFreeSubscriptionPage(page);
 
         // Assert search icon visible on dashboard
@@ -46,25 +46,16 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         // Click search icon and search for creator
         freeSub.clickSearchIcon();
-        freeSub.searchCreator("john_smith");
-        freeSub.clickCreatorResult("john_smith");
+        freeSub.searchCreator("createur");
+        freeSub.clickCreatorResult("createur");
 
         // Skip intro screens by clicking hint texts
         freeSub.skipIntroScreens();
 
-        // Click Subscribe
-        freeSub.clickSubscribe();
-
-        // Assert free subscription message visible
-        freeSub.assertFreeSubscriptionTextVisible();
-
-        // Click Buy a collection
-        freeSub.clickBuyCollection();
-
-        // Click on visible collection
+        // Click first priced content tile on the profile
         freeSub.clickCollectionItem();
 
-        // Click Pay to see
+        // Click Pay to see on the collection detail screen
         freeSub.clickPayToSee();
 
         // Assert on Secure payment screen
@@ -85,12 +76,6 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
 
         // Assert collection buy success
         freeSub.assertCollectionBuySuccess();
-
-        // Navigate directly to creator profile to verify subscription
-        freeSub.navigateToCreatorProfile("john_smith");
-
-        // Assert Subscriber button visible (subscription confirmed)
-        freeSub.assertSubscriberVisible();
     }
 
     @Test(priority = 2, description = "New fan registers, searches creator john_smith, subscribes via private media request with payment")
@@ -119,14 +104,23 @@ public class FanFreeSubscriptionTest extends BaseTestClass {
         // Skip intro screens
         fanPage.skipIntroScreens();
 
-        // Click Subscribe
+        // Click Subscribe -> Premium screen -> Continue -> pay (chat icon appears once subscribed)
         fanPage.clickSubscribe();
-
-        // Assert free subscription message
         fanPage.assertFreeSubscriptionTextVisible();
+        fanPage.clickContinue();
+        fanPage.assertSecurePaymentVisible();
 
-        // ===== STEP 3: Fan clicks "Request private media" =====
-        fanPage.clickRequestPrivateMedia();
+        String subCard = ConfigReader.getProperty("payment.card.number", "4012 0018 0000 0016");
+        String subExpiry = ConfigReader.getProperty("payment.card.expiry", "07/34");
+        String subCvc = ConfigReader.getProperty("payment.card.cvc", "657");
+        fanPage.fillPaymentDetails(subCard, subExpiry, subCvc);
+        fanPage.selectPaymentCard();
+        fanPage.confirmPayment();
+        fanPage.complete3DSVerification();
+
+        // Back on the creator profile, open the conversation via the chat icon
+        fanPage.navigateToCreatorProfile("john_smith");
+        fanPage.clickProfileChatIcon();
 
         // Assert on message conversation screen
         fanPage.assertOnMessageScreen();

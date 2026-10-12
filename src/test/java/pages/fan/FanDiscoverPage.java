@@ -9,146 +9,172 @@ import com.microsoft.playwright.options.AriaRole;
 
 import io.qameta.allure.Step;
 
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
 public class FanDiscoverPage extends BasePage {
 
-    private static final int SCROLL_DOWN_LARGE = 1200;
-    private static final int SCROLL_UP_LARGE = 1200;
-
     private static final String DISCOVER_PATH_FRAGMENT = "/common/discover";
-    private static final String FEED_XPATH = "//div[@class='hls-video-player']";
-    private static final String SEARCH_TEXT = "Search";
+    private static final String PUBLICATION_PATH_FRAGMENT = "/common/discover/publications/";
 
     public FanDiscoverPage(Page page) {
         super(page);
     }
 
-    @Step("Navigate to Discover screen via Search icon (Fan)")
+    // ================= Locators =================
+
+    private Locator topSearchIcon() {
+        // Fan top-bar search icon uses alt="search" (lowercase) - role name match is case-insensitive
+        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search")).first();
+    }
+
+    private Locator footerDiscoverIcon() {
+        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon")).first();
+    }
+
+    private Locator gridItems() {
+        return page.locator(".discover-grid-item");
+    }
+
+    private Locator gridThumbnails() {
+        return page.locator(".discover-grid-thumbnail");
+    }
+
+    private Locator gridTypeIcons() {
+        return page.locator(".discover-grid-type-icon");
+    }
+
+    private Locator publicationViewer() {
+        return page.locator(".discover-publication-page");
+    }
+
+    private Locator publicationMedia() {
+        return page.locator(".discover-publication-page .hls-video-player, .discover-publication-swiper-slide, .discover-publication-slide").first();
+    }
+
+    private Locator muteButton() {
+        return page.locator(".mute-button").first();
+    }
+
+    private Locator creatorRow() {
+        return page.locator(".discover-publication-creator-row").first();
+    }
+
+    private Locator backArrow() {
+        // Publication viewer back chevron has empty alt; profile back uses alt="arrow left"
+        return page.locator(".discover-publication-header-hit img[src*='chevron-back'], img[alt='arrow left']").first();
+    }
+
+    private Locator searchBox() {
+        return page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search"));
+    }
+
+    // ================= Navigation =================
+
+    @Step("Navigate to Discover screen via footer Search icon (Fan)")
     public void navigateToDiscover() {
-        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(searchIcon.first(), 2, ConfigReader.getElementRetryDelay());
+        if (page.url().contains(DISCOVER_PATH_FRAGMENT)) {
+            logger.info("[Fan Discover] Already on Discover screen");
+            return;
+        }
+        waitVisible(footerDiscoverIcon(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(footerDiscoverIcon(), 2, ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Assert on Discover screen (URL contains /common/discover)")
+    @Step("Assert on Discover screen (URL + footer icon + grid)")
     public void assertOnDiscoverScreen() {
-        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        // And for at least one feed container / Search icon to appear
-        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**",
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        waitVisible(footerDiscoverIcon(), ConfigReader.getVisibilityTimeout());
+        waitVisible(topSearchIcon(), ConfigReader.getShortTimeout());
+        logger.info("[Fan Discover] On Discover screen - search icon and footer icon visible");
     }
 
-    @Step("Scroll through feeds top-to-bottom, ensuring each is visible")
-    public int scrollDownEnsureFeeds() {
-        Locator visibleFeeds = page.locator(".hls-video-player:visible");
-        waitVisible(visibleFeeds.first(), ConfigReader.getVisibilityTimeout());
-        Locator feeds = page.locator("xpath=" + FEED_XPATH);
-        int total = Math.max(0, feeds.count());
-        int seen = 0;
-        for (int i = 0; i < total; i++) {
-            Locator feed = feeds.nth(i);
-            try {
-                feed.scrollIntoViewIfNeeded();
-                waitVisible(feed, ConfigReader.getShortTimeout());
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e2) { logger.debug("Feed scroll wait failed: {}", e2.getMessage()); }
-                seen++;
-            } catch (Exception e) {
-                logger.warn("Feed {} not confirmed visible: {}", i, e.toString());
-            }
+    // ================= Grid =================
+
+    @Step("Assert Discover grid rendered with tiles")
+    public int assertGridRendered() {
+        waitVisible(gridItems().first(), ConfigReader.getVisibilityTimeout());
+        int count = gridItems().count();
+        logger.info("[Fan Discover] Grid rendered with {} tiles", count);
+        if (count <= 0) {
+            throw new AssertionError("Fan Discover grid rendered no tiles");
         }
-        try { page.mouse().wheel(0, SCROLL_DOWN_LARGE); } catch (Exception e) { logger.debug("Scroll wheel failed: {}", e.getMessage()); }
-        logger.info("Scrolled through {} feeds", seen);
-        return seen;
+        return count;
     }
 
-    @Step("Unmute every visible feed by clicking its mute button while scrolling down")
-    public int unmuteAllFeedsWhileScrolling() {
-        Locator feeds = page.locator("xpath=" + FEED_XPATH);
-        int toggled = 0;
-        int totalFeeds = feeds.count();
-        for (int i = 0; i < totalFeeds; i++) {
-            Locator feed = feeds.nth(i);
-            try {
-                feed.scrollIntoViewIfNeeded();
-                waitVisible(feed, ConfigReader.getShortTimeout());
-                // Scope mute button search to this feed's parent container
-                Locator feedMuteBtn = feed.locator("xpath=ancestor::div//button[@class='mute-button']");
-                if (feedMuteBtn.count() > 0 && safeIsVisible(feedMuteBtn.first())) {
-                    clickWithRetry(feedMuteBtn.first(), 1, ConfigReader.getElementRetryDelay());
-                    toggled++;
-                }
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e2) { logger.debug("Unmute wait failed: {}", e2.getMessage()); }
-            } catch (Exception e) {
-                logger.warn("Unable to unmute feed {}: {}", i, e.toString());
-            }
+    @Step("Assert grid tiles have thumbnails and media type icons")
+    public void assertGridTileContent() {
+        waitVisible(gridThumbnails().first(), ConfigReader.getShortTimeout());
+        int thumbs = gridThumbnails().count();
+        int icons = gridTypeIcons().count();
+        logger.info("[Fan Discover] Grid thumbnails: {}, media type icons: {}", thumbs, icons);
+        if (thumbs <= 0) {
+            throw new AssertionError("Fan Discover grid has no thumbnails");
         }
-        logger.info("Unmuted {} feeds", toggled);
-        return toggled;
     }
 
-    @Step("Scroll up to the top of the Discover feed")
-    public void scrollUpToTop() {
+    @Step("Scroll the Discover grid to lazy-load more tiles")
+    public int scrollGridToLoadMore() {
+        int before = gridItems().count();
         for (int i = 0; i < 6; i++) {
-            try { page.mouse().wheel(0, -SCROLL_UP_LARGE); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-            try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+            page.mouse().wheel(0, 900);
+            page.waitForTimeout(ConfigReader.getScrollWaitBetween());
         }
+        int after = gridItems().count();
+        logger.info("[Fan Discover] Grid tiles before scroll: {}, after scroll: {}", before, after);
+        return after;
     }
 
-    @Step("Open a random visible Discover profile from a feed")
-    public void openRandomVisibleDiscoverProfile() {
-        Locator visibleFeeds = page.locator(".hls-video-player:visible");
-        waitVisible(visibleFeeds.first(), ConfigReader.getVisibilityTimeout());
+    @Step("Open the first Discover grid tile")
+    public void openFirstGridTile() {
+        waitVisible(gridItems().first(), ConfigReader.getShortTimeout());
+        clickWithRetry(gridItems().first(), 2, ConfigReader.getElementRetryDelay());
+    }
 
-        Locator target = null;
-        int attempts = 0;
-        while (target == null && attempts++ < ConfigReader.getMaxScrollAttempts()) {
-            Locator profileText = page.getByText("Discover profile");
-            for (int i = 0; i < profileText.count(); i++) {
-                Locator candidate = profileText.nth(i);
-                if (safeIsVisible(candidate)) {
-                    target = candidate;
-                    break;
-                }
-            }
-            if (target == null) {
-                try { page.mouse().wheel(0, ConfigReader.getScrollStepSize()); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-                try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            }
+    // ================= Publication viewer =================
+
+    @Step("Assert publication viewer opened from grid tile")
+    public void assertOnPublicationViewer() {
+        page.waitForURL("**" + PUBLICATION_PATH_FRAGMENT + "**",
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        waitVisible(publicationViewer(), ConfigReader.getVisibilityTimeout());
+        // Tiles may be photos or videos - assert the slide media, not the video player specifically
+        waitVisible(publicationMedia(), ConfigReader.getVisibilityTimeout());
+        logger.info("[Fan Discover] Publication viewer opened - media visible");
+    }
+
+    @Step("Assert creator row visible in publication viewer")
+    public void assertViewerCreatorRow() {
+        waitVisible(creatorRow(), ConfigReader.getShortTimeout());
+        logger.info("[Fan Discover] Creator row visible in publication viewer");
+    }
+
+    @Step("Toggle mute on the publication video if it has audio")
+    public void togglePublicationMute() {
+        if (muteButton().count() == 0 || !safeIsVisible(muteButton())) {
+            logger.info("[Fan Discover] No mute control on this publication (photo or silent media) - skipping");
+            return;
         }
-
-        if (target == null) {
-            throw new RuntimeException("No visible 'Discover profile' text found on Fan Discover feed");
-        }
-
-        try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
-        clickWithRetry(target, 2, ConfigReader.getElementRetryDelay());
+        clickWithRetry(muteButton(), 1, ConfigReader.getElementRetryDelay());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        logger.info("[Fan Discover] Toggled mute on publication video");
     }
 
-    @Step("Ensure creator profile screen is visible via publications icon")
-    public void ensureOnCreatorProfileScreen() {
-        Locator publicationsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("publications icon"));
-        waitVisible(publicationsIcon.first(), ConfigReader.getVisibilityTimeout());
-    }
-
-    @Step("Navigate back from profile to Discover and assert URL")
-    public void navigateBackToDiscover() {
-        Locator back = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
-        waitVisible(back.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(back.first(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-    }
+    // ================= Search =================
 
     @Step("Open search field on Discover")
     public void openSearchField() {
-        Locator searchFieldActivator = page.getByText(SEARCH_TEXT).first();
-        waitVisible(searchFieldActivator, ConfigReader.getShortTimeout());
-        clickWithRetry(searchFieldActivator, 1, ConfigReader.getElementRetryDelay());
+        waitVisible(topSearchIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(topSearchIcon(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(searchBox(), ConfigReader.getShortTimeout());
+        logger.info("[Fan Discover] Search field opened");
     }
 
     @Step("Fill search query: {query}")
     public void fillSearch(String query) {
-        Locator input = page.getByPlaceholder("Search");
-        waitVisible(input.first(), ConfigReader.getShortTimeout());
-        input.first().fill(query == null ? "" : query);
+        waitVisible(searchBox(), ConfigReader.getShortTimeout());
+        searchBox().fill(query == null ? "" : query);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
     }
 
     @Step("Click search result by text: {resultText}")
@@ -157,5 +183,72 @@ public class FanDiscoverPage extends BasePage {
         waitVisible(res.first(), ConfigReader.getShortTimeout());
         clickWithRetry(res.first(), 1, ConfigReader.getElementRetryDelay());
     }
-}
 
+    // ================= Back navigation =================
+
+    @Step("Navigate back from profile/viewer to Discover and assert URL")
+    public void navigateBackToDiscover() {
+        waitVisible(backArrow(), ConfigReader.getShortTimeout());
+
+        boolean navigated = false;
+        try {
+            backArrow().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+            navigated = true;
+        } catch (Exception e) {
+            logger.warn("Normal back arrow click failed ({}); trying to dismiss overlay", e.getMessage());
+        }
+
+        if (!navigated) {
+            try {
+                page.keyboard().press("Escape");
+                page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+                backArrow().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+                navigated = true;
+            } catch (Exception e) {
+                logger.warn("Overlay dismiss + back arrow click failed ({}); trying force click", e.getMessage());
+            }
+        }
+
+        if (!navigated) {
+            try {
+                backArrow().click(new Locator.ClickOptions().setForce(true).setTimeout(ConfigReader.getShortTimeout()));
+                navigated = true;
+            } catch (Exception e) {
+                logger.warn("Force back arrow click failed ({}); falling back to browser back", e.getMessage());
+            }
+        }
+
+        if (!navigated) {
+            try {
+                page.goBack(new Page.GoBackOptions().setTimeout(ConfigReader.getShortTimeout()));
+                navigated = true;
+            } catch (Exception e) {
+                logger.warn("Browser back navigation failed: {}", e.getMessage());
+            }
+        }
+
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**",
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
+    }
+
+    // ================= Profile assertions =================
+
+    @Step("Ensure creator profile screen is visible via publications icon")
+    public void ensureOnCreatorProfileScreen() {
+        Locator publicationsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("publications icon"));
+        waitVisible(publicationsIcon.first(), ConfigReader.getVisibilityTimeout());
+    }
+
+    @Step("Dismiss creator profile onboarding tutorial")
+    public void dismissSearchOnboarding() {
+        Locator firstHint = page.getByText("Click here to see the creator's collections");
+        if (firstHint.count() == 0 || !safeIsVisible(firstHint.first())) {
+            logger.debug("Profile onboarding hint not visible; skipping dismissal");
+            return;
+        }
+        assertThat(firstHint.first()).isVisible();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next")).click();
+        assertThat(page.getByText("And here to see their")).isVisible();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Finished")).click();
+    }
+}

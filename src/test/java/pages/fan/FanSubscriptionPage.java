@@ -21,13 +21,28 @@ public class FanSubscriptionPage extends BasePage {
     @Step("Open search and focus search field")
     public void openSearchPanel() {
         logger.info("[Fan][Subscribe] Opening search panel");
-        // According to flow: click search icon, then click 'Search' label to focus
-        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(searchIcon.first(), 1, ConfigReader.getElementRetryDelay());
-        Locator searchLabel = page.getByText("Search");
-        waitVisible(searchLabel.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(searchLabel.first(), 1, ConfigReader.getElementRetryDelay());
+
+        // Ensure on the Discover screen (footer Search icon navigates there)
+        if (!page.url().contains("/common/discover")) {
+            Locator footerIcon = page.getByRole(AriaRole.IMG,
+                    new Page.GetByRoleOptions().setName("Search icon"));
+            waitVisible(footerIcon.first(), ConfigReader.getVisibilityTimeout());
+            clickWithRetry(footerIcon.first(), 1, ConfigReader.getElementRetryDelay());
+            page.waitForURL("**/common/discover**",
+                    new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        }
+
+        // Click the top search magnifier to open the search overlay
+        Locator searchIcon = page.getByRole(AriaRole.IMG,
+                new Page.GetByRoleOptions().setName("Search")).first();
+        waitVisible(searchIcon, ConfigReader.getShortTimeout());
+        clickWithRetry(searchIcon, 1, ConfigReader.getElementRetryDelay());
+
+        // Wait for the searchbox to appear
+        Locator searchBox = page.getByRole(AriaRole.SEARCHBOX,
+                new Page.GetByRoleOptions().setName("Search"));
+        waitVisible(searchBox.first(), ConfigReader.getShortTimeout());
+        logger.info("[Fan][Subscribe] Search panel opened");
     }
 
     @Step("Search and open creator profile")
@@ -52,7 +67,8 @@ public class FanSubscriptionPage extends BasePage {
         while (!landed && System.currentTimeMillis() < end) {
             // Check if we've successfully landed on the profile page
             try {
-                if (page.url() != null && (page.url().contains("/twizzcreator") || page.url().contains("/creator/") || page.url().contains("/profile/"))) {
+                if (page.url() != null && (page.url().contains("/twizzcreator") || page.url().contains("/p/")
+                        || page.url().contains("/creator/") || page.url().contains("/profile/"))) {
                     logger.debug("[Fan][Subscribe] Profile page detected via URL");
                     return; // Exit method immediately when profile is found
                 }
@@ -184,8 +200,28 @@ public class FanSubscriptionPage extends BasePage {
     @Step("Handle payment screen - check for saved cards or fill manually")
     public void handlePaymentScreen(String cardNumber, String expiry, String cvc) {
         logger.info("[Fan][Subscribe] Handling payment screen");
-        
+
         try { page.waitForTimeout(ConfigReader.getPageLoadTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+
+        // Dismiss the Apple Pay modal (DOM overlay) if it appears over the payment form
+        try {
+            Locator applePayText = page.getByText("Scan Code with iPhone");
+            if (applePayText.count() == 0) { applePayText = page.getByText("Apple Pay"); }
+            if (applePayText.count() > 0 && safeIsVisible(applePayText.first())) {
+                try {
+                    page.evaluate("document.querySelectorAll('apple-pay-modal').forEach(el => el.remove())");
+                } catch (Throwable e) { logger.debug("[Fan][Subscribe] apple-pay-modal removal failed: {}", e.getMessage()); }
+                if (page.getByText("Scan Code with iPhone").count() > 0) {
+                    Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
+                    if (closeBtn.count() > 0 && safeIsVisible(closeBtn.first())) {
+                        closeBtn.first().click();
+                    } else {
+                        page.keyboard().press("Escape");
+                    }
+                }
+                logger.info("[Fan][Subscribe] Dismissed Apple Pay modal");
+            }
+        } catch (Throwable e) { logger.debug("[Fan][Subscribe] Apple Pay dismiss failed: {}", e.getMessage()); }
         
         // Check if "No saved cards" is displayed
         Locator noSavedCards = page.getByText("No saved cards");
@@ -207,9 +243,18 @@ public class FanSubscriptionPage extends BasePage {
         fillCardDetails(cardNumber, expiry, cvc);
     }
 
+    // The <apple-pay-modal> element is re-created by the payment form whenever a card
+    // field gains focus, so it must be removed immediately before each interaction.
+    private void removeApplePayModal() {
+        try {
+            page.evaluate("document.querySelectorAll('apple-pay-modal').forEach(el => el.remove())");
+        } catch (Throwable e) { logger.debug("[Fan][Subscribe] apple-pay-modal removal failed: {}", e.getMessage()); }
+    }
+
     @Step("Fill card details")
     public void fillCardDetails(String cardNumber, String expiry, String cvc) {
         logger.info("[Fan][Subscribe] Filling payment card details");
+        removeApplePayModal();
         // Some payment fields can be inside iframes; try direct first.
         try {
             Locator number = page.getByPlaceholder("1234 1234 1234");
@@ -277,6 +322,7 @@ public class FanSubscriptionPage extends BasePage {
             Locator confirmBtn = appPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
             boolean clicked = false;
             try {
+                removeApplePayModal();
                 waitVisible(confirmBtn, ConfigReader.getShortTimeout());
                 try { confirmBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
                 // Try a bounded-time click first to avoid 60s default timeouts

@@ -16,12 +16,12 @@ public class FanBookmarksTest extends BaseFanTest {
     @Test(priority = 1, 
           description = "Fan can bookmark multiple feeds from home screen")
     public void fanCanBookmarkMultipleFeeds() {
-        // Verify on home screen and click Home icon to navigate to feed screen
+        // Verify on home screen and switch to Following tab (posts have bookmark icons)
         FanHomePage home = new FanHomePage(page);
         home.assertOnHomeUrl();
-        home.clickHomeIcon();
+        home.switchToFollowingTab();
 
-        // Bookmark multiple feeds using img.slideItemBookmark
+        // Bookmark multiple posts on the Following feed
         FanBookmarksPage bookmarks = new FanBookmarksPage(page);
         bookmarks.bookmarkMultipleFeeds(FEEDS_TO_BOOKMARK);
 

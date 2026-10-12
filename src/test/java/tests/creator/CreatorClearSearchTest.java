@@ -22,18 +22,25 @@ public class CreatorClearSearchTest extends BaseCreatorTest {
         CreatorClearSearchPage clearSearch = new CreatorClearSearchPage(page);
         clearSearch.navigateToDiscover();
 
+        // Seed recent searches so the clear flow always has items to remove
         clearSearch.clickSearchField();
+        if (clearSearch.getRecentSearchCount() < 2) {
+            for (String query : new String[] { "igor", "star" }) {
+                if (clearSearch.getRecentSearchCount() >= 2) {
+                    break;
+                }
+                clearSearch.fillSearch(query);
+                clearSearch.clickFirstSearchResult();
+                clearSearch.navigateBackToDiscover();
+                clearSearch.clickSearchField();
+            }
+        }
 
         int initialCount = clearSearch.getRecentSearchCount();
+        Assert.assertTrue(initialCount > 0, "Expected at least 1 recent search after seeding");
 
-        if (initialCount > 0) {
-            Assert.assertTrue(clearSearch.isRecentTextVisible(),
-                    "Expected 'Recent' text to be visible when recent searches exist");
-        }
-
-        if (initialCount == 0) {
-            return;
-        }
+        Assert.assertTrue(clearSearch.isRecentTextVisible(),
+                "Expected 'Recent' text to be visible when recent searches exist");
 
         int clearedCount = clearSearch.clearAllRecentSearches();
         Assert.assertTrue(clearedCount > 0,

@@ -15,63 +15,75 @@ import utils.ConfigReader;
 public class FanDiscoverTest extends BaseFanTest {
     private static final Logger logger = LoggerFactory.getLogger(FanDiscoverTest.class);
 
-    @Story("Discover screen: feeds visible, unmute and scroll actions")
-    @Test(priority = 1, description = "Navigate to Discover, verify feeds exist, scroll down/up, unmute each feed (Fan)")
-    public void fanDiscoverFeedsAndUnmute() {
+    @Story("Discover screen: grid of publication tiles (Fan)")
+    @Test(priority = 1, description = "Navigate to Fan Discover, verify thumbnail grid renders")
+    public void fanDiscoverLoadsGrid() {
         FanDiscoverPage discover = new FanDiscoverPage(page);
 
-        logger.info("[Fan Discover] Navigate to discover via Search icon");
+        logger.info("[Fan Discover] Navigate to discover via footer Search icon");
         discover.navigateToDiscover();
         discover.assertOnDiscoverScreen();
 
-        logger.info("[Fan Discover] Scroll down ensuring feeds are visible");
-        int seen = discover.scrollDownEnsureFeeds();
-        Assert.assertTrue(seen > 0, "Expected to see at least one feed");
+        int tiles = discover.assertGridRendered();
+        Assert.assertTrue(tiles > 0, "Expected at least one grid tile");
 
-        logger.info("[Fan Discover] Unmute every feed (visible) while scrolling");
-        int toggled = discover.unmuteAllFeedsWhileScrolling();
-        Assert.assertTrue(toggled >= 0, "Unmute toggles executed");
-
-        logger.info("[Fan Discover] Scroll back to top");
-        discover.scrollUpToTop();
+        discover.assertGridTileContent();
     }
 
-    @Story("Discover screen: open a creator profile from a feed and navigate back")
-    @Test(priority = 2, description = "From Fan Discover, open a random visible profile from a feed, ensure profile screen, go back, and assert Discover")
-    public void fanDiscoverOpenProfileAndBack() {
+    @Story("Discover screen: grid lazy-loads more tiles on scroll (Fan)")
+    @Test(priority = 2, description = "Scroll the Fan Discover grid and verify tiles keep rendering")
+    public void fanDiscoverGridScrollLoadsMore() {
         FanDiscoverPage discover = new FanDiscoverPage(page);
 
-        logger.info("[Fan Discover->Profile] Navigate to discover via Search icon");
         discover.navigateToDiscover();
         discover.assertOnDiscoverScreen();
+        discover.assertGridRendered();
 
-        logger.info("[Fan Discover->Profile] Open a random visible discover profile");
-        discover.openRandomVisibleDiscoverProfile();
-        discover.ensureOnCreatorProfileScreen();
+        int after = discover.scrollGridToLoadMore();
+        Assert.assertTrue(after > 0, "Expected tiles to remain rendered after scrolling");
+        logger.info("[Fan Discover] Tiles rendered after scroll: {}", after);
+    }
 
-        logger.info("[Fan Discover->Profile] Navigate back and assert Discover screen");
+    @Story("Discover screen: open a publication tile, unmute, and navigate back (Fan)")
+    @Test(priority = 3, description = "Open first grid tile into publication viewer, verify player and creator row, unmute, go back")
+    public void fanDiscoverTileOpensPublicationAndBack() {
+        FanDiscoverPage discover = new FanDiscoverPage(page);
+
+        discover.navigateToDiscover();
+        discover.assertOnDiscoverScreen();
+        discover.assertGridRendered();
+
+        logger.info("[Fan Discover] Open first grid tile");
+        discover.openFirstGridTile();
+        discover.assertOnPublicationViewer();
+        discover.assertViewerCreatorRow();
+
+        logger.info("[Fan Discover] Toggle mute on publication video");
+        discover.togglePublicationMute();
+
+        logger.info("[Fan Discover] Navigate back to Discover grid");
         discover.navigateBackToDiscover();
         discover.assertOnDiscoverScreen();
     }
 
-    @Story("Discover screen: search and open creator profile, then navigate back")
-    @Test(priority = 3, description = "Search for a creator, open profile via result, verify profile, go back to Discover and assert URL (Fan)")
-    public void fanDiscoverSearchOpenAndBack() {
+    @Story("Discover screen: search creator, open profile, and navigate back (Fan)")
+    @Test(priority = 4, description = "Search for a creator via top search icon, open result profile, go back to Discover")
+    public void fanDiscoverSearchOpensProfileAndBack() {
         String searchQuery = ConfigReader.getProperty("fan.discover.search.query", "igor");
         String searchResultText = ConfigReader.getProperty("fan.discover.search.resultText", "igor test");
 
         FanDiscoverPage discover = new FanDiscoverPage(page);
 
-        logger.info("[Fan Discover->Search] Navigate to discover via Search icon");
         discover.navigateToDiscover();
         discover.assertOnDiscoverScreen();
 
-        logger.info("[Fan Discover->Search] Open search field and search");
+        logger.info("[Fan Discover->Search] Open search field and search for '{}'", searchQuery);
         discover.openSearchField();
         discover.fillSearch(searchQuery);
 
         logger.info("[Fan Discover->Search] Click search result '{}'", searchResultText);
         discover.clickSearchResult(searchResultText);
+        discover.dismissSearchOnboarding();
         discover.ensureOnCreatorProfileScreen();
 
         logger.info("[Fan Discover->Search] Navigate back and assert Discover screen");

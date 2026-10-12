@@ -32,6 +32,8 @@ public class BrowserFactory {
             String browserType = ConfigReader.getBrowserType();
             boolean headless = ConfigReader.isHeadless();
             BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions().setHeadless(headless);
+            // Disable the macOS native Apple Pay sheet so automated payment flows are not blocked
+            launchOptions.setArgs(java.util.Collections.singletonList("--disable-features=ApplePay"));
             try {
                 switch (browserType.toLowerCase()) {
                     case "chrome":

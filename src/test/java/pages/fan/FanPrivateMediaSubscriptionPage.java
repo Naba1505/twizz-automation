@@ -99,9 +99,24 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
 
     @Step("Click on Search icon to open search")
     public void clickSearchIcon() {
-        Locator icon = page.locator("div").nth(5);
-        clickWithRetry(icon, 1, 150);
-        logger.info("[FanPrivMedia] Clicked on search icon");
+        // Ensure on the Discover screen (footer Search icon navigates there)
+        if (!page.url().contains("/common/discover")) {
+            Locator footerIcon = searchIcon().first();
+            waitVisible(footerIcon, ConfigReader.getVisibilityTimeout());
+            clickWithRetry(footerIcon, 1, ConfigReader.getElementRetryDelay());
+            page.waitForURL("**/common/discover**",
+                    new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        }
+
+        // Click the top search magnifier to open the search overlay
+        Locator magnifier = page.getByRole(AriaRole.IMG,
+                new Page.GetByRoleOptions().setName("Search")).first();
+        waitVisible(magnifier, ConfigReader.getShortTimeout());
+        clickWithRetry(magnifier, 1, ConfigReader.getElementRetryDelay());
+
+        // Wait for the searchbox to appear
+        waitVisible(searchBox().first(), ConfigReader.getShortTimeout());
+        logger.info("[FanPrivMedia] Clicked on search icon - search panel opened");
     }
 
     @Step("Search for creator: {creatorUsername}")
@@ -187,6 +202,70 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         logger.warn("[FanPrivMedia] Free subscription text not found after waiting, but continuing...");
     }
 
+    // The <apple-pay-modal> element is re-created by the payment form whenever a card
+    // field gains focus, so it must be removed immediately before each interaction.
+    private void removeApplePayModal() {
+        try {
+            page.evaluate("document.querySelectorAll('apple-pay-modal').forEach(el => el.remove())");
+        } catch (Throwable e) { logger.debug("[FanPrivMedia] apple-pay-modal removal failed: {}", e.getMessage()); }
+    }
+
+    @Step("Dismiss Apple Pay modal if present")
+    public void dismissApplePayIfPresent() {
+        try {
+            // The modal can appear a moment after the payment screen renders - poll briefly
+            Locator applePayText = null;
+            for (int i = 0; i < 5; i++) {
+                applePayText = page.getByText("Scan Code with iPhone");
+                if (applePayText.count() == 0) {
+                    applePayText = page.getByText("Apple Pay");
+                }
+                if (applePayText.count() > 0 && safeIsVisible(applePayText.first())) {
+                    break;
+                }
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            }
+            if (applePayText == null || applePayText.count() == 0 || !safeIsVisible(applePayText.first())) {
+                return;
+            }
+            logger.info("[FanPrivMedia] Apple Pay modal detected; attempting to dismiss");
+
+            // Deterministic: remove the <apple-pay-modal> overlay element from the DOM
+            try {
+                page.evaluate("document.querySelectorAll('apple-pay-modal').forEach(el => el.remove())");
+                if (page.getByText("Scan Code with iPhone").count() == 0) {
+                    logger.info("[FanPrivMedia] Dismissed Apple Pay modal via DOM removal");
+                    return;
+                }
+            } catch (Throwable e) { logger.debug("[FanPrivMedia] apple-pay-modal removal failed: {}", e.getMessage()); }
+
+            // Try the modal's close button next
+            Locator closeBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
+            if (closeBtn.count() > 0 && safeIsVisible(closeBtn.first())) {
+                clickWithRetry(closeBtn.first(), 2, ConfigReader.getElementRetryDelay());
+                logger.info("[FanPrivMedia] Dismissed Apple Pay modal via Close button");
+                return;
+            }
+
+            // Fallback: press Escape
+            page.keyboard().press("Escape");
+            logger.info("[FanPrivMedia] Dismissed Apple Pay modal via Escape key");
+        } catch (Throwable e) {
+            logger.debug("[FanPrivMedia] Apple Pay modal not present or dismiss failed: {}", e.getMessage());
+        }
+    }
+
+    @Step("Click 'Continue' button on Premium subscribe screen")
+    public void clickContinue() {
+        dismissApplePayIfPresent();
+        dismissOverlay();
+        Locator btn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Continue"));
+        waitVisible(btn, ConfigReader.getShortTimeout());
+        clickWithRetry(btn, 1, ConfigReader.getAnimationTimeout());
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
+        logger.info("[FanPrivMedia] Clicked 'Continue' button");
+    }
+
     @Step("Click 'Request private media' button")
     public void clickRequestPrivateMedia() {
         dismissOverlay();
@@ -196,6 +275,33 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         clickWithRetry(btn, 2, ConfigReader.getAnimationTimeout());
         page.waitForTimeout(ConfigReader.getPageLoadTimeout());
         logger.info("[FanPrivMedia] Clicked 'Request private media' button");
+    }
+
+    @Step("Click 'Discuss' button on creator profile to open conversation")
+    public void clickProfileChatIcon() {
+        dismissOverlay();
+        // New UI shows a 'FREE · Discuss' (or 'Discuss'/'Discuter') pill next to Subscriber
+        Locator[] discussButtons = {
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Discuss")),
+            page.getByText("Discuss"),
+            page.getByText("Discuter"),
+            page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("chat"))
+        };
+        boolean clicked = false;
+        for (Locator btn : discussButtons) {
+            try {
+                if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                    clickWithRetry(btn.first(), 1, ConfigReader.getAnimationTimeout());
+                    clicked = true;
+                    break;
+                }
+            } catch (Throwable e) { logger.debug("[FanPrivMedia] Discuss button attempt failed: {}", e.getMessage()); }
+        }
+        if (!clicked) {
+            throw new RuntimeException("Discuss/chat button not found on creator profile");
+        }
+        page.waitForTimeout(ConfigReader.getPageLoadTimeout());
+        logger.info("[FanPrivMedia] Clicked Discuss button on profile");
     }
 
     @Step("Assert on creator message conversation screen and click message box")
@@ -235,11 +341,13 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
     @Step("Assert 'Secure payment' screen is visible")
     public void assertSecurePaymentVisible() {
         waitVisible(securePaymentText(), ConfigReader.getVisibilityTimeout());
+        dismissApplePayIfPresent();
         logger.info("[FanPrivMedia] 'Secure payment' screen is visible");
     }
 
     @Step("Fill card number: {cardNumber}")
     public void fillCardNumber(String cardNumber) {
+        removeApplePayModal();
         Locator field = cardNumberField();
         waitVisible(field, ConfigReader.getShortTimeout());
         field.click();
@@ -249,6 +357,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
 
     @Step("Click on Expiration date area")
     public void clickExpirationDateArea() {
+        removeApplePayModal();
         Locator area = page.locator("div").filter(new Locator.FilterOptions().setHasText(Pattern.compile("^Expiration date$"))).nth(2);
         clickWithRetry(area, 1, 150);
         logger.info("[FanPrivMedia] Clicked on Expiration date area");
@@ -302,6 +411,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         for (Locator btn : paymentButtons) {
             try {
                 if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                    removeApplePayModal();
                     btn.first().scrollIntoViewIfNeeded();
                     waitVisible(btn.first(), ConfigReader.getShortTimeout());
                     clickWithRetry(btn.first(), 1, 150);
@@ -343,6 +453,7 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
         for (Locator btn : confirmButtons) {
             try {
                 if (btn.count() > 0 && safeIsVisible(btn.first())) {
+                    removeApplePayModal();
                     btn.first().scrollIntoViewIfNeeded();
                     waitVisible(btn.first(), ConfigReader.getShortTimeout());
                     clickWithRetry(btn.first(), 1, 150);
@@ -644,13 +755,14 @@ public class FanPrivateMediaSubscriptionPage extends BasePage {
 
     @Step("Navigate directly to creator profile: {username}")
     public void navigateToCreatorProfile(String username) {
-        String profileUrl = ConfigReader.getBaseUrl() + "/profile/" + username;
+        // New public profile URL format is /p/<username>
+        String profileUrl = ConfigReader.getBaseUrl() + "/p/" + username;
         page.navigate(profileUrl);
         page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
 
         // Verify we're actually on the creator profile, not redirected to discover
         String currentUrl = page.url();
-        if (!currentUrl.contains("/profile/") && !currentUrl.contains(username)) {
+        if (!currentUrl.contains("/p/") && !currentUrl.contains(username)) {
             logger.warn("[FanPrivMedia] Redirected away from profile to: {}. Searching for creator again.", currentUrl);
             assertSearchIconVisible();
             clickSearchIcon();
