@@ -14,134 +14,267 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 public class CreatorDiscoverPage extends BasePage {
 
     private static final String DISCOVER_PATH_FRAGMENT = "/common/discover";
-    private static final String FEED_XPATH = "//div[@class='hls-video-player']";
+    private static final String PUBLICATION_PATH_FRAGMENT = "/common/discover/publications/";
 
     public CreatorDiscoverPage(Page page) {
         super(page);
     }
 
+    // ================= Locators =================
 
-    @Step("Navigate to Discover screen via Search icon")
+    private Locator discoverTab() {
+        return page.getByText("Discover", new Page.GetByTextOptions().setExact(true)).first();
+    }
+
+    private Locator presentationVideoTab() {
+        return page.getByText("Presentation Video").first();
+    }
+
+    private Locator topSearchIcon() {
+        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search")).first();
+    }
+
+    private Locator footerDiscoverIcon() {
+        return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon")).first();
+    }
+
+    private Locator gridItems() {
+        return page.locator(".discover-grid-item");
+    }
+
+    private Locator gridThumbnails() {
+        return page.locator(".discover-grid-thumbnail");
+    }
+
+    private Locator gridTypeIcons() {
+        return page.locator(".discover-grid-type-icon");
+    }
+
+    private Locator publicationViewer() {
+        return page.locator(".discover-publication-page");
+    }
+
+    private Locator publicationMedia() {
+        return page.locator(".discover-publication-page .hls-video-player, .discover-publication-swiper-slide, .discover-publication-slide").first();
+    }
+
+    private Locator muteButton() {
+        return page.locator(".mute-button").first();
+    }
+
+    private Locator creatorRow() {
+        return page.locator(".discover-publication-creator-row").first();
+    }
+
+    private Locator backArrow() {
+        // Publication viewer back chevron has empty alt; profile back uses alt="arrow left"
+        return page.locator(".discover-publication-header-hit img[src*='chevron-back'], img[alt='arrow left']").first();
+    }
+
+    private Locator searchBox() {
+        return page.getByRole(AriaRole.SEARCHBOX, new Page.GetByRoleOptions().setName("Search"));
+    }
+
+    private Locator cancelSearchText() {
+        return page.getByText("Cancel", new Page.GetByTextOptions().setExact(true)).first();
+    }
+
+    private Locator presentationSlides() {
+        return page.locator(".swiper-slide .hls-video-player, .slide-container .hls-video-player");
+    }
+
+    private Locator discoverProfileCta() {
+        return page.getByText("Discover profile").first();
+    }
+
+    // ================= Navigation =================
+
+    @Step("Navigate to Discover screen via footer Search icon")
     public void navigateToDiscover() {
-        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
-        clickWithRetry(searchIcon.first(), 2, ConfigReader.getElementRetryDelay());
+        waitVisible(footerDiscoverIcon(), ConfigReader.getVisibilityTimeout());
+        clickWithRetry(footerDiscoverIcon(), 2, ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Assert on Discover screen (URL contains /common/discover)")
+    @Step("Assert on Discover screen (URL + tabs + grid)")
     public void assertOnDiscoverScreen() {
-        // Wait for URL to include the discover path
-        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        // And for at least one feed container to appear
-        Locator searchIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
-        waitVisible(searchIcon.first(), ConfigReader.getVisibilityTimeout());
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**",
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        waitVisible(discoverTab(), ConfigReader.getShortTimeout());
+        waitVisible(presentationVideoTab(), ConfigReader.getShortTimeout());
+        waitVisible(footerDiscoverIcon(), ConfigReader.getVisibilityTimeout());
+        logger.info("[Discover] On Discover screen - tabs and footer icon visible");
     }
 
-    @Step("Scroll through feeds top-to-bottom, ensuring each is visible")
-    public int scrollDownEnsureFeeds() {
-        Locator visibleFeeds = page.locator(".hls-video-player:visible");
-        waitVisible(visibleFeeds.first(), ConfigReader.getVisibilityTimeout());
-        Locator feeds = page.locator("xpath=" + FEED_XPATH);
-        int total = Math.max(0, feeds.count());
-        int seen = 0;
-        for (int i = 0; i < total; i++) {
-            Locator feed = feeds.nth(i);
-            try {
-                feed.scrollIntoViewIfNeeded();
-                waitVisible(feed, ConfigReader.getShortTimeout());
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e2) { logger.debug("Feed scroll wait failed: {}", e2.getMessage()); }
-                seen++;
-            } catch (Exception e) {
-                logger.warn("Feed {} not confirmed visible: {}", i, e.toString());
-            }
+    // ================= Grid =================
+
+    @Step("Assert Discover grid rendered with tiles")
+    public int assertGridRendered() {
+        waitVisible(gridItems().first(), ConfigReader.getVisibilityTimeout());
+        int count = gridItems().count();
+        logger.info("[Discover] Grid rendered with {} tiles", count);
+        if (count <= 0) {
+            throw new AssertionError("Discover grid rendered no tiles");
         }
-        try { page.mouse().wheel(0, 1200); } catch (Exception e) { logger.debug("Scroll wheel failed: {}", e.getMessage()); }
-        return seen;
+        return count;
     }
 
-    @Step("Unmute every visible feed by clicking its mute button while scrolling down")
-    public int unmuteAllFeedsWhileScrolling() {
-        Locator feeds = page.locator("xpath=" + FEED_XPATH);
+    @Step("Assert grid tiles have thumbnails and media type icons")
+    public void assertGridTileContent() {
+        waitVisible(gridThumbnails().first(), ConfigReader.getShortTimeout());
+        int thumbs = gridThumbnails().count();
+        int icons = gridTypeIcons().count();
+        logger.info("[Discover] Grid thumbnails: {}, media type icons: {}", thumbs, icons);
+        if (thumbs <= 0) {
+            throw new AssertionError("Discover grid has no thumbnails");
+        }
+    }
+
+    @Step("Scroll the Discover grid to lazy-load more tiles")
+    public int scrollGridToLoadMore() {
+        int before = gridItems().count();
+        for (int i = 0; i < 6; i++) {
+            page.mouse().wheel(0, 900);
+            page.waitForTimeout(ConfigReader.getScrollWaitBetween());
+        }
+        int after = gridItems().count();
+        logger.info("[Discover] Grid tiles before scroll: {}, after scroll: {}", before, after);
+        return after;
+    }
+
+    @Step("Open the first Discover grid tile")
+    public void openFirstGridTile() {
+        waitVisible(gridItems().first(), ConfigReader.getShortTimeout());
+        clickWithRetry(gridItems().first(), 2, ConfigReader.getElementRetryDelay());
+    }
+
+    // ================= Publication viewer =================
+
+    @Step("Assert publication viewer opened from grid tile")
+    public void assertOnPublicationViewer() {
+        page.waitForURL("**" + PUBLICATION_PATH_FRAGMENT + "**",
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
+        waitVisible(publicationViewer(), ConfigReader.getVisibilityTimeout());
+        // Tiles may be photos or videos - assert the slide media, not the video player specifically
+        waitVisible(publicationMedia(), ConfigReader.getVisibilityTimeout());
+        logger.info("[Discover] Publication viewer opened - media visible");
+    }
+
+    @Step("Assert creator row visible in publication viewer")
+    public void assertViewerCreatorRow() {
+        waitVisible(creatorRow(), ConfigReader.getShortTimeout());
+        logger.info("[Discover] Creator row visible in publication viewer");
+    }
+
+    @Step("Toggle mute on the publication video if it has audio")
+    public void togglePublicationMute() {
+        if (muteButton().count() == 0 || !safeIsVisible(muteButton())) {
+            logger.info("[Discover] No mute control on this publication (photo or silent media) - skipping");
+            return;
+        }
+        clickWithRetry(muteButton(), 1, ConfigReader.getElementRetryDelay());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        logger.info("[Discover] Toggled mute on publication video");
+    }
+
+    // ================= Tabs =================
+
+    @Step("Switch to Presentation Video tab")
+    public void switchToPresentationVideoTab() {
+        waitVisible(presentationVideoTab(), ConfigReader.getShortTimeout());
+        clickWithRetry(presentationVideoTab(), 1, ConfigReader.getElementRetryDelay());
+        // The SPA may delay or skip the ?tab=presentation query update - wait for the feed instead
+        waitVisible(presentationSlides().first(), ConfigReader.getVisibilityTimeout());
+        logger.info("[Discover] Switched to Presentation Video tab (url: {})", page.url());
+    }
+
+    @Step("Assert on Presentation Video feed")
+    public void assertOnPresentationFeed() {
+        waitVisible(presentationSlides().first(), ConfigReader.getVisibilityTimeout());
+        logger.info("[Discover] Presentation Video feed visible - {} slide(s) loaded", presentationSlides().count());
+    }
+
+    @Step("Switch back to Discover tab")
+    public void switchToDiscoverTab() {
+        waitVisible(discoverTab(), ConfigReader.getShortTimeout());
+        clickWithRetry(discoverTab(), 1, ConfigReader.getElementRetryDelay());
+        page.waitForTimeout(ConfigReader.getAnimationTimeout());
+        logger.info("[Discover] Switched back to Discover tab");
+    }
+
+    @Step("Unmute presentation slide video")
+    public int unmutePresentationSlides(int maxSlides) {
+        Locator slides = presentationSlides();
         int toggled = 0;
-        int totalFeeds = feeds.count();
-        for (int i = 0; i < totalFeeds; i++) {
-            Locator feed = feeds.nth(i);
+        int total = Math.min(slides.count(), maxSlides);
+        for (int i = 0; i < total; i++) {
             try {
-                feed.scrollIntoViewIfNeeded();
-                waitVisible(feed, ConfigReader.getShortTimeout());
-                // Scope mute button search to this feed's parent container for O(1) lookup
-                Locator feedMuteBtn = feed.locator("xpath=ancestor::div//button[@class='mute-button']");
-                if (feedMuteBtn.count() > 0 && safeIsVisible(feedMuteBtn.first())) {
-                    clickWithRetry(feedMuteBtn.first(), 1, ConfigReader.getElementRetryDelay());
+                Locator slide = slides.nth(i);
+                slide.scrollIntoViewIfNeeded();
+                waitVisible(slide, ConfigReader.getShortTimeout());
+                Locator mute = slide.locator("xpath=ancestor::div[contains(@class,'slide-container') or contains(@class,'swiper-slide')]//button[contains(@class,'mute-button')]");
+                if (mute.count() > 0 && safeIsVisible(mute.first())) {
+                    clickWithRetry(mute.first(), 1, ConfigReader.getElementRetryDelay());
                     toggled++;
                 }
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e2) { logger.debug("Unmute wait failed: {}", e2.getMessage()); }
+                page.waitForTimeout(ConfigReader.getElementRetryDelay());
             } catch (Exception e) {
-                logger.warn("Unable to unmute feed {}: {}", i, e.toString());
+                logger.warn("[Discover] Unable to unmute presentation slide {}: {}", i, e.getMessage());
             }
         }
         return toggled;
     }
 
-    @Step("Scroll up to the top of the Discover feed")
-    public void scrollUpToTop() {
-        try {
-            for (int i = 0; i < 6; i++) {
-                page.mouse().wheel(0, -1200);
-                try { page.waitForTimeout(ConfigReader.getElementRetryDelay()); } catch (Exception e) { logger.debug("Scroll up wait failed: {}", e.getMessage()); }
-            }
-        } catch (Exception e) { logger.debug("ScrollUpToTop failed: {}", e.getMessage()); }
-    }
-
-    @Step("Open a random visible Discover profile from a feed")
-    public void openRandomVisibleDiscoverProfile() {
-        // Codegen: page.getByText("Discover profile").first().click();
-        // Try to surface a "Discover profile" element by scrolling a few times
-        Locator visibleFeeds = page.locator(".hls-video-player:visible");
-        waitVisible(visibleFeeds.first(), ConfigReader.getVisibilityTimeout());
-
-        Locator target = null;
-        int attempts = 0;
-        while (target == null && attempts++ < ConfigReader.getMaxScrollAttempts()) {
-            Locator profileText = page.getByText("Discover profile");
-            for (int i = 0; i < profileText.count(); i++) {
-                Locator candidate = profileText.nth(i);
-                if (safeIsVisible(candidate)) {
-                    target = candidate;
-                    break;
-                }
-            }
-
-            if (target == null) {
-                try { page.mouse().wheel(0, ConfigReader.getScrollStepSize()); } catch (Exception e) { logger.debug("Scroll failed: {}", e.getMessage()); }
-                try { page.waitForTimeout(ConfigReader.getScrollWaitBetween()); } catch (Exception e) { logger.debug("Wait failed: {}", e.getMessage()); }
-            }
+    @Step("Open creator profile via 'Discover profile' bar")
+    public void openDiscoverProfileCta() {
+        waitVisible(discoverProfileCta(), ConfigReader.getShortTimeout());
+        try { discoverProfileCta().scrollIntoViewIfNeeded(); } catch (Throwable e) {
+            logger.debug("[Discover] scrollIntoViewIfNeeded failed: {}", e.getMessage());
         }
+        clickWithRetry(discoverProfileCta(), 2, ConfigReader.getElementRetryDelay());
+    }
 
-        if (target == null) {
-            throw new RuntimeException("No visible 'Discover profile' text found on Discover feed");
+    // ================= Search =================
+
+    @Step("Open search field on Discover")
+    public void openSearchField() {
+        waitVisible(topSearchIcon(), ConfigReader.getShortTimeout());
+        clickWithRetry(topSearchIcon(), 1, ConfigReader.getElementRetryDelay());
+        waitVisible(searchBox(), ConfigReader.getShortTimeout());
+        logger.info("[Discover] Search field opened");
+    }
+
+    @Step("Fill search query: {query}")
+    public void fillSearch(String query) {
+        waitVisible(searchBox(), ConfigReader.getShortTimeout());
+        searchBox().fill(query == null ? "" : query);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+    }
+
+    @Step("Click search result by text: {resultText}")
+    public void clickSearchResult(String resultText) {
+        Locator res = page.getByText(resultText);
+        waitVisible(res.first(), ConfigReader.getShortTimeout());
+        clickWithRetry(res.first(), 1, ConfigReader.getElementRetryDelay());
+    }
+
+    @Step("Cancel search and return to Discover grid")
+    public void cancelSearch() {
+        if (cancelSearchText().count() > 0 && safeIsVisible(cancelSearchText())) {
+            clickWithRetry(cancelSearchText(), 1, ConfigReader.getElementRetryDelay());
         }
-
-        try { target.scrollIntoViewIfNeeded(); } catch (Exception e) { logger.debug("ScrollIntoView failed: {}", e.getMessage()); }
-        clickWithRetry(target, 2, ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Ensure creator profile screen is visible via publications icon")
-    public void ensureOnCreatorProfileScreen() {
-        Locator publicationsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("publications icon"));
-        waitVisible(publicationsIcon.first(), ConfigReader.getShortTimeout());
-    }
+    // ================= Back navigation =================
 
-    @Step("Navigate back from profile to Discover and assert URL")
+    @Step("Navigate back from profile/viewer to Discover and assert URL")
     public void navigateBackToDiscover() {
-        Locator back = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("arrow left"));
-        waitVisible(back.first(), ConfigReader.getShortTimeout());
+        waitVisible(backArrow(), ConfigReader.getShortTimeout());
 
         // The profile may open as an overlay (fan-profile-overlay) that intercepts
         // the back chevron. Use a short timeout and escalate through force/JS/browser back.
         boolean navigated = false;
         try {
-            back.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+            backArrow().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
             navigated = true;
         } catch (Exception e) {
             logger.warn("Normal back arrow click failed ({}); trying to dismiss overlay", e.getMessage());
@@ -151,7 +284,7 @@ public class CreatorDiscoverPage extends BasePage {
             try {
                 page.keyboard().press("Escape");
                 page.waitForTimeout(ConfigReader.getUiSettleTimeout());
-                back.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+                backArrow().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
                 navigated = true;
             } catch (Exception e) {
                 logger.warn("Overlay dismiss + back arrow click failed ({}); trying force click", e.getMessage());
@@ -160,7 +293,7 @@ public class CreatorDiscoverPage extends BasePage {
 
         if (!navigated) {
             try {
-                back.first().click(new Locator.ClickOptions().setForce(true).setTimeout(ConfigReader.getShortTimeout()));
+                backArrow().click(new Locator.ClickOptions().setForce(true).setTimeout(ConfigReader.getShortTimeout()));
                 navigated = true;
             } catch (Exception e) {
                 logger.warn("Force back arrow click failed ({}); falling back to browser back", e.getMessage());
@@ -177,33 +310,21 @@ public class CreatorDiscoverPage extends BasePage {
         }
 
         // Wait URL back on discover regardless of which navigation method succeeded
-        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**", new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
+        page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**",
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
     }
 
-    @Step("Open search field on Discover")
-    public void openSearchField() {
-        Locator searchFieldActivator = page.getByText("Search").first();
-        waitVisible(searchFieldActivator, ConfigReader.getShortTimeout());
-        clickWithRetry(searchFieldActivator, 1, ConfigReader.getElementRetryDelay());
-    }
+    // ================= Profile assertions =================
 
-    @Step("Fill search query: {query}")
-    public void fillSearch(String query) {
-        Locator input = page.getByPlaceholder("Search");
-        waitVisible(input.first(), ConfigReader.getShortTimeout());
-        input.first().fill(query == null ? "" : query);
-    }
-
-    @Step("Click search result by text: {resultText}")
-    public void clickSearchResult(String resultText) {
-        Locator res = page.getByText(resultText);
-        waitVisible(res.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(res.first(), 1, ConfigReader.getElementRetryDelay());
+    @Step("Ensure creator profile screen is visible via publications icon")
+    public void ensureOnCreatorProfileScreen() {
+        Locator publicationsIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("publications icon"));
+        waitVisible(publicationsIcon.first(), ConfigReader.getShortTimeout());
     }
 
     @Step("Dismiss creator profile onboarding tutorial")
     public void dismissSearchOnboarding() {
-        // Newly added onboarding flow that appears when opening a creator profile.
+        // Onboarding flow that appears when opening a creator profile.
         Locator firstHint = page.getByText("Click here to see the creator's collections");
         if (firstHint.count() == 0 || !safeIsVisible(firstHint.first())) {
             logger.debug("Profile onboarding hint not visible; skipping dismissal");

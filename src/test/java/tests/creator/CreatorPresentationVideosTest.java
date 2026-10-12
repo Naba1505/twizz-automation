@@ -1,6 +1,7 @@
 package tests.creator;
 
 import org.testng.annotations.Test;
+import pages.creator.CreatorDiscoverPage;
 import pages.creator.CreatorMediaPushPage;
 import pages.creator.CreatorPresentationVideosPage;
 
@@ -44,5 +45,28 @@ public class CreatorPresentationVideosTest extends BaseCreatorTest {
 
         // Assert empty state
         pvPage.assertEmptyPromptVisible();
+    }
+
+    @Test(priority = 3, description = "Creator can view the Presentation Video feed on Discover and open a creator profile")
+    public void creatorCanViewPresentationVideoFeed() {
+        CreatorDiscoverPage discover = new CreatorDiscoverPage(page);
+
+        // Open Discover and switch to the Presentation Video tab
+        discover.navigateToDiscover();
+        discover.assertOnDiscoverScreen();
+        discover.switchToPresentationVideoTab();
+        discover.assertOnPresentationFeed();
+
+        // Unmute visible presentation slides
+        discover.unmutePresentationSlides(3);
+
+        // Open the creator profile behind the current presentation video
+        discover.openDiscoverProfileCta();
+        discover.dismissSearchOnboarding();
+        discover.ensureOnCreatorProfileScreen();
+
+        // Navigate back to Discover
+        discover.navigateBackToDiscover();
+        discover.assertOnDiscoverScreen();
     }
 }
