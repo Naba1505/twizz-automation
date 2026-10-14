@@ -25,10 +25,10 @@ public class CreatorPublicationPage extends BasePage {
     private static final String CONVERSION_TOOLS_TEXT = "Vos meilleurs outils de conversion";
     private static final String I_UNDERSTAND_BTN = "I understand";
     private static final String POST_TEXT = "Post";
-    private static final String PUBLICATIONS_TEXT = "Publications";
-    private static final String PUBLISH_BTN = "Publish";
-    private static final String CAPTION_PLACEHOLDER = "Write a caption and tag other creators...";
-    private static final String CAPTION_TITLE_TEXT = "Caption";
+    private static final String PUBLICATIONS_TEXT = "Publication";
+    private static final String PUBLISH_BTN = "Confirm";
+    private static final String CAPTION_PLACEHOLDER = "Your message....";
+    private static final String CAPTION_TITLE_TEXT = "Description";
     private static final String CAPTION_OK_TEXT = "OK";
 
     public CreatorPublicationPage(Page page) {
@@ -87,16 +87,15 @@ public class CreatorPublicationPage extends BasePage {
     }
 
     public void openCaptionEditor() {
-        Locator openCaption = page.getByText(CAPTION_PLACEHOLDER);
-        waitVisible(openCaption, ConfigReader.getVisibilityTimeout());
-        clickWithRetry(openCaption, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-        logger.info("Opened caption editor");
+        Locator descriptionHeading = page.getByText(CAPTION_TITLE_TEXT, new Page.GetByTextOptions().setExact(true));
+        waitVisible(descriptionHeading, ConfigReader.getVisibilityTimeout());
+        logger.info("Description section visible on publication page");
     }
 
     public void ensureCaptionPopupVisible() {
-        Locator captionTitle = page.getByText(CAPTION_TITLE_TEXT, new Page.GetByTextOptions().setExact(true));
-        waitVisible(captionTitle, ConfigReader.getVisibilityTimeout());
-        logger.info("Caption popup is visible");
+        Locator captionField = page.getByPlaceholder(CAPTION_PLACEHOLDER);
+        waitVisible(captionField, ConfigReader.getVisibilityTimeout());
+        logger.info("Caption field is visible");
     }
 
     public void fillCaption(String caption) {
@@ -105,10 +104,8 @@ public class CreatorPublicationPage extends BasePage {
     }
 
     public void clickCaptionOk() {
-        Locator ok = page.getByText(CAPTION_OK_TEXT, new Page.GetByTextOptions().setExact(true));
-        waitVisible(ok, ConfigReader.getShortTimeout());
-        clickWithRetry(ok, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-        logger.info("Clicked CaptionOK");
+        // No separate OK button in new UI; caption is inline. No-op.
+        logger.info("Caption OK step skipped (inline description in new UI)");
     }
 
     private boolean getBlurSwitchState() {
@@ -238,7 +235,7 @@ public class CreatorPublicationPage extends BasePage {
     }
 
     private Locator getPublishButton() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(PUBLISH_BTN).setExact(true));
+        return page.locator("button.sticky-bottom-button");
     }
 
     private void waitForPublishEnabled(Locator btn, long timeoutMs) {
@@ -406,11 +403,35 @@ private void confirmDeletionPopup() {
         return page.locator(".dots-wrapper").count();
     }
 
+    private void confirmMediaIfPresent() {
+        Locator mediaConfirmBtn = page.locator("button.publication-media-confirm-btn");
+        try {
+            mediaConfirmBtn.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(ConfigReader.getMediumTimeout()));
+            clickWithRetry(mediaConfirmBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+            logger.info("Clicked media confirm button");
+            // Wait for overlay to disappear after confirming media
+            Locator overlay = page.locator(".publication-media-confirm-overlay");
+            try {
+                overlay.waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.HIDDEN)
+                        .setTimeout(ConfigReader.getShortTimeout()));
+                logger.info("Media confirm overlay disappeared");
+            } catch (Exception e2) {
+                logger.debug("Overlay still present or already gone: {}", e2.getMessage());
+            }
+        } catch (Exception e) {
+            logger.debug("Media confirm button not present or not needed: {}", e.getMessage());
+        }
+    }
+
     public boolean completePublicationFlow(Path mediaPath, String caption, boolean blurEnabled) {
         openPlusMenu();
         selectPostEntry();
         ensurePublicationsScreen();
         uploadMedia(mediaPath);
+        confirmMediaIfPresent();
         openCaptionEditor();
         ensureCaptionPopupVisible();
         fillCaption(caption);
