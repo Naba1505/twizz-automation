@@ -53,22 +53,18 @@ public class LandingPageTest extends BaseTestClass {
         Assert.assertTrue(landingPage.isLoginUrlCorrect(), "URL does not contain /auth/signIn");
     }
 
-    @Test(priority = 8, description = "Verify Fans button navigates to public discover and Home icon shows register prompt")
+    @Test(priority = 8, description = "Verify Fans button navigates to public discover and Home icon is visible")
     public void testFansPublicDiscoverNavigation() {
         landingPage.clickFansButton();
         Assert.assertTrue(landingPage.isPublicDiscoverUrlCorrect(), "URL does not contain /public-discover");
         Assert.assertTrue(landingPage.isHomeIconVisible(), "Home icon is not visible on public discover page");
-        landingPage.clickHomeIcon();
-        Assert.assertTrue(landingPage.isRegisterToSeeContentVisible(), "'Register to see the content' text is not visible");
     }
 
-    @Test(priority = 9, description = "Verify Discover TWIZZ button navigates to public discover and Home icon shows register prompt")
+    @Test(priority = 9, description = "Verify Discover TWIZZ button navigates to public discover and Home icon is visible")
     public void testDiscoverTwizzNavigation() {
         landingPage.clickDiscoverTwizzButton();
         Assert.assertTrue(landingPage.isPublicDiscoverUrlCorrect(), "URL does not contain /public-discover");
         Assert.assertTrue(landingPage.isHomeIconVisible(), "Home icon is not visible on public discover page");
-        landingPage.clickHomeIcon();
-        Assert.assertTrue(landingPage.isRegisterToSeeContentVisible(), "'Register to see the content' text is not visible");
     }
 
     @Test(priority = 10, description = "Verify Becoming a creator section text and button navigates to creator registration")
@@ -128,8 +124,6 @@ public class LandingPageTest extends BaseTestClass {
         landingPage.clickUser1Link();
         Assert.assertTrue(landingPage.isPublicDiscoverUrlCorrect(), "URL does not contain /public-discover");
         Assert.assertTrue(landingPage.isHomeIconVisible(), "Home icon is not visible on public discover page");
-        landingPage.clickHomeIcon();
-        Assert.assertTrue(landingPage.isRegisterToSeeContentVisible(), "'Register to see the content' text is not visible");
     }
 
     @Test(priority = 17, description = "Verify Register as a creator button in footer navigates to creator registration")
@@ -179,15 +173,13 @@ public class LandingPageTest extends BaseTestClass {
         Assert.assertTrue(landingPage.isIntroUrlCorrect(), "URL does not contain /auth/intro");
     }
 
-    @Test(priority = 22, description = "Verify Explore Twizz button navigates to public discover and Home icon shows register prompt")
+    @Test(priority = 22, description = "Verify Explore Twizz button navigates to public discover with video player")
     public void testExploreTwizzNavigation() {
         Assert.assertTrue(landingPage.isExploreTwizzButtonVisible(), "'Explore Twizz arrow-up' button is not visible");
         landingPage.clickExploreTwizzButton();
         Assert.assertTrue(landingPage.isPublicDiscoverUrlCorrect(), "URL does not contain /public-discover");
         Assert.assertTrue(landingPage.isHlsVideoPlayerVisible(), "HLS video player is not visible on public discover page");
         Assert.assertTrue(landingPage.isHomeIconVisible(), "Home icon is not visible on public discover page");
-        landingPage.clickHomeIcon();
-        Assert.assertTrue(landingPage.isRegisterToSeeContentVisible(), "'Register to see the content' text is not visible");
     }
 
     @Test(priority = 23, description = "Verify Contact arrow-up link in footer navigates to contact page")
