@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Twizz Cucumber BDD Suite" verbose="1">
+    <test name="Cucumber BDD Tests">
+        <classes>
+            <class name="cucumber.runner.CucumberTestNGRunner"/>
+        </classes>
+    </test>
+</suite>
