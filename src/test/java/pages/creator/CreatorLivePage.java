@@ -41,7 +41,7 @@ public class CreatorLivePage extends BasePage {
     private static final String EDIT_BTN = "Edit";
     private static final String SCHEDULED_LIVE_TEXT = "Scheduled Live";
     private static final String DELETE_EVENT_BTN = "Delete event";
-    private static final String DELETE_CONFIRM_TEXT = "Do you want to delete this event ? Fans will be refunded";
+    private static final String DELETE_CONFIRM_TEXT = "Do you want to delete this event ?";
     private static final String YES_DELETE_BTN = "Yes delete";
     private static final String DELETE_SUCCESS_TOAST = "Deleted the live successfully";
 
@@ -135,10 +135,17 @@ public class CreatorLivePage extends BasePage {
     // ================= Delete Flow =================
     @Step("Check if live logo visible on profile")
     public boolean isLiveLogoVisibleOnProfile() {
+        // Primary: look for live banner text (e.g. "LIVE for 15/10 at 03h30")
+        Locator liveBanner = page.getByText("LIVE for").first();
+        if (safeIsVisible(liveBanner)) {
+            logger.info("Live banner visible on profile");
+            return true;
+        }
+        // Fallback: legacy .ant-col > img selector
         Locator logo = page.locator(".ant-col > img").first();
         boolean visible = safeIsVisible(logo);
         if (visible) {
-            logger.info("Live logo visible on profile");
+            logger.info("Live logo visible on profile (legacy selector)");
         } else {
             logger.warn("Live logo not visible on profile");
         }
@@ -147,49 +154,43 @@ public class CreatorLivePage extends BasePage {
 
     @Step("Open Edit on latest event")
     public void openEditEvent() {
-        // Try to reveal edit actions by hovering the first live card/logo
+        // Strategy 1: direct button named "Edit" (current UI shows Edit button on live banner)
+        Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
+        try {
+            editBtn.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(ConfigReader.getShortTimeout()));
+            clickWithRetry(editBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
+            logger.info("Clicked Edit via BUTTON locator");
+            return;
+        } catch (Exception e) {
+            logger.debug("Edit button wait failed: {}", e.getMessage());
+        }
+
+        // Strategy 2: hover on legacy live card image to reveal Edit
         try {
             Locator firstImg = page.locator(".ant-col > img").first();
             if (safeIsVisible(firstImg)) {
                 firstImg.scrollIntoViewIfNeeded();
                 firstImg.hover();
+                page.waitForTimeout(ConfigReader.getAnimationTimeout());
             }
         } catch (Exception e) { logger.debug("Hover on live card failed: {}", e.getMessage()); }
 
-        // Strategy 1: direct button named "Edit"
-        Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
+        // Re-check button after hover
         if (safeIsVisible(editBtn)) {
             clickWithRetry(editBtn, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-            logger.info("Clicked Edit via BUTTON locator");
+            logger.info("Clicked Edit via BUTTON locator after hover");
             return;
         }
 
-        // Strategy 2: link named "Edit"
+        // Strategy 3: link named "Edit"
         Locator editLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
         if (safeIsVisible(editLink)) {
             clickWithRetry(editLink, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
             logger.info("Clicked Edit via LINK locator");
             return;
         }
-
-        // Strategy 3: menu item named "Edit" (if actions are under a menu)
-        Locator menuItem = page.getByRole(AriaRole.MENUITEM, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
-        if (safeIsVisible(menuItem)) {
-            clickWithRetry(menuItem, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-            logger.info("Clicked Edit via MENUITEM locator");
-            return;
-        }
-
-        // Strategy 4: visible text "Edit" scoped under an open dropdown/menu/dialog
-        try {
-            Locator popup = page.locator(".ant-dropdown:visible, .ant-popover:visible, .ant-modal:visible, body");
-            Locator editTxt = popup.getByText(EDIT_BTN, new Locator.GetByTextOptions().setExact(true)).first();
-            if (safeIsVisible(editTxt)) {
-                clickWithRetry(editTxt, ConfigReader.getElementRetryMax(), ConfigReader.getElementRetryDelay());
-                logger.info("Clicked Edit via visible text fallback");
-                return;
-            }
-        } catch (Exception e) { logger.debug("Edit popup text strategy failed: {}", e.getMessage()); }
 
         // If all strategies fail, log a warning for non-fatal cleanup skip
         logger.warn("Unable to locate clickable 'Edit' action for live event after multiple strategies");
@@ -675,9 +676,11 @@ public class CreatorLivePage extends BasePage {
             }
         }
 
+        // Wait for live banner or logo to appear on profile
+        Locator liveBanner = page.getByText("LIVE for").first();
         Locator firstImg = page.locator(".ant-col > img").first();
-        if (safeIsVisible(firstImg)) {
-            waitVisible(firstImg, ConfigReader.getShortTimeout());
+        if (safeIsVisible(liveBanner) || safeIsVisible(firstImg)) {
+            logger.info("Live event visible on profile after scheduling");
         }
         logger.info("Live scheduled successfully");
     }
