@@ -26,10 +26,8 @@ public class CreatorPublicationPage extends BasePage {
     private static final String I_UNDERSTAND_BTN = "I understand";
     private static final String POST_TEXT = "Post";
     private static final String PUBLICATIONS_TEXT = "Publication";
-    private static final String PUBLISH_BTN = "Confirm";
     private static final String CAPTION_PLACEHOLDER = "Your message....";
     private static final String CAPTION_TITLE_TEXT = "Description";
-    private static final String CAPTION_OK_TEXT = "OK";
 
     public CreatorPublicationPage(Page page) {
         super(page);
