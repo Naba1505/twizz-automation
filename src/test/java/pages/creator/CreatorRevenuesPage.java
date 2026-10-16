@@ -60,7 +60,7 @@ public class CreatorRevenuesPage extends BasePage {
     }
 
     private Locator infoCloseButton() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Close"));
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("I understand"));
     }
 
     private Locator validatedInfoText() {
@@ -68,8 +68,7 @@ public class CreatorRevenuesPage extends BasePage {
     }
 
     private Locator waitingInfoText() {
-        // Narrow CSS to avoid strict mode violation and uniquely match the modal description
-        return page.locator("div span.ant-typography.info-modal-description.css-ixblex");
+        return page.getByText("Your private media, push media, Unlock links and lives are validated within 7 days. Monthly subscriptions are validated in 15 days, and quarterly subscriptions in 30 days.");
     }
 
     @Step("Open Revenues from dashboard")
@@ -99,7 +98,7 @@ public class CreatorRevenuesPage extends BasePage {
         clickWithRetry(validatedInfoIcon(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(validatedInfoText(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Validated info text is visible; closing popover");
-        clickWithRetry(infoCloseButton(), 1, ConfigReader.getElementRetryDelay());
+        dismissPopover();
     }
 
     @Step("Check Waiting for validation info popover")
@@ -108,6 +107,11 @@ public class CreatorRevenuesPage extends BasePage {
         clickWithRetry(waitingInfoIcon(), 1, ConfigReader.getElementRetryDelay());
         waitVisible(waitingInfoText(), ConfigReader.getShortTimeout());
         logger.info("[Revenues] Waiting info text is visible; closing popover");
+        dismissPopover();
+    }
+
+    private void dismissPopover() {
+        waitVisible(infoCloseButton(), ConfigReader.getShortTimeout());
         clickWithRetry(infoCloseButton(), 1, ConfigReader.getElementRetryDelay());
     }
 

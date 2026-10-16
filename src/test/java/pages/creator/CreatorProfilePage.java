@@ -328,24 +328,27 @@ public class CreatorProfilePage extends BasePage {
         }
     }
 
-    @Step("Click share Message icon")
-    public void clickShareMessageIcon() {
-        Locator msg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("message icon"));
-        waitVisible(msg.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(msg.first(), 1, ConfigReader.getElementRetryDelay());
+    @Step("Click Send via SMS")
+    public void clickShareSms() {
+        Locator sms = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Send via SMS"));
+        waitVisible(sms, ConfigReader.getShortTimeout());
+        clickWithRetry(sms, 1, ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Click share Copy icon")
-    public void clickShareCopyIcon() {
-        Locator copy = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("copy icon"));
-        waitVisible(copy.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(copy.first(), 1, ConfigReader.getElementRetryDelay());
+    @Step("Click Copy link")
+    public void clickCopyLink() {
+        Locator copy = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Copy link"));
+        waitVisible(copy, ConfigReader.getShortTimeout());
+        clickWithRetry(copy, 1, ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Cancel Share profile")
-    public void cancelShare() {
-        Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
-        waitVisible(cancel.first(), ConfigReader.getShortTimeout());
-        clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
+    @Step("Close Share profile")
+    public void closeSharePanel() {
+        Locator close = page.locator(".share-modal-header-line-wrapper");
+        waitVisible(close, ConfigReader.getShortTimeout());
+        clickWithRetry(close, 1, ConfigReader.getElementRetryDelay());
+        page.locator(".share-modal-content").waitFor(new Locator.WaitForOptions()
+                .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN)
+                .setTimeout(ConfigReader.getShortTimeout()));
     }
 }

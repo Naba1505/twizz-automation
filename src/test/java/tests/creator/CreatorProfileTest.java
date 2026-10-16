@@ -64,7 +64,7 @@ public class CreatorProfileTest extends BaseCreatorTest {
         profile.waitForProfileUpdatedToastSoft(ConfigReader.getMediumTimeout());
     }
 
-    @Test(priority = 4, description = "Creator verifies Share Profile options (whatsapp, twitter, telegram, message, copy, cancel)")
+    @Test(priority = 4, description = "Creator verifies Share Profile options (WhatsApp, X, Telegram, SMS, Copy link, close)")
     public void creatorCanUseShareProfileOptions() {
         // Navigate to profile
         CreatorProfilePage profile = new CreatorProfilePage(page);
@@ -76,9 +76,9 @@ public class CreatorProfileTest extends BaseCreatorTest {
         profile.openShareOptionAndClose("whatsapp");
         profile.openShareOptionAndClose("twitter");
         profile.openShareOptionAndClose("telegram");
-        profile.clickShareMessageIcon();
-        profile.clickShareCopyIcon();
-        profile.cancelShare();
+        profile.clickShareSms();
+        profile.clickCopyLink();
+        profile.closeSharePanel();
     }
 
     @Test(priority = 5, description = "Creator deletes uploaded avatar from Modify profile with confirmation")

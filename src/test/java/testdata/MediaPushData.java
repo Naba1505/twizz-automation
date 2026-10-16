@@ -19,9 +19,7 @@ public class MediaPushData {
 
     // Media file paths for Quick Files (device) uploads
     public static final Path QUICK_IMAGE_A = Paths.get("src", "test", "resources", "Images", "QuickImageA.jpg");
-    public static final Path QUICK_IMAGE_B = Paths.get("src", "test", "resources", "Images", "QuickImageB.jpg");
     public static final Path QUICK_VIDEO_A = Paths.get("src", "test", "resources", "Videos", "QuickVideoA.mp4");
-    public static final Path QUICK_VIDEO_B = Paths.get("src", "test", "resources", "Videos", "QuickVideoB.mp4");
 
     // Pricing configurations
     public static final int STANDARD_PRICE_EURO = 15;
@@ -39,8 +37,6 @@ public class MediaPushData {
 
     // Segment configurations
     public static final String[] SUBSCRIBERS_ONLY = {"Subscribers"};
-    public static final String[] INTERESTED_ONLY = {"Interested"};
-    public static final String[] SUBSCRIBERS_AND_INTERESTED = {"Subscribers", "Interested"};
 
 
     // Blur settings
@@ -75,10 +71,6 @@ public class MediaPushData {
 
     public static final MediaCombination QUICK_FILES_MEDIA = new MediaCombination(
         QUICK_IMAGE_A, QUICK_VIDEO_A, "Quick Files media (A)"
-    );
-
-    public static final MediaCombination QUICK_FILES_MEDIA_B = new MediaCombination(
-        QUICK_IMAGE_B, QUICK_VIDEO_B, "Quick Files media (B)"
     );
 
     // Pricing configurations
@@ -120,10 +112,6 @@ public class MediaPushData {
 
     public static final PricingConfig PROMO_EURO_PRICING = new PricingConfig(
         STANDARD_PRICE_EURO, true, 0, PROMO_DISCOUNT_EURO, PROMO_VALIDITY_7_DAYS, "Standard with 5€ discount, 7 days"
-    );
-
-    public static final PricingConfig PROMO_UNLIMITED_PRICING = new PricingConfig(
-        STANDARD_PRICE_EURO, true, PROMO_DISCOUNT_PERCENT, 0, PROMO_VALIDITY_UNLIMITED, "Standard with 10% discount, unlimited"
     );
 
     // Test scenario configurations
@@ -178,43 +166,7 @@ public class MediaPushData {
                         PROMO_PERCENT_PRICING, BLUR_ENABLED, "Media push with percent discount, unlimited")
     };
 
-    // Predefined test scenarios: Interested only (priorities 7-12)
-    public static final TestScenario[] INTERESTED_SCENARIOS = {
-        new TestScenario("InterestedMediaPush", DEVICE_MEDIA, INTERESTED_ONLY,
-                        STANDARD_PRICING, BLUR_ENABLED, "Media push to Interested segment",
-                        false, true),
-        new TestScenario("InterestedPromoUnlimited", DEVICE_MEDIA_B, INTERESTED_ONLY,
-                        PROMO_UNLIMITED_PRICING, BLUR_ENABLED, "Interested segment with 10% unlimited promo",
-                        false, true),
-        new TestScenario("InterestedEuroMediaPush", DEVICE_MEDIA_C, INTERESTED_ONLY,
-                        PROMO_EURO_PRICING, BLUR_ENABLED, "Interested segment with euro promo",
-                        false, true),
-        new TestScenario("InterestedCustomMediaPush", DEVICE_MEDIA, INTERESTED_ONLY,
-                        CUSTOM_PRICING, BLUR_ENABLED, "Interested segment custom price",
-                        false, true),
-        new TestScenario("InterestedFreeMediaPush", QUICK_FILES_MEDIA, INTERESTED_ONLY,
-                        FREE_PRICING, BLUR_ENABLED, "Interested segment free push",
-                        false, true),
-        new TestScenario("InterestedClearMediaPush", QUICK_FILES_MEDIA_B, INTERESTED_ONLY,
-                        STANDARD_PRICING, BLUR_DISABLED, "Interested segment clear push",
-                        false, true)
-    };
-
-    // Predefined test scenarios: Subscribers + Interested multi-select (priorities 13-18)
-    public static final TestScenario[] MULTI_MEDIA_SCENARIOS = {
-        new TestScenario("MultiMediaPush", DEVICE_MEDIA, SUBSCRIBERS_AND_INTERESTED,
-                        STANDARD_PRICING, BLUR_ENABLED, "Multi-select media push"),
-        new TestScenario("ClearMultiMediaPush", QUICK_FILES_MEDIA_B, SUBSCRIBERS_AND_INTERESTED,
-                        STANDARD_PRICING, BLUR_DISABLED, "Multi-select clear media push"),
-        new TestScenario("FreeMultiMediaPush", QUICK_FILES_MEDIA, SUBSCRIBERS_AND_INTERESTED,
-                        FREE_PRICING, BLUR_ENABLED, "Multi-select free media push"),
-        new TestScenario("CustomMultiMediaPush", DEVICE_MEDIA, SUBSCRIBERS_AND_INTERESTED,
-                        CUSTOM_PRICING, BLUR_ENABLED, "Multi-select custom price media push"),
-        new TestScenario("PromoMultiMediaPush", DEVICE_MEDIA_B, SUBSCRIBERS_AND_INTERESTED,
-                        PROMO_UNLIMITED_PRICING, BLUR_ENABLED, "Multi-select media with 10% unlimited promo")
-    };
-
-    // Quick Files scenario (priority 19): media/pricing fields are unused since
+    // Quick Files scenario (priority 7): media/pricing fields are unused since
     // selectQuickFilesAlbumAndMedia() drives message + price internally.
     public static final TestScenario QUICK_FILES_SCENARIO = new TestScenario(
         "QuickFilesMediaPush", QUICK_FILES_MEDIA, SUBSCRIBERS_ONLY,

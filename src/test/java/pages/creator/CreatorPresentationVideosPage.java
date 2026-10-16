@@ -93,9 +93,7 @@ public class CreatorPresentationVideosPage extends BasePage {
     }
 
     private Locator deleteVideoButton() {
-        Locator role = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Delete Video"));
-        if (role.count() > 0) return role;
-        return page.getByText("Delete Video", new Page.GetByTextOptions().setExact(false));
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Confirm"));
     }
 
     private Locator emptyPromptText() {
