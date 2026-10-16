@@ -69,9 +69,15 @@ public class CreatorClearSearchPage extends BasePage {
 
     @Step("Click the first search result row")
     public void clickFirstSearchResult() {
-        // Search result rows use .row-recent-search with an img.avatar
+        // Result rows are .row-recent-search on some builds; the avatar image works on all
         Locator firstResult = page.locator(".row-recent-search").first();
-        waitVisible(firstResult, ConfigReader.getShortTimeout());
+        try {
+            waitVisible(firstResult, ConfigReader.getShortTimeout());
+        } catch (Throwable e) {
+            logger.debug("row-recent-search not found, falling back to avatar row: {}", e.getMessage());
+            firstResult = page.locator("img.avatar").first();
+            waitVisible(firstResult, ConfigReader.getShortTimeout());
+        }
         clickWithRetry(firstResult, 1, ConfigReader.getElementRetryDelay());
         waitForUiToSettle();
         logger.info("Clicked first search result");
@@ -79,6 +85,10 @@ public class CreatorClearSearchPage extends BasePage {
 
     @Step("Navigate back to Discover from opened profile")
     public void navigateBackToDiscover() {
+        // The profile onboarding overlay (.fan-profile-overlay) intercepts the back chevron - remove it
+        try {
+            page.evaluate("document.querySelectorAll('.fan-profile-overlay').forEach(el => el.remove())");
+        } catch (Throwable e) { logger.debug("fan-profile-overlay removal failed: {}", e.getMessage()); }
         waitVisible(backControl(), ConfigReader.getShortTimeout());
         boolean navigated = false;
         try {

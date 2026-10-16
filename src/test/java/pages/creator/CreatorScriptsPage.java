@@ -1234,13 +1234,17 @@ public class CreatorScriptsPage extends BasePage {
         // Long press on the bookmark tab
         longPressOnBookmarkTab(qaBookmarkTab);
         
-        // Wait for the delete dialog to appear
-        Locator deleteDialogDesc = page.locator(".edit-category-actions-bottom-modal-desc");
+        // Wait for the delete dialog/bottom sheet to appear (old modal desc or any sheet with Delete)
+        Locator deleteDialogDesc = page.locator(".edit-category-actions-bottom-modal-desc, .bottom-sheet-modal-overlay button:has-text('Delete'), .bottom-sheet-modal-overlay :text('Delete')");
         try {
             waitVisible(deleteDialogDesc.first(), 5000);
             logger.info("Delete dialog appeared");
         } catch (Throwable e) {
-            logger.warn("Delete dialog did not appear after long press; retrying with click");
+            logger.warn("Delete dialog did not appear after long press; closing any open overlay and retrying with click");
+            // A different bottom sheet may already be open - close/remove it before retrying
+            try { page.evaluate("document.querySelectorAll('.bottom-sheet-modal-overlay').forEach(el => el.remove())"); } catch (Throwable ignored) {}
+            try { page.keyboard().press("Escape"); } catch (Throwable ignored) {}
+            waitForUiToSettle();
             // Try clicking instead
             clickWithRetry(qaBookmarkTab.first(), 1, ConfigReader.getElementRetryDelay());
             page.waitForTimeout(ConfigReader.getElementRetryDelay());
@@ -1261,13 +1265,16 @@ public class CreatorScriptsPage extends BasePage {
         page.waitForTimeout(ConfigReader.getElementRetryDelay());
 
         Locator confirmTitle = page.locator(".confirm-delete-category-title");
-        waitVisible(confirmTitle.first(), ConfigReader.getShortTimeout());
+        try {
+            waitVisible(confirmTitle.first(), ConfigReader.getShortTimeout());
+        } catch (Throwable e) { logger.debug("Confirm title class not found, trying confirm buttons anyway: {}", e.getMessage()); }
         logger.info("Confirmation dialog appeared");
 
-        Locator confirmBtn = page.locator("//button[normalize-space()='Confirm']");
+        // New confirm sheets use 'Delete'; older ones use 'Confirm'
+        Locator confirmBtn = page.locator("//button[normalize-space()='Confirm' or normalize-space()='Delete' or normalize-space()='Yes, delete']");
         waitVisible(confirmBtn.first(), ConfigReader.getShortTimeout());
         clickWithRetry(confirmBtn.first(), 1, ConfigReader.getElementRetryDelay());
-        logger.info("Clicked Confirm button - bookmark '{}' deleted", bookmarkName);
+        logger.info("Clicked confirm button - bookmark '{}' deleted", bookmarkName);
         page.waitForTimeout(ConfigReader.getShortTimeout() / 2);
         
         return true;

@@ -309,7 +309,8 @@ public class CreatorCollectionPage extends BasePage {
             waitVisible(del.first(), ConfigReader.getShortTimeout());
             clickWithRetry(del.first(), 2, ConfigReader.getElementRetryDelay());
 
-            Locator yes = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
+            Locator yes = page.locator("button").filter(new Locator.FilterOptions()
+                    .setHasText(Pattern.compile("^(Delete|Yes,?\\s?delete)$", Pattern.CASE_INSENSITIVE)));
             waitVisible(yes.first(), ConfigReader.getShortTimeout());
             clickWithRetry(yes.first(), 2, ConfigReader.getElementRetryDelay());
 

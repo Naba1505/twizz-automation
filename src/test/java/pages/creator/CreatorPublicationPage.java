@@ -4,6 +4,7 @@ import pages.common.BasePage;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 import com.microsoft.playwright.FileChooser;
 import com.microsoft.playwright.Locator;
@@ -348,9 +349,10 @@ public void deleteOnePublication() {
 private void confirmDeletionPopup() {
     Locator confirmText = page.getByText("Do you really want to delete a publication?");
     waitVisible(confirmText, ConfigReader.getShortTimeout());
-    Locator yesDelete = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Yes, delete"));
-    waitVisible(yesDelete, ConfigReader.getShortTimeout());
-    clickWithRetry(yesDelete, 2, ConfigReader.getElementRetryDelay());
+    Locator yesDelete = page.locator("button").filter(new Locator.FilterOptions()
+        .setHasText(Pattern.compile("^(Delete|Yes,?\\s?delete)$", Pattern.CASE_INSENSITIVE)));
+    waitVisible(yesDelete.first(), ConfigReader.getShortTimeout());
+    clickWithRetry(yesDelete.first(), 2, ConfigReader.getElementRetryDelay());
     logger.info("Confirmed publication deletion");
     page.waitForTimeout(ConfigReader.getAnimationTimeout());
 }
