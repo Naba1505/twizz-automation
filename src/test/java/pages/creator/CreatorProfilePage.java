@@ -54,9 +54,28 @@ public class CreatorProfilePage extends BasePage {
 
     // ===== Actions & Asserts =====
 
-    @Step("Navigate to Creator Profile via URL")
+    @Step("Navigate to Creator Profile via footer icon (URL fallback)")
     public void navigateToProfile() {
-        // Navigate directly to stage profile URL per spec
+        // Already on the profile (post-login lands here) — re-navigating the same
+        // route remounts the page and flashes tab content before the header
+        if (page.url().contains("/creator/profile")) {
+            logger.info("[Profile] Already on profile: {}", page.url());
+            return;
+        }
+        // End-user path first: footer "Profile icon"
+        try {
+            Locator profileIcon = page.getByRole(AriaRole.IMG,
+                    new Page.GetByRoleOptions().setName("Profile icon")).first();
+            profileIcon.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getShortTimeout()));
+            profileIcon.click();
+            page.waitForURL("**/creator/profile**", new Page.WaitForURLOptions()
+                    .setTimeout(ConfigReader.getMediumTimeout()));
+            logger.info("[Profile] Reached profile via footer icon: {}", page.url());
+            return;
+        } catch (RuntimeException e) {
+            logger.warn("Footer profile-icon navigation failed ({}); falling back to URL", e.getMessage());
+        }
+        // Fallback: direct URL
         String profileUrl = ConfigReader.getBaseUrl() + "/creator/profile";
         RuntimeException last = null;
         for (int attempt = 0; attempt <= ConfigReader.getElementRetryMax(); attempt++) {
@@ -289,6 +308,89 @@ public class CreatorProfilePage extends BasePage {
             ta = page.getByRole(AriaRole.TEXTBOX);
         }
         clearAndFill(ta.first(), desc);
+    }
+
+    // ===== Modify Profile: switches, DOB, bio footer =====
+
+    private Locator profileSwitch(int index) {
+        return page.locator(".ant-switch").nth(index);
+    }
+
+    @Step("Exercise profile switch #{index} ({label}): flip, verify, restore")
+    public boolean exerciseProfileSwitch(int index, String label) {
+        Locator sw = profileSwitch(index);
+        try {
+            waitVisible(sw, ConfigReader.getShortTimeout());
+        } catch (Throwable t) {
+            logger.warn("[Profile] Switch '{}' not found", label);
+            return false;
+        }
+        boolean before = "true".equals(sw.getAttribute("aria-checked"));
+        clickWithRetry(sw, 1, ConfigReader.getElementRetryDelay());
+        boolean mid = "true".equals(sw.getAttribute("aria-checked"));
+        clickWithRetry(sw, 1, ConfigReader.getElementRetryDelay());
+        boolean restored = "true".equals(sw.getAttribute("aria-checked"));
+        boolean ok = (mid != before) && (restored == before);
+        logger.info("[Profile] Switch '{}' {} -> {} -> {} (ok={})", label, before, mid, restored, ok);
+        return ok;
+    }
+
+    @Step("Assert date-of-birth input has a value bound")
+    public boolean isDobBound() {
+        return waitForDobBound(ConfigReader.getShortTimeout());
+    }
+
+    @Step("Wait for DOB input to be populated (hydration race tolerance: {timeoutMs}ms)")
+    public boolean waitForDobBound(int timeoutMs) {
+        Locator dob = page.locator("input[type=date]").first();
+        try {
+            waitVisible(dob, ConfigReader.getShortTimeout());
+        } catch (Throwable t) {
+            logger.warn("[Profile] DOB input not found: {}", t.getMessage());
+            return false;
+        }
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        String v = "";
+        while (System.currentTimeMillis() < deadline) {
+            try { v = dob.inputValue(); } catch (Throwable ignored) {}
+            if (v != null && !v.isEmpty()) {
+                logger.info("[Profile] DOB input bound: '{}'", v);
+                return true;
+            }
+            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable ignored) {}
+        }
+        logger.warn("[Profile] DOB input stayed empty for {}ms (hydration race?)", timeoutMs);
+        return false;
+    }
+
+    @Step("Assert '@ Identification' footer under the description textarea")
+    public boolean isBioFooterVisible() {
+        Locator footer = page.locator(".bioTextAreaFooter");
+        try {
+            waitVisible(footer.first(), ConfigReader.getShortTimeout());
+            String txt = footer.first().textContent();
+            logger.info("[Profile] Bio footer text: '{}'", txt);
+            return txt != null && txt.contains("Identification");
+        } catch (Throwable t) {
+            logger.warn("[Profile] Bio footer not found: {}", t.getMessage());
+            return false;
+        }
+    }
+
+    @Step("Click 'Register' and wait for PATCH /users/infos response")
+    public int clickRegisterUpdateAndWaitSave(int timeoutMs) {
+        try {
+            com.microsoft.playwright.Response resp = page.waitForResponse(
+                r -> r.url().contains("/users/infos") && "PATCH".equalsIgnoreCase(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(timeoutMs),
+                this::clickRegisterUpdate);
+            int status = resp.status();
+            logger.info("[Profile] PATCH /users/infos responded status={}", status);
+            return status;
+        } catch (Throwable t) {
+            logger.warn("[Profile] No PATCH /users/infos response within {}ms: {}", timeoutMs, t.getMessage());
+            return -1;
+        }
     }
 
     // ===== Share Profile =====

@@ -360,14 +360,29 @@ private void confirmDeletionPopup() {
 // Loop delete until none remain
     public void deleteAllPublicationsLoop() {
         int deleted = 0;
-        while (true) {
+        int consecutiveNavFailures = 0;
+        int maxIterations = 30;
+        for (int iter = 0; iter < maxIterations; iter++) {
             if (!isPublicationsScreen()) {
                 openProfilePublicationsIcon();
                 if (!isPublicationsScreen()) {
-                    logger.warn("Could not navigate to Publications screen; stopping loop");
-                    break;
+                    consecutiveNavFailures++;
+                    logger.warn("Could not navigate to Publications screen (failure {}/3)", consecutiveNavFailures);
+                    if (consecutiveNavFailures >= 3) {
+                        logger.warn("Stopping delete loop after {} consecutive navigation failures; {} deleted", consecutiveNavFailures, deleted);
+                        break;
+                    }
+                    // Recover: reload the profile and try again
+                    try {
+                        page.navigate(ConfigReader.getBaseUrl() + "/creator/profile",
+                                new Page.NavigateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
+                        page.waitForLoadState(LoadState.DOMCONTENTLOADED,
+                                new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getDefaultTimeout()));
+                    } catch (Exception e) { logger.debug("Recovery navigate failed: {}", e.getMessage()); }
+                    continue;
                 }
             }
+            consecutiveNavFailures = 0;
 
             Locator dotsWrapper = page.locator(".dots-wrapper").first();
             Locator dotImg = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("dot")).first();

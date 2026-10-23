@@ -65,7 +65,9 @@ public class FanRegistrationPage extends BasePage {
 
     public boolean isDiscoverVisibleForUser(String username) {
         try {
-            page.waitForURL("**/common/discover**",
+            // Post-registration landing varies: /common/discover or /fan/home —
+            // both are valid; the success signal is the footer Search icon
+            page.waitForURL(java.util.regex.Pattern.compile(".*(common/discover|fan/home).*"),
                     new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
             Locator discoverIcon = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon"));
             waitVisible(discoverIcon.first(), ConfigReader.getShortTimeout());

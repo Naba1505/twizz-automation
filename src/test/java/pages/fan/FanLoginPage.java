@@ -114,21 +114,22 @@ public class FanLoginPage extends BasePage {
     }
 
     private boolean isOnFanDiscoverUrl(long timeoutMs) {
+        // Post-login landing varies: /common/discover or /fan/home — both valid
         long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
-            if (page.url().contains("/common/discover")) {
+            if (page.url().contains("/common/discover") || page.url().contains("/fan/home")) {
                 logger.info("[Fan] Login landed on URL: {} (ok=true)", page.url());
                 return true;
             }
             waitForAnimation();
         }
-        logger.warn("[Fan] Did not reach /common/discover within {} ms (actual URL: {})", timeoutMs, page.url());
+        logger.warn("[Fan] Did not reach a fan landing page within {} ms (actual URL: {})", timeoutMs, page.url());
         return false;
     }
 
     private void waitForFanDiscoverUrl(long timeoutMs) {
         if (!isOnFanDiscoverUrl(timeoutMs)) {
-            throw new IllegalStateException("Fan did not land on /common/discover after login. Actual URL: " + page.url());
+            throw new IllegalStateException("Fan did not land on /common/discover or /fan/home after login. Actual URL: " + page.url());
         }
     }
 }

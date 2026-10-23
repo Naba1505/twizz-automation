@@ -128,7 +128,33 @@ public class FanDiscoverPage extends BasePage {
     @Step("Open the first Discover grid tile")
     public void openFirstGridTile() {
         waitVisible(gridItems().first(), ConfigReader.getShortTimeout());
-        clickWithRetry(gridItems().first(), 2, ConfigReader.getElementRetryDelay());
+        for (int i = 0; i < 3; i++) {
+            if (i >= gridItems().count()) {
+                logger.warn("[Fan Discover] Grid has no tile at index {}; stopping", i);
+                break;
+            }
+            Locator tile = gridItems().nth(i);
+            clickWithRetry(tile, 1, ConfigReader.getElementRetryDelay());
+            try {
+                page.waitForURL("**" + PUBLICATION_PATH_FRAGMENT + "**",
+                        new Page.WaitForURLOptions().setTimeout(ConfigReader.getShortTimeout()));
+                logger.info("[Fan Discover] Tile {} opened the publication viewer", i);
+                return;
+            } catch (Exception e) {
+                if (page.url().contains(PUBLICATION_PATH_FRAGMENT)) {
+                    logger.info("[Fan Discover] Tile {} reached the viewer (URL edge match)", i);
+                    return;
+                }
+                logger.warn("[Fan Discover] Tile {} did not open the viewer; trying next tile", i);
+                if (!page.url().contains(DISCOVER_PATH_FRAGMENT)) {
+                    try { page.goBack(); } catch (Exception ignored) {}
+                }
+                try {
+                    waitVisible(gridItems().first(), ConfigReader.getShortTimeout());
+                } catch (Exception ignored) {}
+            }
+        }
+        logger.warn("[Fan Discover] No tile navigated to the viewer");
     }
 
     // ================= Publication viewer =================
@@ -136,10 +162,10 @@ public class FanDiscoverPage extends BasePage {
     @Step("Assert publication viewer opened from grid tile")
     public void assertOnPublicationViewer() {
         page.waitForURL("**" + PUBLICATION_PATH_FRAGMENT + "**",
-                new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        waitVisible(publicationViewer(), ConfigReader.getVisibilityTimeout());
+                new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
+        waitVisible(publicationViewer(), ConfigReader.getMediumTimeout());
         // Tiles may be photos or videos - assert the slide media, not the video player specifically
-        waitVisible(publicationMedia(), ConfigReader.getVisibilityTimeout());
+        waitVisible(publicationMedia(), ConfigReader.getMediumTimeout());
         logger.info("[Fan Discover] Publication viewer opened - media visible");
     }
 

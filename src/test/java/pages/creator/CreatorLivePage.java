@@ -135,19 +135,20 @@ public class CreatorLivePage extends BasePage {
     // ================= Delete Flow =================
     @Step("Check if live logo visible on profile")
     public boolean isLiveLogoVisibleOnProfile() {
-        // Primary: look for live banner text (e.g. "LIVE for 15/10 at 03h30")
-        Locator liveBanner = page.getByText("LIVE for").first();
+        // Primary: live banner text ("LIVE for 15/10 at 03h30" / "LIVE le 23/10 à 19h38")
+        Locator liveBanner = page.getByText(Pattern.compile("^LIVE\\s")).first();
         if (safeIsVisible(liveBanner)) {
             logger.info("Live banner visible on profile");
             return true;
         }
-        // Fallback: legacy .ant-col > img selector
-        Locator logo = page.locator(".ant-col > img").first();
-        boolean visible = safeIsVisible(logo);
+        // Fallback: an actionable "Edit" control — the cleanup deletes via Edit,
+        // so without it there is nothing to remove anyway
+        Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
+        boolean visible = safeIsVisible(editBtn);
         if (visible) {
-            logger.info("Live logo visible on profile (legacy selector)");
+            logger.info("Live event Edit control visible on profile");
         } else {
-            logger.warn("Live logo not visible on profile");
+            logger.info("No live event found on profile");
         }
         return visible;
     }

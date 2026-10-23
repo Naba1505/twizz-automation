@@ -59,9 +59,38 @@ public class CreatorProfileTest extends BaseCreatorTest {
         profile.setPosition("India");
         profile.setDescription("Automation Test Creator");
 
-        // Submit and confirm
-        profile.clickRegisterUpdate();
+        // The DOB field must be bound into the save payload — visually filled
+        // but empty in form state is the "@identifier" bug the backend rejects
+        // with 400 "dateOfBirth should not be empty"
+        org.testng.Assert.assertTrue(profile.isDobBound(), "DOB input is empty or unbound");
+        org.testng.Assert.assertTrue(profile.isBioFooterVisible(), "'@ Identification' bio footer not visible");
+
+        // Submit and confirm — assert the PATCH itself succeeds (soft toast
+        // alone would silently swallow a 400)
+        int saveStatus = profile.clickRegisterUpdateAndWaitSave(ConfigReader.getMediumTimeout());
+        org.testng.Assert.assertEquals(saveStatus, 200, "PATCH /users/infos failed — profile save rejected");
         profile.waitForProfileUpdatedToastSoft(ConfigReader.getMediumTimeout());
+    }
+
+    @Test(priority = 6, description = "Creator exercises Modify profile switches (Featured collection, Free subscription, Free chat) and saves")
+    public void creatorCanToggleProfileSwitches() {
+        CreatorProfilePage profile = new CreatorProfilePage(page);
+        profile.navigateToProfile();
+        profile.assertOnProfileUrl();
+        profile.openModifyProfile();
+        profile.assertModifyProfileScreen();
+
+        // Flip each switch on and back off — state must actually change and restore
+        org.testng.Assert.assertTrue(profile.exerciseProfileSwitch(0, "Featured collection"), "Featured collection switch did not toggle");
+        org.testng.Assert.assertTrue(profile.exerciseProfileSwitch(1, "Free subscription"), "Free subscription switch did not toggle");
+        org.testng.Assert.assertTrue(profile.exerciseProfileSwitch(2, "Free chat"), "Free chat switch did not toggle");
+
+        // Same DOB-binding race guard as the fields test — an unbound DOB
+        // makes the save fail with 400 "dateOfBirth should not be empty"
+        org.testng.Assert.assertTrue(profile.isDobBound(), "DOB input empty/unbound before save");
+
+        int saveStatus = profile.clickRegisterUpdateAndWaitSave(ConfigReader.getMediumTimeout());
+        org.testng.Assert.assertEquals(saveStatus, 200, "PATCH /users/infos failed after switch exercise");
     }
 
     @Test(priority = 4, description = "Creator verifies Share Profile options (WhatsApp, X, Telegram, SMS, Copy link, close)")
