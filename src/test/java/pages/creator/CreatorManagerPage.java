@@ -73,7 +73,7 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Verify confirmation dialog is visible")
     public boolean isConfirmationDialogVisible() {
-        Locator confirmationDialog = page.locator(".manager-modal-title");
+        Locator confirmationDialog = page.locator(".bottom-sheet-modal-title");
         try {
             confirmationDialog.waitFor(new Locator.WaitForOptions().setTimeout(5000));
         } catch (Exception e) {
@@ -86,7 +86,7 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Click 'I refuse' button to confirm")
     public void clickIRefuseButton() {
-        Locator iRefuseButton = page.locator(".manager-modal-refuse-button");
+        Locator iRefuseButton = page.locator(".bottom-sheet-modal-content").getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("I refuse").setExact(true));
         iRefuseButton.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);
@@ -117,7 +117,7 @@ public class CreatorManagerPage extends BasePage {
     @Step("Click Accept button")
     public void clickAcceptButton() {
         // Use CSS selector for the Accept button container from invitation list
-        Locator acceptButton = page.locator(".invitation-manager-button-container button");
+        Locator acceptButton = page.locator(".invitation-manager-accept-button");
         try {
             acceptButton.waitFor(new Locator.WaitForOptions().setTimeout(5000));
         } catch (Exception e) {
@@ -135,7 +135,7 @@ public class CreatorManagerPage extends BasePage {
 
     @Step("Click 'I accept' button to confirm")
     public void clickIAcceptButton() {
-        Locator iAcceptButton = page.locator(".manager-modal-accept-button");
+        Locator iAcceptButton = page.locator(".bottom-sheet-modal-content").getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("I accept").setExact(true));
         iAcceptButton.click();
         page.waitForLoadState(LoadState.LOAD);
         page.waitForTimeout(1000);

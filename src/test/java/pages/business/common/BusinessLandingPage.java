@@ -38,7 +38,8 @@ public class BusinessLandingPage extends BasePage {
     @Step("Verify Twizz Business logo is visible")
     public boolean isLogoVisible() {
         // The logo is the second image on the page (nth(1) = index 1)
-        Locator logo = page.getByRole(AriaRole.IMG).nth(1);
+        Locator logo = page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Twizz").setExact(true));
+        logo.waitFor(new Locator.WaitForOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
         boolean isVisible = logo.isVisible();
         logger.info("[Business] Logo visibility: {}", isVisible);
         return isVisible;
