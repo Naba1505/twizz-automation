@@ -15,12 +15,16 @@ public class CreatorDisableFreeSubscriptionTest extends BaseCreatorTest {
         freeSub.clickSettingsIcon();
         freeSub.clickProfileSettings();
 
-        // Assert Free subscription visible and disable toggle
+        // Ensure a real state change happens first — the "Updated Personal Information"
+        // toast only fires when settings are actually modified. If toggles are already
+        // off, enabling then disabling still produces a change for the save.
         freeSub.assertFreeSubscriptionVisible();
+        freeSub.enableFreeSubscriptionToggle();
         freeSub.disableFreeSubscriptionToggle();
 
         // Assert Featured collection visible and disable toggle
         freeSub.assertFeaturedCollectionVisible();
+        freeSub.enableFeaturedCollectionToggle();
         freeSub.disableFeaturedCollectionToggle();
 
         // Click Register to save
