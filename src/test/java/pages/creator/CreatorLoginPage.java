@@ -151,9 +151,14 @@ public class CreatorLoginPage extends BasePage {
 
     public boolean isHandleVisible(String handleWithAt) {
         Locator handle = page.getByText(handleWithAt, new Page.GetByTextOptions().setExact(true));
-        boolean visible = safeIsVisible(handle);
-        logger.info("Handle '{}' visible: {}", handleWithAt, visible);
-        return visible;
+        try {
+            waitVisible(handle, ConfigReader.getVisibilityTimeout());
+            logger.info("Handle '{}' visible: true", handleWithAt);
+            return true;
+        } catch (RuntimeException e) {
+            logger.info("Handle '{}' visible: false", handleWithAt);
+            return false;
+        }
     }
 }
 
