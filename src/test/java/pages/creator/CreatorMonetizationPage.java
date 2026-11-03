@@ -72,12 +72,19 @@ public class CreatorMonetizationPage extends BasePage {
     }
 
     private Locator quarterlyPriceInput() {
-        // Prefer role-based euro textboxes as per codegen: getByRole(TEXTBOX, name="€").nth(1)
+        // Prefer the input inside the same container as the "Quarterly offer" label,
+        // so we never fill the monthly price or an unrelated euro textbox.
+        Locator scoped = page.getByText(QUARTERLY_OFFER_TEXT)
+                .locator("xpath=ancestor::*[.//input][1]")
+                .locator("input");
+        if (scoped.count() > 0) {
+            return scoped.first();
+        }
+        // Fallback: role-based euro textboxes - quarterly is the last one on the screen
         Locator euros = page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("€"));
         if (euros.count() > 1) {
-            return euros.nth(1);
+            return euros.last();
         }
-        // Fallback: placeholder-based locator
         return priceInputs().nth(1);
     }
 
@@ -230,18 +237,28 @@ public class CreatorMonetizationPage extends BasePage {
 
     @Step("Set Quarterly price to: {price}")
     public void setQuarterlyPrice(String price) {
-        waitVisible(quarterlyPriceInput(), ConfigReader.getShortTimeout());
         Locator el = quarterlyPriceInput();
-        el.click();
-        // Clear robustly before filling
-        try { el.fill(""); } catch (Throwable e) { logger.debug("Fill failed: {}", e.getMessage()); }
-        try { el.press("Control+A"); el.press("Backspace"); } catch (Throwable e) { logger.debug("Key press failed: {}", e.getMessage()); }
-        el.fill(price);
-        String current = el.inputValue();
-        if (!price.equals(current)) {
-            // UI may format as 0.0€, etc.; just log for debugging instead of failing the test
-            logger.warn("Quarterly price mismatch after fill. Expected='{}' Actual='{}'", price, current);
+        waitVisible(el, ConfigReader.getShortTimeout());
+        // The input can stay disabled briefly after enabling the toggle; wait for it to be editable
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < ConfigReader.getShortTimeout()) {
+            try { if (el.isEnabled()) break; } catch (Throwable e) { logger.debug("Enabled check failed: {}", e.getMessage()); }
+            try { page.waitForTimeout(200); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
         }
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            el.click();
+            try { el.fill(""); } catch (Throwable e) { logger.debug("Fill failed: {}", e.getMessage()); }
+            try { el.press("Control+A"); el.press("Backspace"); } catch (Throwable e) { logger.debug("Key press failed: {}", e.getMessage()); }
+            el.fill(price);
+            String current = el.inputValue();
+            if (price.equals(current)) {
+                logger.info("Quarterly price set to: {}", current);
+                return;
+            }
+            logger.warn("Quarterly price mismatch on attempt {}. Expected='{}' Actual='{}'", attempt, price, current);
+            try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Throwable e) { logger.debug("Wait failed: {}", e.getMessage()); }
+        }
+        logger.error("Quarterly price could not be set to '{}' after 3 attempts", price);
     }
 
     @Step("Click Continue to save monetization changes")

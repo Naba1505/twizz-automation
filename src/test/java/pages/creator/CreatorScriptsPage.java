@@ -465,7 +465,7 @@ public class CreatorScriptsPage extends BasePage {
     public void clickNextAfterMedia() {
         // Some flows may leave a bottom modal overlay (with a Cancel button) on top of the page
         // which intercepts clicks on the sticky Next button. If present and visible, dismiss it.
-        Locator bottomCancel = page.locator("span.bottom-modal-cancel-button-title");
+        Locator bottomCancel = page.locator("span.bottom-modal-cancel-button-title, .bottom-sheet-modal-overlay button:has-text('Cancel')");
         if (bottomCancel.count() > 0 && safeIsVisible(bottomCancel.first())) {
             clickWithRetry(bottomCancel.first(), 1, ConfigReader.getElementRetryDelay());
             page.waitForTimeout(ConfigReader.getElementRetryDelay());

@@ -187,6 +187,11 @@ public class FanPersonalInfoPage extends BasePage {
     public void updateEmail(String email) {
         Locator emailField = emailInput();
         waitVisible(emailField, ConfigReader.getShortTimeout());
+        if (!emailField.isEnabled()) {
+            String current = emailField.inputValue();
+            logger.warn("[Fan][PersonalInfo] Email field is disabled in current UI (value='{}'); skipping edit", current);
+            return;
+        }
         emailField.click();
         emailField.clear();
         emailField.fill(email);

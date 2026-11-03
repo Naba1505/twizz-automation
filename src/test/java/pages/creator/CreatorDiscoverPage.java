@@ -34,16 +34,20 @@ public class CreatorDiscoverPage extends BasePage {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search")).first();
     }
 
+    private Locator searchBar() {
+        return page.locator(".discover-search-bar").first();
+    }
+
     private Locator footerDiscoverIcon() {
         return page.getByRole(AriaRole.IMG, new Page.GetByRoleOptions().setName("Search icon")).first();
     }
 
     private Locator gridItems() {
-        return page.locator(".discover-grid-item");
+        return page.locator(".discover-grid-item, .swiper-slide[data-feed-index]");
     }
 
     private Locator gridThumbnails() {
-        return page.locator(".discover-grid-thumbnail");
+        return page.locator(".discover-grid-thumbnail, .discover-video-player, .discover-video-thumbnail, .user-profile-images");
     }
 
     private Locator gridTypeIcons() {
@@ -95,14 +99,24 @@ public class CreatorDiscoverPage extends BasePage {
         clickWithRetry(footerDiscoverIcon(), 2, ConfigReader.getElementRetryDelay());
     }
 
-    @Step("Assert on Discover screen (URL + tabs + grid)")
+    @Step("Assert on Discover screen")
     public void assertOnDiscoverScreen() {
         page.waitForURL("**" + DISCOVER_PATH_FRAGMENT + "**",
                 new Page.WaitForURLOptions().setTimeout(ConfigReader.getVisibilityTimeout()));
-        waitVisible(discoverTab(), ConfigReader.getShortTimeout());
-        waitVisible(presentationVideoTab(), ConfigReader.getShortTimeout());
         waitVisible(footerDiscoverIcon(), ConfigReader.getVisibilityTimeout());
-        logger.info("[Discover] On Discover screen - tabs and footer icon visible");
+        if (safeIsVisible(cancelSearchText())) {
+            cancelSearch();
+            waitForUiToSettle();
+        }
+        try {
+            waitVisible(searchBar(), ConfigReader.getShortTimeout());
+            waitVisible(gridItems().first(), ConfigReader.getVisibilityTimeout());
+            logger.info("[Discover] On Discover feed - search bar and slides visible");
+        } catch (RuntimeException e) {
+            waitVisible(discoverTab(), ConfigReader.getShortTimeout());
+            waitVisible(presentationVideoTab(), ConfigReader.getShortTimeout());
+            logger.info("[Discover] On Discover screen - tabs and footer icon visible");
+        }
     }
 
     // ================= Grid =================
@@ -141,15 +155,25 @@ public class CreatorDiscoverPage extends BasePage {
         return after;
     }
 
-    @Step("Open the first Discover grid tile")
+    @Step("Open the first Discover item")
     public void openFirstGridTile() {
-        waitVisible(gridItems().first(), ConfigReader.getShortTimeout());
+        Locator legacyTiles = page.locator(".discover-grid-item");
+        if (legacyTiles.count() == 0) {
+            Locator profileThumbs = page.locator(".user-profile-images");
+            waitVisible(profileThumbs.first(), ConfigReader.getVisibilityTimeout());
+            clickWithRetry(profileThumbs.first(), 1, ConfigReader.getElementRetryDelay());
+            page.waitForURL("**" + PUBLICATION_PATH_FRAGMENT + "**",
+                    new Page.WaitForURLOptions().setTimeout(ConfigReader.getMediumTimeout()));
+            logger.info("[Discover] Feed thumbnail opened the publication viewer");
+            return;
+        }
+        waitVisible(legacyTiles.first(), ConfigReader.getShortTimeout());
         for (int i = 0; i < 3; i++) {
-            if (i >= gridItems().count()) {
+            if (i >= legacyTiles.count()) {
                 logger.warn("[Discover] Grid has no tile at index {}; stopping", i);
                 break;
             }
-            Locator tile = gridItems().nth(i);
+            Locator tile = legacyTiles.nth(i);
             clickWithRetry(tile, 1, ConfigReader.getElementRetryDelay());
             try {
                 page.waitForURL("**" + PUBLICATION_PATH_FRAGMENT + "**",
@@ -166,7 +190,7 @@ public class CreatorDiscoverPage extends BasePage {
                     try { page.goBack(); } catch (Exception ignored) {}
                 }
                 try {
-                    waitVisible(gridItems().first(), ConfigReader.getShortTimeout());
+                    waitVisible(legacyTiles.first(), ConfigReader.getShortTimeout());
                 } catch (Exception ignored) {}
             }
         }
@@ -206,11 +230,11 @@ public class CreatorDiscoverPage extends BasePage {
 
     @Step("Switch to Presentation Video tab")
     public void switchToPresentationVideoTab() {
-        waitVisible(presentationVideoTab(), ConfigReader.getShortTimeout());
-        clickWithRetry(presentationVideoTab(), 1, ConfigReader.getElementRetryDelay());
-        // The SPA may delay or skip the ?tab=presentation query update - wait for the feed instead
+        if (presentationVideoTab().count() > 0 && safeIsVisible(presentationVideoTab())) {
+            clickWithRetry(presentationVideoTab(), 1, ConfigReader.getElementRetryDelay());
+            logger.info("[Discover] Switched to Presentation Video tab (url: {})", page.url());
+        }
         waitVisible(presentationSlides().first(), ConfigReader.getVisibilityTimeout());
-        logger.info("[Discover] Switched to Presentation Video tab (url: {})", page.url());
     }
 
     @Step("Assert on Presentation Video feed")
@@ -221,10 +245,15 @@ public class CreatorDiscoverPage extends BasePage {
 
     @Step("Switch back to Discover tab")
     public void switchToDiscoverTab() {
-        waitVisible(discoverTab(), ConfigReader.getShortTimeout());
-        clickWithRetry(discoverTab(), 1, ConfigReader.getElementRetryDelay());
-        page.waitForTimeout(ConfigReader.getAnimationTimeout());
-        logger.info("[Discover] Switched back to Discover tab");
+        if (presentationVideoTab().count() > 0 && safeIsVisible(presentationVideoTab())) {
+            waitVisible(discoverTab(), ConfigReader.getShortTimeout());
+            clickWithRetry(discoverTab(), 1, ConfigReader.getElementRetryDelay());
+            page.waitForTimeout(ConfigReader.getAnimationTimeout());
+            logger.info("[Discover] Switched back to Discover tab");
+            return;
+        }
+        waitVisible(presentationSlides().first(), ConfigReader.getVisibilityTimeout());
+        logger.info("[Discover] Already on Discover feed");
     }
 
     @Step("Unmute presentation slide video")
@@ -235,11 +264,10 @@ public class CreatorDiscoverPage extends BasePage {
         for (int i = 0; i < total; i++) {
             try {
                 Locator slide = slides.nth(i);
-                slide.scrollIntoViewIfNeeded();
-                waitVisible(slide, ConfigReader.getShortTimeout());
+                if (!safeIsVisible(slide)) continue;
                 Locator mute = slide.locator("xpath=ancestor::div[contains(@class,'slide-container') or contains(@class,'swiper-slide')]//button[contains(@class,'mute-button')]");
                 if (mute.count() > 0 && safeIsVisible(mute.first())) {
-                    clickWithRetry(mute.first(), 1, ConfigReader.getElementRetryDelay());
+                    mute.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
                     toggled++;
                 }
                 page.waitForTimeout(ConfigReader.getElementRetryDelay());
@@ -263,8 +291,13 @@ public class CreatorDiscoverPage extends BasePage {
 
     @Step("Open search field on Discover")
     public void openSearchField() {
-        waitVisible(topSearchIcon(), ConfigReader.getShortTimeout());
-        clickWithRetry(topSearchIcon(), 1, ConfigReader.getElementRetryDelay());
+        try {
+            waitVisible(searchBar(), ConfigReader.getShortTimeout());
+            clickWithRetry(searchBar(), 1, ConfigReader.getElementRetryDelay());
+        } catch (RuntimeException e) {
+            waitVisible(topSearchIcon(), ConfigReader.getShortTimeout());
+            clickWithRetry(topSearchIcon(), 1, ConfigReader.getElementRetryDelay());
+        }
         waitVisible(searchBox(), ConfigReader.getShortTimeout());
         logger.info("[Discover] Search field opened");
     }

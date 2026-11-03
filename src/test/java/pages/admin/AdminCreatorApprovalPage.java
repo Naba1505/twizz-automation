@@ -115,39 +115,50 @@ public class AdminCreatorApprovalPage extends BasePage {
             throw new RuntimeException("No creator username available. Run CreatorRegistrationTest first or set approval.username in config.properties.");
         }
         
-        // Try multiple locator strategies for search field
+        // Try multiple locator strategies for search field. The creators table
+        // loads asynchronously in the new admin UI, so retry while it renders.
+        // NOTE: never fall back to a bare "input" locator - the page header now
+        // contains a "New interface" checkbox switch that matches it.
+        String textInputSelector = "input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']):not([type='file'])";
         Locator[] searchLocators = {
             page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Search")),
             page.getByPlaceholder("Search"),
             page.getByPlaceholder("search"),
+            page.locator("input[type='search']"),
+            page.locator("input[role='searchbox']"),
+            page.locator("input[aria-label*='earch']"),
+            page.locator("input[name*='earch']"),
             page.locator("input[type='text']:visible"),
             page.locator("input[placeholder*='Search']"),
             page.locator("input[placeholder*='search']"),
             page.locator(".ant-input"),
-            page.locator("input"),
-            page.locator("*:has-text('Search')"),
-            page.locator("[data-testid*='search']"),
-            page.locator("[class*='search'] input"),
-            page.locator("div:has(input)"),
+            page.locator("[data-testid*='search'] input"),
+            page.locator("[class*='search'] " + "input:not([type='checkbox'])"),
+            page.locator(textInputSelector),
             page.getByRole(AriaRole.TEXTBOX)
         };
-        
+
         Locator searchField = null;
-        for (Locator locator : searchLocators) {
-            try {
-                if (locator.count() > 0) {
-                    log.info("Found search field with count: {} using locator: {}", locator.count(), locator);
-                    locator.first().scrollIntoViewIfNeeded();
-                    waitVisible(locator.first(), ConfigReader.getMediumTimeout());
-                    searchField = locator.first();
-                    break;
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
+        while (System.currentTimeMillis() < deadline && searchField == null) {
+            for (Locator locator : searchLocators) {
+                try {
+                    if (locator.count() > 0 && safeIsVisible(locator.first())) {
+                        log.info("Found search field with count: {} using locator: {}", locator.count(), locator);
+                        locator.first().scrollIntoViewIfNeeded();
+                        waitVisible(locator.first(), ConfigReader.getShortTimeout());
+                        searchField = locator.first();
+                        break;
+                    }
+                } catch (Exception e) {
+                    log.debug("Search locator strategy failed: {}", e.getMessage());
                 }
-            } catch (Exception e) {
-                log.debug("Search locator strategy failed: {}", e.getMessage());
-                continue;
+            }
+            if (searchField == null) {
+                page.waitForTimeout(500);
             }
         }
-        
+
         if (searchField == null) {
             throw new RuntimeException("Unable to locate search field in admin interface");
         }
