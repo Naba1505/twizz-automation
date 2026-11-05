@@ -116,6 +116,13 @@ public class CreatorLivePage extends BasePage {
     public void enableChatSubscribersIfPresent() {
         Locator chatBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ACCESS_SUBSCRIBERS));
         if (chatBtn.count() > 0) {
+            String pressed = null;
+            try { pressed = chatBtn.first().getAttribute("aria-checked"); } catch (Exception ignored) {}
+            if (pressed == null) { try { pressed = chatBtn.first().getAttribute("aria-pressed"); } catch (Exception ignored) {} }
+            if ("true".equalsIgnoreCase(pressed)) {
+                logger.info("Chat with Subscribers already enabled; skipping toggle");
+                return;
+            }
             clickWithRetry(chatBtn.first(), 2, ConfigReader.getElementRetryDelay());
             logger.info("Enabled chat with Subscribers");
         }
@@ -123,34 +130,65 @@ public class CreatorLivePage extends BasePage {
 
     @Step("Set custom price: {amount}€")
     public void setCustomPriceEuro(String amount) {
-        // Click the editable price field, then fill the spinbutton
-        Locator priceDisplay = page.getByText("0.00 €");
-        if (priceDisplay.count() > 0) {
-            priceDisplay.first().click();
+        // Click the editable price field, then fill the spinbutton and verify the
+        // value committed — masked inputs can silently clear programmatic fills.
+        Locator spin = page.getByRole(AriaRole.SPINBUTTON).first();
+        Locator priceDisplay = page.getByText(Pattern.compile("^\\s*0[.,]00\\s*€\\s*$"));
+        for (int attempt = 0; attempt < 3 && !safeIsVisible(spin); attempt++) {
+            if (priceDisplay.count() > 0) {
+                try {
+                    priceDisplay.first().click();
+                } catch (Exception e) {
+                    logger.debug("Price display click failed: {}", e.getMessage());
+                }
+            }
+            try {
+                spin.waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(ConfigReader.getShortTimeout()));
+            } catch (Exception ignored) {}
         }
-        page.getByRole(AriaRole.SPINBUTTON).fill(amount);
-        logger.info("Set custom price to {}€", amount);
+        if (!safeIsVisible(spin)) {
+            logger.warn("Custom price spinbutton did not appear; skipping price set");
+            return;
+        }
+        for (int i = 0; i < 3; i++) {
+            try {
+                spin.fill(amount);
+                page.keyboard().press("Tab");
+                String v = String.valueOf(spin.evaluate("el => el.value"));
+                if (v != null && v.contains(amount)) {
+                    logger.info("Set custom price to {}€", amount);
+                    return;
+                }
+                logger.warn("Custom price fill did not persist (attempt {}): value='{}'", i + 1, v);
+            } catch (Exception e) {
+                logger.warn("Custom price attempt {} failed: {}", i + 1, e.getMessage());
+            }
+        }
+        logger.error("Custom price input still shows unexpected value after retries; proceeding anyway");
     }
 
     // ================= Delete Flow =================
     @Step("Check if live logo visible on profile")
     public boolean isLiveLogoVisibleOnProfile() {
-        // Primary: live banner text ("LIVE for 15/10 at 03h30" / "LIVE le 23/10 à 19h38")
+        // The banner can take a few seconds to render after scheduling; poll briefly.
+        long deadline = System.currentTimeMillis() + ConfigReader.getMediumTimeout();
         Locator liveBanner = page.getByText(Pattern.compile("^LIVE\\s")).first();
-        if (safeIsVisible(liveBanner)) {
-            logger.info("Live banner visible on profile");
-            return true;
-        }
-        // Fallback: an actionable "Edit" control — the cleanup deletes via Edit,
-        // so without it there is nothing to remove anyway
         Locator editBtn = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EDIT_BTN)).first();
-        boolean visible = safeIsVisible(editBtn);
-        if (visible) {
-            logger.info("Live event Edit control visible on profile");
-        } else {
-            logger.info("No live event found on profile");
+        while (System.currentTimeMillis() < deadline) {
+            if (safeIsVisible(liveBanner)) {
+                logger.info("Live banner visible on profile");
+                return true;
+            }
+            if (safeIsVisible(editBtn)) {
+                logger.info("Live event Edit control visible on profile");
+                return true;
+            }
+            page.waitForTimeout(1000);
         }
-        return visible;
+        logger.info("No live event found on profile");
+        return false;
     }
 
     @Step("Open Edit on latest event")
@@ -672,6 +710,18 @@ public class CreatorLivePage extends BasePage {
                 logger.info("URL changed from {} to {} - treating as success", urlBefore, urlAfter);
                 toastFound = true;
             } else {
+                // Fallback: poll for the LIVE banner on the profile — the success toast
+                // is transient and can be missed even when scheduling worked.
+                try {
+                    Locator banner = page.getByText(Pattern.compile("^LIVE\\s")).first();
+                    banner.waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout(ConfigReader.getMediumTimeout()));
+                    logger.info("LIVE banner appeared on profile - treating as success");
+                    toastFound = true;
+                } catch (Throwable ignored) {}
+            }
+            if (!toastFound) {
                 throw new RuntimeException("Live scheduling failed: success toast '" + SUCCESS_TOAST
                     + "' not visible within " + ConfigReader.getMediumTimeout() + "ms after clicking Register");
             }

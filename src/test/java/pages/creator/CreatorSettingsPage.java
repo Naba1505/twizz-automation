@@ -5,6 +5,8 @@ import utils.ConfigReader;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import java.util.regex.Pattern;
+
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -879,6 +881,211 @@ public class CreatorSettingsPage extends BasePage {
         }
         log.info("IMG plus not found; clicking BUTTON plus");
         clickWithRetry(plusBtn, 2, ConfigReader.getElementRetryDelay());
+    }
+
+    // ================= Quick Files album cleanup =================
+    // Album names follow patterns like imagealbum_*, videoalbum_*, audioalbum_*, mixalbum_*.
+    // The management UI exposes Delete via a long-press (context menu) on the album card.
+
+    // Quick Files album rows are div.qf-row[role=button] containing .qf-row-title
+    // (name) and .qf-row-icon (the long-press target) — see deleteAllQuickFilesAlbums.
+
+    private void longPress(Locator target, int holdMs) {
+        // Real press-and-hold (matches the confirmed manual gesture: hold left
+        // click on the album row icon to open the delete confirmation sheet).
+        target.scrollIntoViewIfNeeded(new Locator.ScrollIntoViewIfNeededOptions()
+                .setTimeout(ConfigReader.getShortTimeout()));
+        var box = target.boundingBox();
+        if (box != null) {
+            double x = box.x + box.width / 2;
+            double y = box.y + box.height / 2;
+            page.mouse().move(x, y);
+            page.mouse().down();
+            page.waitForTimeout(holdMs);
+            page.mouse().up();
+            return;
+        }
+        try {
+            target.dispatchEvent("contextmenu");
+        } catch (Exception e) {
+            log.debug("contextmenu dispatch failed: {}", e.getMessage());
+        }
+    }
+
+    private boolean deleteConfirmVisible() {
+        // Bottom-sheet: "Are you sure you want to delete this album?" + Confirm/Cancel
+        return page.getByText(Pattern.compile("delete this album|supprimer cet album", Pattern.CASE_INSENSITIVE)).count() > 0;
+    }
+
+    private boolean deleteOptionVisible() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("Delete|Supprimer", Pattern.CASE_INSENSITIVE))).count() > 0
+                || page.getByRole(AriaRole.MENUITEM, new Page.GetByRoleOptions().setName(Pattern.compile("Delete|Supprimer", Pattern.CASE_INSENSITIVE))).count() > 0
+                || page.getByText(Pattern.compile("^(Delete|Supprimer)$", Pattern.CASE_INSENSITIVE)).count() > 0;
+    }
+
+    private void clickDeleteOption() {
+        for (AriaRole role : new AriaRole[]{AriaRole.MENUITEM, AriaRole.BUTTON, AriaRole.OPTION, AriaRole.LISTITEM}) {
+            try {
+                Locator opt = page.getByRole(role, new Page.GetByRoleOptions()
+                        .setName(Pattern.compile("Delete|Supprimer", Pattern.CASE_INSENSITIVE)));
+                if (opt.count() > 0 && opt.first().isVisible()) {
+                    opt.first().click();
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
+        Locator txt = page.getByText(Pattern.compile("^(Delete|Supprimer)$", Pattern.CASE_INSENSITIVE)).first();
+        txt.click();
+    }
+
+    private void confirmDeleteIfDialog() {
+        try {
+            Locator confirm = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                    .setName(Pattern.compile("^(Delete|Supprimer|Confirm|Yes|OK|Valider|Confirmer)$", Pattern.CASE_INSENSITIVE)));
+            if (confirm.count() > 0 && confirm.first().isVisible()) {
+                confirm.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+            }
+        } catch (Exception e) {
+            log.debug("No delete confirmation dialog: {}", e.getMessage());
+        }
+    }
+
+    @Step("Delete all Quick Files albums (photos, videos, audios) via long-press delete")
+    public int deleteAllQuickFilesAlbums() {
+        openSettingsFromProfile();
+        openQuickFiles();
+        int deleted = deleteAlbumsInCurrentTab();
+
+        // The page has two tabs: "Photos & videos" and "Audios" — switch and repeat.
+        // Tab control is div.quick-file-switch[role=button] with inner text.
+        try {
+            Locator audiosTab = page.locator(".quick-file-switch")
+                    .filter(new Locator.FilterOptions().setHasText("Audios")).first();
+            if (audiosTab.count() == 0) {
+                audiosTab = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Audios")).first();
+            }
+            if (audiosTab.count() > 0 && audiosTab.isVisible()) {
+                audiosTab.click();
+                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception ignored) {}
+                log.info("Quick Files cleanup: switched to Audios tab");
+                deleted += deleteAlbumsInCurrentTab();
+            }
+        } catch (Exception e) {
+            log.warn("Audios tab not found or failed to open: {}", e.getMessage());
+        }
+        log.info("Quick Files cleanup: finished, {} album(s) deleted in total", deleted);
+        return deleted;
+    }
+
+    /** Current album names in the visible tab, from .qf-row-title. */
+    private java.util.List<String> albumNames() {
+        try {
+            return page.locator(".qf-row-title").allTextContents().stream()
+                    .map(String::trim).filter(s -> !s.isEmpty())
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    /** Wait until the given album name no longer appears in the list. */
+    private boolean waitUntilAlbumGone(String name, int timeoutMs) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            if (!albumNames().contains(name)) {
+                return true;
+            }
+            page.waitForTimeout(500);
+        }
+        return !albumNames().contains(name);
+    }
+
+    private int deleteAlbumsInCurrentTab() {
+        int deleted = 0;
+        java.util.Set<String> failedAlbums = new java.util.HashSet<>();
+        for (int guard = 0; guard < 60; guard++) {
+            // A failed long-press can release as a click and navigate INTO the
+            // album detail view — recover to the album list before counting,
+            // otherwise everything downstream silently sees "no albums".
+            if (!page.url().contains("quickLink")) {
+                log.warn("Quick Files cleanup: bounced off quickLink ({}); navigating back", page.url());
+                try {
+                    page.navigate(QUICK_LINK_URL);
+                    page.waitForLoadState(LoadState.DOMCONTENTLOADED,
+                            new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
+                    page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+                } catch (Exception ignored) {}
+            }
+            java.util.List<String> names = albumNames();
+            if (names.isEmpty()) {
+                // After a delete+reload the list re-renders — never trust an instant
+                // zero; give it a moment and re-check regardless of deleted count.
+                if (guard < 4) {
+                    try { page.waitForTimeout(2000); } catch (Exception ignored) {}
+                    continue;
+                }
+                log.info("Quick Files cleanup: no albums remaining in tab after {} deletion(s)", deleted);
+                return deleted;
+            }
+            // Pick the first album not already marked failed (phantom rows whose
+            // backend entity is gone fail deletion with 'Entity is not found').
+            String name = names.stream().filter(n -> !failedAlbums.contains(n))
+                    .findFirst().orElse(null);
+            if (name == null) {
+                log.warn("Quick Files cleanup: all {} remaining album(s) are undeletable (skipped): {}", names.size(), failedAlbums);
+                return deleted;
+            }
+            // Locate THIS album's row by its title — never operate on positional
+            // rows, which shift during re-renders after each deletion.
+            Locator row = page.locator(".qf-row").filter(new Locator.FilterOptions()
+                    .setHasText(name)).first();
+            // Verified against live UI: the delete sheet opens during a real
+            // press-and-hold (pointerdown+mousedown ~2s) on .qf-row-icon.
+            Locator icon = row.locator(".qf-row-icon").first();
+            log.info("Quick Files cleanup: long-pressing album {} ({} remaining)", name, names.size());
+            for (int attempt = 0; attempt < 3 && !deleteConfirmVisible(); attempt++) {
+                if (attempt > 0) {
+                    log.info("Quick Files cleanup: retrying long-press on {} (attempt {})", name, attempt + 1);
+                }
+                try {
+                    longPress(icon, 2000 + attempt * 700);
+                } catch (Exception e) {
+                    log.debug("icon press failed ({}), falling back to row", e.getMessage());
+                    try { longPress(row, 2000 + attempt * 700); } catch (Exception ignored) {}
+                }
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception ignored) {}
+            }
+            if (!deleteConfirmVisible()) {
+                try { icon.dispatchEvent("contextmenu"); } catch (Exception ignored) {}
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception ignored) {}
+            }
+            if (!deleteConfirmVisible()) {
+                if (!deleteOptionVisible()) {
+                    failedAlbums.add(name);
+                    log.warn("Quick Files cleanup: no delete UI after long-press on '{}'; skipping", name);
+                    continue;
+                }
+                clickDeleteOption();
+                try { page.waitForTimeout(ConfigReader.getAnimationTimeout()); } catch (Exception ignored) {}
+            }
+            confirmDeleteIfDialog();
+            // Album deletion triggers a page navigation/reload — wait for it
+            // before touching the DOM again or locators hit a destroyed context.
+            try {
+                page.waitForLoadState(LoadState.DOMCONTENTLOADED,
+                        new Page.WaitForLoadStateOptions().setTimeout(ConfigReader.getNavigationTimeout()));
+            } catch (Exception ignored) {}
+            try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception ignored) {}
+            // Verify THIS album is gone — the only reliable success signal.
+            if (waitUntilAlbumGone(name, ConfigReader.getShortTimeout())) {
+                deleted++;
+            } else {
+                failedAlbums.add(name);
+                log.warn("Quick Files cleanup: album '{}' still present after confirm (delete rejected?); skipping", name);
+            }
+        }
+        log.warn("Quick Files cleanup: stopped after {} deletions (guard limit)", deleted);
+        return deleted;
     }
 
 }

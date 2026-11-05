@@ -85,6 +85,7 @@
             <class name="tests.creator.CreatorScriptsCleanupTest"/>
             <class name="tests.creator.CleanupDeletePromoCodesTest"/>
             <class name="tests.creator.CreatorPublicationDeleteTest"/>
+            <class name="tests.creator.CreatorQuickFilesCleanupTest"/>
             <class name="tests.creator.CreatorDisableFreeSubscriptionTest"/>
         </classes>
     </test>

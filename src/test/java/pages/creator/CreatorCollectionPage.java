@@ -13,6 +13,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
 
 import io.qameta.allure.Step;
 import utils.WaitUtils;
@@ -748,13 +749,20 @@ public class CreatorCollectionPage extends BasePage {
 
         // If the Importation bottom sheet is still visible, dismiss it so it doesn't block
         // subsequent clicks (e.g., on the Next button). This avoids clicking 'My Device'
-        // directly, which would trigger a native file chooser.
+        // directly, which would trigger a native file chooser. The sheet currently renders
+        // with .bottom-sheet-modal-* classes (.bottom-modal-overlay is the legacy variant).
         try {
-            Locator bottomSheet = page.locator(".bottom-modal-overlay");
+            Locator bottomSheet = page.locator(".bottom-sheet-modal-overlay, .bottom-modal-overlay");
             if (bottomSheet.count() > 0 && bottomSheet.first().isVisible()) {
-                Locator cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                Locator cancel = bottomSheet.first().locator(".bottom-sheet-modal-cancel-button");
+                if (cancel.count() == 0) {
+                    cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                }
                 if (cancel.count() > 0) {
                     clickWithRetry(cancel.first(), 1, ConfigReader.getElementRetryDelay());
+                    try { bottomSheet.first().waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.HIDDEN).setTimeout(ConfigReader.getShortTimeout())); }
+                    catch (Exception ignored) {}
                 }
             }
         } catch (Exception e) { logger.debug("Optional action failed: {}", e.getMessage()); }
@@ -779,9 +787,25 @@ public class CreatorCollectionPage extends BasePage {
 
     @Step("Click Next in Add media")
     public void clickNext() {
+        dismissImportationSheetIfOpen();
         Locator next = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Next"));
         waitVisible(next.first(), ConfigReader.getShortTimeout());
         clickWithRetry(next.first(), 2, ConfigReader.getElementRetryDelay());
+    }
+
+    private void dismissImportationSheetIfOpen() {
+        try {
+            Locator bottomSheet = page.locator(".bottom-sheet-modal-overlay, .bottom-modal-overlay");
+            if (bottomSheet.count() > 0 && bottomSheet.first().isVisible()) {
+                Locator cancel = bottomSheet.first().locator(".bottom-sheet-modal-cancel-button");
+                if (cancel.count() == 0) {
+                    cancel = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Cancel"));
+                }
+                if (cancel.count() > 0) {
+                    cancel.first().click(new Locator.ClickOptions().setTimeout(ConfigReader.getShortTimeout()));
+                }
+            }
+        } catch (Exception e) { logger.debug("Bottom sheet dismiss skipped: {}", e.getMessage()); }
     }
     
 
