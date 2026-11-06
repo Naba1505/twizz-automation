@@ -901,8 +901,11 @@ public class CreatorSettingsPage extends BasePage {
             double y = box.y + box.height / 2;
             page.mouse().move(x, y);
             page.mouse().down();
-            page.waitForTimeout(holdMs);
-            page.mouse().up();
+            try {
+                page.waitForTimeout(holdMs);
+            } finally {
+                page.mouse().up();
+            }
             return;
         }
         try {
@@ -954,38 +957,54 @@ public class CreatorSettingsPage extends BasePage {
     public int deleteAllQuickFilesAlbums() {
         openSettingsFromProfile();
         openQuickFiles();
-        int deleted = deleteAlbumsInCurrentTab();
+        selectQuickFilesTab("Photos & videos");
+        int deleted = deleteAlbumsInCurrentTab("Photos & videos");
 
         // The page has two tabs: "Photos & videos" and "Audios" — switch and repeat.
         // Tab control is div.quick-file-switch[role=button] with inner text.
-        try {
-            Locator audiosTab = page.locator(".quick-file-switch")
-                    .filter(new Locator.FilterOptions().setHasText("Audios")).first();
-            if (audiosTab.count() == 0) {
-                audiosTab = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Audios")).first();
-            }
-            if (audiosTab.count() > 0 && audiosTab.isVisible()) {
-                audiosTab.click();
-                try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception ignored) {}
-                log.info("Quick Files cleanup: switched to Audios tab");
-                deleted += deleteAlbumsInCurrentTab();
-            }
-        } catch (Exception e) {
-            log.warn("Audios tab not found or failed to open: {}", e.getMessage());
-        }
+        selectQuickFilesTab("Audios");
+        deleted += deleteAlbumsInCurrentTab("Audios");
+        assertQuickFilesAlbumsEmpty();
         log.info("Quick Files cleanup: finished, {} album(s) deleted in total", deleted);
         return deleted;
     }
 
+    public void assertQuickFilesAlbumsEmpty() {
+        page.navigate(QUICK_LINK_URL);
+        for (String tab : List.of("Photos & videos", "Audios")) {
+            selectQuickFilesTab(tab);
+            List<String> remaining = albumNames();
+            Assert.assertTrue(remaining.isEmpty(), "Quick Files albums remain in " + tab + ": " + remaining);
+        }
+    }
+
+    private void selectQuickFilesTab(String tab) {
+        if (!page.url().split("\\?")[0].equals(QUICK_LINK_URL)) {
+            page.navigate(QUICK_LINK_URL);
+        }
+        Locator control = page.locator(".quick-file-switch")
+                .filter(new Locator.FilterOptions().setHasText(tab)).first();
+        control.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(ConfigReader.getShortTimeout()));
+        if (!"true".equals(control.getAttribute("aria-pressed"))) {
+            control.click();
+        }
+        page.waitForFunction("tab => [...document.querySelectorAll('.quick-file-switch')].some(e => "
+                + "e.textContent.trim() === tab && e.getAttribute('aria-pressed') === 'true')", tab);
+        page.waitForTimeout(ConfigReader.getUiSettleTimeout());
+    }
+
     /** Current album names in the visible tab, from .qf-row-title. */
     private java.util.List<String> albumNames() {
-        try {
-            return page.locator(".qf-row-title").allTextContents().stream()
-                    .map(String::trim).filter(s -> !s.isEmpty())
-                    .collect(java.util.stream.Collectors.toList());
-        } catch (Exception e) {
-            return java.util.Collections.emptyList();
-        }
+        page.waitForFunction("() => location.pathname === '/creator/quickLink' && "
+                + "document.querySelector('.quick-file-switch[aria-pressed=\"true\"]') && "
+                + "(document.querySelector('.qf-row-title') || "
+                + "document.body.innerText.includes(document.querySelector('.quick-file-switch[aria-pressed=\"true\"]')"
+                + ".textContent.trim() === 'Audios' ? \"You haven't created any audio albums yet\" : "
+                + "\"You haven't created any photo or video albums yet\"))");
+        return page.locator(".qf-row-title").allTextContents().stream()
+                .map(String::trim).filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toList());
     }
 
     /** Wait until the given album name no longer appears in the list. */
@@ -1000,7 +1019,7 @@ public class CreatorSettingsPage extends BasePage {
         return !albumNames().contains(name);
     }
 
-    private int deleteAlbumsInCurrentTab() {
+    private int deleteAlbumsInCurrentTab(String tab) {
         int deleted = 0;
         java.util.Set<String> failedAlbums = new java.util.HashSet<>();
         for (int guard = 0; guard < 60; guard++) {
@@ -1016,6 +1035,7 @@ public class CreatorSettingsPage extends BasePage {
                     page.waitForTimeout(ConfigReader.getUiSettleTimeout());
                 } catch (Exception ignored) {}
             }
+            selectQuickFilesTab(tab);
             java.util.List<String> names = albumNames();
             if (names.isEmpty()) {
                 // After a delete+reload the list re-renders — never trust an instant
@@ -1024,6 +1044,7 @@ public class CreatorSettingsPage extends BasePage {
                     try { page.waitForTimeout(2000); } catch (Exception ignored) {}
                     continue;
                 }
+                Assert.assertTrue(failedAlbums.isEmpty(), "Quick Files deletion was not verified in " + tab + ": " + failedAlbums);
                 log.info("Quick Files cleanup: no albums remaining in tab after {} deletion(s)", deleted);
                 return deleted;
             }
@@ -1032,8 +1053,7 @@ public class CreatorSettingsPage extends BasePage {
             String name = names.stream().filter(n -> !failedAlbums.contains(n))
                     .findFirst().orElse(null);
             if (name == null) {
-                log.warn("Quick Files cleanup: all {} remaining album(s) are undeletable (skipped): {}", names.size(), failedAlbums);
-                return deleted;
+                throw new AssertionError("Quick Files cleanup incomplete in " + tab + "; undeletable albums: " + failedAlbums);
             }
             // Locate THIS album's row by its title — never operate on positional
             // rows, which shift during re-renders after each deletion.
@@ -1047,6 +1067,7 @@ public class CreatorSettingsPage extends BasePage {
                 if (attempt > 0) {
                     log.info("Quick Files cleanup: retrying long-press on {} (attempt {})", name, attempt + 1);
                 }
+                selectQuickFilesTab(tab);
                 try {
                     longPress(icon, 2000 + attempt * 700);
                 } catch (Exception e) {
@@ -1077,6 +1098,7 @@ public class CreatorSettingsPage extends BasePage {
             } catch (Exception ignored) {}
             try { page.waitForTimeout(ConfigReader.getUiSettleTimeout()); } catch (Exception ignored) {}
             // Verify THIS album is gone — the only reliable success signal.
+            selectQuickFilesTab(tab);
             if (waitUntilAlbumGone(name, ConfigReader.getShortTimeout())) {
                 deleted++;
             } else {
@@ -1084,8 +1106,7 @@ public class CreatorSettingsPage extends BasePage {
                 log.warn("Quick Files cleanup: album '{}' still present after confirm (delete rejected?); skipping", name);
             }
         }
-        log.warn("Quick Files cleanup: stopped after {} deletions (guard limit)", deleted);
-        return deleted;
+        throw new AssertionError("Quick Files cleanup reached guard limit in " + tab + "; remaining albums: " + albumNames());
     }
 
 }
