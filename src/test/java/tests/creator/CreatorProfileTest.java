@@ -54,10 +54,12 @@ public class CreatorProfileTest extends BaseCreatorTest {
         profile.openModifyProfile();
         profile.assertModifyProfileScreen();
 
-        // Update fields using robust clear/fill helpers
+        // Update fields using robust clear/fill helpers — description is unique
+        // per run so the form always registers a change (Register button only
+        // enables when the form is dirty)
         profile.setLastName("Smith");
         profile.setPosition("India");
-        profile.setDescription("Automation Test Creator");
+        profile.setDescription("Automation Test Creator " + (System.currentTimeMillis() % 100000));
 
         // The DOB field must be bound into the save payload — visually filled
         // but empty in form state is the "@identifier" bug the backend rejects
@@ -84,6 +86,10 @@ public class CreatorProfileTest extends BaseCreatorTest {
         org.testng.Assert.assertTrue(profile.exerciseProfileSwitch(0, "Featured collection"), "Featured collection switch did not toggle");
         org.testng.Assert.assertTrue(profile.exerciseProfileSwitch(1, "Free subscription"), "Free subscription switch did not toggle");
         org.testng.Assert.assertTrue(profile.exerciseProfileSwitch(2, "Free chat"), "Free chat switch did not toggle");
+
+        // Flip-restore leaves net-zero change, so dirty the form via a unique
+        // description — otherwise Register stays disabled and no PATCH fires
+        profile.setDescription("Automation Test Creator " + (System.currentTimeMillis() % 100000));
 
         // Same DOB-binding race guard as the fields test — an unbound DOB
         // makes the save fail with 400 "dateOfBirth should not be empty"

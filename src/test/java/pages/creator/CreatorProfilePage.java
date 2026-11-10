@@ -235,6 +235,19 @@ public class CreatorProfilePage extends BasePage {
         waitVisible(toast, ConfigReader.getMediumTimeout());
         logger.info("[Profile] Avatar image removed toast visible");
     }
+    // Poll until a button becomes enabled; returns silently if it stays disabled
+    // so the caller's failure message reflects the real cause (form not dirty)
+    private void waitForButtonEnabled(Locator btn, int timeoutMs) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                if (btn.isEnabled()) return;
+            } catch (Throwable ignored) {}
+            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable ignored) {}
+        }
+        logger.warn("[Profile] Register button stayed disabled for {}ms (form not dirty?)", timeoutMs);
+    }
+
     @Step("Click 'Register' to save profile changes")
     public void clickRegisterUpdate() {
         // Prefer explicit XPath text match per spec
@@ -242,6 +255,7 @@ public class CreatorProfilePage extends BasePage {
         if (xpathBtn.count() > 0) {
             waitVisible(xpathBtn.first(), ConfigReader.getShortTimeout());
             try { xpathBtn.first().scrollIntoViewIfNeeded(); } catch (Throwable e) { logger.debug("Scroll failed: {}", e.getMessage()); }
+            waitForButtonEnabled(xpathBtn.first(), ConfigReader.getShortTimeout());
             clickWithRetry(xpathBtn.first(), 1, ConfigReader.getElementRetryDelay());
         } else {
             // Fallback: role button by name
@@ -316,6 +330,19 @@ public class CreatorProfilePage extends BasePage {
         return page.locator(".ant-switch").nth(index);
     }
 
+    // Poll aria-checked until the switch settles into the expected state
+    private boolean waitForSwitchState(Locator sw, boolean expected, int timeoutMs) {
+        String target = expected ? "true" : "false";
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        String v = null;
+        while (System.currentTimeMillis() < deadline) {
+            try { v = sw.getAttribute("aria-checked"); } catch (Throwable ignored) {}
+            if (target.equals(v)) return true;
+            try { page.waitForTimeout(ConfigReader.getPollInterval()); } catch (Throwable ignored) {}
+        }
+        return false;
+    }
+
     @Step("Exercise profile switch #{index} ({label}): flip, verify, restore")
     public boolean exerciseProfileSwitch(int index, String label) {
         Locator sw = profileSwitch(index);
@@ -327,11 +354,11 @@ public class CreatorProfilePage extends BasePage {
         }
         boolean before = "true".equals(sw.getAttribute("aria-checked"));
         clickWithRetry(sw, 1, ConfigReader.getElementRetryDelay());
-        boolean mid = "true".equals(sw.getAttribute("aria-checked"));
+        boolean mid = waitForSwitchState(sw, !before, ConfigReader.getShortTimeout());
         clickWithRetry(sw, 1, ConfigReader.getElementRetryDelay());
-        boolean restored = "true".equals(sw.getAttribute("aria-checked"));
-        boolean ok = (mid != before) && (restored == before);
-        logger.info("[Profile] Switch '{}' {} -> {} -> {} (ok={})", label, before, mid, restored, ok);
+        boolean restored = waitForSwitchState(sw, before, ConfigReader.getShortTimeout());
+        boolean ok = mid && restored;
+        logger.info("[Profile] Switch '{}' {} -> flipped:{} -> restored:{} (ok={})", label, before, mid, restored, ok);
         return ok;
     }
 
